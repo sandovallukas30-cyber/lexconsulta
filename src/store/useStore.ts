@@ -1,0 +1,187 @@
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+import type {
+  PerfilUsuario,
+  VistaId,
+  CodigoActivo,
+  EntradaJurisprudencia,
+  ConsultaHistorial,
+  Favorito,
+  Mensaje,
+  Canvas,
+} from '../types'
+
+interface AppState {
+  perfil: PerfilUsuario
+  vistaActiva: VistaId
+  codigos: CodigoActivo[]
+  jurisprudencia: EntradaJurisprudencia[]
+  historial: ConsultaHistorial[]
+  favoritos: Favorito[]
+  canvases: Canvas[]
+  canvasActivoId: string | null
+  modoOscuro: boolean
+  sidebarColapsado: boolean
+  modalPerfilAbierto: boolean
+  consultaActivaId: string | null
+  codigoExploradorActivo: CodigoActivo['tipo'] | null
+  codigoMapaActivo: CodigoActivo['tipo'] | null
+
+  setPerfil: (perfil: PerfilUsuario) => void
+  setVistaActiva: (vista: VistaId) => void
+  toggleCodigo: (tipo: CodigoActivo['tipo']) => void
+  agregarJurisprudencia: (entrada: EntradaJurisprudencia) => void
+  actualizarJurisprudencia: (id: string, cambios: Partial<EntradaJurisprudencia>) => void
+  eliminarJurisprudencia: (id: string) => void
+  agregarConsulta: (consulta: ConsultaHistorial) => void
+  actualizarConsulta: (id: string, mensajes: Mensaje[]) => void
+  eliminarConsulta: (id: string) => void
+  cargarConsulta: (id: string) => void
+  nuevaConsulta: () => void
+  agregarFavorito: (favorito: Favorito) => void
+  eliminarFavorito: (id: string) => void
+  guardarCanvas: (canvas: Canvas) => void
+  actualizarCanvas: (id: string, cambios: Partial<Canvas>) => void
+  eliminarCanvas: (id: string) => void
+  setCanvasActivo: (id: string | null) => void
+  toggleModoOscuro: () => void
+  toggleSidebar: () => void
+  setCodigoExplorador: (tipo: CodigoActivo['tipo'] | null) => void
+  setCodigoMapa: (tipo: CodigoActivo['tipo'] | null) => void
+  abrirModalPerfil: () => void
+  cerrarModalPerfil: () => void
+}
+
+const codigosIniciales: CodigoActivo[] = [
+  { tipo: 'con', nombre: 'Constitución Política', nombreCorto: 'Constitución', descripcion: 'Carta fundamental de la República', categoria: 'fundamentales', activo: true, cargado: true, bloqueado: true },
+  { tipo: 'tra', nombre: 'Tratados Internacionales', nombreCorto: 'Tratados', descripcion: 'Convenios internacionales ratificados por Chile', categoria: 'fundamentales', activo: true, cargado: false, bloqueado: true },
+  { tipo: 'civ', nombre: 'Código Civil', nombreCorto: 'Civil', descripcion: 'Relaciones civiles, contratos, propiedad y familia', categoria: 'sustantivos', activo: true, cargado: false },
+  { tipo: 'pen', nombre: 'Código Penal', nombreCorto: 'Penal', descripcion: 'Delitos y penas correspondientes', categoria: 'sustantivos', activo: true, cargado: false },
+  { tipo: 'lab', nombre: 'Código del Trabajo', nombreCorto: 'Trabajo', descripcion: 'Legislación laboral y derechos de los trabajadores', categoria: 'sustantivos', activo: true, cargado: true },
+  { tipo: 'tri', nombre: 'Código Tributario', nombreCorto: 'Tributario', descripcion: 'Impuestos y obligaciones fiscales', categoria: 'sustantivos', activo: true, cargado: false },
+  { tipo: 'com', nombre: 'Código de Comercio', nombreCorto: 'Comercio', descripcion: 'Actividades comerciales y sociedades', categoria: 'sustantivos', activo: false, cargado: false },
+  { tipo: 'agu', nombre: 'Código de Aguas', nombreCorto: 'Aguas', descripcion: 'Uso y administración de recursos hídricos', categoria: 'sustantivos', activo: false, cargado: false },
+  { tipo: 'san', nombre: 'Código Sanitario', nombreCorto: 'Sanitario', descripcion: 'Salud pública y servicios sanitarios', categoria: 'sustantivos', activo: false, cargado: false },
+  { tipo: 'min', nombre: 'Código de Minería', nombreCorto: 'Minería', descripcion: 'Explotación y regulación de recursos mineros', categoria: 'sustantivos', activo: false, cargado: false },
+  { tipo: 'pci', nombre: 'Código de Procedimiento Civil', nombreCorto: 'Proc. Civil', descripcion: 'Normas sobre procesos judiciales civiles', categoria: 'procedimentales', activo: false, cargado: false },
+  { tipo: 'ppe', nombre: 'Código Procesal Penal', nombreCorto: 'Proc. Penal', descripcion: 'Reglas de los procesos penales', categoria: 'procedimentales', activo: false, cargado: false },
+  { tipo: 'pad', nombre: 'Procedimiento Administrativo', nombreCorto: 'Proc. Admin.', descripcion: 'Reglas para la administración pública', categoria: 'procedimentales', activo: false, cargado: false },
+  { tipo: 'mil', nombre: 'Código de Justicia Militar', nombreCorto: 'Justicia Militar', descripcion: 'Disciplina y procedimientos en las Fuerzas Armadas', categoria: 'especiales', activo: false, cargado: false },
+]
+
+export const useStore = create<AppState>()(
+  persist(
+    (set) => ({
+      perfil: null,
+      vistaActiva: 'consultar',
+      codigos: codigosIniciales,
+      jurisprudencia: [],
+      historial: [],
+      favoritos: [],
+      canvases: [],
+      canvasActivoId: null,
+      modoOscuro: false,
+      sidebarColapsado: false,
+      modalPerfilAbierto: false,
+      consultaActivaId: null,
+      codigoExploradorActivo: null,
+      codigoMapaActivo: null,
+
+      setPerfil: (perfil) => set({ perfil, modalPerfilAbierto: false }),
+      setVistaActiva: (vistaActiva) => set({ vistaActiva }),
+      toggleCodigo: (tipo) =>
+        set((s) => ({
+          codigos: s.codigos.map((c) =>
+            c.tipo === tipo && !c.bloqueado ? { ...c, activo: !c.activo } : c
+          ),
+        })),
+      agregarJurisprudencia: (entrada) =>
+        set((s) => ({ jurisprudencia: [entrada, ...s.jurisprudencia] })),
+      actualizarJurisprudencia: (id, cambios) =>
+        set((s) => ({
+          jurisprudencia: s.jurisprudencia.map((j) => (j.id === id ? { ...j, ...cambios } : j)),
+        })),
+      eliminarJurisprudencia: (id) =>
+        set((s) => ({ jurisprudencia: s.jurisprudencia.filter((j) => j.id !== id) })),
+      agregarConsulta: (consulta) =>
+        set((s) => ({
+          historial: [consulta, ...s.historial].slice(0, 200),
+          consultaActivaId: consulta.id,
+        })),
+      actualizarConsulta: (id, mensajes) =>
+        set((s) => ({
+          historial: s.historial.map((h) => (h.id === id ? { ...h, mensajes } : h)),
+        })),
+      eliminarConsulta: (id) =>
+        set((s) => ({
+          historial: s.historial.filter((h) => h.id !== id),
+          consultaActivaId: s.consultaActivaId === id ? null : s.consultaActivaId,
+        })),
+      cargarConsulta: (id) => set({ consultaActivaId: id, vistaActiva: 'consultar' }),
+      nuevaConsulta: () => set({ consultaActivaId: null }),
+      agregarFavorito: (favorito) =>
+        set((s) => ({ favoritos: [favorito, ...s.favoritos] })),
+      eliminarFavorito: (id) =>
+        set((s) => ({ favoritos: s.favoritos.filter((f) => f.id !== id) })),
+      guardarCanvas: (canvas) =>
+        set((s) => ({
+          canvases: [canvas, ...s.canvases.filter((c) => c.id !== canvas.id)].slice(0, 50),
+          canvasActivoId: canvas.id,
+        })),
+      actualizarCanvas: (id, cambios) =>
+        set((s) => ({
+          canvases: s.canvases.map((c) =>
+            c.id === id ? { ...c, ...cambios, fechaModificacion: new Date() } : c
+          ),
+        })),
+      eliminarCanvas: (id) =>
+        set((s) => ({
+          canvases: s.canvases.filter((c) => c.id !== id),
+          canvasActivoId: s.canvasActivoId === id ? null : s.canvasActivoId,
+        })),
+      setCanvasActivo: (id) => set({ canvasActivoId: id }),
+      toggleModoOscuro: () => set((s) => ({ modoOscuro: !s.modoOscuro })),
+      toggleSidebar: () => set((s) => ({ sidebarColapsado: !s.sidebarColapsado })),
+      setCodigoExplorador: (tipo) => set({ codigoExploradorActivo: tipo }),
+      setCodigoMapa: (tipo) => set({ codigoMapaActivo: tipo }),
+      abrirModalPerfil: () => set({ modalPerfilAbierto: true }),
+      cerrarModalPerfil: () => set({ modalPerfilAbierto: false }),
+    }),
+    {
+      name: 'prima-lex-storage-v3',
+      version: 4,
+      partialize: (s) => ({
+        perfil: s.perfil,
+        codigos: s.codigos,
+        jurisprudencia: s.jurisprudencia,
+        historial: s.historial,
+        favoritos: s.favoritos,
+        canvases: s.canvases,
+        modoOscuro: s.modoOscuro,
+        sidebarColapsado: s.sidebarColapsado,
+      }),
+      migrate: (persisted: unknown, version: number) => {
+        if (version < 3) {
+          const state = persisted as { codigos?: unknown }
+          return { ...(state ?? {}), codigos: codigosIniciales }
+        }
+        if (version < 4) {
+          // Preservar preferencia activo/bloqueado del usuario, refrescar el resto (cargado, nombre, etc.)
+          const state = persisted as { codigos?: CodigoActivo[] }
+          const prefs = new Map<string, boolean>()
+          if (Array.isArray(state.codigos)) {
+            for (const c of state.codigos) prefs.set(c.tipo, c.activo)
+          }
+          return {
+            ...state,
+            codigos: codigosIniciales.map((c) => ({
+              ...c,
+              activo: c.bloqueado ? true : prefs.get(c.tipo) ?? c.activo,
+            })),
+          }
+        }
+        return persisted as never
+      },
+    }
+  )
+)
