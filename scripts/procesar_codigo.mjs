@@ -26,25 +26,37 @@ for (const l of lines) {
 
 // --- Header detectors ---
 // IMPORTANT: 'Art' / 'Artículo' must start with CAPITAL A. Otherwise "artículo 2472" inside text matches.
-const RE_LIBRO = /^LIBRO\s+([IVXLCDM]+)\s*$/;
-const RE_TITULO_CAPS = /^(?:TITULO|TÍTULO)\s+(PRELIMINAR|FINAL|[IVXLCDM]+)\s*$/;
-const RE_TITULO_TC = /^T[íi]tulo\s+([IVXLCDM]+)\s*$/;
+// Ordinales masculinos en palabras (para Libros/Títulos como "LIBRO PRIMERO")
+const ORD_MASC = '(?:PRIMERO|SEGUNDO|TERCERO|CUARTO|QUINTO|SEXTO|S[ÉE]PTIMO|OCTAVO|NOVENO|D[ÉE]CIMO|UND[ÉE]CIMO|DUOD[ÉE]CIMO|DECIM[OA][A-Z]+|VIG[ÉE]SIMO|TRIG[ÉE]SIMO)';
+const RE_LIBRO = new RegExp(`^LIBRO\\s+([IVXLCDM]+|${ORD_MASC}(?:\\s+${ORD_MASC})?)\\s*\\.?\\s*$`);
+const RE_LIBRO_TC = /^Libro\s+([IVXLCDM]+)\s*\.?\s*$/;
+const RE_TITULO_CAPS = new RegExp(`^(?:TITULO|TÍTULO)\\s+(PRELIMINAR|FINAL|[IVXLCDM]+|${ORD_MASC}(?:\\s+${ORD_MASC})?)\\s*\\.?\\s*$`);
+const RE_TITULO_TC = /^T[íi]tulo\s+([IVXLCDM]+)\s*\.?\s*$/;
 const RE_CAPITULO = /^Cap[íi]tulo\s+([IVXLCDM]+)\s*$/;
 const RE_PARRAFO = /^P[áa]rrafo\s+(\d+\s*[ºo°]?|[IVXLCDM]+)\s*$/;
 // Captures number with optional sub-letter (183-A, 183-AA) and ordinal suffix (bis/ter/quáter etc.) in any order/case.
 const SUFIJO = '(?:[Bb]is|[Tt]er|[Qq]u[áa]ter|[Qq]uinquies|[Ss]exies|[Ss]epties|[Oo]cties|[Nn]ovies|[Dd]ecies)';
 const RE_ART = new RegExp(
-  '^(?:Artículo|Articulo|Art\\.)\\s*' +
+  '^(?:Art[íi]culo|ART[ÍI]CULO|Art\\.|ART\\.)\\s*' +
     '(' +
       '\\d+' +
-      '(?:\\s*-\\s*[A-ZÑ]{1,2})?' +     // -A, -AA, -AB
-      '(?:\\s+' + SUFIJO + ')?' +      // bis, ter, quáter
-      '(?:\\s+[A-ZÑ](?![a-z]))?' +      // A, B (un solo letter trailing)
-      '(?:\\s+' + SUFIJO + ')?' +      // bis again (152 quáter O bis)
+      '(?:\\s*-\\s*(?:\\d+|[A-ZÑ]{1,2}(?![a-záéíóúñ])))?' +  // -A/-AA/-N. La letra NO debe ir seguida de minúscula (eso indicaría inicio de palabra)
+      '(?:[°º\\s-]+[a-z](?=[\\s.)]|$))?' +           // " a", "° a" (Penal)
+      '(?:[°º\\s-]+' + SUFIJO + ')?' +               // " bis", "° bis", "° ter" (Tributario)
+      '(?:\\s+[A-ZÑ](?![a-z]))?' +                   // A, B (letter trailing)
+      '(?:[°º\\s-]+' + SUFIJO + ')?' +               // bis again
     ')' +
-    '\\.?\\s*o?\\s*[°º]?\\.?\\s*(?:-)?\\s*(.*)$'
+    '[\\s.°ºo)\\-]*(.*)$'
 );
-const RE_TRANSITORIOS_MARK = /^(?:ARTICULOS|ART[ÍI]CULOS|DISPOSICIONES)\s+TRANSITORIAS?\s*$/i;
+
+function normalizarIdArt(raw) {
+  return raw.replace(/[°º]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+const RE_TRANSITORIOS_MARK = /^(?:ARTICULOS|ART[ÍI]CULOS|DISPOSICIONES)\s+TRANSITORI[AO]S?\s*$/i;
+
+// DFL/Ley que refunde varios textos: "ARTICULO 3º: Fíjase el siguiente texto refundido..."
+// Cuando aparece después de haber capturado el primer texto, marca el inicio de OTRA ley distinta y debemos parar.
+const RE_DFL_FIJASE = /^(?:ART[ÍI]CULO|Art[íi]culo)\s*\d+[º°]?\s*[.:-]?-?\s*F[íi]jase\s+el\s+siguiente\s+texto/i;
 
 // Ordinales femeninos (PRIMERA, SEGUNDA, ... CENTÉSIMA) usados en disposiciones transitorias de la Constitución
 const ORD_FEM = '(?:PRIMERA|SEGUNDA|TERCERA|CUARTA|QUINTA|SEXTA|S[ÉE]PTIMA|OCTAVA|NOVENA|D[ÉE]CIMA|UND[ÉE]CIMA|DUOD[ÉE]CIMA|DECIMO[A-Z]+|VIG[ÉE]SIMA|TRIG[ÉE]SIMA|CUADRAG[ÉE]SIMA|QUINCUAG[ÉE]SIMA|SEXAG[ÉE]SIMA|SEPTUAG[ÉE]SIMA|OCTOG[ÉE]SIMA|NONAG[ÉE]SIMA|CENT[ÉE]SIMA)';
@@ -68,7 +80,7 @@ function ordFemToNumber(s) {
   return total || s;
 }
 
-function esLibro(l) { return RE_LIBRO.test(l); }
+function esLibro(l) { return RE_LIBRO.test(l) || RE_LIBRO_TC.test(l); }
 function esTitulo(l) { return RE_TITULO_CAPS.test(l) || RE_TITULO_TC.test(l); }
 function esCapitulo(l) { return RE_CAPITULO.test(l); }
 function esParrafo(l) { return RE_PARRAFO.test(l); }
@@ -94,6 +106,7 @@ function tomarNombre(arr, start) {
 // --- Main parse ---
 const estado = { libro: null, titulo: null, capitulo: null, parrafo: null };
 const articulos = [];
+const idsVistos = new Set();
 let actual = null;
 let enTransitorios = false;
 
@@ -106,6 +119,19 @@ function flush() {
       .replace(/ ?\n\n ?/g, '\n\n')
       .replace(/\n{3,}/g, '\n\n')
       .trim();
+    // Si el ID ya existe (códigos antiguos con numeración que reinicia por Libro)
+    // prefijar con el Libro romano para diferenciarlos.
+    if (idsVistos.has(actual.a) && actual.libro) {
+      const libroRoman = (actual.libro.match(/^([IVXLCDM]+)/) ?? [, 'X'])[1];
+      let nuevoId = `${actual.a} (L.${libroRoman})`;
+      let n = 2;
+      while (idsVistos.has(nuevoId)) {
+        nuevoId = `${actual.a} (L.${libroRoman}-${n})`;
+        n++;
+      }
+      actual.a = nuevoId;
+    }
+    idsVistos.add(actual.a);
     articulos.push(actual);
   }
   actual = null;
@@ -115,6 +141,13 @@ for (let i = 0; i < cleaned.length; i++) {
   const raw = cleaned[i];
   const indented = raw.startsWith('<<P>>');
   const l = indented ? raw.slice(5) : raw;
+
+  // Si encontramos OTRA ley refundida (DFL "Artículo Nº: Fíjase texto refundido...")
+  // después del primer cuerpo legal capturado, detenemos: es contenido de OTRA ley distinta.
+  if (RE_DFL_FIJASE.test(l) && articulos.length > 50) {
+    flush();
+    break;
+  }
 
   if (RE_TRANSITORIOS_MARK.test(l)) {
     flush();
@@ -128,7 +161,7 @@ for (let i = 0; i < cleaned.length; i++) {
   }
 
   let m;
-  if ((m = l.match(RE_LIBRO))) {
+  if ((m = l.match(RE_LIBRO)) || (m = l.match(RE_LIBRO_TC))) {
     flush();
     const { nombre, saltar } = tomarNombre(cleaned, i + 1);
     estado.libro = nombre ? `${m[1]} — ${nombre}` : m[1];
@@ -140,6 +173,11 @@ for (let i = 0; i < cleaned.length; i++) {
   }
   if ((m = l.match(RE_TITULO_CAPS)) || (m = l.match(RE_TITULO_TC))) {
     flush();
+    // Si es "Título Preliminar" y ya hay artículos detectados, son del Decreto Ley
+    // que aprueba el código, no del código mismo. Descartar.
+    if (/PRELIMINAR/i.test(m[1]) && articulos.length > 0) {
+      articulos.length = 0;
+    }
     const { nombre, saltar } = tomarNombre(cleaned, i + 1);
     estado.titulo = nombre ? `${m[1]} — ${nombre}` : m[1];
     estado.capitulo = null;
@@ -165,7 +203,7 @@ for (let i = 0; i < cleaned.length; i++) {
   }
   if ((m = l.match(RE_ART))) {
     flush();
-    const numero = m[1].replace(/\s+/g, ' ').trim();
+    const numero = normalizarIdArt(m[1]);
     const restoLinea = m[2].trim();
     const label = enTransitorios ? `Art. ${numero} transitorio` : `Art. ${numero}`;
     actual = {

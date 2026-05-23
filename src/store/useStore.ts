@@ -22,6 +22,7 @@ interface AppState {
   canvasActivoId: string | null
   modoOscuro: boolean
   sidebarColapsado: boolean
+  modernizarLenguaje: boolean
   modalPerfilAbierto: boolean
   consultaActivaId: string | null
   codigoExploradorActivo: CodigoActivo['tipo'] | null
@@ -46,6 +47,7 @@ interface AppState {
   setCanvasActivo: (id: string | null) => void
   toggleModoOscuro: () => void
   toggleSidebar: () => void
+  toggleModernizar: () => void
   setCodigoExplorador: (tipo: CodigoActivo['tipo'] | null) => void
   setCodigoMapa: (tipo: CodigoActivo['tipo'] | null) => void
   abrirModalPerfil: () => void
@@ -55,17 +57,18 @@ interface AppState {
 const codigosIniciales: CodigoActivo[] = [
   { tipo: 'con', nombre: 'Constitución Política', nombreCorto: 'Constitución', descripcion: 'Carta fundamental de la República', categoria: 'fundamentales', activo: true, cargado: true, bloqueado: true },
   { tipo: 'tra', nombre: 'Tratados Internacionales', nombreCorto: 'Tratados', descripcion: 'Convenios internacionales ratificados por Chile', categoria: 'fundamentales', activo: true, cargado: false, bloqueado: true },
-  { tipo: 'civ', nombre: 'Código Civil', nombreCorto: 'Civil', descripcion: 'Relaciones civiles, contratos, propiedad y familia', categoria: 'sustantivos', activo: true, cargado: false },
-  { tipo: 'pen', nombre: 'Código Penal', nombreCorto: 'Penal', descripcion: 'Delitos y penas correspondientes', categoria: 'sustantivos', activo: true, cargado: false },
+  { tipo: 'civ', nombre: 'Código Civil', nombreCorto: 'Civil', descripcion: 'Relaciones civiles, contratos, propiedad y familia', categoria: 'sustantivos', activo: true, cargado: true },
+  { tipo: 'pen', nombre: 'Código Penal', nombreCorto: 'Penal', descripcion: 'Delitos y penas correspondientes', categoria: 'sustantivos', activo: true, cargado: true },
   { tipo: 'lab', nombre: 'Código del Trabajo', nombreCorto: 'Trabajo', descripcion: 'Legislación laboral y derechos de los trabajadores', categoria: 'sustantivos', activo: true, cargado: true },
-  { tipo: 'tri', nombre: 'Código Tributario', nombreCorto: 'Tributario', descripcion: 'Impuestos y obligaciones fiscales', categoria: 'sustantivos', activo: true, cargado: false },
-  { tipo: 'com', nombre: 'Código de Comercio', nombreCorto: 'Comercio', descripcion: 'Actividades comerciales y sociedades', categoria: 'sustantivos', activo: false, cargado: false },
-  { tipo: 'agu', nombre: 'Código de Aguas', nombreCorto: 'Aguas', descripcion: 'Uso y administración de recursos hídricos', categoria: 'sustantivos', activo: false, cargado: false },
+  { tipo: 'tri', nombre: 'Código Tributario', nombreCorto: 'Tributario', descripcion: 'Impuestos y obligaciones fiscales', categoria: 'sustantivos', activo: true, cargado: true },
+  { tipo: 'com', nombre: 'Código de Comercio', nombreCorto: 'Comercio', descripcion: 'Actividades comerciales y sociedades', categoria: 'sustantivos', activo: true, cargado: true },
+  { tipo: 'agu', nombre: 'Código de Aguas', nombreCorto: 'Aguas', descripcion: 'Uso y administración de recursos hídricos', categoria: 'sustantivos', activo: true, cargado: true },
   { tipo: 'san', nombre: 'Código Sanitario', nombreCorto: 'Sanitario', descripcion: 'Salud pública y servicios sanitarios', categoria: 'sustantivos', activo: false, cargado: false },
-  { tipo: 'min', nombre: 'Código de Minería', nombreCorto: 'Minería', descripcion: 'Explotación y regulación de recursos mineros', categoria: 'sustantivos', activo: false, cargado: false },
-  { tipo: 'pci', nombre: 'Código de Procedimiento Civil', nombreCorto: 'Proc. Civil', descripcion: 'Normas sobre procesos judiciales civiles', categoria: 'procedimentales', activo: false, cargado: false },
-  { tipo: 'ppe', nombre: 'Código Procesal Penal', nombreCorto: 'Proc. Penal', descripcion: 'Reglas de los procesos penales', categoria: 'procedimentales', activo: false, cargado: false },
+  { tipo: 'min', nombre: 'Código de Minería', nombreCorto: 'Minería', descripcion: 'Explotación y regulación de recursos mineros', categoria: 'sustantivos', activo: true, cargado: true },
+  { tipo: 'pci', nombre: 'Código de Procedimiento Civil', nombreCorto: 'Proc. Civil', descripcion: 'Normas sobre procesos judiciales civiles', categoria: 'procedimentales', activo: true, cargado: true },
+  { tipo: 'ppe', nombre: 'Código Procesal Penal', nombreCorto: 'Proc. Penal', descripcion: 'Reglas de los procesos penales', categoria: 'procedimentales', activo: true, cargado: true },
   { tipo: 'pad', nombre: 'Procedimiento Administrativo', nombreCorto: 'Proc. Admin.', descripcion: 'Reglas para la administración pública', categoria: 'procedimentales', activo: false, cargado: false },
+  { tipo: 'cot', nombre: 'Código Orgánico de Tribunales', nombreCorto: 'Orgánico Tribunales', descripcion: 'Organización y atribuciones de los tribunales chilenos', categoria: 'procedimentales', activo: true, cargado: true },
   { tipo: 'mil', nombre: 'Código de Justicia Militar', nombreCorto: 'Justicia Militar', descripcion: 'Disciplina y procedimientos en las Fuerzas Armadas', categoria: 'especiales', activo: false, cargado: false },
 ]
 
@@ -82,6 +85,7 @@ export const useStore = create<AppState>()(
       canvasActivoId: null,
       modoOscuro: false,
       sidebarColapsado: false,
+      modernizarLenguaje: false,
       modalPerfilAbierto: false,
       consultaActivaId: null,
       codigoExploradorActivo: null,
@@ -142,6 +146,7 @@ export const useStore = create<AppState>()(
       setCanvasActivo: (id) => set({ canvasActivoId: id }),
       toggleModoOscuro: () => set((s) => ({ modoOscuro: !s.modoOscuro })),
       toggleSidebar: () => set((s) => ({ sidebarColapsado: !s.sidebarColapsado })),
+      toggleModernizar: () => set((s) => ({ modernizarLenguaje: !s.modernizarLenguaje })),
       setCodigoExplorador: (tipo) => set({ codigoExploradorActivo: tipo }),
       setCodigoMapa: (tipo) => set({ codigoMapaActivo: tipo }),
       abrirModalPerfil: () => set({ modalPerfilAbierto: true }),
@@ -149,7 +154,7 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'prima-lex-storage-v3',
-      version: 4,
+      version: 11,
       partialize: (s) => ({
         perfil: s.perfil,
         codigos: s.codigos,
@@ -159,14 +164,15 @@ export const useStore = create<AppState>()(
         canvases: s.canvases,
         modoOscuro: s.modoOscuro,
         sidebarColapsado: s.sidebarColapsado,
+        modernizarLenguaje: s.modernizarLenguaje,
       }),
       migrate: (persisted: unknown, version: number) => {
         if (version < 3) {
           const state = persisted as { codigos?: unknown }
           return { ...(state ?? {}), codigos: codigosIniciales }
         }
-        if (version < 4) {
-          // Preservar preferencia activo/bloqueado del usuario, refrescar el resto (cargado, nombre, etc.)
+        if (version < 11) {
+          // Refrescar metadatos de códigos (cargado/descripción) preservando preferencia activo
           const state = persisted as { codigos?: CodigoActivo[] }
           const prefs = new Map<string, boolean>()
           if (Array.isArray(state.codigos)) {

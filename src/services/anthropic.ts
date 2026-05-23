@@ -1,20 +1,10 @@
-import Anthropic from '@anthropic-ai/sdk'
+import { callMessages } from './aiClient'
 import type { PerfilUsuario, Articulo, Cita } from '../types'
 import type { ResultadoBusqueda } from './busqueda'
+export { precargar } from './codigos'
 
 const MODELO = 'claude-sonnet-4-5'
 const MAX_TOKENS = 1500
-
-function getClient(): Anthropic {
-  const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY
-  if (!apiKey) {
-    throw new Error('Falta VITE_ANTHROPIC_API_KEY en .env')
-  }
-  return new Anthropic({
-    apiKey,
-    dangerouslyAllowBrowser: true,
-  })
-}
 
 function systemPromptConsulta(perfil: PerfilUsuario): string {
   const base = `Eres Prima Lex, un consultor jurídico chileno asistido por IA. Tu fuente única son los artículos del ordenamiento jurídico chileno que recibirás como contexto en cada consulta. NUNCA inventes artículos ni cites normas que no estén en el contexto provisto.
@@ -72,7 +62,6 @@ export async function consultar(
   contexto: ResultadoBusqueda[],
   perfil: PerfilUsuario
 ): Promise<RespuestaIA> {
-  const client = getClient()
   const system = systemPromptConsulta(perfil)
   const contextoTexto = formatearContexto(contexto)
 
@@ -82,7 +71,7 @@ ${contextoTexto}
 CONSULTA DEL USUARIO:
 ${pregunta}`
 
-  const res = await client.messages.create({
+  const res = await callMessages({
     model: MODELO,
     max_tokens: MAX_TOKENS,
     system,

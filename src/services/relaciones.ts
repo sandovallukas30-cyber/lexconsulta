@@ -1,4 +1,4 @@
-import { CODIGOS_DATA } from './codigos'
+import { obtenerCodigo } from './codigos'
 import type { Articulo, CodigoTipo } from '../types'
 
 export type TipoRelacion = 'remite' | 'sub-articulo'
@@ -25,7 +25,7 @@ const RE_MENCION = /(?:Art(?:[íi]culo)?\.?)\s*(\d+(?:\s*-\s*[A-ZÑ]{1,2})?(?:\s
 
 export function getGrafo(tipo: CodigoTipo): GrafoCodigo | null {
   if (cache.has(tipo)) return cache.get(tipo)!
-  const codigo = CODIGOS_DATA[tipo]
+  const codigo = obtenerCodigo(tipo)
   if (!codigo) return null
   const g = construirGrafo(tipo, codigo.articulos)
   cache.set(tipo, g)

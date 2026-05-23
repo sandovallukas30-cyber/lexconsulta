@@ -302,8 +302,8 @@ Estructura jerárquica capturada: Libros I-V detectados, Títulos, Capítulos, P
 ## 7. Bugs conocidos / Pendientes
 
 ### Críticos (antes de deploy)
-- 🔴 **API key expuesta en el cliente.** `VITE_ANTHROPIC_API_KEY` queda en el bundle. Cualquiera puede sacarla. **Antes de prod hay que migrar a backend proxy** o usar serverless function.
-- 🔴 **Sin rate limiting ni protección.** Un usuario puede gastar la cuota completa.
+- ✅ **API key segura via backend proxy.** En producción se usa `api/anthropic.ts` (Vercel Function). La env var server-side es `ANTHROPIC_API_KEY` (sin prefijo VITE_). En desarrollo local sigue usando `VITE_ANTHROPIC_API_KEY` directo.
+- 🟡 **Sin rate limiting ni protección por IP.** Un usuario puede mandar miles de llamadas. Mitigar con límite mensual en Anthropic console + Cloudflare rate limit si crece.
 
 ### Conocidos
 - 🟡 **Jurisprudencia no se inyecta en Consultar.** El módulo Admin guarda entradas pero la IA no las usa todavía. **Próximo paso natural.**
@@ -326,13 +326,21 @@ Estructura jerárquica capturada: Libros I-V detectados, Títulos, Capítulos, P
 
 ## 8. Variables de entorno
 
-Archivo `.env` en la raíz (ya en `.gitignore`):
-
+### Local (`.env` en la raíz, ya en `.gitignore`)
 ```ini
 VITE_ANTHROPIC_API_KEY=sk-ant-api03-...
 ```
+⚠️ El prefijo `VITE_` significa que la key se expone al cliente. **SOLO para desarrollo local.**
 
-⚠️ Variables `VITE_*` se exponen al cliente. La key actual del `.env` quedó en logs de chat antiguos; **rotarla antes de hacer público el repo**.
+### Producción (Vercel Dashboard → Settings → Environment Variables)
+```ini
+ANTHROPIC_API_KEY=sk-ant-api03-...
+```
+Sin prefijo `VITE_`. La consume `api/anthropic.ts` (servidor), nunca llega al navegador.
+
+### Flujo de las llamadas a IA
+- `npm run dev` → `services/aiClient.ts` detecta `import.meta.env.DEV` → usa SDK con `VITE_ANTHROPIC_API_KEY`
+- Build de producción → `aiClient.ts` detecta `import.meta.env.PROD` → hace `fetch('/api/anthropic')` → Vercel Function reenvía con `ANTHROPIC_API_KEY`
 
 ---
 

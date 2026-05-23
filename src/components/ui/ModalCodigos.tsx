@@ -52,6 +52,13 @@ export function ModalCodigos({ abierto, onCerrar }: Props) {
       const cat = c.categoria ?? 'sustantivos'
       if (map[cat]) map[cat].push(c)
     }
+    // Dentro de cada categoría: cargados primero, pendientes después
+    for (const cat of Object.keys(map) as CategoriaCodigo[]) {
+      map[cat].sort((a, b) => {
+        if (a.cargado === b.cargado) return 0
+        return a.cargado ? -1 : 1
+      })
+    }
     return map
   }, [filtrados])
 

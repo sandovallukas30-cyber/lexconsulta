@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk'
+import { callMessages } from './aiClient'
 import type { ArticuloRelevante } from '../types'
 
 const MODELO = 'claude-haiku-4-5-20251001'
@@ -50,12 +50,6 @@ function guardarCache(concepto: string, resultado: ResultadoConcepto) {
   }
 }
 
-function getClient(): Anthropic {
-  const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY
-  if (!apiKey) throw new Error('Falta VITE_ANTHROPIC_API_KEY en .env')
-  return new Anthropic({ apiKey, dangerouslyAllowBrowser: true })
-}
-
 function extraerJSON(texto: string): string {
   // Try direct
   const trimmed = texto.trim()
@@ -75,14 +69,26 @@ const SYSTEM_PROMPT = `Eres un asistente educativo de derecho chileno. Genera co
 Reglas:
 - Responde SOLO con un objeto JSON válido, sin texto extra, sin bloques de código markdown.
 - Si el concepto no pertenece al derecho chileno, marca "definicion" como "Concepto fuera del ámbito del derecho chileno." y deja "articulos" como [] y "caso" vacío.
-- Los artículos deben ser del Código del Trabajo chileno (numeración real). Máximo 5.
-- Definición: 2 oraciones máximo, claras, sin tecnicismos innecesarios.
+- Identifica el cuerpo legal MÁS PERTINENTE al concepto entre estos disponibles:
+  - "Constitución Política" → derechos fundamentales, organización del Estado, garantías
+  - "Código Civil" → contratos, familia, propiedad, sucesiones, obligaciones
+  - "Código Penal" → delitos, penas, responsabilidad penal
+  - "Código del Trabajo" → relación laboral, contratos de trabajo, sindicatos, despido
+  - "Código Tributario" → impuestos, fiscalización, infracciones tributarias
+  - "Código de Comercio" → actos de comercio, sociedades, contratos mercantiles
+  - "Código de Procedimiento Civil" → procesos judiciales civiles
+- Cita 3-5 artículos REALES del código pertinente (no inventes números).
+- Si el concepto cruza varios códigos, puedes mezclar artículos de distintos códigos.
+- En cada artículo indica de qué código es.
+- Definición: 2 oraciones máximo, claras.
 - Caso: 1 párrafo corto con ejemplo cotidiano que ilustre el concepto.
 
 Estructura JSON:
 {
   "definicion": "string",
-  "articulos": [{ "numero": "Art. N", "relevancia": "breve explicación" }],
+  "articulos": [
+    { "numero": "Art. N", "codigo": "Código del Trabajo", "relevancia": "breve explicación" }
+  ],
   "caso": "string"
 }`
 
@@ -90,8 +96,7 @@ export async function generarConcepto(concepto: string): Promise<ResultadoConcep
   const cacheado = obtenerCache(concepto)
   if (cacheado) return cacheado
 
-  const client = getClient()
-  const res = await client.messages.create({
+  const res = await callMessages({
     model: MODELO,
     max_tokens: MAX_TOKENS,
     system: SYSTEM_PROMPT,
@@ -127,8 +132,7 @@ export function tieneCache(concepto: string): boolean {
 }
 
 export async function generarRelacion(a: string, b: string): Promise<string> {
-  const client = getClient()
-  const res = await client.messages.create({
+  const res = await callMessages({
     model: MODELO,
     max_tokens: 60,
     messages: [

@@ -24,10 +24,21 @@ export function Topbar() {
         modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
       }`}
     >
-      <div>
-        <h2 className={`text-lg font-semibold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+      <div className="flex items-center gap-4 min-w-0">
+        <h2 className={`text-lg font-semibold flex-shrink-0 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
           {titulos[vistaActiva]}
         </h2>
+        <div
+          className={`hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium border truncate ${
+            modoOscuro
+              ? 'bg-amber-950/30 border-amber-900/60 text-amber-300'
+              : 'bg-amber-50 border-amber-200 text-amber-800'
+          }`}
+          title="Esta plataforma no constituye asesoría legal. Consulta siempre con un profesional para decisiones jurídicas."
+        >
+          <i className="ti ti-alert-triangle text-xs flex-shrink-0" />
+          <span className="truncate">Orientación educativa · No reemplaza asesoría legal profesional</span>
+        </div>
       </div>
 
       <div className="flex items-center gap-2">

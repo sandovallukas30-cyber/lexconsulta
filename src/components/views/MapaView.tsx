@@ -14,7 +14,7 @@ import {
 } from '@xyflow/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
-import { obtenerCodigo } from '../../services/codigos'
+import { cargarCodigo, obtenerCodigo } from '../../services/codigos'
 import {
   getGrafo,
   estadisticasGrafo,
@@ -110,8 +110,24 @@ function MapaInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: CodigoTipo; 
     } catch {/* noop */}
   }
 
-  const codigo = useMemo(() => obtenerCodigo(tipoActivo), [tipoActivo])
-  const grafo = useMemo(() => getGrafo(tipoActivo), [tipoActivo])
+  const [cargandoCodigo, setCargandoCodigo] = useState(!obtenerCodigo(tipoActivo))
+  useEffect(() => {
+    if (obtenerCodigo(tipoActivo)) {
+      setCargandoCodigo(false)
+      return
+    }
+    setCargandoCodigo(true)
+    let cancelado = false
+    cargarCodigo(tipoActivo).then(() => {
+      if (!cancelado) setCargandoCodigo(false)
+    })
+    return () => {
+      cancelado = true
+    }
+  }, [tipoActivo])
+
+  const codigo = useMemo(() => obtenerCodigo(tipoActivo), [tipoActivo, cargandoCodigo])
+  const grafo = useMemo(() => getGrafo(tipoActivo), [tipoActivo, cargandoCodigo])
   const stats = useMemo(() => estadisticasGrafo(tipoActivo), [tipoActivo])
 
   // Reset when switching code
@@ -428,10 +444,20 @@ function MapaInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: CodigoTipo; 
     return grafo.articulos.get(seleccionado) ?? null
   }, [grafo, seleccionado])
 
-  if (!grafo || !codigo) {
+  if (cargandoCodigo || !grafo || !codigo) {
     return (
-      <div className="h-full flex items-center justify-center p-8">
-        <p className={modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}>No hay códigos cargados.</p>
+      <div className={`h-full flex items-center justify-center ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
+        <div className="text-center">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+            className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3"
+            style={{ background: modoOscuro ? '#0F6E5625' : '#0F6E5610' }}
+          >
+            <i className="ti ti-loader-2 text-2xl" style={{ color: VERDE }} />
+          </motion.div>
+          <p className={`text-sm ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>Cargando código...</p>
+        </div>
       </div>
     )
   }

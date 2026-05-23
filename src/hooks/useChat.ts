@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useStore } from '../store/useStore'
 import { buscar } from '../services/busqueda'
 import { consultar } from '../services/anthropic'
-import { codigosCargados } from '../services/codigos'
+import { codigosCargados, precargar } from '../services/codigos'
 import type { Mensaje, ConsultaHistorial } from '../types'
 
 function titularDesdePregunta(p: string): string {
@@ -72,6 +72,7 @@ export function useChat() {
       }
 
       try {
+        await precargar(activos)
         const resultados = buscar(texto, activos, 8)
         const respuesta = await consultar(texto, resultados, perfil)
         const mensajeAsistente: Mensaje = {

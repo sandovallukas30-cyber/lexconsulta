@@ -800,13 +800,24 @@ function NodoBase(props: NodeProps<NodoFlow>) {
         {!data.colapsado && (
           <div className="p-3 flex-1 overflow-y-auto min-h-0">
             {tieneArticulos ? (
-              <ul className="space-y-1.5">
+              <ul className="space-y-2">
                 {data.articulos!.map((art, i) => (
                   <li key={i} className="text-[12px] leading-snug">
-                    <span className="font-mono font-semibold" style={{ color }}>
-                      {art.numero}
-                    </span>
-                    <span className={modoOscuro ? 'text-zinc-200' : 'text-zinc-800'}> — {art.relevancia}</span>
+                    <div className="flex items-baseline gap-1.5 flex-wrap">
+                      <span className="font-mono font-semibold" style={{ color }}>
+                        {art.numero}
+                      </span>
+                      {art.codigo && (
+                        <span
+                          className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                            modoOscuro ? 'bg-zinc-700 text-zinc-300' : 'bg-zinc-100 text-zinc-600'
+                          }`}
+                        >
+                          {art.codigo}
+                        </span>
+                      )}
+                    </div>
+                    <span className={modoOscuro ? 'text-zinc-200' : 'text-zinc-800'}>{art.relevancia}</span>
                   </li>
                 ))}
               </ul>

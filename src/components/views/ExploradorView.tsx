@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { useCodigo } from '../../hooks/useCodigo'
 import { SelectorCodigo } from '../ui/SelectorCodigo'
+import { modernizar, necesitaModernizacion } from '../../services/moderniza'
 import type { Articulo, CodigoTipo } from '../../types'
 
 const VERDE = '#0F6E56'
@@ -27,6 +28,10 @@ export function ExploradorView() {
 
 function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: CodigoTipo; onCambiarCodigo: () => void }) {
   const modoOscuro = useStore((s) => s.modoOscuro)
+  const modernizarLenguaje = useStore((s) => s.modernizarLenguaje)
+  const toggleModernizar = useStore((s) => s.toggleModernizar)
+  const aplicarModernizacion = modernizarLenguaje && necesitaModernizacion(tipoActivo)
+  const transformarTexto = (t: string) => (aplicarModernizacion ? modernizar(t) : t)
   const [seleccionadoId, setSeleccionadoId] = useState<string | null>(null)
   const [indiceAbierto, setIndiceAbierto] = useState(false)
   const [busquedaAbierta, setBusquedaAbierta] = useState(false)
@@ -38,7 +43,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
     setBusqueda('')
   }, [tipoActivo])
 
-  const codigo = useCodigo(tipoActivo)
+  const { codigo, cargando: cargandoCodigo } = useCodigo(tipoActivo)
 
   const arts = codigo?.articulos ?? []
   const seleccionado = useMemo(
@@ -84,6 +89,9 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
+  if (cargandoCodigo) {
+    return <PantallaCargandoCodigo modoOscuro={modoOscuro} />
+  }
   if (!codigo) {
     return (
       <div className="h-full flex items-center justify-center p-8">
@@ -141,6 +149,24 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
           <i className="ti ti-list-tree text-base" />
           Índice
         </button>
+
+        {necesitaModernizacion(tipoActivo) && (
+          <button
+            onClick={toggleModernizar}
+            title={modernizarLenguaje ? 'Mostrar texto original (siglo XIX)' : 'Modernizar lenguaje antiguo'}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
+              modernizarLenguaje
+                ? 'text-white'
+                : modoOscuro
+                ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+                : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+            }`}
+            style={modernizarLenguaje ? { background: VERDE } : undefined}
+          >
+            <i className={`ti ${modernizarLenguaje ? 'ti-language' : 'ti-language-off'} text-base`} />
+            Lenguaje moderno
+          </button>
+        )}
 
         <button
           onClick={() => setBusquedaAbierta(true)}
@@ -204,7 +230,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
                   {indiceActual + 1} de {arts.length}
                 </span>
               </div>
-              <ArticuloTexto texto={seleccionado.t} modoOscuro={modoOscuro} />
+              <ArticuloTexto texto={transformarTexto(seleccionado.t)} modoOscuro={modoOscuro} />
             </motion.article>
           </AnimatePresence>
         )}
@@ -789,6 +815,24 @@ function ModalBusqueda({
         </motion.div>
       )}
     </AnimatePresence>
+  )
+}
+
+function PantallaCargandoCodigo({ modoOscuro }: { modoOscuro: boolean }) {
+  return (
+    <div className={`h-full flex items-center justify-center ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
+      <div className="text-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+          className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3"
+          style={{ background: modoOscuro ? '#0F6E5625' : '#0F6E5610' }}
+        >
+          <i className="ti ti-loader-2 text-2xl" style={{ color: VERDE }} />
+        </motion.div>
+        <p className={`text-sm ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>Cargando código...</p>
+      </div>
+    </div>
   )
 }
 

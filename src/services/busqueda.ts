@@ -1,4 +1,4 @@
-import { CODIGOS_DATA } from './codigos'
+import { obtenerCodigo } from './codigos'
 import type { Articulo, CodigoTipo } from '../types'
 
 const STOPWORDS = new Set([
@@ -62,7 +62,7 @@ export function buscar(
   const resultados: ResultadoBusqueda[] = []
 
   for (const tipo of codigosActivos) {
-    const codigo = CODIGOS_DATA[tipo]
+    const codigo = obtenerCodigo(tipo)
     if (!codigo) continue
 
     for (const art of codigo.articulos) {

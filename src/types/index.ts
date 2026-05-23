@@ -15,6 +15,7 @@ export type CodigoTipo =
   | 'ppe'
   | 'pad'
   | 'mil'
+  | 'cot'
 
 export type CategoriaCodigo =
   | 'fundamentales'
@@ -37,6 +38,7 @@ export type TipoNodoCanvas = 'definicion' | 'articulos' | 'caso' | 'libre' | 'co
 export interface ArticuloRelevante {
   numero: string
   relevancia: string
+  codigo?: string
 }
 
 export interface NodoCanvas {
@@ -173,6 +175,48 @@ export interface PasoSituacion {
   tipo: 'opciones' | 'texto' | 'numero'
   opciones?: string[]
   respuesta?: string
+}
+
+export type TipoPregunta = 'opciones' | 'texto' | 'numero' | 'fecha'
+
+export interface PreguntaSituacion {
+  id: string
+  pregunta: string
+  preguntaSimple: string
+  tipo: TipoPregunta
+  opciones?: string[]
+  placeholder?: string
+  obligatoria?: boolean
+}
+
+export interface AreaSituacion {
+  id: string
+  titulo: string
+  icono: string
+  descripcion: string
+  codigo: CodigoTipo
+  preguntas: PreguntaSituacion[]
+}
+
+export interface RespuestaSituacion {
+  preguntaId: string
+  valor: string
+}
+
+export interface PasoAccion {
+  titulo: string
+  detalle: string
+  plazo?: string
+  urgente?: boolean
+}
+
+export interface ResultadoSituacion {
+  diagnostico: string
+  marcoLegal: Cita[]
+  pasos: PasoAccion[]
+  plazosCriticos: string[]
+  dondeAcudir: string[]
+  modeloUsado: string
 }
 
 export interface RelacionNorma {

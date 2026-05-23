@@ -61,12 +61,26 @@ export function CitaBlock({ cita }: Props) {
               className={`px-4 py-3 border-t text-sm leading-relaxed ${
                 modoOscuro ? 'border-zinc-800 text-zinc-300 bg-zinc-900/50' : 'border-zinc-100 text-zinc-700 bg-zinc-50/50'
               }`}
+              style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
             >
-              {cita.texto_original}
+              {dividirIncisos(cita.texto_original).map((parrafo, i) => (
+                <p
+                  key={i}
+                  className="mb-2 last:mb-0 whitespace-pre-line"
+                  style={i === 0 ? undefined : { textIndent: '1rem' }}
+                >
+                  {parrafo}
+                </p>
+              ))}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
     </div>
   )
+}
+
+function dividirIncisos(texto: string): string[] {
+  if (!texto || !texto.trim()) return []
+  return texto.split(/\n{2,}/).map((p) => p.trim()).filter((p) => p.length > 0)
 }
