@@ -154,13 +154,18 @@ export function ConsultarView() {
             </button>
           </div>
           {!cargando && (
-            <p
-              className={`text-[10px] mt-2 text-center ${
+            <div
+              className={`text-[10px] mt-2 text-center space-x-2 ${
                 modoOscuro ? 'text-zinc-600' : 'text-zinc-400'
               }`}
             >
-              Prima Lex es orientación jurídica, no reemplaza el asesoramiento profesional
-            </p>
+              <span>Prima Lex es orientación jurídica, no reemplaza el asesoramiento profesional ·</span>
+              <EnlaceLegal pestana="privacidad" modoOscuro={modoOscuro}>Privacidad</EnlaceLegal>
+              <span>·</span>
+              <EnlaceLegal pestana="terminos" modoOscuro={modoOscuro}>Términos</EnlaceLegal>
+              <span>·</span>
+              <EnlaceLegal pestana="disclaimer" modoOscuro={modoOscuro}>Aviso legal</EnlaceLegal>
+            </div>
           )}
         </form>
       </div>
@@ -244,6 +249,29 @@ function Bienvenida({
         </div>
       </motion.div>
     </div>
+  )
+}
+
+function EnlaceLegal({
+  pestana,
+  modoOscuro,
+  children,
+}: {
+  pestana: 'acerca' | 'disclaimer' | 'privacidad' | 'terminos'
+  modoOscuro: boolean
+  children: React.ReactNode
+}) {
+  const abrirAcerca = useStore((s) => s.abrirAcerca)
+  return (
+    <button
+      type="button"
+      onClick={() => abrirAcerca(pestana)}
+      className={`underline-offset-2 hover:underline ${
+        modoOscuro ? 'hover:text-zinc-300' : 'hover:text-zinc-700'
+      }`}
+    >
+      {children}
+    </button>
   )
 }
 

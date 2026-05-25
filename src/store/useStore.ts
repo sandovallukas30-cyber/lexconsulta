@@ -58,6 +58,10 @@ interface AppState {
   setCodigoMapa: (tipo: CodigoActivo['tipo'] | null) => void
   abrirModalPerfil: () => void
   cerrarModalPerfil: () => void
+  acercaAbierto: boolean
+  acercaPestana: 'acerca' | 'disclaimer' | 'privacidad' | 'terminos'
+  abrirAcerca: (pestana?: 'acerca' | 'disclaimer' | 'privacidad' | 'terminos') => void
+  cerrarAcerca: () => void
 }
 
 const codigosIniciales: CodigoActivo[] = [
@@ -96,6 +100,8 @@ export const useStore = create<AppState>()(
       sidebarColapsado: false,
       modernizarLenguaje: false,
       modalPerfilAbierto: false,
+      acercaAbierto: false,
+      acercaPestana: 'acerca',
       consultaActivaId: null,
       codigoExploradorActivo: null,
       codigoMapaActivo: null,
@@ -183,6 +189,8 @@ export const useStore = create<AppState>()(
       setCodigoMapa: (tipo) => set({ codigoMapaActivo: tipo }),
       abrirModalPerfil: () => set({ modalPerfilAbierto: true }),
       cerrarModalPerfil: () => set({ modalPerfilAbierto: false }),
+      abrirAcerca: (pestana = 'acerca') => set({ acercaAbierto: true, acercaPestana: pestana }),
+      cerrarAcerca: () => set({ acercaAbierto: false }),
     }),
     {
       name: 'prima-lex-storage-v3',

@@ -1,19 +1,27 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 
 const VERDE = '#0F6E56'
 
-type Pestana = 'acerca' | 'disclaimer' | 'privacidad' | 'terminos'
+export type PestanaAcerca = 'acerca' | 'disclaimer' | 'privacidad' | 'terminos'
+type Pestana = PestanaAcerca
 
 interface Props {
   abierto: boolean
   onCerrar: () => void
+  /** Pestaña en la que abrir el modal (por defecto 'acerca'). Se respeta cada vez que se abre. */
+  pestanaInicial?: PestanaAcerca
 }
 
-export function ModalAcercaDe({ abierto, onCerrar }: Props) {
+export function ModalAcercaDe({ abierto, onCerrar, pestanaInicial = 'acerca' }: Props) {
   const modoOscuro = useStore((s) => s.modoOscuro)
-  const [pestana, setPestana] = useState<Pestana>('acerca')
+  const [pestana, setPestana] = useState<Pestana>(pestanaInicial)
+
+  // Cada vez que el modal se abre, mover a la pestaña solicitada.
+  useEffect(() => {
+    if (abierto) setPestana(pestanaInicial)
+  }, [abierto, pestanaInicial])
 
   return (
     <AnimatePresence>
@@ -255,35 +263,76 @@ function Disclaimer({ modoOscuro }: { modoOscuro: boolean }) {
 function Privacidad({ modoOscuro }: { modoOscuro: boolean }) {
   return (
     <div>
-      <H modoOscuro={modoOscuro}>Qué datos guardamos</H>
       <P modoOscuro={modoOscuro}>
-        <strong>Nada en nuestros servidores.</strong> Prima Lex no tiene base de datos propia. Tu perfil
-        (Ciudadano/Profesional), historial de consultas, canvas guardados y preferencias se almacenan
-        <strong> exclusivamente en el navegador</strong> de tu dispositivo (localStorage).
+        <em>Última actualización: 25 de mayo de 2026.</em>
       </P>
 
-      <H modoOscuro={modoOscuro}>Procesamiento por IA</H>
+      <H modoOscuro={modoOscuro}>1. Marco normativo</H>
       <P modoOscuro={modoOscuro}>
-        Cuando haces una consulta, tu pregunta se envía a la API de Anthropic (proveedor del modelo de IA) a través de
-        nuestro servidor proxy. Anthropic procesa la consulta y devuelve una respuesta. Según la política de Anthropic,
-        las consultas API <strong>no se usan para entrenar modelos</strong>.
+        Esta política se rige por la <strong>Ley 19.628 sobre protección de la vida privada</strong> y su
+        modificación por la Ley 21.719 (2024). Cualquier dato personal que entregues queda sujeto a los
+        derechos ARCO (acceso, rectificación, cancelación y oposición) reconocidos en dicha normativa.
       </P>
 
-      <H modoOscuro={modoOscuro}>Sin tracking ni cookies</H>
+      <H modoOscuro={modoOscuro}>2. Qué datos NO recopilamos</H>
       <P modoOscuro={modoOscuro}>
-        No usamos cookies de seguimiento, no compartimos datos con terceros, no hacemos perfilado de usuarios.
+        Prima Lex no requiere registro ni cuenta de usuario. No solicitamos nombre, RUT, correo, teléfono,
+        ubicación ni ningún dato identificatorio. <strong>No tenemos base de datos de usuarios.</strong>
       </P>
 
-      <H modoOscuro={modoOscuro}>Borrar tus datos</H>
+      <H modoOscuro={modoOscuro}>3. Qué se guarda en TU navegador</H>
       <P modoOscuro={modoOscuro}>
-        Puedes borrar todo lo que Prima Lex guarda en tu navegador limpiando los datos del sitio desde la configuración
-        de tu navegador (suele estar en "Borrar datos de navegación → Datos de sitio").
+        Estos datos viven únicamente en el almacenamiento local de tu dispositivo (localStorage). Nunca
+        se transmiten a un servidor propio:
+      </P>
+      <ul className={`text-sm space-y-1 mb-3 ml-4 list-disc ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>
+        <li>Perfil elegido (Ciudadano / Profesional).</li>
+        <li>Historial de consultas y respuestas (texto de pregunta + respuesta de la IA + citas).</li>
+        <li>Valoraciones 👍/👎 y comentarios de feedback sobre las respuestas.</li>
+        <li>Canvas conceptuales que crees.</li>
+        <li>Preferencias visuales (modo oscuro, sidebar colapsado, códigos activos).</li>
+      </ul>
+
+      <H modoOscuro={modoOscuro}>4. Procesamiento por IA (Anthropic)</H>
+      <P modoOscuro={modoOscuro}>
+        Cada consulta se envía a la <strong>API de Anthropic</strong> (proveedor del modelo Claude) a través
+        de un proxy en nuestro servidor que oculta la credencial. La pregunta y los fragmentos de código que
+        Prima Lex selecciona como contexto se transmiten cifrados (HTTPS). Según la política comercial de
+        Anthropic, las consultas vía API <strong>no se utilizan para entrenar modelos</strong> y se eliminan
+        de sus sistemas tras 30 días, salvo obligación legal.
       </P>
 
-      <H modoOscuro={modoOscuro}>Contacto</H>
+      <H modoOscuro={modoOscuro}>5. Datos transitorios del servidor</H>
       <P modoOscuro={modoOscuro}>
-        Si tienes preguntas sobre privacidad, escribe al equipo del proyecto a través de los canales oficiales que
-        figuran en la institución que aloja Prima Lex.
+        Para proteger la plataforma contra abuso, nuestro proxy mantiene en memoria un contador temporal
+        de consultas por dirección IP durante <strong>1 hora</strong>. Esta información se descarta
+        automáticamente y no se persiste en disco, no se cruza con otros datos y no permite identificar
+        personas.
+      </P>
+
+      <H modoOscuro={modoOscuro}>6. Sin tracking, cookies ni compartición</H>
+      <P modoOscuro={modoOscuro}>
+        No usamos Google Analytics ni servicios equivalentes. No instalamos cookies de seguimiento. No
+        vendemos ni cedemos datos a terceros con fines comerciales o publicitarios.
+      </P>
+
+      <H modoOscuro={modoOscuro}>7. Borrar tus datos</H>
+      <P modoOscuro={modoOscuro}>
+        Puedes eliminar en cualquier momento todo lo que Prima Lex guarda localmente desde
+        <em> Configuración del navegador → Privacidad → Borrar datos del sitio</em>, o desde la consola del
+        navegador con <code>localStorage.clear()</code>. La eliminación es inmediata e irreversible.
+      </P>
+
+      <H modoOscuro={modoOscuro}>8. Menores de edad</H>
+      <P modoOscuro={modoOscuro}>
+        Prima Lex puede ser utilizada por menores de edad con fines educativos. No recopilamos ningún dato
+        personal de menores y no realizamos perfilado.
+      </P>
+
+      <H modoOscuro={modoOscuro}>9. Contacto y consultas</H>
+      <P modoOscuro={modoOscuro}>
+        Para ejercer derechos ARCO o realizar preguntas sobre esta política, contacta al equipo
+        responsable a través de los canales oficiales de la institución que aloja Prima Lex.
       </P>
     </div>
   )
@@ -292,35 +341,77 @@ function Privacidad({ modoOscuro }: { modoOscuro: boolean }) {
 function Terminos({ modoOscuro }: { modoOscuro: boolean }) {
   return (
     <div>
-      <H modoOscuro={modoOscuro}>Uso aceptado</H>
       <P modoOscuro={modoOscuro}>
-        Prima Lex se ofrece como herramienta educativa de uso libre. Está permitido el uso para fines de estudio,
-        investigación, orientación personal y educación jurídica.
+        <em>Última actualización: 25 de mayo de 2026.</em>
       </P>
 
-      <H modoOscuro={modoOscuro}>Uso prohibido</H>
+      <H modoOscuro={modoOscuro}>1. Aceptación</H>
       <P modoOscuro={modoOscuro}>
-        Queda prohibido: usar la plataforma para generar volúmenes masivos de consultas (scraping, abuso de la API),
-        intentar extraer credenciales o vulnerar la infraestructura, o presentar los resultados de la IA como dictamen
-        legal oficial ante autoridades o terceros.
+        El uso de Prima Lex implica la aceptación íntegra y sin reservas de estos Términos, del Aviso legal
+        y de la Política de privacidad. Si no estás de acuerdo con alguno de ellos, abstente de usar la plataforma.
       </P>
 
-      <H modoOscuro={modoOscuro}>Disponibilidad</H>
+      <H modoOscuro={modoOscuro}>2. Naturaleza del servicio</H>
       <P modoOscuro={modoOscuro}>
-        La plataforma se ofrece "tal cual" (as-is), sin garantía de disponibilidad continua. Puede haber interrupciones
-        por mantenimiento, actualizaciones o límites del proveedor de IA.
+        Prima Lex es una <strong>herramienta educativa y de orientación</strong> que combina textos legales
+        oficiales chilenos con un asistente de inteligencia artificial. <strong>No constituye asesoría legal</strong>,
+        no genera relación abogado-cliente y no sustituye la consulta con un profesional del derecho titulado.
       </P>
 
-      <H modoOscuro={modoOscuro}>Propiedad intelectual</H>
+      <H modoOscuro={modoOscuro}>3. Uso permitido</H>
       <P modoOscuro={modoOscuro}>
-        El texto de los códigos legales es de dominio público (Ley de la República). La interfaz, el código fuente y las
-        funcionalidades de Prima Lex pertenecen a sus autores y se distribuyen bajo los términos de la institución
-        responsable.
+        Se permite el uso personal, educativo, académico, de investigación y de orientación general. Los
+        usuarios pueden compartir el enlace de la plataforma libremente y citarla académicamente indicando
+        autor, nombre del proyecto y fecha de consulta.
       </P>
 
-      <H modoOscuro={modoOscuro}>Modificaciones</H>
+      <H modoOscuro={modoOscuro}>4. Uso prohibido</H>
+      <P modoOscuro={modoOscuro}>Queda expresamente prohibido:</P>
+      <ul className={`text-sm space-y-1 mb-3 ml-4 list-disc ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>
+        <li>Generar volúmenes masivos de consultas (scraping, bots, automatización) que excedan el uso humano razonable.</li>
+        <li>Eludir o atacar las medidas técnicas de protección (rate limiting, validación, autenticación de origen).</li>
+        <li>Intentar acceder, modificar o extraer credenciales, código del servidor o datos de otros usuarios.</li>
+        <li>Presentar las respuestas de la IA como dictamen oficial, peritaje, certificación o documento vinculante ante tribunales, organismos públicos o terceros.</li>
+        <li>Utilizar la plataforma para incitar a la comisión de delitos o vulnerar derechos fundamentales de terceros.</li>
+      </ul>
+
+      <H modoOscuro={modoOscuro}>5. Limitación de responsabilidad</H>
       <P modoOscuro={modoOscuro}>
-        Estos términos pueden actualizarse. El uso continuado de la plataforma implica aceptación de la versión vigente.
+        Los autores de Prima Lex y la institución que la aloja <strong>no responden por daños directos o
+        indirectos</strong> derivados de decisiones tomadas en base a las respuestas de la IA, errores u
+        omisiones en los textos legales indexados, indisponibilidad temporal del servicio, ni por acciones
+        de terceros (incluida la API del proveedor de IA). El usuario asume toda responsabilidad por el uso
+        que haga de la información obtenida.
+      </P>
+
+      <H modoOscuro={modoOscuro}>6. Disponibilidad y "tal cual"</H>
+      <P modoOscuro={modoOscuro}>
+        El servicio se ofrece <em>as-is</em>, sin garantía de disponibilidad continua, exactitud, completitud
+        ni adecuación a un fin particular. Puede haber interrupciones por mantenimiento, actualizaciones,
+        falla de proveedores o agotamiento de cuota del modelo de IA.
+      </P>
+
+      <H modoOscuro={modoOscuro}>7. Propiedad intelectual</H>
+      <P modoOscuro={modoOscuro}>
+        Los textos de los códigos y leyes son de <strong>dominio público</strong> conforme a la legislación
+        chilena. La interfaz, el código fuente, los datos procesados (JSON estructurados), las funcionalidades
+        y los textos descriptivos pertenecen a los autores de Prima Lex y se publican bajo los términos que
+        acuerde la institución responsable. Las marcas mencionadas (Anthropic, Claude, BCN) pertenecen a sus
+        respectivos titulares.
+      </P>
+
+      <H modoOscuro={modoOscuro}>8. Legislación aplicable y jurisdicción</H>
+      <P modoOscuro={modoOscuro}>
+        Estos Términos se rigen por las <strong>leyes de la República de Chile</strong>. Cualquier
+        controversia será sometida a los tribunales ordinarios de justicia con competencia en la ciudad de
+        Santiago.
+      </P>
+
+      <H modoOscuro={modoOscuro}>9. Modificaciones</H>
+      <P modoOscuro={modoOscuro}>
+        Estos Términos pueden actualizarse cuando sea necesario. La versión vigente es siempre la publicada
+        en esta sección con su fecha. El uso continuado de la plataforma tras una modificación implica su
+        aceptación.
       </P>
     </div>
   )

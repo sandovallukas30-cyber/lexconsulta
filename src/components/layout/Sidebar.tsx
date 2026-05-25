@@ -32,7 +32,10 @@ export function Sidebar() {
   const colapsado = useStore((s) => s.sidebarColapsado)
   const toggleSidebar = useStore((s) => s.toggleSidebar)
   const [modalCodigos, setModalCodigos] = useState(false)
-  const [modalAcerca, setModalAcerca] = useState(false)
+  const acercaAbierto = useStore((s) => s.acercaAbierto)
+  const acercaPestana = useStore((s) => s.acercaPestana)
+  const abrirAcerca = useStore((s) => s.abrirAcerca)
+  const cerrarAcerca = useStore((s) => s.cerrarAcerca)
 
   // Atajo: Ctrl/Cmd + B para colapsar
   useEffect(() => {
@@ -198,7 +201,7 @@ export function Sidebar() {
           </button>
 
           <button
-            onClick={() => setModalAcerca(true)}
+            onClick={() => abrirAcerca('acerca')}
             title={colapsado ? 'Acerca de · Aviso legal' : undefined}
             className={`w-full mt-1 rounded-lg text-xs transition-colors flex items-center ${
               colapsado ? 'justify-center px-0 py-2' : 'gap-2 px-3 py-2'
@@ -225,7 +228,7 @@ export function Sidebar() {
       </motion.aside>
 
       <ModalCodigos abierto={modalCodigos} onCerrar={() => setModalCodigos(false)} />
-      <ModalAcercaDe abierto={modalAcerca} onCerrar={() => setModalAcerca(false)} />
+      <ModalAcercaDe abierto={acercaAbierto} onCerrar={cerrarAcerca} pestanaInicial={acercaPestana} />
     </>
   )
 }
