@@ -163,17 +163,17 @@ function Acerca({ modoOscuro }: { modoOscuro: boolean }) {
         </Feat>
       </ul>
 
-      <H modoOscuro={modoOscuro}>Códigos indexados (11)</H>
+      <H modoOscuro={modoOscuro}>Normas indexadas (12)</H>
       <P modoOscuro={modoOscuro}>
         Constitución · Civil · Penal · Trabajo · Tributario · Comercio · Procedimiento Civil · Procesal Penal ·
-        Orgánico de Tribunales · Minería · Aguas. <strong>+8.700 artículos</strong> oficiales de la Biblioteca del
-        Congreso Nacional de Chile (leychile.cl).
+        Orgánico de Tribunales · Minería · Aguas · Ley 19.880 (Bases del Procedimiento Administrativo).
+        <strong> +8.800 artículos</strong> oficiales de la Biblioteca del Congreso Nacional de Chile (leychile.cl).
       </P>
 
       <H modoOscuro={modoOscuro}>Próximamente</H>
       <P modoOscuro={modoOscuro}>
         Módulo de Comparación de normas · Panel de administración de jurisprudencia · Tratados internacionales ·
-        Código Sanitario, de Justicia Militar y de Procedimiento Administrativo.
+        Código Sanitario y de Justicia Militar · Otras leyes especiales prioritarias.
       </P>
 
       <H modoOscuro={modoOscuro}>Versión</H>

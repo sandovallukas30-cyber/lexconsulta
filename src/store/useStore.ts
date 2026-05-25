@@ -73,7 +73,7 @@ const codigosIniciales: CodigoActivo[] = [
   { tipo: 'min', nombre: 'Código de Minería', nombreCorto: 'Minería', descripcion: 'Explotación y regulación de recursos mineros', categoria: 'sustantivos', activo: true, cargado: true },
   { tipo: 'pci', nombre: 'Código de Procedimiento Civil', nombreCorto: 'Proc. Civil', descripcion: 'Normas sobre procesos judiciales civiles', categoria: 'procedimentales', activo: true, cargado: true },
   { tipo: 'ppe', nombre: 'Código Procesal Penal', nombreCorto: 'Proc. Penal', descripcion: 'Reglas de los procesos penales', categoria: 'procedimentales', activo: true, cargado: true },
-  { tipo: 'pad', nombre: 'Procedimiento Administrativo', nombreCorto: 'Proc. Admin.', descripcion: 'Reglas para la administración pública', categoria: 'procedimentales', activo: false, cargado: false },
+  { tipo: 'pad', nombre: 'Ley 19.880 - Bases del Procedimiento Administrativo', nombreCorto: 'Proc. Admin.', descripcion: 'Reglas que rigen los actos de los órganos del Estado y su relación con los ciudadanos', categoria: 'procedimentales', activo: true, cargado: true },
   { tipo: 'cot', nombre: 'Código Orgánico de Tribunales', nombreCorto: 'Orgánico Tribunales', descripcion: 'Organización y atribuciones de los tribunales chilenos', categoria: 'procedimentales', activo: true, cargado: true },
   { tipo: 'mil', nombre: 'Código de Justicia Militar', nombreCorto: 'Justicia Militar', descripcion: 'Disciplina y procedimientos en las Fuerzas Armadas', categoria: 'especiales', activo: false, cargado: false },
 ]
@@ -183,7 +183,7 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'prima-lex-storage-v3',
-      version: 11,
+      version: 12,
       partialize: (s) => ({
         perfil: s.perfil,
         codigos: s.codigos,
@@ -200,8 +200,8 @@ export const useStore = create<AppState>()(
           const state = persisted as { codigos?: unknown }
           return { ...(state ?? {}), codigos: codigosIniciales }
         }
-        if (version < 11) {
-          // Refrescar metadatos de códigos (cargado/descripción) preservando preferencia activo
+        if (version < 12) {
+          // v11: refrescar metadatos. v12: incorporar Ley 19.880 (pad) como cargada.
           const state = persisted as { codigos?: CodigoActivo[] }
           const prefs = new Map<string, boolean>()
           if (Array.isArray(state.codigos)) {

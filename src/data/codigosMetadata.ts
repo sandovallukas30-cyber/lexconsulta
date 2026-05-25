@@ -107,6 +107,14 @@ export const CODIGOS_METADATA: Record<string, CodigoMetadata> = {
     fechaIndexacion: '2026-05-23',
     notas: 'Reformado significativamente por Ley 21.435 (2022). Verificar contra texto vigente para materias modificadas.',
   },
+  pad: {
+    tipo: 'pad',
+    nombreOficial: 'Ley 19.880 — Bases de los Procedimientos Administrativos',
+    norma: 'Ley 19.880, publicada el 29 de mayo de 2003',
+    fuenteUrl: 'https://www.bcn.cl/leychile/navegar?idNorma=210676',
+    fechaIndexacion: '2026-05-25',
+    notas: 'Ley supletoria: rige todo procedimiento administrativo que no tenga regla especial. Cubre plazos, notificaciones, silencio administrativo, recursos (reposición, jerárquico, revisión).',
+  },
 }
 
 export function obtenerMetadata(tipo: CodigoTipo): CodigoMetadata | null {
