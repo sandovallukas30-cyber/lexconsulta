@@ -52,8 +52,26 @@ export async function callMessages(payload: PayloadMessages): Promise<RespuestaM
       body: JSON.stringify(payload),
     })
     if (!r.ok) {
+      // Intentar leer un mensaje amigable del cuerpo (rate limit, validación, etc.)
       const body = await r.text().catch(() => '')
-      throw new Error(`Error del servidor (${r.status}): ${body.slice(0, 200)}`)
+      let detalle = body.slice(0, 300)
+      try {
+        const parsed = JSON.parse(body) as { error?: string; detalle?: string }
+        if (parsed.detalle) detalle = parsed.detalle
+        else if (parsed.error) detalle = parsed.error
+      } catch {
+        // body no es JSON, usar texto plano
+      }
+      if (r.status === 429) {
+        throw new Error(detalle || 'Demasiadas consultas en poco tiempo. Espera unos minutos antes de volver a preguntar.')
+      }
+      if (r.status === 503) {
+        throw new Error(detalle || 'El servicio está saturado. Intenta nuevamente en unos minutos.')
+      }
+      if (r.status === 413) {
+        throw new Error(detalle || 'La consulta es demasiado larga. Intenta acortarla.')
+      }
+      throw new Error(`Error del servidor (${r.status}): ${detalle}`)
     }
     const data = (await r.json()) as RespuestaMessages & { error?: string }
     if (data.error) throw new Error(data.error)
