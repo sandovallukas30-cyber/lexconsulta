@@ -39,6 +39,12 @@ interface AppState {
   eliminarConsulta: (id: string) => void
   cargarConsulta: (id: string) => void
   nuevaConsulta: () => void
+  valorarMensaje: (
+    consultaId: string,
+    mensajeId: string,
+    valoracion: 'util' | 'no_util' | null,
+    comentario?: string
+  ) => void
   agregarFavorito: (favorito: Favorito) => void
   eliminarFavorito: (id: string) => void
   guardarCanvas: (canvas: Canvas) => void
@@ -123,6 +129,29 @@ export const useStore = create<AppState>()(
         })),
       cargarConsulta: (id) => set({ consultaActivaId: id, vistaActiva: 'consultar' }),
       nuevaConsulta: () => set({ consultaActivaId: null }),
+      valorarMensaje: (consultaId, mensajeId, valoracion, comentario) =>
+        set((s) => ({
+          historial: s.historial.map((h) => {
+            if (h.id !== consultaId) return h
+            return {
+              ...h,
+              mensajes: h.mensajes.map((m) => {
+                if (m.id !== mensajeId) return m
+                if (valoracion === null) {
+                  // Quitar valoración previa
+                  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                  const { valoracion: _v, comentarioValoracion: _c, ...resto } = m
+                  return resto
+                }
+                return {
+                  ...m,
+                  valoracion,
+                  comentarioValoracion: valoracion === 'no_util' ? comentario : undefined,
+                }
+              }),
+            }
+          }),
+        })),
       agregarFavorito: (favorito) =>
         set((s) => ({ favoritos: [favorito, ...s.favoritos] })),
       eliminarFavorito: (id) =>

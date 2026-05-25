@@ -301,7 +301,139 @@ function MensajeBubble({ mensaje, modoOscuro }: { mensaje: Mensaje; modoOscuro: 
           ))}
         </div>
       )}
+      {!mensaje.contenido.startsWith('⚠️') && (
+        <div className="ml-11">
+          <Feedback mensaje={mensaje} modoOscuro={modoOscuro} />
+        </div>
+      )}
     </motion.div>
+  )
+}
+
+function Feedback({ mensaje, modoOscuro }: { mensaje: Mensaje; modoOscuro: boolean }) {
+  const consultaActivaId = useStore((s) => s.consultaActivaId)
+  const valorar = useStore((s) => s.valorarMensaje)
+  const [escribiendo, setEscribiendo] = useState(false)
+  const [comentario, setComentario] = useState(mensaje.comentarioValoracion ?? '')
+
+  if (!consultaActivaId) return null
+
+  const valoracion = mensaje.valoracion
+  const claseBtn = (activo: boolean, color: 'verde' | 'rojo') => {
+    if (activo) {
+      return color === 'verde'
+        ? modoOscuro
+          ? 'bg-emerald-950/60 text-emerald-300 border-emerald-700'
+          : 'bg-emerald-50 text-emerald-800 border-emerald-300'
+        : modoOscuro
+        ? 'bg-rose-950/60 text-rose-300 border-rose-700'
+        : 'bg-rose-50 text-rose-800 border-rose-300'
+    }
+    return modoOscuro
+      ? 'text-zinc-500 border-zinc-800 hover:bg-zinc-800 hover:text-zinc-200'
+      : 'text-zinc-500 border-zinc-200 hover:bg-zinc-50 hover:text-zinc-700'
+  }
+
+  function manejarUtil() {
+    if (valoracion === 'util') {
+      valorar(consultaActivaId!, mensaje.id, null)
+    } else {
+      valorar(consultaActivaId!, mensaje.id, 'util')
+      setEscribiendo(false)
+    }
+  }
+
+  function manejarNoUtil() {
+    if (valoracion === 'no_util') {
+      valorar(consultaActivaId!, mensaje.id, null)
+      setEscribiendo(false)
+    } else {
+      valorar(consultaActivaId!, mensaje.id, 'no_util')
+      setEscribiendo(true)
+    }
+  }
+
+  function guardarComentario() {
+    valorar(consultaActivaId!, mensaje.id, 'no_util', comentario.trim() || undefined)
+    setEscribiendo(false)
+  }
+
+  return (
+    <div className="mt-3 space-y-2">
+      <div className="flex items-center gap-2">
+        <span className={`text-[11px] ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
+          ¿Te fue útil esta respuesta?
+        </span>
+        <button
+          onClick={manejarUtil}
+          title="Sí, me fue útil"
+          className={`w-7 h-7 rounded-md border flex items-center justify-center transition-colors ${claseBtn(valoracion === 'util', 'verde')}`}
+        >
+          <i className="ti ti-thumb-up text-sm" />
+        </button>
+        <button
+          onClick={manejarNoUtil}
+          title="No, fue mejorable"
+          className={`w-7 h-7 rounded-md border flex items-center justify-center transition-colors ${claseBtn(valoracion === 'no_util', 'rojo')}`}
+        >
+          <i className="ti ti-thumb-down text-sm" />
+        </button>
+        {valoracion === 'no_util' && !escribiendo && (
+          <button
+            onClick={() => setEscribiendo(true)}
+            className={`text-[11px] underline ${modoOscuro ? 'text-zinc-400 hover:text-zinc-200' : 'text-zinc-500 hover:text-zinc-700'}`}
+          >
+            {mensaje.comentarioValoracion ? 'Editar comentario' : 'Agregar comentario'}
+          </button>
+        )}
+      </div>
+
+      {escribiendo && valoracion === 'no_util' && (
+        <div className="space-y-2">
+          <textarea
+            value={comentario}
+            onChange={(e) => setComentario(e.target.value)}
+            placeholder="¿Qué faltó, qué estuvo incorrecto o qué se podría mejorar? (opcional)"
+            rows={2}
+            className={`w-full text-sm rounded-md px-3 py-2 border outline-none resize-none ${
+              modoOscuro
+                ? 'bg-zinc-900 border-zinc-700 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500'
+                : 'bg-white border-zinc-300 text-zinc-800 placeholder:text-zinc-400 focus:border-zinc-500'
+            }`}
+          />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={guardarComentario}
+              className="text-xs font-medium px-3 py-1.5 rounded-md text-white"
+              style={{ background: VERDE }}
+            >
+              Guardar
+            </button>
+            <button
+              onClick={() => {
+                setEscribiendo(false)
+                setComentario(mensaje.comentarioValoracion ?? '')
+              }}
+              className={`text-xs px-3 py-1.5 rounded-md ${
+                modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-600 hover:bg-zinc-100'
+              }`}
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {valoracion === 'no_util' && !escribiendo && mensaje.comentarioValoracion && (
+        <p
+          className={`text-xs italic px-3 py-1.5 rounded-md ${
+            modoOscuro ? 'bg-zinc-900 text-zinc-400 border border-zinc-800' : 'bg-zinc-50 text-zinc-600 border border-zinc-200'
+          }`}
+        >
+          “{mensaje.comentarioValoracion}”
+        </p>
+      )}
+    </div>
   )
 }
 

@@ -49,6 +49,52 @@ export function HistorialView() {
       })
   }, [historial, busqueda, moduloFiltro])
 
+  const stats = useMemo(() => {
+    let util = 0
+    let noUtil = 0
+    let asistente = 0
+    for (const h of historial) {
+      for (const m of h.mensajes) {
+        if (m.rol !== 'assistant') continue
+        asistente++
+        if (m.valoracion === 'util') util++
+        else if (m.valoracion === 'no_util') noUtil++
+      }
+    }
+    return { util, noUtil, sinValorar: asistente - util - noUtil, total: asistente }
+  }, [historial])
+
+  function exportarFeedback() {
+    const entradas: Array<Record<string, unknown>> = []
+    for (const h of historial) {
+      for (let i = 0; i < h.mensajes.length; i++) {
+        const m = h.mensajes[i]
+        if (m.rol !== 'assistant' || !m.valoracion) continue
+        const previo = h.mensajes[i - 1]
+        entradas.push({
+          consultaId: h.id,
+          modulo: h.modulo,
+          fecha: h.fecha,
+          pregunta: previo?.rol === 'user' ? previo.contenido : null,
+          respuesta: m.contenido,
+          valoracion: m.valoracion,
+          comentario: m.comentarioValoracion ?? null,
+          citas: m.citas?.map((c) => c.articulo) ?? [],
+          citasNoVerificadas: m.citasNoVerificadas ?? [],
+        })
+      }
+    }
+    const blob = new Blob([JSON.stringify(entradas, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `prima-lex-feedback-${new Date().toISOString().slice(0, 10)}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
   const grupos = useMemo(() => agruparPorFecha(filtrados), [filtrados])
   const modulosUsados = useMemo(() => {
     const s = new Set<VistaId>()
@@ -109,6 +155,35 @@ export function HistorialView() {
                 {moduloLabel[m]} ({historial.filter((h) => h.modulo === m).length})
               </ChipFiltro>
             ))}
+          </div>
+        )}
+
+        {stats.total > 0 && (
+          <div className="flex items-center gap-3 flex-wrap text-[11px]">
+            <span className={modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}>Feedback de respuestas:</span>
+            <span className={`inline-flex items-center gap-1 ${modoOscuro ? 'text-emerald-400' : 'text-emerald-700'}`}>
+              <i className="ti ti-thumb-up text-xs" /> {stats.util} útil{stats.util !== 1 ? 'es' : ''}
+            </span>
+            <span className={`inline-flex items-center gap-1 ${modoOscuro ? 'text-rose-400' : 'text-rose-700'}`}>
+              <i className="ti ti-thumb-down text-xs" /> {stats.noUtil} mejorable{stats.noUtil !== 1 ? 's' : ''}
+            </span>
+            <span className={modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}>
+              · {stats.sinValorar} sin valorar
+            </span>
+            {(stats.util + stats.noUtil) > 0 && (
+              <button
+                onClick={exportarFeedback}
+                className={`ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium border transition-colors ${
+                  modoOscuro
+                    ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
+                    : 'border-zinc-300 text-zinc-700 hover:bg-zinc-100'
+                }`}
+                title="Descargar las respuestas valoradas en un archivo JSON para análisis"
+              >
+                <i className="ti ti-download text-xs" />
+                Exportar feedback
+              </button>
+            )}
           </div>
         )}
       </div>

@@ -127,6 +127,10 @@ export interface Mensaje {
   /** Etiquetas "Art. N" mencionadas pero no presentes en el contexto: la UI las marca. */
   citasNoVerificadas?: string[]
   jurisprudencia?: Jurisprudencia[]
+  /** Valoración del usuario sobre esta respuesta (solo aplica a rol 'assistant'). */
+  valoracion?: 'util' | 'no_util'
+  /** Comentario opcional cuando la valoración es negativa. */
+  comentarioValoracion?: string
   timestamp: Date
 }
 
