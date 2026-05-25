@@ -661,12 +661,18 @@ function NodoBase(props: NodeProps<NodoFlow>) {
   return (
     <>
       <NodeResizer
-        isVisible={selected && !data.colapsado}
+        isVisible={selected}
         minWidth={180}
-        minHeight={120}
+        minHeight={data.colapsado ? 60 : 120}
         color={color}
-        handleStyle={{ width: 8, height: 8, borderRadius: 2 }}
-        lineStyle={{ borderWidth: 1 }}
+        handleStyle={{
+          width: 14,
+          height: 14,
+          borderRadius: 3,
+          border: '2px solid white',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+        }}
+        lineStyle={{ borderWidth: 2, borderStyle: 'dashed', opacity: 0.6 }}
       />
 
       <NodeToolbar isVisible={selected} position={Position.Top} offset={10}>
