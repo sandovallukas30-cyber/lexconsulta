@@ -131,6 +131,14 @@ export const CODIGOS_METADATA: Record<string, CodigoMetadata> = {
     fechaIndexacion: '2026-05-25',
     notas: 'Reemplaza para todos los efectos a la antigua Ley 19.366. Distingue tráfico, microtráfico, porte y consumo. Incluye técnicas especiales de investigación y atenuante por cooperación eficaz.',
   },
+  kar: {
+    tipo: 'kar',
+    nombreOficial: 'Ley 21.643 — "Ley Karin": regula y sanciona acoso laboral, sexual y violencia en el trabajo',
+    norma: 'Ley 21.643, publicada el 15 de enero de 2024, vigente desde el 1 de agosto de 2024',
+    fuenteUrl: 'https://www.bcn.cl/leychile/navegar?idNorma=1201219',
+    fechaIndexacion: '2026-05-25',
+    notas: 'LEY MODIFICATORIA. Sus 6 artículos no contienen regulación autónoma sino que insertan o sustituyen artículos en: Código del Trabajo (Art. 211-A a 211-E), Ley 18.575 (Bases de la Administración), Ley 18.834 (Estatuto Administrativo), Ley 18.883 (Municipalidades) y Ley 18.695 (Orgánica de Municipalidades). El texto vigente del Código del Trabajo indexado en Prima Lex ya debería contener estos cambios.',
+  },
 }
 
 export function obtenerMetadata(tipo: CodigoTipo): CodigoMetadata | null {

@@ -18,6 +18,7 @@ export type CodigoTipo =
   | 'cot'
   | 'acc'
   | 'dro'
+  | 'kar'
 
 export type CategoriaCodigo =
   | 'fundamentales'

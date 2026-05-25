@@ -78,6 +78,7 @@ const codigosIniciales: CodigoActivo[] = [
   { tipo: 'mil', nombre: 'Código de Justicia Militar', nombreCorto: 'Justicia Militar', descripcion: 'Disciplina y procedimientos en las Fuerzas Armadas', categoria: 'especiales', activo: false, cargado: false },
   { tipo: 'acc', nombre: 'Ley 16.744 - Accidentes del Trabajo y Enfermedades Profesionales', nombreCorto: 'Accidentes del Trabajo', descripcion: 'Seguro social obligatorio: mutuales, prestaciones, prevención e indemnizaciones', categoria: 'especiales', activo: true, cargado: true },
   { tipo: 'dro', nombre: 'Ley 20.000 - Sanciona el Tráfico Ilícito de Estupefacientes', nombreCorto: 'Ley de Drogas', descripcion: 'Tipifica y sanciona delitos sobre estupefacientes y sustancias sicotrópicas', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'kar', nombre: 'Ley 21.643 - Ley Karin (acoso y violencia laboral)', nombreCorto: 'Ley Karin', descripcion: 'Modifica el Código del Trabajo y estatutos administrativos para prevenir y sancionar acoso laboral, sexual y violencia en el trabajo', categoria: 'especiales', activo: true, cargado: true },
 ]
 
 export const useStore = create<AppState>()(
@@ -185,7 +186,7 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'prima-lex-storage-v3',
-      version: 13,
+      version: 14,
       partialize: (s) => ({
         perfil: s.perfil,
         codigos: s.codigos,
@@ -202,8 +203,8 @@ export const useStore = create<AppState>()(
           const state = persisted as { codigos?: unknown }
           return { ...(state ?? {}), codigos: codigosIniciales }
         }
-        if (version < 13) {
-          // v11-12: refrescar metadatos. v13: incorporar Leyes 16.744 (acc) y 20.000 (dro).
+        if (version < 14) {
+          // v11-13: refrescar metadatos. v14: incorporar Ley 21.643 (Karin).
           const state = persisted as { codigos?: CodigoActivo[] }
           const prefs = new Map<string, boolean>()
           if (Array.isArray(state.codigos)) {
