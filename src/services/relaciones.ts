@@ -23,6 +23,12 @@ const cache = new Map<CodigoTipo, GrafoCodigo>()
 
 const RE_MENCION = /(?:Art(?:[íi]culo)?\.?)\s*(\d+(?:\s*-\s*[A-ZÑ]{1,2})?(?:\s+(?:bis|ter|qu[áa]ter|quinquies|sexies))?(?:\s+[A-ZÑ](?![a-z]))?(?:\s+(?:bis|ter|qu[áa]ter|quinquies))?)/gi
 
+// Si después del "Art. N" viene una referencia a OTRO cuerpo legal,
+// la cita no apunta al mismo código y debe descartarse.
+// Ej.: "artículo 6º del Código Orgánico de Tribunales", "art. 19 de la Constitución",
+// "art. 5 de la Ley N° 19.880". Se conserva "del mismo Código" como remisión interna.
+const RE_CROSS_CODE = /^\s*[°ºoª]?\s*(?:del\s+(?!mismo\b|presente\b|propio\b)(?:C[óo]digo|Decreto|D\.?\s*L\.?|D\.?\s*F\.?\s*L\.?|Reglamento|Estatuto)|de\s+la\s+(?:Constituci[óo]n|Ley\b|ley\b|Carta\b))/i
+
 export function getGrafo(tipo: CodigoTipo): GrafoCodigo | null {
   if (cache.has(tipo)) return cache.get(tipo)!
   const codigo = obtenerCodigo(tipo)
@@ -56,6 +62,11 @@ function construirGrafo(codigo: CodigoTipo, arts: Articulo[]): GrafoCodigo {
 
     // Remisiones: cada mención de Art. N en el texto
     for (const m of a.t.matchAll(RE_MENCION)) {
+      // Filtrar referencias a otros cuerpos legales mirando el texto justo después
+      const fin = (m.index ?? 0) + m[0].length
+      const cola = a.t.slice(fin, fin + 80)
+      if (RE_CROSS_CODE.test(cola)) continue
+
       const num = m[1].trim().replace(/\s+/g, ' ')
       const candidato = `Art. ${num}`
       const referenciado = matchearArticulo(candidato, articulos)
