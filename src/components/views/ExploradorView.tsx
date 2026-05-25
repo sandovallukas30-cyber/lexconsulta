@@ -1,9 +1,10 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo, useEffect, useRef, type ReactNode } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { useCodigo } from '../../hooks/useCodigo'
 import { SelectorCodigo } from '../ui/SelectorCodigo'
 import { modernizar, necesitaModernizacion } from '../../services/moderniza'
+import { obtenerMetadata, formatearFechaIndexacion } from '../../data/codigosMetadata'
 import type { Articulo, CodigoTipo } from '../../types'
 
 const VERDE = '#0F6E56'
@@ -135,6 +136,8 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
             }`}
           />
         </button>
+
+        <FichaCodigo tipo={tipoActivo} modoOscuro={modoOscuro} />
 
         <div className="flex-1" />
 
@@ -815,6 +818,118 @@ function ModalBusqueda({
         </motion.div>
       )}
     </AnimatePresence>
+  )
+}
+
+function FichaCodigo({ tipo, modoOscuro }: { tipo: CodigoTipo; modoOscuro: boolean }) {
+  const [abierto, setAbierto] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const meta = obtenerMetadata(tipo)
+
+  useEffect(() => {
+    if (!abierto) return
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setAbierto(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [abierto])
+
+  if (!meta) return null
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setAbierto((v) => !v)}
+        title="Ver fuente, decreto y fecha de indexación"
+        className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+          abierto
+            ? modoOscuro
+              ? 'bg-zinc-800 text-emerald-400'
+              : 'bg-emerald-50 text-emerald-700'
+            : modoOscuro
+            ? 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
+            : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800'
+        }`}
+      >
+        <i className="ti ti-info-circle text-base" />
+      </button>
+      <AnimatePresence>
+        {abierto && (
+          <motion.div
+            initial={{ opacity: 0, y: -4, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.98 }}
+            transition={{ duration: 0.15 }}
+            className={`absolute top-full left-0 mt-2 w-80 rounded-xl shadow-xl z-30 overflow-hidden border ${
+              modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
+            }`}
+          >
+            <div className={`px-4 py-3 border-b ${modoOscuro ? 'border-zinc-800' : 'border-zinc-100'}`}>
+              <div className={`text-[11px] uppercase tracking-wider font-semibold mb-0.5 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                Ficha del código
+              </div>
+              <div className={`text-sm font-semibold leading-tight ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+                {meta.nombreOficial}
+              </div>
+            </div>
+            <div className="px-4 py-3 space-y-2.5 text-xs">
+              <FichaFila label="Norma de origen" modoOscuro={modoOscuro}>
+                {meta.norma}
+              </FichaFila>
+              <FichaFila label="Última indexación" modoOscuro={modoOscuro}>
+                {formatearFechaIndexacion(meta.fechaIndexacion)}
+              </FichaFila>
+              <FichaFila label="Fuente" modoOscuro={modoOscuro}>
+                <a
+                  href={meta.fuenteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`inline-flex items-center gap-1 underline ${
+                    modoOscuro ? 'text-emerald-400 hover:text-emerald-300' : 'text-emerald-700 hover:text-emerald-800'
+                  }`}
+                >
+                  Biblioteca del Congreso Nacional
+                  <i className="ti ti-external-link text-xs" />
+                </a>
+              </FichaFila>
+              {meta.notas && (
+                <div
+                  className={`flex items-start gap-2 text-[11px] leading-relaxed px-2.5 py-2 rounded-md ${
+                    modoOscuro ? 'bg-amber-950/30 text-amber-300 border border-amber-900/60' : 'bg-amber-50 text-amber-800 border border-amber-200'
+                  }`}
+                >
+                  <i className="ti ti-alert-triangle text-xs mt-0.5 flex-shrink-0" />
+                  <span>{meta.notas}</span>
+                </div>
+              )}
+              <p className={`text-[10px] leading-relaxed pt-1 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
+                La fecha indica cuándo se procesó el PDF oficial. <strong>Puede no incluir reformas legales posteriores</strong>. Verifica siempre contra el texto vigente en la fuente.
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+function FichaFila({
+  label,
+  modoOscuro,
+  children,
+}: {
+  label: string
+  modoOscuro: boolean
+  children: ReactNode
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className={`w-28 flex-shrink-0 text-[10px] uppercase tracking-wide ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
+        {label}
+      </div>
+      <div className={`flex-1 ${modoOscuro ? 'text-zinc-200' : 'text-zinc-700'}`}>{children}</div>
+    </div>
   )
 }
 
