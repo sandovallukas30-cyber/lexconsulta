@@ -66,7 +66,7 @@ export function ConsultarView() {
           <div className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
             {mensajes.filter((m) => m.rol === 'user').length} consulta
             {mensajes.filter((m) => m.rol === 'user').length !== 1 ? 's' : ''} ·{' '}
-            {codigosActivos} norma{codigosActivos !== 1 ? 's' : ''} activa
+            {codigosActivos} código{codigosActivos !== 1 ? 's' : ''} activo
             {codigosActivos !== 1 ? 's' : ''}
           </div>
           <button
@@ -111,7 +111,7 @@ export function ConsultarView() {
           <div className="flex items-center justify-between mb-2">
             <ToggleModo modoOscuro={modoOscuro} />
             <span className={`text-[10px] ${modoOscuro ? 'text-zinc-600' : 'text-zinc-400'}`}>
-              {codigosActivos} norma{codigosActivos !== 1 ? 's' : ''} activa{codigosActivos !== 1 ? 's' : ''}
+              {codigosActivos} código{codigosActivos !== 1 ? 's' : ''} activo{codigosActivos !== 1 ? 's' : ''}
             </span>
           </div>
           <div
@@ -237,7 +237,7 @@ function Bienvenida({
             <span className="font-semibold" style={{ color: VERDE }}>
               {codigosActivos}
             </span>{' '}
-            norma{codigosActivos !== 1 ? 's' : ''} activa{codigosActivos !== 1 ? 's' : ''}
+            código{codigosActivos !== 1 ? 's' : ''} activo{codigosActivos !== 1 ? 's' : ''}
           </span>
           <span>·</span>
           <span>

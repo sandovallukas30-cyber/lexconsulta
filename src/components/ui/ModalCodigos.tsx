@@ -97,10 +97,13 @@ export function ModalCodigos({ abierto, onCerrar }: Props) {
                     modoOscuro ? 'text-white' : 'text-zinc-900'
                   }`}
                 >
-                  Gestionar normas indexadas
+                  Gestionar códigos
                 </h2>
                 <p className={`text-xs mt-1 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                  {activos} activas · {disponibles} disponibles · {codigos.length} totales
+                  {activos} activos · {disponibles} disponibles · {codigos.length} totales
+                  <span className={`ml-1 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                    (incluye leyes especiales)
+                  </span>
                 </p>
               </div>
               <button
@@ -126,7 +129,7 @@ export function ModalCodigos({ abierto, onCerrar }: Props) {
                   type="text"
                   value={busqueda}
                   onChange={(e) => setBusqueda(e.target.value)}
-                  placeholder="Buscar norma..."
+                  placeholder="Buscar código o ley..."
                   autoFocus
                   className={`flex-1 bg-transparent outline-none text-sm ${
                     modoOscuro ? 'text-white placeholder:text-zinc-500' : 'text-zinc-900 placeholder:text-zinc-400'
@@ -172,7 +175,7 @@ export function ModalCodigos({ abierto, onCerrar }: Props) {
               {filtrados.length === 0 && (
                 <div className={`text-center py-12 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
                   <i className="ti ti-search-off text-3xl mb-2 block" />
-                  <p className="text-sm">No se encontraron normas</p>
+                  <p className="text-sm">No se encontraron códigos ni leyes</p>
                 </div>
               )}
             </div>

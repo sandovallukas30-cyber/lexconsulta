@@ -158,7 +158,7 @@ export function Sidebar() {
         <div className={`border-t ${colapsado ? 'p-2' : 'p-3'} ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
           <button
             onClick={() => setModalCodigos(true)}
-            title={colapsado ? `Normas · ${activos} de ${total} activas` : undefined}
+            title={colapsado ? `Códigos · ${activos} de ${total} activos (incluye leyes especiales)` : undefined}
             className={`w-full rounded-lg text-sm font-medium transition-colors text-left flex items-center ${
               colapsado ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2.5'
             } ${
@@ -188,9 +188,9 @@ export function Sidebar() {
                   transition={{ duration: 0.15 }}
                   className="flex-1 overflow-hidden whitespace-nowrap"
                 >
-                  <span className="block">Normas</span>
+                  <span className="block">Códigos</span>
                   <span className={`block text-[11px] font-normal ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
-                    {activos} de {total} activas
+                    {activos} de {total} activos · incl. leyes
                   </span>
                 </motion.span>
               )}
