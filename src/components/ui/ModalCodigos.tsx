@@ -9,7 +9,7 @@ const tituloCategoria: Record<CategoriaCodigo, string> = {
   fundamentales: 'Fundamentales',
   sustantivos: 'Códigos sustantivos',
   procedimentales: 'Códigos procedimentales',
-  especiales: 'Especiales',
+  especiales: 'Leyes especiales',
 }
 
 const ordenCategorias: CategoriaCodigo[] = [
@@ -97,10 +97,10 @@ export function ModalCodigos({ abierto, onCerrar }: Props) {
                     modoOscuro ? 'text-white' : 'text-zinc-900'
                   }`}
                 >
-                  Gestionar códigos
+                  Gestionar normas indexadas
                 </h2>
                 <p className={`text-xs mt-1 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                  {activos} activos · {disponibles} disponibles · {codigos.length} totales
+                  {activos} activas · {disponibles} disponibles · {codigos.length} totales
                 </p>
               </div>
               <button
@@ -126,7 +126,7 @@ export function ModalCodigos({ abierto, onCerrar }: Props) {
                   type="text"
                   value={busqueda}
                   onChange={(e) => setBusqueda(e.target.value)}
-                  placeholder="Buscar código..."
+                  placeholder="Buscar norma..."
                   autoFocus
                   className={`flex-1 bg-transparent outline-none text-sm ${
                     modoOscuro ? 'text-white placeholder:text-zinc-500' : 'text-zinc-900 placeholder:text-zinc-400'
@@ -172,7 +172,7 @@ export function ModalCodigos({ abierto, onCerrar }: Props) {
               {filtrados.length === 0 && (
                 <div className={`text-center py-12 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
                   <i className="ti ti-search-off text-3xl mb-2 block" />
-                  <p className="text-sm">No se encontraron códigos</p>
+                  <p className="text-sm">No se encontraron normas</p>
                 </div>
               )}
             </div>
