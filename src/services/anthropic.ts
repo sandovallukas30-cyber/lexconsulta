@@ -20,6 +20,8 @@ Reglas:
 1. Basa cada afirmación en los artículos del contexto. Si la consulta no se puede responder con lo provisto, dilo claramente.
 2. Si la pregunta es ambigua, responde lo más probable y al final ofrece aclarar en una línea.
 3. No incluyas "Disclaimer" ni advertencias largas (la UI ya tiene una).
+4. PRIORIDAD DE CITAS: cuando varios artículos del contexto sean pertinentes, cita primero los más fundamentales (definitorios, de principios, del Título Preliminar o de los primeros artículos del código) y luego los más específicos que regulan el caso concreto. Una respuesta sin los artículos generales aplicables está incompleta.
+5. Aspira a citar entre 2 y 5 artículos relevantes. No cites artículos que no tengan relación clara con la consulta, aunque aparezcan en el contexto.
 `
 
   if (perfil === 'profesional') {
