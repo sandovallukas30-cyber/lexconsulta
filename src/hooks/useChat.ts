@@ -73,13 +73,14 @@ export function useChat() {
 
       try {
         await precargar(activos)
-        const resultados = buscar(texto, activos, 8)
+        const resultados = buscar(texto, activos)
         const respuesta = await consultar(texto, resultados, perfil)
         const mensajeAsistente: Mensaje = {
           id: crypto.randomUUID(),
           rol: 'assistant',
           contenido: respuesta.texto,
           citas: respuesta.citas,
+          citasNoVerificadas: respuesta.citasNoVerificadas,
           timestamp: new Date(),
         }
         const mensajesFinales = [...mensajesConUser, mensajeAsistente]

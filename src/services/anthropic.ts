@@ -56,6 +56,9 @@ function formatearContexto(articulos: ResultadoBusqueda[]): string {
 export interface RespuestaIA {
   texto: string
   citas: Cita[]
+  /** Etiquetas "Art. N" mencionadas en la respuesta que NO aparecen en el contexto.
+   * Indican posibles alucinaciones de la IA — la UI debería marcarlas. */
+  citasNoVerificadas: string[]
   modeloUsado: string
 }
 
@@ -86,16 +89,20 @@ ${pregunta}`
     .join('\n')
 
   // Extract cited articles from the response by detecting "Art. N" patterns
-  const citas = extraerCitasMencionadas(texto, contexto)
+  const { citas, noVerificadas } = extraerCitasMencionadas(texto, contexto)
 
   return {
     texto,
     citas,
+    citasNoVerificadas: noVerificadas,
     modeloUsado: MODELO,
   }
 }
 
-function extraerCitasMencionadas(texto: string, contexto: ResultadoBusqueda[]): Cita[] {
+function extraerCitasMencionadas(
+  texto: string,
+  contexto: ResultadoBusqueda[]
+): { citas: Cita[]; noVerificadas: string[] } {
   const mencionados = new Set<string>()
   const re = /Art\.?\s*(\d+(?:\s*-?\s*[A-ZÑ]{1,2})?(?:\s+(?:bis|ter|qu[áa]ter|quinquies)){0,2})/gi
   let m
@@ -103,12 +110,14 @@ function extraerCitasMencionadas(texto: string, contexto: ResultadoBusqueda[]): 
     mencionados.add(`Art. ${m[1].trim().replace(/\s+/g, ' ')}`)
   }
 
-  const out: Cita[] = []
+  const enContexto = new Set(contexto.map((r) => r.articulo.a))
+
+  const citas: Cita[] = []
   const vistos = new Set<string>()
   for (const r of contexto) {
     if (mencionados.has(r.articulo.a) && !vistos.has(r.articulo.a)) {
       vistos.add(r.articulo.a)
-      out.push({
+      citas.push({
         articulo: r.articulo.a,
         titulo: tituloDeArticulo(r.articulo),
         texto_original: r.articulo.t,
@@ -117,7 +126,16 @@ function extraerCitasMencionadas(texto: string, contexto: ResultadoBusqueda[]): 
       })
     }
   }
-  return out
+
+  // Citas mencionadas en la respuesta que NO están en el contexto pasado a la IA.
+  // Son potenciales alucinaciones: la IA inventó un número de artículo o citó uno
+  // que no le entregamos.
+  const noVerificadas: string[] = []
+  for (const cita of mencionados) {
+    if (!enContexto.has(cita)) noVerificadas.push(cita)
+  }
+
+  return { citas, noVerificadas }
 }
 
 function descripcionRelevancia(r: ResultadoBusqueda): string {

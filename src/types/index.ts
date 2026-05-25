@@ -124,6 +124,8 @@ export interface Mensaje {
   rol: 'user' | 'assistant'
   contenido: string
   citas?: Cita[]
+  /** Etiquetas "Art. N" mencionadas pero no presentes en el contexto: la UI las marca. */
+  citasNoVerificadas?: string[]
   jurisprudencia?: Jurisprudencia[]
   timestamp: Date
 }

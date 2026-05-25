@@ -273,7 +273,11 @@ function MensajeBubble({ mensaje, modoOscuro }: { mensaje: Mensaje; modoOscuro: 
           <i className="ti ti-scale text-base text-white" />
         </div>
         <div className="flex-1 min-w-0">
-          <RespuestaIA texto={mensaje.contenido} modoOscuro={modoOscuro} />
+          <RespuestaIA
+            texto={mensaje.contenido}
+            modoOscuro={modoOscuro}
+            noVerificadas={mensaje.citasNoVerificadas ?? []}
+          />
         </div>
       </div>
       {mensaje.citas && mensaje.citas.length > 0 && (
@@ -303,10 +307,36 @@ function MensajeBubble({ mensaje, modoOscuro }: { mensaje: Mensaje; modoOscuro: 
 
 const RE_ART_INLINE = /(Art\.?\s*\d+(?:\s*-?\s*[A-ZÑ]{1,2})?(?:\s+(?:bis|ter|qu[áa]ter|quinquies)){0,2})/gi
 
-function resaltarArts(texto: string, modoOscuro: boolean): React.ReactNode[] {
+function normalizarArt(s: string): string {
+  return s.replace(/^Art\.?\s*/i, 'Art. ').replace(/\s+/g, ' ').trim()
+}
+
+function resaltarArts(
+  texto: string,
+  modoOscuro: boolean,
+  noVerificadas: Set<string>
+): React.ReactNode[] {
   const parts = texto.split(RE_ART_INLINE)
-  return parts.map((p, i) =>
-    /^Art\.?\s*\d/i.test(p) ? (
+  return parts.map((p, i) => {
+    if (!/^Art\.?\s*\d/i.test(p)) return <span key={i}>{p}</span>
+    const noVerif = noVerificadas.has(normalizarArt(p))
+    if (noVerif) {
+      return (
+        <span
+          key={i}
+          title="Cita no verificada: este artículo no fue parte del contexto proporcionado a la IA. Verifícalo manualmente."
+          className={`font-semibold rounded px-1 inline-flex items-center gap-0.5 ${
+            modoOscuro
+              ? 'bg-amber-950/60 text-amber-300 ring-1 ring-amber-700/60'
+              : 'bg-amber-50 text-amber-800 ring-1 ring-amber-300'
+          }`}
+        >
+          {p}
+          <i className="ti ti-alert-triangle text-[11px]" />
+        </span>
+      )
+    }
+    return (
       <span
         key={i}
         className={`font-semibold rounded px-1 ${
@@ -315,13 +345,20 @@ function resaltarArts(texto: string, modoOscuro: boolean): React.ReactNode[] {
       >
         {p}
       </span>
-    ) : (
-      <span key={i}>{p}</span>
     )
-  )
+  })
 }
 
-function RespuestaIA({ texto, modoOscuro }: { texto: string; modoOscuro: boolean }) {
+function RespuestaIA({
+  texto,
+  modoOscuro,
+  noVerificadas,
+}: {
+  texto: string
+  modoOscuro: boolean
+  noVerificadas: string[]
+}) {
+  const setNoVerif = React.useMemo(() => new Set(noVerificadas.map(normalizarArt)), [noVerificadas])
   return (
     <div
       className={`text-[15px] leading-relaxed prima-markdown ${
@@ -331,7 +368,7 @@ function RespuestaIA({ texto, modoOscuro }: { texto: string; modoOscuro: boolean
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
-          p: ({ children }) => <p className="mb-2.5 last:mb-0">{procesarHijos(children, modoOscuro)}</p>,
+          p: ({ children }) => <p className="mb-2.5 last:mb-0">{procesarHijos(children, modoOscuro, setNoVerif)}</p>,
           strong: ({ children }) => (
             <strong className={modoOscuro ? 'text-white font-semibold' : 'text-zinc-900 font-semibold'}>
               {children}
@@ -339,7 +376,7 @@ function RespuestaIA({ texto, modoOscuro }: { texto: string; modoOscuro: boolean
           ),
           ul: ({ children }) => <ul className="list-disc pl-5 mb-2.5 space-y-1">{children}</ul>,
           ol: ({ children }) => <ol className="list-decimal pl-5 mb-2.5 space-y-1">{children}</ol>,
-          li: ({ children }) => <li>{procesarHijos(children, modoOscuro)}</li>,
+          li: ({ children }) => <li>{procesarHijos(children, modoOscuro, setNoVerif)}</li>,
           h1: ({ children }) => <h3 className={`text-base font-semibold mt-3 mb-1.5 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{children}</h3>,
           h2: ({ children }) => <h3 className={`text-base font-semibold mt-3 mb-1.5 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{children}</h3>,
           h3: ({ children }) => <h3 className={`text-sm font-semibold mt-3 mb-1.5 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{children}</h3>,
@@ -353,13 +390,33 @@ function RespuestaIA({ texto, modoOscuro }: { texto: string; modoOscuro: boolean
       >
         {texto}
       </ReactMarkdown>
+      {noVerificadas.length > 0 && (
+        <div
+          className={`mt-3 flex items-start gap-2 text-xs rounded-md px-3 py-2 ${
+            modoOscuro
+              ? 'bg-amber-950/40 text-amber-300 border border-amber-900/60'
+              : 'bg-amber-50 text-amber-800 border border-amber-200'
+          }`}
+        >
+          <i className="ti ti-alert-triangle text-sm mt-0.5 flex-shrink-0" />
+          <span>
+            La respuesta menciona {noVerificadas.length === 1 ? 'un artículo' : `${noVerificadas.length} artículos`} que no
+            forma{noVerificadas.length === 1 ? '' : 'n'} parte del contexto entregado a la IA
+            ({noVerificadas.join(', ')}). Verifica manualmente en el Explorador antes de usar esa información.
+          </span>
+        </div>
+      )}
     </div>
   )
 }
 
-function procesarHijos(children: React.ReactNode, modoOscuro: boolean): React.ReactNode {
+function procesarHijos(
+  children: React.ReactNode,
+  modoOscuro: boolean,
+  noVerificadas: Set<string>
+): React.ReactNode {
   return React.Children.map(children, (child) => {
-    if (typeof child === 'string') return resaltarArts(child, modoOscuro)
+    if (typeof child === 'string') return resaltarArts(child, modoOscuro, noVerificadas)
     return child
   })
 }
