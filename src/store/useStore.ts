@@ -77,7 +77,7 @@ const codigosIniciales: CodigoActivo[] = [
   { tipo: 'min', nombre: 'Código de Minería', nombreCorto: 'Minería', descripcion: 'Explotación y regulación de recursos mineros', categoria: 'sustantivos', activo: true, cargado: true },
   { tipo: 'pci', nombre: 'Código de Procedimiento Civil', nombreCorto: 'Proc. Civil', descripcion: 'Normas sobre procesos judiciales civiles', categoria: 'procedimentales', activo: true, cargado: true },
   { tipo: 'ppe', nombre: 'Código Procesal Penal', nombreCorto: 'Proc. Penal', descripcion: 'Reglas de los procesos penales', categoria: 'procedimentales', activo: true, cargado: true },
-  { tipo: 'pad', nombre: 'Ley 19.880 - Bases del Procedimiento Administrativo', nombreCorto: 'Proc. Admin.', descripcion: 'Reglas que rigen los actos de los órganos del Estado y su relación con los ciudadanos', categoria: 'procedimentales', activo: true, cargado: true },
+  { tipo: 'pad', nombre: 'Ley 19.880 - Bases del Procedimiento Administrativo', nombreCorto: 'Proc. Admin.', descripcion: 'Reglas que rigen los actos de los órganos del Estado y su relación con los ciudadanos', categoria: 'especiales', activo: true, cargado: true },
   { tipo: 'cot', nombre: 'Código Orgánico de Tribunales', nombreCorto: 'Orgánico Tribunales', descripcion: 'Organización y atribuciones de los tribunales chilenos', categoria: 'procedimentales', activo: true, cargado: true },
   { tipo: 'mil', nombre: 'Código de Justicia Militar', nombreCorto: 'Justicia Militar', descripcion: 'Disciplina y procedimientos en las Fuerzas Armadas', categoria: 'especiales', activo: false, cargado: false },
   { tipo: 'acc', nombre: 'Ley 16.744 - Accidentes del Trabajo y Enfermedades Profesionales', nombreCorto: 'Accidentes del Trabajo', descripcion: 'Seguro social obligatorio: mutuales, prestaciones, prevención e indemnizaciones', categoria: 'especiales', activo: true, cargado: true },
@@ -194,7 +194,7 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'prima-lex-storage-v3',
-      version: 14,
+      version: 15,
       partialize: (s) => ({
         perfil: s.perfil,
         codigos: s.codigos,
@@ -211,8 +211,8 @@ export const useStore = create<AppState>()(
           const state = persisted as { codigos?: unknown }
           return { ...(state ?? {}), codigos: codigosIniciales }
         }
-        if (version < 14) {
-          // v11-13: refrescar metadatos. v14: incorporar Ley 21.643 (Karin).
+        if (version < 15) {
+          // v11-14: refrescar metadatos. v15: mover Ley 19.880 (pad) a categoría 'especiales'.
           const state = persisted as { codigos?: CodigoActivo[] }
           const prefs = new Map<string, boolean>()
           if (Array.isArray(state.codigos)) {
