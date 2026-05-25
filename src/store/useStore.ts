@@ -76,6 +76,8 @@ const codigosIniciales: CodigoActivo[] = [
   { tipo: 'pad', nombre: 'Ley 19.880 - Bases del Procedimiento Administrativo', nombreCorto: 'Proc. Admin.', descripcion: 'Reglas que rigen los actos de los órganos del Estado y su relación con los ciudadanos', categoria: 'procedimentales', activo: true, cargado: true },
   { tipo: 'cot', nombre: 'Código Orgánico de Tribunales', nombreCorto: 'Orgánico Tribunales', descripcion: 'Organización y atribuciones de los tribunales chilenos', categoria: 'procedimentales', activo: true, cargado: true },
   { tipo: 'mil', nombre: 'Código de Justicia Militar', nombreCorto: 'Justicia Militar', descripcion: 'Disciplina y procedimientos en las Fuerzas Armadas', categoria: 'especiales', activo: false, cargado: false },
+  { tipo: 'acc', nombre: 'Ley 16.744 - Accidentes del Trabajo y Enfermedades Profesionales', nombreCorto: 'Accidentes del Trabajo', descripcion: 'Seguro social obligatorio: mutuales, prestaciones, prevención e indemnizaciones', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'dro', nombre: 'Ley 20.000 - Sanciona el Tráfico Ilícito de Estupefacientes', nombreCorto: 'Ley de Drogas', descripcion: 'Tipifica y sanciona delitos sobre estupefacientes y sustancias sicotrópicas', categoria: 'especiales', activo: true, cargado: true },
 ]
 
 export const useStore = create<AppState>()(
@@ -183,7 +185,7 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'prima-lex-storage-v3',
-      version: 12,
+      version: 13,
       partialize: (s) => ({
         perfil: s.perfil,
         codigos: s.codigos,
@@ -200,8 +202,8 @@ export const useStore = create<AppState>()(
           const state = persisted as { codigos?: unknown }
           return { ...(state ?? {}), codigos: codigosIniciales }
         }
-        if (version < 12) {
-          // v11: refrescar metadatos. v12: incorporar Ley 19.880 (pad) como cargada.
+        if (version < 13) {
+          // v11-12: refrescar metadatos. v13: incorporar Leyes 16.744 (acc) y 20.000 (dro).
           const state = persisted as { codigos?: CodigoActivo[] }
           const prefs = new Map<string, boolean>()
           if (Array.isArray(state.codigos)) {

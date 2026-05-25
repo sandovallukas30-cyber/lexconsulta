@@ -115,6 +115,22 @@ export const CODIGOS_METADATA: Record<string, CodigoMetadata> = {
     fechaIndexacion: '2026-05-25',
     notas: 'Ley supletoria: rige todo procedimiento administrativo que no tenga regla especial. Cubre plazos, notificaciones, silencio administrativo, recursos (reposición, jerárquico, revisión).',
   },
+  acc: {
+    tipo: 'acc',
+    nombreOficial: 'Ley 16.744 — Seguro social contra riesgos de accidentes del trabajo y enfermedades profesionales',
+    norma: 'Ley 16.744, publicada el 1 de febrero de 1968',
+    fuenteUrl: 'https://www.bcn.cl/leychile/navegar?idNorma=28650',
+    fechaIndexacion: '2026-05-25',
+    notas: 'Seguro obligatorio administrado por mutualidades (ACHS, IST, Mutual) e ISL. Cubre prestaciones médicas, subsidios, indemnizaciones y pensiones por accidentes y enfermedades profesionales.',
+  },
+  dro: {
+    tipo: 'dro',
+    nombreOficial: 'Ley 20.000 — Sanciona el tráfico ilícito de estupefacientes y sustancias sicotrópicas',
+    norma: 'Ley 20.000, publicada el 16 de febrero de 2005',
+    fuenteUrl: 'https://www.bcn.cl/leychile/navegar?idNorma=235507',
+    fechaIndexacion: '2026-05-25',
+    notas: 'Reemplaza para todos los efectos a la antigua Ley 19.366. Distingue tráfico, microtráfico, porte y consumo. Incluye técnicas especiales de investigación y atenuante por cooperación eficaz.',
+  },
 }
 
 export function obtenerMetadata(tipo: CodigoTipo): CodigoMetadata | null {

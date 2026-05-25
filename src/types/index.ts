@@ -16,6 +16,8 @@ export type CodigoTipo =
   | 'pad'
   | 'mil'
   | 'cot'
+  | 'acc'
+  | 'dro'
 
 export type CategoriaCodigo =
   | 'fundamentales'
