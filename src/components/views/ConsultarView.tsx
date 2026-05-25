@@ -108,6 +108,12 @@ export function ConsultarView() {
         }`}
       >
         <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
+          <div className="flex items-center justify-between mb-2">
+            <ToggleModo modoOscuro={modoOscuro} />
+            <span className={`text-[10px] ${modoOscuro ? 'text-zinc-600' : 'text-zinc-400'}`}>
+              {codigosActivos} código{codigosActivos !== 1 ? 's' : ''} activo{codigosActivos !== 1 ? 's' : ''}
+            </span>
+          </div>
           <div
             className={`flex items-end gap-2 p-2 rounded-2xl border-2 transition-colors ${
               modoOscuro
@@ -237,6 +243,55 @@ function Bienvenida({
           </span>
         </div>
       </motion.div>
+    </div>
+  )
+}
+
+function ToggleModo({ modoOscuro }: { modoOscuro: boolean }) {
+  const perfil = useStore((s) => s.perfil)
+  const setPerfil = useStore((s) => s.setPerfil)
+  const opciones: Array<{ valor: 'ciudadano' | 'profesional'; icono: string; label: string; tip: string }> = [
+    {
+      valor: 'ciudadano',
+      icono: 'ti-user',
+      label: 'Ciudadano',
+      tip: 'Lenguaje simple, con ejemplos y sin tecnicismos',
+    },
+    {
+      valor: 'profesional',
+      icono: 'ti-briefcase',
+      label: 'Profesional',
+      tip: 'Terminología técnica, citas de incisos, sin glosar conceptos',
+    },
+  ]
+  return (
+    <div
+      className={`inline-flex items-center rounded-full p-0.5 border ${
+        modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-100 border-zinc-200'
+      }`}
+    >
+      {opciones.map((o) => {
+        const activo = perfil === o.valor
+        return (
+          <button
+            key={o.valor}
+            type="button"
+            onClick={() => setPerfil(o.valor)}
+            title={o.tip}
+            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors ${
+              activo
+                ? 'text-white shadow-sm'
+                : modoOscuro
+                ? 'text-zinc-400 hover:text-zinc-200'
+                : 'text-zinc-600 hover:text-zinc-900'
+            }`}
+            style={activo ? { background: VERDE } : undefined}
+          >
+            <i className={`ti ${o.icono} text-xs`} />
+            {o.label}
+          </button>
+        )
+      })}
     </div>
   )
 }
