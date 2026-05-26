@@ -35,10 +35,21 @@ export function etiquetaInciso(i: number): string {
   return ORDINALES[i] ?? `${i + 1}°`
 }
 
-/** Divide el texto de un artículo en párrafos. */
+// Cuando el extractor de PDF une el final de un numeral con el inicio del siguiente
+// dentro del mismo párrafo (ej. "...descrita en ella; 4º.- El respeto..."), este
+// regex localiza el corte. Requiere un terminador (";" o ".") seguido de espacio y
+// luego un marcador inequívoco de numeral al estilo chileno (dígito + ° o º + .- o )).
+const RE_NUMERAL_INTERNO = /(?<=[;.])\s+(?=\d{1,3}[°ºo][.\-)])/g
+
+/** Divide el texto de un artículo en párrafos. Aplica también una limpieza
+ * adicional cuando el PDF dejó pegados dos numerales en una misma línea. */
 export function dividirIncisos(texto: string): string[] {
   if (!texto || !texto.trim()) return []
-  return texto.split(/\n{2,}/).map((p) => p.trim()).filter((p) => p.length > 0)
+  return texto
+    .split(/\n{2,}/)
+    .flatMap((p) => p.split(RE_NUMERAL_INTERNO))
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0)
 }
 
 export type TipoParrafo = 'inciso' | 'numeral' | 'letra'
