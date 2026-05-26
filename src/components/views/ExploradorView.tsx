@@ -5,7 +5,7 @@ import { useCodigo } from '../../hooks/useCodigo'
 import { SelectorCodigo } from '../ui/SelectorCodigo'
 import { modernizar, necesitaModernizacion } from '../../services/moderniza'
 import { obtenerMetadata, formatearFechaIndexacion } from '../../data/codigosMetadata'
-import { etiquetaInciso, analizarParrafos } from '../../services/incisos'
+import { etiquetaInciso, analizarParrafos, nivelIndentacion } from '../../services/incisos'
 import type { Articulo, CodigoTipo } from '../../types'
 
 const VERDE = '#0F6E56'
@@ -1011,8 +1011,6 @@ function ArticuloTexto({
 }) {
   const { principal, notas } = useMemo(() => separarNotas(texto), [texto])
   const parrafos = useMemo(() => analizarParrafos(principal), [principal])
-  const totalIncisos = parrafos.filter((p) => p.tipo === 'inciso').length
-  const mostrarNumeros = numerarIncisos && totalIncisos > 1
   return (
     <>
       <div
@@ -1021,29 +1019,41 @@ function ArticuloTexto({
       >
         {parrafos.map((p, i) => {
           const esInciso = p.tipo === 'inciso'
-          const indentExtra = p.tipo === 'numeral' ? '1rem' : p.tipo === 'letra' ? '2rem' : '0rem'
+          const nivel = nivelIndentacion(p)
+          const sangriaExtra = `${nivel * 1.4}rem`
+          // Mostrar etiqueta solo a incisos puros (no a headers de numeral/letra,
+          // que ya llevan su marcador en el texto). Si está al cuerpo del artículo,
+          // se etiqueta desde el 1°. Si está dentro de un numeral/letra, el header
+          // de éste ya es el "inciso 1°", así que la etiqueta arranca desde "2°".
+          const mostrarEtiqueta = numerarIncisos && esInciso
+          // Tooltip de cita jurídica completa
+          const ctxParts: string[] = []
+          if (p.contextoNumeral) ctxParts.push(p.contextoNumeral)
+          if (p.contextoLetra) ctxParts.push(p.contextoLetra)
+          ctxParts.push(`inciso ${etiquetaInciso(p.indiceInciso)}`)
+          const citaCompleta = ctxParts.join(' · ')
           return (
             <p
               key={i}
               className="text-[17px] leading-[1.8] mb-4 last:mb-0 relative"
               style={
-                mostrarNumeros
-                  ? { paddingLeft: `calc(2.2rem + ${indentExtra})` }
+                numerarIncisos
+                  ? { paddingLeft: `calc(2.2rem + ${sangriaExtra})` }
                   : esInciso && i === 0
-                  ? undefined
-                  : { textIndent: indentExtra !== '0rem' ? `calc(1.5rem + ${indentExtra})` : '1.5rem' }
+                  ? { paddingLeft: sangriaExtra }
+                  : { textIndent: '1.5rem', paddingLeft: sangriaExtra }
               }
             >
-              {mostrarNumeros && esInciso && (
+              {mostrarEtiqueta && (
                 <span
-                  className={`absolute left-0 top-1 font-mono text-[11px] font-medium select-none ${
+                  className={`absolute top-1 font-mono text-[11px] font-medium select-none ${
                     modoOscuro ? 'text-zinc-600' : 'text-zinc-400'
                   }`}
-                  style={{ width: '1.8rem', textAlign: 'right' }}
-                  aria-label={`Inciso ${etiquetaInciso(p.indiceInciso!)}`}
-                  title={`Inciso ${etiquetaInciso(p.indiceInciso!)}`}
+                  style={{ left: sangriaExtra, width: '1.8rem', textAlign: 'right' }}
+                  aria-label={`Inciso ${etiquetaInciso(p.indiceInciso)}${p.contextoNumeral ? ' de ' + p.contextoNumeral : ''}`}
+                  title={citaCompleta}
                 >
-                  {etiquetaInciso(p.indiceInciso!)}
+                  {etiquetaInciso(p.indiceInciso)}
                 </span>
               )}
               {p.texto}
