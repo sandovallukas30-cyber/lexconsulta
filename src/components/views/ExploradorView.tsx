@@ -5,6 +5,7 @@ import { useCodigo } from '../../hooks/useCodigo'
 import { SelectorCodigo } from '../ui/SelectorCodigo'
 import { modernizar, necesitaModernizacion } from '../../services/moderniza'
 import { obtenerMetadata, formatearFechaIndexacion } from '../../data/codigosMetadata'
+import { etiquetaInciso } from '../../services/incisos'
 import type { Articulo, CodigoTipo } from '../../types'
 
 const VERDE = '#0F6E56'
@@ -31,6 +32,8 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
   const modoOscuro = useStore((s) => s.modoOscuro)
   const modernizarLenguaje = useStore((s) => s.modernizarLenguaje)
   const toggleModernizar = useStore((s) => s.toggleModernizar)
+  const numerarIncisos = useStore((s) => s.numerarIncisos)
+  const toggleNumerarIncisos = useStore((s) => s.toggleNumerarIncisos)
   const aplicarModernizacion = modernizarLenguaje && necesitaModernizacion(tipoActivo)
   const transformarTexto = (t: string) => (aplicarModernizacion ? modernizar(t) : t)
   const [seleccionadoId, setSeleccionadoId] = useState<string | null>(null)
@@ -172,6 +175,22 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
         )}
 
         <button
+          onClick={toggleNumerarIncisos}
+          title={numerarIncisos ? 'Ocultar numeración de incisos' : 'Mostrar numeración de incisos (1°, 2°, 3°...)'}
+          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
+            numerarIncisos
+              ? 'text-white'
+              : modoOscuro
+              ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+              : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+          }`}
+          style={numerarIncisos ? { background: VERDE } : undefined}
+        >
+          <i className="ti ti-list-numbers text-base" />
+          Incisos
+        </button>
+
+        <button
           onClick={() => setBusquedaAbierta(true)}
           className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors min-w-[220px] ${
             modoOscuro
@@ -233,7 +252,11 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
                   {indiceActual + 1} de {arts.length}
                 </span>
               </div>
-              <ArticuloTexto texto={transformarTexto(seleccionado.t)} modoOscuro={modoOscuro} />
+              <ArticuloTexto
+                texto={transformarTexto(seleccionado.t)}
+                modoOscuro={modoOscuro}
+                numerarIncisos={numerarIncisos}
+              />
             </motion.article>
           </AnimatePresence>
         )}
@@ -977,12 +1000,21 @@ function separarNotas(texto: string): { principal: string; notas: { etiqueta: st
   return { principal, notas }
 }
 
-function ArticuloTexto({ texto, modoOscuro }: { texto: string; modoOscuro: boolean }) {
+function ArticuloTexto({
+  texto,
+  modoOscuro,
+  numerarIncisos = false,
+}: {
+  texto: string
+  modoOscuro: boolean
+  numerarIncisos?: boolean
+}) {
   const { principal, notas } = useMemo(() => separarNotas(texto), [texto])
   const parrafos = useMemo(
     () => principal.split(/\n{2,}/).map((p) => p.trim()).filter((p) => p.length > 0),
     [principal]
   )
+  const mostrarNumeros = numerarIncisos && parrafos.length > 1
   return (
     <>
       <div
@@ -992,9 +1024,27 @@ function ArticuloTexto({ texto, modoOscuro }: { texto: string; modoOscuro: boole
         {parrafos.map((p, i) => (
           <p
             key={i}
-            className="text-[17px] leading-[1.8] mb-4 last:mb-0"
-            style={i === 0 ? undefined : { textIndent: '1.5rem' }}
+            className="text-[17px] leading-[1.8] mb-4 last:mb-0 relative"
+            style={
+              mostrarNumeros
+                ? { paddingLeft: '2.2rem' }
+                : i === 0
+                ? undefined
+                : { textIndent: '1.5rem' }
+            }
           >
+            {mostrarNumeros && (
+              <span
+                className={`absolute left-0 top-1 font-mono text-[11px] font-medium select-none ${
+                  modoOscuro ? 'text-zinc-600' : 'text-zinc-400'
+                }`}
+                style={{ width: '1.8rem', textAlign: 'right' }}
+                aria-label={`Inciso ${etiquetaInciso(i)}`}
+                title={`Inciso ${etiquetaInciso(i)}`}
+              >
+                {etiquetaInciso(i)}
+              </span>
+            )}
             {p}
           </p>
         ))}

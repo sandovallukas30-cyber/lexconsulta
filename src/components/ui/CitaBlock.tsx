@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
+import { etiquetaInciso } from '../../services/incisos'
 import type { Cita } from '../../types'
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
 export function CitaBlock({ cita }: Props) {
   const [expandido, setExpandido] = useState(false)
   const modoOscuro = useStore((s) => s.modoOscuro)
+  const numerarIncisos = useStore((s) => s.numerarIncisos)
   const color = '#0F6E56'
 
   return (
@@ -63,15 +65,36 @@ export function CitaBlock({ cita }: Props) {
               }`}
               style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
             >
-              {dividirIncisos(cita.texto_original).map((parrafo, i) => (
-                <p
-                  key={i}
-                  className="mb-2 last:mb-0 whitespace-pre-line"
-                  style={i === 0 ? undefined : { textIndent: '1rem' }}
-                >
-                  {parrafo}
-                </p>
-              ))}
+              {(() => {
+                const parrafos = dividirIncisos(cita.texto_original)
+                const mostrarNumeros = numerarIncisos && parrafos.length > 1
+                return parrafos.map((parrafo, i) => (
+                  <p
+                    key={i}
+                    className="mb-2 last:mb-0 whitespace-pre-line relative"
+                    style={
+                      mostrarNumeros
+                        ? { paddingLeft: '1.9rem' }
+                        : i === 0
+                        ? undefined
+                        : { textIndent: '1rem' }
+                    }
+                  >
+                    {mostrarNumeros && (
+                      <span
+                        className={`absolute left-0 top-0 font-mono text-[10px] font-medium select-none ${
+                          modoOscuro ? 'text-zinc-600' : 'text-zinc-400'
+                        }`}
+                        style={{ width: '1.6rem', textAlign: 'right', lineHeight: '1.6rem' }}
+                        title={`Inciso ${etiquetaInciso(i)}`}
+                      >
+                        {etiquetaInciso(i)}
+                      </span>
+                    )}
+                    {parrafo}
+                  </p>
+                ))
+              })()}
             </div>
           </motion.div>
         )}
