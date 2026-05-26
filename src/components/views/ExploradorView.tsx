@@ -5,7 +5,7 @@ import { useCodigo } from '../../hooks/useCodigo'
 import { SelectorCodigo } from '../ui/SelectorCodigo'
 import { modernizar, necesitaModernizacion } from '../../services/moderniza'
 import { obtenerMetadata, formatearFechaIndexacion } from '../../data/codigosMetadata'
-import { etiquetaInciso } from '../../services/incisos'
+import { etiquetaInciso, analizarParrafos } from '../../services/incisos'
 import type { Articulo, CodigoTipo } from '../../types'
 
 const VERDE = '#0F6E56'
@@ -1010,44 +1010,46 @@ function ArticuloTexto({
   numerarIncisos?: boolean
 }) {
   const { principal, notas } = useMemo(() => separarNotas(texto), [texto])
-  const parrafos = useMemo(
-    () => principal.split(/\n{2,}/).map((p) => p.trim()).filter((p) => p.length > 0),
-    [principal]
-  )
-  const mostrarNumeros = numerarIncisos && parrafos.length > 1
+  const parrafos = useMemo(() => analizarParrafos(principal), [principal])
+  const totalIncisos = parrafos.filter((p) => p.tipo === 'inciso').length
+  const mostrarNumeros = numerarIncisos && totalIncisos > 1
   return (
     <>
       <div
         className={modoOscuro ? 'text-zinc-200' : 'text-zinc-800'}
         style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
       >
-        {parrafos.map((p, i) => (
-          <p
-            key={i}
-            className="text-[17px] leading-[1.8] mb-4 last:mb-0 relative"
-            style={
-              mostrarNumeros
-                ? { paddingLeft: '2.2rem' }
-                : i === 0
-                ? undefined
-                : { textIndent: '1.5rem' }
-            }
-          >
-            {mostrarNumeros && (
-              <span
-                className={`absolute left-0 top-1 font-mono text-[11px] font-medium select-none ${
-                  modoOscuro ? 'text-zinc-600' : 'text-zinc-400'
-                }`}
-                style={{ width: '1.8rem', textAlign: 'right' }}
-                aria-label={`Inciso ${etiquetaInciso(i)}`}
-                title={`Inciso ${etiquetaInciso(i)}`}
-              >
-                {etiquetaInciso(i)}
-              </span>
-            )}
-            {p}
-          </p>
-        ))}
+        {parrafos.map((p, i) => {
+          const esInciso = p.tipo === 'inciso'
+          const indentExtra = p.tipo === 'numeral' ? '1rem' : p.tipo === 'letra' ? '2rem' : '0rem'
+          return (
+            <p
+              key={i}
+              className="text-[17px] leading-[1.8] mb-4 last:mb-0 relative"
+              style={
+                mostrarNumeros
+                  ? { paddingLeft: `calc(2.2rem + ${indentExtra})` }
+                  : esInciso && i === 0
+                  ? undefined
+                  : { textIndent: indentExtra !== '0rem' ? `calc(1.5rem + ${indentExtra})` : '1.5rem' }
+              }
+            >
+              {mostrarNumeros && esInciso && (
+                <span
+                  className={`absolute left-0 top-1 font-mono text-[11px] font-medium select-none ${
+                    modoOscuro ? 'text-zinc-600' : 'text-zinc-400'
+                  }`}
+                  style={{ width: '1.8rem', textAlign: 'right' }}
+                  aria-label={`Inciso ${etiquetaInciso(p.indiceInciso!)}`}
+                  title={`Inciso ${etiquetaInciso(p.indiceInciso!)}`}
+                >
+                  {etiquetaInciso(p.indiceInciso!)}
+                </span>
+              )}
+              {p.texto}
+            </p>
+          )
+        })}
       </div>
       {notas.length > 0 && (
         <div className="mt-6 space-y-2.5">

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
-import { etiquetaInciso } from '../../services/incisos'
+import { etiquetaInciso, analizarParrafos } from '../../services/incisos'
 import type { Cita } from '../../types'
 
 interface Props {
@@ -66,34 +66,39 @@ export function CitaBlock({ cita }: Props) {
               style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
             >
               {(() => {
-                const parrafos = dividirIncisos(cita.texto_original)
-                const mostrarNumeros = numerarIncisos && parrafos.length > 1
-                return parrafos.map((parrafo, i) => (
-                  <p
-                    key={i}
-                    className="mb-2 last:mb-0 whitespace-pre-line relative"
-                    style={
-                      mostrarNumeros
-                        ? { paddingLeft: '1.9rem' }
-                        : i === 0
-                        ? undefined
-                        : { textIndent: '1rem' }
-                    }
-                  >
-                    {mostrarNumeros && (
-                      <span
-                        className={`absolute left-0 top-0 font-mono text-[10px] font-medium select-none ${
-                          modoOscuro ? 'text-zinc-600' : 'text-zinc-400'
-                        }`}
-                        style={{ width: '1.6rem', textAlign: 'right', lineHeight: '1.6rem' }}
-                        title={`Inciso ${etiquetaInciso(i)}`}
-                      >
-                        {etiquetaInciso(i)}
-                      </span>
-                    )}
-                    {parrafo}
-                  </p>
-                ))
+                const parrafos = analizarParrafos(cita.texto_original)
+                const totalIncisos = parrafos.filter((p) => p.tipo === 'inciso').length
+                const mostrarNumeros = numerarIncisos && totalIncisos > 1
+                return parrafos.map((p, i) => {
+                  const esInciso = p.tipo === 'inciso'
+                  const indentExtra = p.tipo === 'numeral' ? '0.8rem' : p.tipo === 'letra' ? '1.6rem' : '0rem'
+                  return (
+                    <p
+                      key={i}
+                      className="mb-2 last:mb-0 whitespace-pre-line relative"
+                      style={
+                        mostrarNumeros
+                          ? { paddingLeft: `calc(1.9rem + ${indentExtra})` }
+                          : esInciso && i === 0
+                          ? undefined
+                          : { textIndent: indentExtra !== '0rem' ? `calc(1rem + ${indentExtra})` : '1rem' }
+                      }
+                    >
+                      {mostrarNumeros && esInciso && (
+                        <span
+                          className={`absolute left-0 top-0 font-mono text-[10px] font-medium select-none ${
+                            modoOscuro ? 'text-zinc-600' : 'text-zinc-400'
+                          }`}
+                          style={{ width: '1.6rem', textAlign: 'right', lineHeight: '1.6rem' }}
+                          title={`Inciso ${etiquetaInciso(p.indiceInciso!)}`}
+                        >
+                          {etiquetaInciso(p.indiceInciso!)}
+                        </span>
+                      )}
+                      {p.texto}
+                    </p>
+                  )
+                })
               })()}
             </div>
           </motion.div>
@@ -103,7 +108,3 @@ export function CitaBlock({ cita }: Props) {
   )
 }
 
-function dividirIncisos(texto: string): string[] {
-  if (!texto || !texto.trim()) return []
-  return texto.split(/\n{2,}/).map((p) => p.trim()).filter((p) => p.length > 0)
-}
