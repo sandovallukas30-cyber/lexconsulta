@@ -54,8 +54,6 @@ interface AppState {
   toggleModoOscuro: () => void
   toggleSidebar: () => void
   toggleModernizar: () => void
-  numerarIncisos: boolean
-  toggleNumerarIncisos: () => void
   setCodigoExplorador: (tipo: CodigoActivo['tipo'] | null) => void
   setCodigoMapa: (tipo: CodigoActivo['tipo'] | null) => void
   abrirModalPerfil: () => void
@@ -101,7 +99,6 @@ export const useStore = create<AppState>()(
       modoOscuro: false,
       sidebarColapsado: false,
       modernizarLenguaje: false,
-      numerarIncisos: false,
       modalPerfilAbierto: false,
       acercaAbierto: false,
       acercaPestana: 'acerca',
@@ -188,7 +185,6 @@ export const useStore = create<AppState>()(
       toggleModoOscuro: () => set((s) => ({ modoOscuro: !s.modoOscuro })),
       toggleSidebar: () => set((s) => ({ sidebarColapsado: !s.sidebarColapsado })),
       toggleModernizar: () => set((s) => ({ modernizarLenguaje: !s.modernizarLenguaje })),
-      toggleNumerarIncisos: () => set((s) => ({ numerarIncisos: !s.numerarIncisos })),
       setCodigoExplorador: (tipo) => set({ codigoExploradorActivo: tipo }),
       setCodigoMapa: (tipo) => set({ codigoMapaActivo: tipo }),
       abrirModalPerfil: () => set({ modalPerfilAbierto: true }),
@@ -209,7 +205,6 @@ export const useStore = create<AppState>()(
         modoOscuro: s.modoOscuro,
         sidebarColapsado: s.sidebarColapsado,
         modernizarLenguaje: s.modernizarLenguaje,
-        numerarIncisos: s.numerarIncisos,
       }),
       migrate: (persisted: unknown, version: number) => {
         if (version < 3) {

@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
-import { etiquetaInciso, analizarParrafos, nivelIndentacion } from '../../services/incisos'
 import type { Cita } from '../../types'
 
 interface Props {
@@ -11,7 +10,6 @@ interface Props {
 export function CitaBlock({ cita }: Props) {
   const [expandido, setExpandido] = useState(false)
   const modoOscuro = useStore((s) => s.modoOscuro)
-  const numerarIncisos = useStore((s) => s.numerarIncisos)
   const color = '#0F6E56'
 
   return (
@@ -65,42 +63,15 @@ export function CitaBlock({ cita }: Props) {
               }`}
               style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
             >
-              {analizarParrafos(cita.texto_original).map((p, i) => {
-                const esInciso = p.tipo === 'inciso'
-                const nivel = nivelIndentacion(p)
-                const sangriaExtra = `${nivel * 1}rem`
-                const mostrarEtiqueta = numerarIncisos && esInciso
-                const ctxParts: string[] = []
-                if (p.contextoNumeral) ctxParts.push(p.contextoNumeral)
-                if (p.contextoLetra) ctxParts.push(p.contextoLetra)
-                ctxParts.push(`inciso ${etiquetaInciso(p.indiceInciso)}`)
-                return (
-                  <p
-                    key={i}
-                    className="mb-2 last:mb-0 whitespace-pre-line relative"
-                    style={
-                      numerarIncisos
-                        ? { paddingLeft: `calc(1.9rem + ${sangriaExtra})` }
-                        : esInciso && i === 0
-                        ? { paddingLeft: sangriaExtra }
-                        : { textIndent: '1rem', paddingLeft: sangriaExtra }
-                    }
-                  >
-                    {mostrarEtiqueta && (
-                      <span
-                        className={`absolute top-0 font-mono text-[10px] font-medium select-none ${
-                          modoOscuro ? 'text-zinc-600' : 'text-zinc-400'
-                        }`}
-                        style={{ left: sangriaExtra, width: '1.6rem', textAlign: 'right', lineHeight: '1.6rem' }}
-                        title={ctxParts.join(' · ')}
-                      >
-                        {etiquetaInciso(p.indiceInciso)}
-                      </span>
-                    )}
-                    {p.texto}
-                  </p>
-                )
-              })}
+              {dividirIncisos(cita.texto_original).map((parrafo, i) => (
+                <p
+                  key={i}
+                  className="mb-2 last:mb-0 whitespace-pre-line"
+                  style={i === 0 ? undefined : { textIndent: '1rem' }}
+                >
+                  {parrafo}
+                </p>
+              ))}
             </div>
           </motion.div>
         )}
@@ -109,3 +80,7 @@ export function CitaBlock({ cita }: Props) {
   )
 }
 
+function dividirIncisos(texto: string): string[] {
+  if (!texto || !texto.trim()) return []
+  return texto.split(/\n{2,}/).map((p) => p.trim()).filter((p) => p.length > 0)
+}

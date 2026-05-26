@@ -5,7 +5,6 @@ import { useCodigo } from '../../hooks/useCodigo'
 import { SelectorCodigo } from '../ui/SelectorCodigo'
 import { modernizar, necesitaModernizacion } from '../../services/moderniza'
 import { obtenerMetadata, formatearFechaIndexacion } from '../../data/codigosMetadata'
-import { etiquetaInciso, analizarParrafos, nivelIndentacion } from '../../services/incisos'
 import type { Articulo, CodigoTipo } from '../../types'
 
 const VERDE = '#0F6E56'
@@ -32,8 +31,6 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
   const modoOscuro = useStore((s) => s.modoOscuro)
   const modernizarLenguaje = useStore((s) => s.modernizarLenguaje)
   const toggleModernizar = useStore((s) => s.toggleModernizar)
-  const numerarIncisos = useStore((s) => s.numerarIncisos)
-  const toggleNumerarIncisos = useStore((s) => s.toggleNumerarIncisos)
   const aplicarModernizacion = modernizarLenguaje && necesitaModernizacion(tipoActivo)
   const transformarTexto = (t: string) => (aplicarModernizacion ? modernizar(t) : t)
   const [seleccionadoId, setSeleccionadoId] = useState<string | null>(null)
@@ -174,21 +171,6 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
           </button>
         )}
 
-        <button
-          onClick={toggleNumerarIncisos}
-          title={numerarIncisos ? 'Ocultar numeración de incisos' : 'Mostrar numeración de incisos (1°, 2°, 3°...)'}
-          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
-            numerarIncisos
-              ? 'text-white'
-              : modoOscuro
-              ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-              : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
-          }`}
-          style={numerarIncisos ? { background: VERDE } : undefined}
-        >
-          <i className="ti ti-list-numbers text-base" />
-          Incisos
-        </button>
 
         <button
           onClick={() => setBusquedaAbierta(true)}
@@ -252,11 +234,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
                   {indiceActual + 1} de {arts.length}
                 </span>
               </div>
-              <ArticuloTexto
-                texto={transformarTexto(seleccionado.t)}
-                modoOscuro={modoOscuro}
-                numerarIncisos={numerarIncisos}
-              />
+              <ArticuloTexto texto={transformarTexto(seleccionado.t)} modoOscuro={modoOscuro} />
             </motion.article>
           </AnimatePresence>
         )}
@@ -1000,66 +978,27 @@ function separarNotas(texto: string): { principal: string; notas: { etiqueta: st
   return { principal, notas }
 }
 
-function ArticuloTexto({
-  texto,
-  modoOscuro,
-  numerarIncisos = false,
-}: {
-  texto: string
-  modoOscuro: boolean
-  numerarIncisos?: boolean
-}) {
+function ArticuloTexto({ texto, modoOscuro }: { texto: string; modoOscuro: boolean }) {
   const { principal, notas } = useMemo(() => separarNotas(texto), [texto])
-  const parrafos = useMemo(() => analizarParrafos(principal), [principal])
+  const parrafos = useMemo(
+    () => principal.split(/\n{2,}/).map((p) => p.trim()).filter((p) => p.length > 0),
+    [principal]
+  )
   return (
     <>
       <div
         className={modoOscuro ? 'text-zinc-200' : 'text-zinc-800'}
         style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
       >
-        {parrafos.map((p, i) => {
-          const esInciso = p.tipo === 'inciso'
-          const nivel = nivelIndentacion(p)
-          const sangriaExtra = `${nivel * 1.4}rem`
-          // Mostrar etiqueta solo a incisos puros (no a headers de numeral/letra,
-          // que ya llevan su marcador en el texto). Si está al cuerpo del artículo,
-          // se etiqueta desde el 1°. Si está dentro de un numeral/letra, el header
-          // de éste ya es el "inciso 1°", así que la etiqueta arranca desde "2°".
-          const mostrarEtiqueta = numerarIncisos && esInciso
-          // Tooltip de cita jurídica completa
-          const ctxParts: string[] = []
-          if (p.contextoNumeral) ctxParts.push(p.contextoNumeral)
-          if (p.contextoLetra) ctxParts.push(p.contextoLetra)
-          ctxParts.push(`inciso ${etiquetaInciso(p.indiceInciso)}`)
-          const citaCompleta = ctxParts.join(' · ')
-          return (
-            <p
-              key={i}
-              className="text-[17px] leading-[1.8] mb-4 last:mb-0 relative"
-              style={
-                numerarIncisos
-                  ? { paddingLeft: `calc(2.2rem + ${sangriaExtra})` }
-                  : esInciso && i === 0
-                  ? { paddingLeft: sangriaExtra }
-                  : { textIndent: '1.5rem', paddingLeft: sangriaExtra }
-              }
-            >
-              {mostrarEtiqueta && (
-                <span
-                  className={`absolute top-1 font-mono text-[11px] font-medium select-none ${
-                    modoOscuro ? 'text-zinc-600' : 'text-zinc-400'
-                  }`}
-                  style={{ left: sangriaExtra, width: '1.8rem', textAlign: 'right' }}
-                  aria-label={`Inciso ${etiquetaInciso(p.indiceInciso)}${p.contextoNumeral ? ' de ' + p.contextoNumeral : ''}`}
-                  title={citaCompleta}
-                >
-                  {etiquetaInciso(p.indiceInciso)}
-                </span>
-              )}
-              {p.texto}
-            </p>
-          )
-        })}
+        {parrafos.map((p, i) => (
+          <p
+            key={i}
+            className="text-[17px] leading-[1.8] mb-4 last:mb-0"
+            style={i === 0 ? undefined : { textIndent: '1.5rem' }}
+          >
+            {p}
+          </p>
+        ))}
       </div>
       {notas.length > 0 && (
         <div className="mt-6 space-y-2.5">
