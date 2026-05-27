@@ -57,6 +57,8 @@ type NodoData = {
   colorHeredado?: string
   colorOverride?: string
   colapsado: boolean
+  nivelExpansion?: number // cuántas veces se ha profundizado este nodo
+  expandiendo?: boolean
 }
 
 interface NodoCallbacks {
@@ -66,6 +68,7 @@ interface NodoCallbacks {
   toggleColapso: (id: string) => void
   cambiarColor: (id: string, color: string | undefined) => void
   actualizarEtiqueta: (id: string, etiqueta: string) => void
+  profundizar: (id: string, modo: import('../../services/canvas').ModoProfundizacion) => Promise<void>
 }
 
 interface CanvasCtx {
@@ -212,6 +215,58 @@ export function CanvasView() {
     [setEdges]
   )
 
+  const handleProfundizar = useCallback(
+    async (id: string, modo: import('../../services/canvas').ModoProfundizacion) => {
+      const nodo = nodesRef.current.find((n) => n.id === id)
+      if (!nodo) return
+      // marcar expandiendo
+      setNodes((nds) =>
+        nds.map((n) => (n.id === id ? { ...n, data: { ...n.data, expandiendo: true } } : n))
+      )
+      try {
+        const { profundizarNodo } = await import('../../services/canvas')
+        const data = nodo.data
+        const res = await profundizarNodo({
+          tipoNodo: data.tipo === 'concepto' ? 'definicion' : data.tipo,
+          titulo: data.titulo,
+          contenidoActual: data.contenido,
+          articulosActuales: data.articulos,
+          modo,
+        })
+        pushHistory()
+        setNodes((nds) =>
+          nds.map((n) => {
+            if (n.id !== id) return n
+            const articulosFusion = res.articulosNuevos && res.articulosNuevos.length > 0
+              ? [...(n.data.articulos ?? []), ...res.articulosNuevos]
+              : n.data.articulos
+            const separador = `\n\n— ${res.etiquetaSeccion} —\n\n`
+            const nuevoContenido = res.contenidoNuevo
+              ? `${n.data.contenido}${separador}${res.contenidoNuevo}`
+              : n.data.contenido
+            return {
+              ...n,
+              data: {
+                ...n.data,
+                contenido: nuevoContenido,
+                articulos: articulosFusion,
+                nivelExpansion: (n.data.nivelExpansion ?? 0) + 1,
+                expandiendo: false,
+              },
+            }
+          })
+        )
+      } catch (e) {
+        console.error('Error al profundizar nodo:', e)
+        setNodes((nds) =>
+          nds.map((n) => (n.id === id ? { ...n, data: { ...n.data, expandiendo: false } } : n))
+        )
+        alert(e instanceof Error ? e.message : 'No se pudo profundizar el nodo. Intenta de nuevo.')
+      }
+    },
+    [setNodes, pushHistory]
+  )
+
   const callbacks: NodoCallbacks = useMemo(
     () => ({
       actualizar: handleActualizar,
@@ -220,8 +275,9 @@ export function CanvasView() {
       toggleColapso: handleToggleColapso,
       cambiarColor: handleCambiarColor,
       actualizarEtiqueta: handleActualizarEtiqueta,
+      profundizar: handleProfundizar,
     }),
-    [handleActualizar, handleEliminar, handleDuplicar, handleToggleColapso, handleCambiarColor, handleActualizarEtiqueta]
+    [handleActualizar, handleEliminar, handleDuplicar, handleToggleColapso, handleCambiarColor, handleActualizarEtiqueta, handleProfundizar]
   )
 
   const ctxValue = useMemo<CanvasCtx>(() => ({ modoOscuro, callbacks }), [modoOscuro, callbacks])
@@ -642,6 +698,7 @@ function NodoBase(props: NodeProps<NodoFlow>) {
   const [editandoTitulo, setEditandoTitulo] = useState(false)
   const [editandoContenido, setEditandoContenido] = useState(false)
   const [mostrandoColores, setMostrandoColores] = useState(false)
+  const [mostrandoProfundizar, setMostrandoProfundizar] = useState(false)
   const refTit = useRef<HTMLInputElement>(null)
   const refCont = useRef<HTMLTextAreaElement>(null)
 
@@ -739,6 +796,74 @@ function NodoBase(props: NodeProps<NodoFlow>) {
               </div>
             )}
           </div>
+          {data.tipo !== 'libre' && (
+            <div className="relative">
+              <ToolbarBtn
+                icono={data.expandiendo ? 'ti-loader-2' : 'ti-sparkles'}
+                label={(data.nivelExpansion ?? 0) >= 3 ? 'Límite' : 'Profundizar con IA'}
+                onClick={() => {
+                  if ((data.nivelExpansion ?? 0) < 3 && !data.expandiendo) {
+                    setMostrandoProfundizar((v) => !v)
+                  }
+                }}
+                modoOscuro={modoOscuro}
+                deshabilitado={(data.nivelExpansion ?? 0) >= 3 || data.expandiendo}
+              />
+              {mostrandoProfundizar && (
+                <div
+                  className={`absolute top-full left-1/2 -translate-x-1/2 mt-1 w-44 rounded-lg shadow-lg overflow-hidden ${
+                    modoOscuro ? 'bg-zinc-800 border border-zinc-700' : 'bg-white border border-zinc-200'
+                  }`}
+                >
+                  <ProfundizarOpcion
+                    icono="ti-zoom-in"
+                    label="Más detalle"
+                    descripcion="Profundidad doctrinal"
+                    onClick={() => {
+                      callbacks.profundizar(id, 'detalle')
+                      setMostrandoProfundizar(false)
+                    }}
+                    modoOscuro={modoOscuro}
+                  />
+                  <ProfundizarOpcion
+                    icono="ti-arrows-split"
+                    label="Distinciones"
+                    descripcion="Conceptos similares"
+                    onClick={() => {
+                      callbacks.profundizar(id, 'distinciones')
+                      setMostrandoProfundizar(false)
+                    }}
+                    modoOscuro={modoOscuro}
+                  />
+                  <ProfundizarOpcion
+                    icono="ti-bulb"
+                    label="Casos prácticos"
+                    descripcion="Ejemplos cotidianos"
+                    onClick={() => {
+                      callbacks.profundizar(id, 'ejemplos')
+                      setMostrandoProfundizar(false)
+                    }}
+                    modoOscuro={modoOscuro}
+                  />
+                  <ProfundizarOpcion
+                    icono="ti-books"
+                    label="Más artículos"
+                    descripcion="Normas relacionadas"
+                    onClick={() => {
+                      callbacks.profundizar(id, 'articulos')
+                      setMostrandoProfundizar(false)
+                    }}
+                    modoOscuro={modoOscuro}
+                  />
+                  {(data.nivelExpansion ?? 0) > 0 && (
+                    <div className={`px-2.5 py-1.5 text-[10px] border-t ${modoOscuro ? 'border-zinc-700 text-zinc-500' : 'border-zinc-100 text-zinc-400'}`}>
+                      Profundizado {data.nivelExpansion} de 3 veces
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
           <div className={`w-px h-5 mx-0.5 ${modoOscuro ? 'bg-zinc-700' : 'bg-zinc-200'}`} />
           <ToolbarBtn
             icono="ti-trash"
@@ -865,18 +990,22 @@ function ToolbarBtn({
   onClick,
   modoOscuro,
   destructivo,
+  deshabilitado,
 }: {
   icono: string
   label: string
   onClick: () => void
   modoOscuro: boolean
   destructivo?: boolean
+  deshabilitado?: boolean
 }) {
+  const cargando = icono === 'ti-loader-2'
   return (
     <button
       onClick={onClick}
       title={label}
-      className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors ${
+      disabled={deshabilitado}
+      className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
         destructivo
           ? modoOscuro
             ? 'text-zinc-400 hover:bg-red-950/50 hover:text-red-400'
@@ -886,7 +1015,38 @@ function ToolbarBtn({
           : 'text-zinc-700 hover:bg-zinc-100'
       }`}
     >
-      <i className={`ti ${icono} text-sm`} />
+      <i className={`ti ${icono} text-sm ${cargando ? 'animate-spin' : ''}`} />
+    </button>
+  )
+}
+
+function ProfundizarOpcion({
+  icono,
+  label,
+  descripcion,
+  onClick,
+  modoOscuro,
+}: {
+  icono: string
+  label: string
+  descripcion: string
+  onClick: () => void
+  modoOscuro: boolean
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full text-left px-2.5 py-2 flex items-start gap-2 transition-colors ${
+        modoOscuro ? 'hover:bg-zinc-700 text-zinc-200' : 'hover:bg-zinc-100 text-zinc-800'
+      }`}
+    >
+      <i className={`ti ${icono} text-sm mt-0.5 flex-shrink-0`} style={{ color: VERDE }} />
+      <div className="flex-1 min-w-0">
+        <div className="text-xs font-medium leading-tight">{label}</div>
+        <div className={`text-[10px] leading-tight mt-0.5 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
+          {descripcion}
+        </div>
+      </div>
     </button>
   )
 }
