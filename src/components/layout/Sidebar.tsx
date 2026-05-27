@@ -203,14 +203,14 @@ export function Sidebar() {
 
           <button
             onClick={() => abrirAcerca('acerca')}
-            title={colapsado ? 'Acerca de · Aviso legal' : undefined}
+            title={colapsado ? 'Configuración · Apariencia, aviso legal, privacidad' : undefined}
             className={`w-full mt-1 rounded-lg text-xs transition-colors flex items-center ${
               colapsado ? 'justify-center px-0 py-2' : 'gap-2 px-3 py-2'
             } ${
               modoOscuro ? 'text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300' : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700'
             }`}
           >
-            <i className="ti ti-info-circle text-base flex-shrink-0" />
+            <i className="ti ti-settings text-base flex-shrink-0" />
             <AnimatePresence initial={false}>
               {!colapsado && (
                 <motion.span
@@ -220,7 +220,7 @@ export function Sidebar() {
                   transition={{ duration: 0.15 }}
                   className="whitespace-nowrap overflow-hidden"
                 >
-                  Acerca de · Aviso legal
+                  Configuración
                 </motion.span>
               )}
             </AnimatePresence>
