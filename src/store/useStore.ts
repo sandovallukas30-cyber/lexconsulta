@@ -112,6 +112,7 @@ const codigosIniciales: CodigoActivo[] = [
   { tipo: 'fam', nombre: 'Ley 19.968 - Tribunales de Familia', nombreCorto: 'Tribunales de Familia', descripcion: 'Crea los tribunales de familia y regula los procedimientos en materia de familia, alimentos, cuidado personal y VIF', categoria: 'especiales', activo: true, cargado: true },
   { tipo: 'trn', nombre: 'Ley 20.285 - Acceso a la Información Pública (Transparencia)', nombreCorto: 'Transparencia', descripcion: 'Principio de transparencia, derecho de acceso a la información de los órganos del Estado, Consejo para la Transparencia', categoria: 'especiales', activo: true, cargado: true },
   { tipo: 'rpa', nombre: 'Ley 20.084 - Responsabilidad Penal Adolescente', nombreCorto: 'Resp. Penal Adolescente', descripcion: 'Sistema especial de responsabilidad penal para adolescentes mayores de 14 y menores de 18 años', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'pdc', nombre: 'Pacto Internacional de Derechos Civiles y Políticos', nombreCorto: 'Pacto Civiles y Políticos', descripcion: 'Tratado internacional de DDHH ratificado por Chile; en virtud del Art. 5° inc. 2° de la Constitución integra el bloque de constitucionalidad', categoria: 'fundamentales', activo: true, cargado: true },
 ]
 
 export const useStore = create<AppState>()(
@@ -287,7 +288,7 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'prima-lex-storage-v3',
-      version: 19,
+      version: 20,
       partialize: (s) => ({
         perfil: s.perfil,
         codigos: s.codigos,
@@ -306,9 +307,9 @@ export const useStore = create<AppState>()(
           const state = persisted as { codigos?: unknown }
           return { ...(state ?? {}), codigos: codigosIniciales }
         }
-        if (version < 19) {
-          // v11-18: refrescar metadatos. v19: incorporar Ley 20.285 (trn) y
-          // Ley 20.084 (rpa) como leyes especiales cargadas.
+        if (version < 20) {
+          // v11-19: refrescar metadatos. v20: incorporar Pacto Internacional
+          // de Derechos Civiles y Políticos (pdc) como norma fundamental.
           const state = persisted as { codigos?: CodigoActivo[] }
           const prefs = new Map<string, boolean>()
           if (Array.isArray(state.codigos)) {

@@ -34,7 +34,7 @@ export const CODIGOS_METADATA: Record<string, CodigoMetadata> = {
     norma: 'DTO 100 (texto refundido, coordinado y sistematizado)',
     fuenteUrl: 'https://www.bcn.cl/leychile/navegar?idNorma=242302',
     fechaIndexacion: '2026-05-22',
-    relacionadas: ['cot', 'pad', 'trn'],
+    relacionadas: ['cot', 'pad', 'trn', 'pdc'],
   },
   civ: {
     tipo: 'civ',
@@ -212,6 +212,15 @@ export const CODIGOS_METADATA: Record<string, CodigoMetadata> = {
     notas: 'Sistema penal especial para adolescentes mayores de 14 y menores de 18 años. Sustituye penas del Código Penal por sanciones específicas (régimen cerrado, semicerrado, libertad asistida, servicios en beneficio de la comunidad). Modificada por Ley 21.527 y otras.',
     relacionadas: ['pen', 'ppe', 'fam'],
   },
+  pdc: {
+    tipo: 'pdc',
+    nombreOficial: 'Pacto Internacional de Derechos Civiles y Políticos',
+    norma: 'Adoptado por la ONU en 1966; ratificado por Chile y promulgado por DTO 778 (RREE), publicado el 29 de abril de 1989',
+    fuenteUrl: 'https://www.bcn.cl/leychile/navegar?idNorma=15406',
+    fechaIndexacion: '2026-05-27',
+    notas: 'Tratado internacional de derechos humanos. En virtud del artículo 5° inciso 2° de la Constitución Política, los derechos esenciales contenidos en tratados ratificados y vigentes constituyen un límite al ejercicio de la soberanía. La doctrina mayoritaria le reconoce rango supralegal y de bloque de constitucionalidad.',
+    relacionadas: ['con'],
+  },
 }
 
 /** Devuelve el nombre corto (3-4 palabras) usado en enlaces de la ficha. */
@@ -238,6 +247,7 @@ export function nombreCortoMetadata(tipo: CodigoTipo): string {
     fam: 'Ley 19.968 (Trib. Familia)',
     trn: 'Ley 20.285 (Transparencia)',
     rpa: 'Ley 20.084 (RPA)',
+    pdc: 'Pacto DCP',
   }
   return nombres[tipo] ?? tipo
 }

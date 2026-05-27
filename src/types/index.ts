@@ -23,6 +23,7 @@ export type CodigoTipo =
   | 'fam'
   | 'trn'
   | 'rpa'
+  | 'pdc'
 
 export type CategoriaCodigo =
   | 'fundamentales'

@@ -176,9 +176,11 @@ function Acerca({ modoOscuro }: { modoOscuro: boolean }) {
         </Feat>
       </ul>
 
-      <H modoOscuro={modoOscuro}>Normas indexadas (21)</H>
+      <H modoOscuro={modoOscuro}>Normas indexadas (22)</H>
       <P modoOscuro={modoOscuro}>
-        <strong>Códigos:</strong> Constitución · Civil · Penal · Trabajo · Tributario · Comercio · Procedimiento Civil ·
+        <strong>Fundamentales:</strong> Constitución · Pacto Internacional de Derechos Civiles y Políticos.
+        <br />
+        <strong>Códigos:</strong> Civil · Penal · Trabajo · Tributario · Comercio · Procedimiento Civil ·
         Procesal Penal · Orgánico de Tribunales · Minería · Aguas · Sanitario · Justicia Militar.
         <br />
         <strong>Leyes especiales:</strong> Ley 19.880 (Proc. Administrativo) · Ley 16.744 (Accidentes del Trabajo) ·
