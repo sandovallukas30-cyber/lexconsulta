@@ -4,7 +4,7 @@ import { useStore } from '../../store/useStore'
 import { codigosCargados, obtenerCodigo } from '../../services/codigos'
 import type { CodigoTipo } from '../../types'
 
-const VERDE = '#0F6E56'
+const VERDE = 'var(--accent-base)'
 
 interface Props {
   titulo: string
@@ -52,7 +52,7 @@ export function SelectorCodigo({ titulo, descripcion, icono, onElegir }: Props) 
         >
           <div
             className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
-            style={{ background: modoOscuro ? '#0F6E5625' : '#0F6E5610' }}
+            style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
           >
             <i className={`ti ${icono} text-3xl`} style={{ color: VERDE }} />
           </div>
@@ -176,14 +176,14 @@ function CodigoCard({ codigo, onClick, modoOscuro, delay }: CodigoCardProps) {
       onClick={onClick}
       className={`group text-left rounded-xl border-2 p-5 transition-all hover:shadow-lg hover:-translate-y-0.5 ${
         modoOscuro
-          ? 'bg-zinc-800/40 border-zinc-800 hover:border-emerald-700'
-          : 'bg-white border-zinc-200 hover:border-emerald-500'
+          ? 'bg-zinc-800/40 border-zinc-800 hover:border-[var(--accent-700)]'
+          : 'bg-white border-zinc-200 hover:border-[var(--accent-500)]'
       }`}
     >
       <div className="flex items-start gap-3 mb-3">
         <span
           className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{ background: modoOscuro ? '#0F6E5630' : '#0F6E5615' }}
+          style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 19%, transparent)' : 'color-mix(in srgb, var(--accent-base) 8%, transparent)' }}
         >
           <i className="ti ti-book-2 text-xl" style={{ color: VERDE }} />
         </span>

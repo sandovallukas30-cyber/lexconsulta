@@ -15,9 +15,9 @@ export function Placeholder({ icono, titulo, descripcion, badge = 'En construcci
       <div className="max-w-md text-center">
         <div
           className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-5"
-          style={{ background: modoOscuro ? '#0F6E5620' : '#0F6E5610' }}
+          style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 13%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
         >
-          <i className={`ti ${icono} text-4xl`} style={{ color: '#0F6E56' }} />
+          <i className={`ti ${icono} text-4xl`} style={{ color: 'var(--accent-base)' }} />
         </div>
         <h3 className={`text-2xl font-serif font-semibold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
           {titulo}

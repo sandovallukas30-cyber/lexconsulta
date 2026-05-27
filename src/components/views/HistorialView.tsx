@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import type { ConsultaHistorial, VistaId } from '../../types'
 
-const VERDE = '#0F6E56'
+const VERDE = 'var(--accent-base)'
 
 const moduloLabel: Record<VistaId, string> = {
   consultar: 'Consultar',
@@ -163,7 +163,7 @@ export function HistorialView() {
         {stats.total > 0 && (
           <div className="flex items-center gap-3 flex-wrap text-[11px]">
             <span className={modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}>Feedback de respuestas:</span>
-            <span className={`inline-flex items-center gap-1 ${modoOscuro ? 'text-emerald-400' : 'text-emerald-700'}`}>
+            <span className={`inline-flex items-center gap-1 ${modoOscuro ? 'text-[var(--accent-400)]' : 'text-[var(--accent-700)]'}`}>
               <i className="ti ti-thumb-up text-xs" /> {stats.util} útil{stats.util !== 1 ? 'es' : ''}
             </span>
             <span className={`inline-flex items-center gap-1 ${modoOscuro ? 'text-rose-400' : 'text-rose-700'}`}>
@@ -284,8 +284,8 @@ function ConsultaCard({
       className={`group rounded-xl border transition-colors ${
         activa
           ? modoOscuro
-            ? 'bg-zinc-800 border-emerald-700'
-            : 'bg-emerald-50/50 border-emerald-300'
+            ? 'bg-zinc-800 border-[var(--accent-700)]'
+            : 'bg-[var(--accent-50)]/50 border-[var(--accent-300)]'
           : modoOscuro
           ? 'bg-zinc-900 border-zinc-800 hover:border-zinc-700'
           : 'bg-white border-zinc-200 hover:border-zinc-300'
@@ -295,7 +295,7 @@ function ConsultaCard({
         <div className="flex items-start gap-3">
           <div
             className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center"
-            style={{ background: modoOscuro ? '#0F6E5630' : '#0F6E5615' }}
+            style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 19%, transparent)' : 'color-mix(in srgb, var(--accent-base) 8%, transparent)' }}
           >
             <i
               className={`ti ${moduloIcono[consulta.modulo]} text-base`}
@@ -369,7 +369,7 @@ function EmptyState({ modoOscuro }: { modoOscuro: boolean }) {
       <div className="max-w-md text-center">
         <div
           className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-5"
-          style={{ background: modoOscuro ? '#0F6E5625' : '#0F6E5610' }}
+          style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
         >
           <i className="ti ti-history text-4xl" style={{ color: VERDE }} />
         </div>

@@ -4,7 +4,7 @@ import { useStore } from '../../store/useStore'
 import { generarRosco, esRespuestaCorrecta } from '../../services/pasapalabra'
 import type { AreaPractica, EntradaRosco, PartidaPasapalabra } from '../../types'
 
-const VERDE = '#0F6E56'
+const VERDE = 'var(--accent-base)'
 const DURACION_DEFAULT = 300 // 5 minutos
 
 const AREAS: { id: AreaPractica; nombre: string; icono: string; descripcion: string }[] = [
@@ -104,7 +104,7 @@ function SeleccionArea({ modoOscuro }: { modoOscuro: boolean }) {
         >
           <div
             className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
-            style={{ background: modoOscuro ? '#0F6E5625' : '#0F6E5610' }}
+            style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
           >
             <i className="ti ti-puzzle text-3xl" style={{ color: VERDE }} />
           </div>
@@ -131,14 +131,14 @@ function SeleccionArea({ modoOscuro }: { modoOscuro: boolean }) {
               disabled={cargando !== null}
               className={`text-left rounded-xl border-2 p-5 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:-translate-y-0.5 ${
                 modoOscuro
-                  ? 'bg-zinc-800/40 border-zinc-800 hover:border-emerald-700'
-                  : 'bg-white border-zinc-200 hover:border-emerald-500'
+                  ? 'bg-zinc-800/40 border-zinc-800 hover:border-[var(--accent-700)]'
+                  : 'bg-white border-zinc-200 hover:border-[var(--accent-500)]'
               }`}
             >
               <div className="flex items-center gap-3 mb-2">
                 <span
                   className="w-10 h-10 rounded-lg flex items-center justify-center"
-                  style={{ background: modoOscuro ? '#0F6E5630' : '#0F6E5615' }}
+                  style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 19%, transparent)' : 'color-mix(in srgb, var(--accent-base) 8%, transparent)' }}
                 >
                   <i className={`ti ${a.icono} text-xl`} style={{ color: VERDE }} />
                 </span>
@@ -282,12 +282,12 @@ function Pasapalabra({ partida, modoOscuro }: { partida: PartidaPasapalabra; mod
                 spellCheck={false}
                 className={`flex-1 px-4 py-2.5 rounded-lg border-2 text-base outline-none transition-colors ${
                   feedback === 'ok'
-                    ? 'border-emerald-500 bg-emerald-50 text-emerald-900'
+                    ? 'border-[var(--accent-500)] bg-[var(--accent-50)] text-[var(--accent-900)]'
                     : feedback === 'fail'
                     ? 'border-rose-500 bg-rose-50 text-rose-900'
                     : modoOscuro
-                    ? 'bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-emerald-600'
-                    : 'bg-zinc-50 border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-500'
+                    ? 'bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-[var(--accent-600)]'
+                    : 'bg-zinc-50 border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-[var(--accent-500)]'
                 }`}
               />
               <button
@@ -372,7 +372,7 @@ function Rosco({
           const esActual = i === letraActualIdx
           const fill =
             r.estado === 'acertada'
-              ? '#0F6E56'
+              ? 'var(--accent-base)'
               : r.estado === 'fallada'
               ? '#dc2626'
               : r.estado === 'pasada'
@@ -395,7 +395,7 @@ function Rosco({
                 cy={y}
                 r={tam / 2}
                 fill={fill}
-                stroke={esActual ? '#0F6E56' : 'transparent'}
+                stroke={esActual ? 'var(--accent-base)' : 'transparent'}
                 strokeWidth={3}
               />
               <text
@@ -437,7 +437,7 @@ function ResumenPartida({ partida, modoOscuro }: { partida: PartidaPasapalabra; 
         <div className="text-center mb-8">
           <div
             className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
-            style={{ background: modoOscuro ? '#0F6E5625' : '#0F6E5610' }}
+            style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
           >
             <i className="ti ti-trophy text-3xl" style={{ color: VERDE }} />
           </div>
@@ -471,7 +471,7 @@ function ResumenPartida({ partida, modoOscuro }: { partida: PartidaPasapalabra; 
                 style={{
                   background:
                     r.estado === 'acertada'
-                      ? '#0F6E56'
+                      ? 'var(--accent-base)'
                       : r.estado === 'fallada'
                       ? '#dc2626'
                       : modoOscuro
@@ -500,7 +500,7 @@ function ResumenPartida({ partida, modoOscuro }: { partida: PartidaPasapalabra; 
                       setVistaActiva('explorador')
                     }}
                     className={`mt-1 inline-flex items-center gap-1 text-[11px] underline ${
-                      modoOscuro ? 'text-emerald-400 hover:text-emerald-300' : 'text-emerald-700 hover:text-emerald-800'
+                      modoOscuro ? 'text-[var(--accent-400)] hover:text-[var(--accent-300)]' : 'text-[var(--accent-700)] hover:text-[var(--accent-800)]'
                     }`}
                   >
                     <i className="ti ti-external-link text-[10px]" />
@@ -539,7 +539,7 @@ function StatCard({
   modoOscuro: boolean
 }) {
   const colores = {
-    emerald: modoOscuro ? 'bg-emerald-950/40 text-emerald-300' : 'bg-emerald-50 text-emerald-800',
+    emerald: modoOscuro ? 'bg-[var(--accent-950)]/40 text-[var(--accent-300)]' : 'bg-[var(--accent-50)] text-[var(--accent-800)]',
     rose: modoOscuro ? 'bg-rose-950/40 text-rose-300' : 'bg-rose-50 text-rose-800',
     zinc: modoOscuro ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-700',
   }
@@ -585,7 +585,7 @@ function ModalContinuar({
           <div className="flex items-center gap-3 mb-3">
             <span
               className="w-10 h-10 rounded-lg flex items-center justify-center"
-              style={{ background: modoOscuro ? '#0F6E5630' : '#0F6E5615' }}
+              style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 19%, transparent)' : 'color-mix(in srgb, var(--accent-base) 8%, transparent)' }}
             >
               <i className="ti ti-player-pause text-xl" style={{ color: VERDE }} />
             </span>

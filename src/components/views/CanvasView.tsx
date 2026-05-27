@@ -26,7 +26,7 @@ import { useStore } from '../../store/useStore'
 import { generarConcepto, generarRelacion, type ResultadoConcepto } from '../../services/canvas'
 import type { Canvas, NodoCanvas, ArticuloRelevante } from '../../types'
 
-const VERDE = '#0F6E56'
+const VERDE = 'var(--accent-base)'
 const COLOR_NEUTRO = '#6b7280'
 
 const tipoColor: Record<string, string> = {
@@ -537,7 +537,7 @@ export function CanvasView() {
           className={`flex-1 min-w-[280px] flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 transition-colors ${
             modoOscuro
               ? 'bg-zinc-800 border-zinc-700 focus-within:border-zinc-600'
-              : 'bg-white border-zinc-200 focus-within:border-emerald-500'
+              : 'bg-white border-zinc-200 focus-within:border-[var(--accent-500)]'
           }`}
         >
           <i className="ti ti-bulb text-base" style={{ color: VERDE }} />
@@ -1211,7 +1211,7 @@ function EmptyState({ modoOscuro, onSugerencia }: { modoOscuro: boolean; onSuger
       <div className="max-w-md text-center">
         <div
           className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-5"
-          style={{ background: modoOscuro ? '#0F6E5625' : '#0F6E5610' }}
+          style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
         >
           <i className="ti ti-affiliate text-4xl" style={{ color: VERDE }} />
         </div>
@@ -1230,7 +1230,7 @@ function EmptyState({ modoOscuro, onSugerencia }: { modoOscuro: boolean; onSuger
               className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${
                 modoOscuro
                   ? 'bg-zinc-900 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800 text-zinc-300'
-                  : 'bg-white border-zinc-200 hover:border-emerald-400 text-zinc-600'
+                  : 'bg-white border-zinc-200 hover:border-[var(--accent-400)] text-zinc-600'
               }`}
             >
               {s}
@@ -1298,8 +1298,8 @@ function ListaCanvases({
                   className={`group rounded-lg px-3 py-2 cursor-pointer transition-colors ${
                     activo
                       ? modoOscuro
-                        ? 'bg-emerald-950/40 border border-emerald-800'
-                        : 'bg-emerald-50 border border-emerald-200'
+                        ? 'bg-[var(--accent-950)]/40 border border-[var(--accent-800)]'
+                        : 'bg-[var(--accent-50)] border border-[var(--accent-200)]'
                       : modoOscuro
                       ? 'hover:bg-zinc-800 border border-transparent'
                       : 'hover:bg-zinc-100 border border-transparent'

@@ -7,7 +7,7 @@ import { modernizar, necesitaModernizacion } from '../../services/moderniza'
 import { obtenerMetadata, formatearFechaIndexacion, nombreCortoMetadata } from '../../data/codigosMetadata'
 import type { Articulo, CodigoTipo } from '../../types'
 
-const VERDE = '#0F6E56'
+const VERDE = 'var(--accent-base)'
 
 export function ExploradorView() {
   const codigoElegido = useStore((s) => s.codigoExploradorActivo)
@@ -117,7 +117,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
         >
           <span
             className="w-7 h-7 rounded-lg flex items-center justify-center"
-            style={{ background: modoOscuro ? '#0F6E5625' : '#0F6E5610' }}
+            style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
           >
             <i className="ti ti-book-2 text-base" style={{ color: VERDE }} />
           </span>
@@ -847,8 +847,8 @@ function FichaCodigo({ tipo, modoOscuro }: { tipo: CodigoTipo; modoOscuro: boole
         className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
           abierto
             ? modoOscuro
-              ? 'bg-zinc-800 text-emerald-400'
-              : 'bg-emerald-50 text-emerald-700'
+              ? 'bg-zinc-800 text-[var(--accent-400)]'
+              : 'bg-[var(--accent-50)] text-[var(--accent-700)]'
             : modoOscuro
             ? 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
             : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800'
@@ -888,7 +888,7 @@ function FichaCodigo({ tipo, modoOscuro }: { tipo: CodigoTipo; modoOscuro: boole
                   target="_blank"
                   rel="noopener noreferrer"
                   className={`inline-flex items-center gap-1 underline ${
-                    modoOscuro ? 'text-emerald-400 hover:text-emerald-300' : 'text-emerald-700 hover:text-emerald-800'
+                    modoOscuro ? 'text-[var(--accent-400)] hover:text-[var(--accent-300)]' : 'text-[var(--accent-700)] hover:text-[var(--accent-800)]'
                   }`}
                 >
                   Biblioteca del Congreso Nacional
@@ -917,8 +917,8 @@ function FichaCodigo({ tipo, modoOscuro }: { tipo: CodigoTipo; modoOscuro: boole
                         }}
                         className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border transition-colors ${
                           modoOscuro
-                            ? 'border-zinc-700 bg-zinc-800/50 text-emerald-400 hover:bg-zinc-800 hover:border-emerald-700'
-                            : 'border-zinc-200 bg-zinc-50 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300'
+                            ? 'border-zinc-700 bg-zinc-800/50 text-[var(--accent-400)] hover:bg-zinc-800 hover:border-[var(--accent-700)]'
+                            : 'border-zinc-200 bg-zinc-50 text-[var(--accent-700)] hover:bg-[var(--accent-50)] hover:border-[var(--accent-300)]'
                         }`}
                         title={`Abrir ${nombreCortoMetadata(relTipo)} en el Explorador`}
                       >
@@ -967,7 +967,7 @@ function PantallaCargandoCodigo({ modoOscuro }: { modoOscuro: boolean }) {
           animate={{ rotate: 360 }}
           transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
           className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3"
-          style={{ background: modoOscuro ? '#0F6E5625' : '#0F6E5610' }}
+          style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
         >
           <i className="ti ti-loader-2 text-2xl" style={{ color: VERDE }} />
         </motion.div>

@@ -23,7 +23,7 @@ const items: ItemMenu[] = [
   { id: 'admin', icono: 'ti-settings-2', label: 'Admin' },
 ]
 
-const VERDE = '#0F6E56'
+const VERDE = 'var(--accent-base)'
 
 export function Sidebar() {
   const vistaActiva = useStore((s) => s.vistaActiva)
@@ -124,7 +124,7 @@ export function Sidebar() {
                   activo
                     ? modoOscuro
                       ? 'bg-zinc-800 text-white'
-                      : 'bg-emerald-50 text-emerald-900'
+                      : 'bg-[var(--accent-50)] text-[var(--accent-900)]'
                     : modoOscuro
                     ? 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
                     : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900'
@@ -168,7 +168,7 @@ export function Sidebar() {
           >
             <span
               className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 relative"
-              style={{ background: modoOscuro ? '#0F6E5625' : '#0F6E5610' }}
+              style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
             >
               <i className="ti ti-books text-base" style={{ color: VERDE }} />
               {colapsado && (

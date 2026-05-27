@@ -10,7 +10,9 @@ import { ExploradorView } from './components/views/ExploradorView'
 import { HistorialView } from './components/views/HistorialView'
 import { AdminView } from './components/views/AdminView'
 import { PracticaView } from './components/views/PracticaView'
+import { useEffect } from 'react'
 import { useStore } from './store/useStore'
+import { aplicarTema } from './theme'
 import type { VistaId } from './types'
 
 const vistas: Record<VistaId, React.ComponentType> = {
@@ -28,7 +30,15 @@ const vistas: Record<VistaId, React.ComponentType> = {
 function App() {
   const vistaActiva = useStore((s) => s.vistaActiva)
   const modoOscuro = useStore((s) => s.modoOscuro)
+  const temaColor = useStore((s) => s.temaColor)
   const VistaComponente = vistas[vistaActiva]
+
+  // Aplicar el tema de color al :root cada vez que cambia. Se ejecuta también
+  // al montar la app, así si el usuario tenía guardada una preferencia previa
+  // (vía persist), la app aparece con su tema desde el primer pintado.
+  useEffect(() => {
+    aplicarTema(temaColor)
+  }, [temaColor])
 
   return (
     <div

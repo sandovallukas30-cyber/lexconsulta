@@ -7,7 +7,7 @@ import { useChat } from '../../hooks/useChat'
 import { CitaBlock } from '../ui/CitaBlock'
 import type { Mensaje } from '../../types'
 
-const VERDE = '#0F6E56'
+const VERDE = 'var(--accent-base)'
 
 const sugerenciasCiudadano = [
   '¿Cuántos días de vacaciones me corresponden?',
@@ -118,7 +118,7 @@ export function ConsultarView() {
             className={`flex items-end gap-2 p-2 rounded-2xl border-2 transition-colors ${
               modoOscuro
                 ? 'bg-zinc-900 border-zinc-800 focus-within:border-zinc-700'
-                : 'bg-white border-zinc-200 focus-within:border-emerald-600'
+                : 'bg-white border-zinc-200 focus-within:border-[var(--accent-600)]'
             }`}
           >
             <textarea
@@ -196,7 +196,7 @@ function Bienvenida({
       >
         <div
           className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
-          style={{ background: modoOscuro ? '#0F6E5625' : '#0F6E5610' }}
+          style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
         >
           <i className="ti ti-scale text-2xl" style={{ color: VERDE }} />
         </div>
@@ -219,7 +219,7 @@ function Bienvenida({
               className={`px-3 py-1.5 rounded-full text-xs transition-all border ${
                 modoOscuro
                   ? 'bg-zinc-900 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800 text-zinc-300'
-                  : 'bg-white border-zinc-200 hover:border-emerald-400 hover:bg-emerald-50/50 text-zinc-600'
+                  : 'bg-white border-zinc-200 hover:border-[var(--accent-400)] hover:bg-[var(--accent-50)]/50 text-zinc-600'
               }`}
             >
               <i className="ti ti-sparkles text-[11px] mr-1.5 opacity-60" />
@@ -406,8 +406,8 @@ function Feedback({ mensaje, modoOscuro }: { mensaje: Mensaje; modoOscuro: boole
     if (activo) {
       return color === 'verde'
         ? modoOscuro
-          ? 'bg-emerald-950/60 text-emerald-300 border-emerald-700'
-          : 'bg-emerald-50 text-emerald-800 border-emerald-300'
+          ? 'bg-[var(--accent-950)]/60 text-[var(--accent-300)] border-[var(--accent-700)]'
+          : 'bg-[var(--accent-50)] text-[var(--accent-800)] border-[var(--accent-300)]'
         : modoOscuro
         ? 'bg-rose-950/60 text-rose-300 border-rose-700'
         : 'bg-rose-50 text-rose-800 border-rose-300'
@@ -555,7 +555,7 @@ function resaltarArts(
       <span
         key={i}
         className={`font-semibold rounded px-1 ${
-          modoOscuro ? 'bg-emerald-950/60 text-emerald-300' : 'bg-emerald-50 text-emerald-800'
+          modoOscuro ? 'bg-[var(--accent-950)]/60 text-[var(--accent-300)]' : 'bg-[var(--accent-50)] text-[var(--accent-800)]'
         }`}
       >
         {p}

@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useStore } from '../../store/useStore'
+import { TEMAS, type TemaColorId } from '../../theme'
 
-const VERDE = '#0F6E56'
+const VERDE = 'var(--accent-base)'
 
-export type PestanaAcerca = 'acerca' | 'disclaimer' | 'privacidad' | 'terminos'
+export type PestanaAcerca = 'acerca' | 'apariencia' | 'disclaimer' | 'privacidad' | 'terminos'
 type Pestana = PestanaAcerca
 
 interface Props {
@@ -65,6 +66,9 @@ export function ModalAcercaDe({ abierto, onCerrar, pestanaInicial = 'acerca' }: 
               <Tab id="acerca" actual={pestana} onClick={setPestana} modoOscuro={modoOscuro}>
                 Acerca de
               </Tab>
+              <Tab id="apariencia" actual={pestana} onClick={setPestana} modoOscuro={modoOscuro}>
+                Apariencia
+              </Tab>
               <Tab id="disclaimer" actual={pestana} onClick={setPestana} modoOscuro={modoOscuro}>
                 Aviso legal
               </Tab>
@@ -78,6 +82,7 @@ export function ModalAcercaDe({ abierto, onCerrar, pestanaInicial = 'acerca' }: 
 
             <div className="flex-1 overflow-y-auto p-6">
               {pestana === 'acerca' && <Acerca modoOscuro={modoOscuro} />}
+              {pestana === 'apariencia' && <Apariencia modoOscuro={modoOscuro} />}
               {pestana === 'disclaimer' && <Disclaimer modoOscuro={modoOscuro} />}
               {pestana === 'privacidad' && <Privacidad modoOscuro={modoOscuro} />}
               {pestana === 'terminos' && <Terminos modoOscuro={modoOscuro} />}
@@ -202,6 +207,75 @@ function Feat({ icono, titulo, children }: { icono: string; titulo: string; chil
         <strong>{titulo}:</strong> {children}
       </span>
     </li>
+  )
+}
+
+function Apariencia({ modoOscuro }: { modoOscuro: boolean }) {
+  const temaActual = useStore((s) => s.temaColor)
+  const setTema = useStore((s) => s.setTemaColor)
+  return (
+    <div>
+      <H modoOscuro={modoOscuro}>Color de acento</H>
+      <P modoOscuro={modoOscuro}>
+        Elige el color que la app usa para los detalles: botones, citas resaltadas, íconos del sidebar y bordes
+        activos. El fondo (blanco o negro según tu modo) se mantiene igual.
+      </P>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mt-3">
+        {TEMAS.map((t) => {
+          const activo = t.id === temaActual
+          return (
+            <button
+              key={t.id}
+              onClick={() => setTema(t.id as TemaColorId)}
+              className={`group text-left rounded-xl border-2 p-3 transition-all hover:-translate-y-0.5 hover:shadow-md ${
+                activo
+                  ? modoOscuro
+                    ? 'bg-zinc-800 border-zinc-600'
+                    : 'bg-zinc-50 border-zinc-400'
+                  : modoOscuro
+                  ? 'bg-zinc-900 border-zinc-800 hover:border-zinc-700'
+                  : 'bg-white border-zinc-200 hover:border-zinc-300'
+              }`}
+              style={activo ? { borderColor: t.paleta.base } : undefined}
+            >
+              <div className="flex items-center gap-2 mb-1.5">
+                <div className="flex -space-x-1.5">
+                  {[t.paleta[300], t.paleta[500], t.paleta.base].map((c, i) => (
+                    <span
+                      key={i}
+                      className="w-5 h-5 rounded-full border-2"
+                      style={{
+                        background: c,
+                        borderColor: modoOscuro ? '#18181b' : '#ffffff',
+                      }}
+                    />
+                  ))}
+                </div>
+                <span className={`text-sm font-semibold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+                  {t.nombre}
+                </span>
+                {activo && (
+                  <i
+                    className="ti ti-check text-sm ml-auto"
+                    style={{ color: t.paleta.base }}
+                  />
+                )}
+              </div>
+              <p className={`text-[11px] leading-snug ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                {t.descripcion}
+              </p>
+            </button>
+          )
+        })}
+      </div>
+
+      <P modoOscuro={modoOscuro}>
+        <em className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
+          Tu elección se guarda en este navegador y se aplica cada vez que vuelvas.
+        </em>
+      </P>
+    </div>
   )
 }
 

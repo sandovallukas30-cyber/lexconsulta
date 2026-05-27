@@ -37,11 +37,11 @@ export function ModalPerfil() {
               modoOscuro ? 'bg-zinc-900' : 'bg-white'
             }`}
           >
-            <div className="px-8 py-6 text-center" style={{ background: '#0F6E56' }}>
+            <div className="px-8 py-6 text-center" style={{ background: 'var(--accent-base)' }}>
               <h2 className="text-2xl font-serif font-bold text-white">
                 Bienvenido a Prima Lex
               </h2>
-              <p className="text-emerald-50 mt-2 text-sm">
+              <p className="text-[var(--accent-50)] mt-2 text-sm">
                 Selecciona tu perfil para adaptar el lenguaje y las funciones
               </p>
             </div>
@@ -97,16 +97,16 @@ function PerfilCard({ icono, titulo, descripcion, seleccionado, onClick, modoOsc
       onClick={onClick}
       className={`p-6 rounded-xl border-2 text-left transition-all ${
         seleccionado
-          ? 'border-emerald-600'
+          ? 'border-[var(--accent-600)]'
           : modoOscuro
           ? 'border-zinc-800 hover:border-zinc-700'
           : 'border-zinc-200 hover:border-zinc-300'
       } ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-50'}`}
-      style={seleccionado ? { background: modoOscuro ? '#0F6E5615' : '#0F6E5608' } : undefined}
+      style={seleccionado ? { background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 8%, transparent)' : 'color-mix(in srgb, var(--accent-base) 3%, transparent)' } : undefined}
     >
       <div
         className="w-12 h-12 rounded-lg flex items-center justify-center mb-3"
-        style={{ background: '#0F6E56', color: 'white' }}
+        style={{ background: 'var(--accent-base)', color: 'white' }}
       >
         <i className={`ti ${icono} text-2xl`} />
       </div>

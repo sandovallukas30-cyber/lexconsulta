@@ -24,7 +24,7 @@ import {
 import { SelectorCodigo } from '../ui/SelectorCodigo'
 import type { Articulo, CodigoTipo } from '../../types'
 
-const VERDE = '#0F6E56'
+const VERDE = 'var(--accent-base)'
 const MORADO = '#8B4789'
 const VISIBLES_POR_COLUMNA = 6
 const ONBOARDING_KEY = 'prima-lex-mapa-onboarding-visto'
@@ -452,7 +452,7 @@ function MapaInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: CodigoTipo; 
             animate={{ rotate: 360 }}
             transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
             className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3"
-            style={{ background: modoOscuro ? '#0F6E5625' : '#0F6E5610' }}
+            style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
           >
             <i className="ti ti-loader-2 text-2xl" style={{ color: VERDE }} />
           </motion.div>
@@ -513,8 +513,8 @@ function MapaInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: CodigoTipo; 
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs cursor-pointer transition-colors ${
             soloMismoLibro
               ? modoOscuro
-                ? 'bg-emerald-950/60 text-emerald-300'
-                : 'bg-emerald-50 text-emerald-800'
+                ? 'bg-[var(--accent-950)]/60 text-[var(--accent-300)]'
+                : 'bg-[var(--accent-50)] text-[var(--accent-800)]'
               : modoOscuro
               ? 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
               : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
@@ -689,8 +689,8 @@ function NodoArticuloMapa({ data }: NodeProps<Node<MapaNodoData>>) {
         className={`block w-full text-left rounded-xl border-2 transition-all hover:shadow-lg hover:scale-[1.02] ${
           esRaiz
             ? modoOscuro
-              ? 'bg-emerald-950/60 shadow-md'
-              : 'bg-emerald-50/90 shadow-md'
+              ? 'bg-[var(--accent-950)]/60 shadow-md'
+              : 'bg-[var(--accent-50)]/90 shadow-md'
             : modoOscuro
             ? 'bg-zinc-800'
             : 'bg-white'
@@ -730,8 +730,8 @@ function NodoMas({ data }: NodeProps<Node<MasNodoData>>) {
         onClick={onAccion}
         className={`w-full rounded-xl border-2 border-dashed transition-all hover:scale-[1.02] hover:shadow-md ${
           modoOscuro
-            ? 'bg-zinc-900 border-zinc-700 hover:border-emerald-700 text-zinc-300'
-            : 'bg-white border-zinc-300 hover:border-emerald-500 text-zinc-700'
+            ? 'bg-zinc-900 border-zinc-700 hover:border-[var(--accent-700)] text-zinc-300'
+            : 'bg-white border-zinc-300 hover:border-[var(--accent-500)] text-zinc-700'
         }`}
         style={{ padding: '12px' }}
       >
@@ -810,7 +810,7 @@ function PanelDetalle({
           {esRaiz ? (
             <span
               className={`text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded ${
-                modoOscuro ? 'bg-emerald-950/60 text-emerald-300' : 'bg-emerald-50 text-emerald-800'
+                modoOscuro ? 'bg-[var(--accent-950)]/60 text-[var(--accent-300)]' : 'bg-[var(--accent-50)] text-[var(--accent-800)]'
               }`}
             >
               Centro actual
@@ -1238,7 +1238,7 @@ function EmptyState({ modoOscuro, onElegir }: { modoOscuro: boolean; onElegir: (
       <div className="max-w-md text-center">
         <div
           className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-5"
-          style={{ background: modoOscuro ? '#0F6E5625' : '#0F6E5610' }}
+          style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
         >
           <i className="ti ti-network text-4xl" style={{ color: VERDE }} />
         </div>

@@ -6,7 +6,7 @@ import { CitaBlock } from '../ui/CitaBlock'
 import { SelectorCodigo } from '../ui/SelectorCodigo'
 import type { AreaSituacion, PreguntaSituacion, ResultadoSituacion } from '../../types'
 
-const VERDE = '#0F6E56'
+const VERDE = 'var(--accent-base)'
 
 export function SituacionView() {
   const modoOscuro = useStore((s) => s.modoOscuro)
@@ -107,7 +107,7 @@ function PantallaEleccion({
       <div className="max-w-2xl mx-auto px-8 py-16 text-center">
         <div
           className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
-          style={{ background: modoOscuro ? '#0F6E5625' : '#0F6E5610' }}
+          style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
         >
           <i className="ti ti-clock-bolt text-3xl" style={{ color: VERDE }} />
         </div>
@@ -143,7 +143,7 @@ function PantallaEleccion({
         </button>
         <div
           className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
-          style={{ background: modoOscuro ? '#0F6E5625' : '#0F6E5610' }}
+          style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
         >
           <i className="ti ti-list-numbers text-3xl" style={{ color: VERDE }} />
         </div>
@@ -165,14 +165,14 @@ function PantallaEleccion({
             onClick={() => onElegir(area.id)}
             className={`group text-left rounded-xl border-2 p-5 transition-all hover:shadow-lg hover:-translate-y-0.5 ${
               modoOscuro
-                ? 'bg-zinc-800/40 border-zinc-800 hover:border-emerald-700'
-                : 'bg-white border-zinc-200 hover:border-emerald-500'
+                ? 'bg-zinc-800/40 border-zinc-800 hover:border-[var(--accent-700)]'
+                : 'bg-white border-zinc-200 hover:border-[var(--accent-500)]'
             }`}
           >
             <div className="flex items-start gap-3">
               <span
                 className="w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ background: modoOscuro ? '#0F6E5630' : '#0F6E5615' }}
+                style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 19%, transparent)' : 'color-mix(in srgb, var(--accent-base) 8%, transparent)' }}
               >
                 <i className={`ti ${area.icono} text-xl`} style={{ color: VERDE }} />
               </span>
@@ -324,8 +324,8 @@ function InputPregunta({
               className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
                 seleccionado
                   ? modoOscuro
-                    ? 'bg-emerald-950/40 border-emerald-700'
-                    : 'bg-emerald-50/80 border-emerald-500'
+                    ? 'bg-[var(--accent-950)]/40 border-[var(--accent-700)]'
+                    : 'bg-[var(--accent-50)]/80 border-[var(--accent-500)]'
                   : modoOscuro
                   ? 'bg-zinc-800/40 border-zinc-800 hover:border-zinc-700'
                   : 'bg-white border-zinc-200 hover:border-zinc-300'
@@ -359,8 +359,8 @@ function InputPregunta({
         min={0}
         className={`w-full px-4 py-3 rounded-xl border-2 outline-none text-lg transition-colors ${
           modoOscuro
-            ? 'bg-zinc-800 border-zinc-700 focus:border-emerald-600 text-white placeholder:text-zinc-500'
-            : 'bg-white border-zinc-200 focus:border-emerald-500 text-zinc-900 placeholder:text-zinc-400'
+            ? 'bg-zinc-800 border-zinc-700 focus:border-[var(--accent-600)] text-white placeholder:text-zinc-500'
+            : 'bg-white border-zinc-200 focus:border-[var(--accent-500)] text-zinc-900 placeholder:text-zinc-400'
         }`}
       />
     )
@@ -374,8 +374,8 @@ function InputPregunta({
         onChange={(e) => onCambio(e.target.value)}
         className={`w-full px-4 py-3 rounded-xl border-2 outline-none text-base transition-colors ${
           modoOscuro
-            ? 'bg-zinc-800 border-zinc-700 focus:border-emerald-600 text-white'
-            : 'bg-white border-zinc-200 focus:border-emerald-500 text-zinc-900'
+            ? 'bg-zinc-800 border-zinc-700 focus:border-[var(--accent-600)] text-white'
+            : 'bg-white border-zinc-200 focus:border-[var(--accent-500)] text-zinc-900'
         }`}
       />
     )
@@ -389,8 +389,8 @@ function InputPregunta({
       rows={4}
       className={`w-full px-4 py-3 rounded-xl border-2 outline-none text-base leading-relaxed resize-none transition-colors ${
         modoOscuro
-          ? 'bg-zinc-800 border-zinc-700 focus:border-emerald-600 text-white placeholder:text-zinc-500'
-          : 'bg-white border-zinc-200 focus:border-emerald-500 text-zinc-900 placeholder:text-zinc-400'
+          ? 'bg-zinc-800 border-zinc-700 focus:border-[var(--accent-600)] text-white placeholder:text-zinc-500'
+          : 'bg-white border-zinc-200 focus:border-[var(--accent-500)] text-zinc-900 placeholder:text-zinc-400'
       }`}
     />
   )
@@ -406,7 +406,7 @@ function PantallaAnalizando({ modoOscuro }: { modoOscuro: boolean }) {
           animate={{ rotate: 360 }}
           transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
           className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
-          style={{ background: modoOscuro ? '#0F6E5625' : '#0F6E5610' }}
+          style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
         >
           <i className="ti ti-sparkles text-3xl" style={{ color: VERDE }} />
         </motion.div>
@@ -453,7 +453,7 @@ function PantallaResultado({
         <div className="flex items-center gap-3">
           <span
             className="w-11 h-11 rounded-lg flex items-center justify-center"
-            style={{ background: modoOscuro ? '#0F6E5630' : '#0F6E5615' }}
+            style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 19%, transparent)' : 'color-mix(in srgb, var(--accent-base) 8%, transparent)' }}
           >
             <i className={`ti ${area.icono} text-xl`} style={{ color: VERDE }} />
           </span>

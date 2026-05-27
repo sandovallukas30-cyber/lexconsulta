@@ -1,6 +1,24 @@
 @import url('https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css');
 @import "tailwindcss";
 
+/* === Paleta de acento (tema esmeralda por defecto) ===
+   Los valores reales los sobreescribe JS al cargar el tema persistido del usuario.
+   Si JS no corre, esta paleta garantiza que la app sigue luciendo como siempre. */
+:root {
+  --accent-50:  #ecfdf5;
+  --accent-100: #d1fae5;
+  --accent-200: #a7f3d0;
+  --accent-300: #6ee7b7;
+  --accent-400: #34d399;
+  --accent-500: #10b981;
+  --accent-600: #0F6E56;
+  --accent-700: #0F6E56;
+  --accent-800: #065f46;
+  --accent-900: #064e3b;
+  --accent-950: #022c22;
+  --accent-base: #0F6E56;
+}
+
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; width: 100%; overflow: hidden; }
 

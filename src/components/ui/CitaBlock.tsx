@@ -10,7 +10,7 @@ interface Props {
 export function CitaBlock({ cita }: Props) {
   const [expandido, setExpandido] = useState(false)
   const modoOscuro = useStore((s) => s.modoOscuro)
-  const color = '#0F6E56'
+  const color = 'var(--accent-base)'
 
   return (
     <div

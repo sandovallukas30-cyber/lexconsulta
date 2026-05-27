@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import type { CategoriaCodigo, CodigoActivo } from '../../types'
 
-const VERDE = '#0F6E56'
+const VERDE = 'var(--accent-base)'
 
 const tituloCategoria: Record<CategoriaCodigo, string> = {
   fundamentales: 'Fundamentales',

@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import type { TemaColorId } from '../theme'
 
 // Devuelve el índice de la próxima letra "pendiente" del rosco, partiendo desde
 // la posición actual + 1 y volviendo al principio si es necesario (rosco
@@ -84,6 +85,8 @@ interface AppState {
   finalizarPartidaPasapalabra: () => void
   abandonarPartidaPasapalabra: () => void
   decrementarTiempoPasapalabra: (segundos: number) => void
+  temaColor: TemaColorId
+  setTemaColor: (id: TemaColorId) => void
 }
 
 const codigosIniciales: CodigoActivo[] = [
@@ -125,6 +128,7 @@ export const useStore = create<AppState>()(
       acercaAbierto: false,
       acercaPestana: 'acerca',
       partidaPasapalabra: null,
+      temaColor: 'esmeralda' as TemaColorId,
       consultaActivaId: null,
       codigoExploradorActivo: null,
       codigoMapaActivo: null,
@@ -262,6 +266,7 @@ export const useStore = create<AppState>()(
           return { partidaPasapalabra: { ...s.partidaPasapalabra, finalizada: Date.now(), pausadaEn: null } }
         }),
       abandonarPartidaPasapalabra: () => set({ partidaPasapalabra: null }),
+      setTemaColor: (id) => set({ temaColor: id }),
       decrementarTiempoPasapalabra: (segundos) =>
         set((s) => {
           const p = s.partidaPasapalabra
@@ -290,6 +295,7 @@ export const useStore = create<AppState>()(
         sidebarColapsado: s.sidebarColapsado,
         modernizarLenguaje: s.modernizarLenguaje,
         partidaPasapalabra: s.partidaPasapalabra,
+        temaColor: s.temaColor,
       }),
       migrate: (persisted: unknown, version: number) => {
         if (version < 3) {
