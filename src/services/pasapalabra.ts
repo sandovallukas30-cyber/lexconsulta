@@ -33,10 +33,11 @@ Reglas estrictas:
 1. Sin tecnicismos extranjeros ni términos de otros sistemas (CC español, common law). Solo derecho chileno.
 2. La definición NO debe contener la palabra-respuesta ni sus declinaciones obvias.
 3. Cada definición: 1 frase, máximo 25 palabras. Clara, técnica, sin rodeos.
-4. Cada entrada DEBE incluir el código u norma chilena de respaldo cuando sea posible: una de las siguientes siglas en "codigoOrigen": con, civ, pen, lab, tri, com, pci, ppe, cot, min, agu, san, mil, pad, acc, dro, kar. Y un "articulo" como "Art. 161" o "Art. 19 N° 3".
-5. Si la palabra no se puede vincular a un artículo específico (concepto doctrinario general), omite codigoOrigen y articulo, pero sé conservador.
-6. Para K, Ñ, W, X, Y usa "contiene" con palabras conocidas (ej. K → "Karin" si aplica al área laboral; Ñ → "compañía" o "señalamiento"; X → "exhorto" en procesal; Y → "ayuda" o "leyes"; W → "Warrant").
-7. Devuelve ÚNICAMENTE un arreglo JSON, sin texto adicional, sin markdown, sin backticks.
+4. **REDACCIÓN PULIDA**: usa siempre los artículos definidos (el, la, los, las) cuando correspondan en castellano. Por ejemplo: "entre las veintidós horas y las seis horas" (no "entre veintidós horas y seis horas"); "el cónyuge sobreviviente" (no "cónyuge sobreviviente" sin artículo cuando es sujeto). Evita estilo telegráfico.
+5. Cada entrada DEBE incluir el código u norma chilena de respaldo cuando sea posible: una de las siguientes siglas en "codigoOrigen": con, civ, pen, lab, tri, com, pci, ppe, cot, min, agu, san, mil, pad, acc, dro, kar. Y un "articulo" como "Art. 161" o "Art. 19 N° 3".
+6. Si la palabra no se puede vincular a un artículo específico (concepto doctrinario general), omite codigoOrigen y articulo, pero sé conservador.
+7. Para K, Ñ, W, X, Y usa "contiene" con palabras conocidas (ej. K → "Karin" si aplica al área laboral; Ñ → "compañía" o "señalamiento"; X → "exhorto" en procesal; Y → "ayuda" o "leyes"; W → "Warrant").
+8. Devuelve ÚNICAMENTE un arreglo JSON, sin texto adicional, sin markdown, sin backticks.
 
 Esquema de cada entrada:
 {

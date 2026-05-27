@@ -8,7 +8,7 @@ const VERDE = '#0F6E56'
 const DURACION_DEFAULT = 300 // 5 minutos
 
 const AREAS: { id: AreaPractica; nombre: string; icono: string; descripcion: string }[] = [
-  { id: 'general', nombre: 'General', icono: 'ti-shuffle', descripcion: 'Mezcla de todas las ramas' },
+  { id: 'general', nombre: 'General', icono: 'ti-arrows-shuffle', descripcion: 'Mezcla de todas las ramas' },
   { id: 'civil', nombre: 'Civil', icono: 'ti-scale', descripcion: 'Contratos, familia, sucesiones, propiedad' },
   { id: 'penal', nombre: 'Penal', icono: 'ti-shield-exclamation', descripcion: 'Delitos, penas y leyes especiales' },
   { id: 'laboral', nombre: 'Laboral', icono: 'ti-briefcase', descripcion: 'Código del Trabajo, Ley 16.744, Karin' },
