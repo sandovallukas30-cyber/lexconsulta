@@ -108,6 +108,8 @@ const codigosIniciales: CodigoActivo[] = [
   { tipo: 'acc', nombre: 'Ley 16.744 - Accidentes del Trabajo y Enfermedades Profesionales', nombreCorto: 'Accidentes del Trabajo', descripcion: 'Seguro social obligatorio: mutuales, prestaciones, prevención e indemnizaciones', categoria: 'especiales', activo: true, cargado: true },
   { tipo: 'dro', nombre: 'Ley 20.000 - Sanciona el Tráfico Ilícito de Estupefacientes', nombreCorto: 'Ley de Drogas', descripcion: 'Tipifica y sanciona delitos sobre estupefacientes y sustancias sicotrópicas', categoria: 'especiales', activo: true, cargado: true },
   { tipo: 'kar', nombre: 'Ley 21.643 - Ley Karin (acoso y violencia laboral)', nombreCorto: 'Ley Karin', descripcion: 'Modifica el Código del Trabajo y estatutos administrativos para prevenir y sancionar acoso laboral, sexual y violencia en el trabajo', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'ins', nombre: 'Ley 20.720 - Reorganización y Liquidación (Insolvencia)', nombreCorto: 'Insolvencia', descripcion: 'Procedimientos concursales de reorganización y liquidación de empresas y personas deudoras', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'fam', nombre: 'Ley 19.968 - Tribunales de Familia', nombreCorto: 'Tribunales de Familia', descripcion: 'Crea los tribunales de familia y regula los procedimientos en materia de familia, alimentos, cuidado personal y VIF', categoria: 'especiales', activo: true, cargado: true },
 ]
 
 export const useStore = create<AppState>()(
@@ -283,7 +285,7 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'prima-lex-storage-v3',
-      version: 17,
+      version: 18,
       partialize: (s) => ({
         perfil: s.perfil,
         codigos: s.codigos,
@@ -302,9 +304,9 @@ export const useStore = create<AppState>()(
           const state = persisted as { codigos?: unknown }
           return { ...(state ?? {}), codigos: codigosIniciales }
         }
-        if (version < 17) {
-          // v11-16: refrescar metadatos. v17: mover Justicia Militar (mil) de
-          // 'especiales' a 'procedimentales' (es un Código, no una ley especial).
+        if (version < 18) {
+          // v11-17: refrescar metadatos. v18: incorporar Ley 20.720 (ins) y
+          // Ley 19.968 (fam) como leyes especiales cargadas.
           const state = persisted as { codigos?: CodigoActivo[] }
           const prefs = new Map<string, boolean>()
           if (Array.isArray(state.codigos)) {

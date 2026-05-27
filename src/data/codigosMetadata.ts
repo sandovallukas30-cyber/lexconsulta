@@ -43,7 +43,7 @@ export const CODIGOS_METADATA: Record<string, CodigoMetadata> = {
     fuenteUrl: 'https://www.bcn.cl/leychile/navegar?idNorma=172986',
     fechaIndexacion: '2026-05-23',
     notas: 'Texto refundido por DFL 1 / 2000. Incorpora múltiples leyes posteriores hasta esa fecha.',
-    relacionadas: ['com', 'pci', 'agu', 'min'],
+    relacionadas: ['com', 'pci', 'agu', 'min', 'fam'],
   },
   lab: {
     tipo: 'lab',
@@ -78,7 +78,7 @@ export const CODIGOS_METADATA: Record<string, CodigoMetadata> = {
     fuenteUrl: 'https://www.bcn.cl/leychile/navegar?idNorma=1974',
     fechaIndexacion: '2026-05-23',
     notas: 'Texto histórico. Muchas materias hoy reguladas por leyes especiales (sociedades, quiebras, mercado de valores).',
-    relacionadas: ['civ', 'pci'],
+    relacionadas: ['civ', 'pci', 'ins'],
   },
   pci: {
     tipo: 'pci',
@@ -176,6 +176,24 @@ export const CODIGOS_METADATA: Record<string, CodigoMetadata> = {
     notas: 'Regula prácticamente toda la actividad relacionada con salud pública en Chile: alimentos, medicamentos, ejercicio profesional, profilaxis, residuos, cementerios y donación de órganos. Fuertemente complementado por reglamentos del Ministerio de Salud (DTO).',
     relacionadas: ['pad', 'pen'],
   },
+  ins: {
+    tipo: 'ins',
+    nombreOficial: 'Ley 20.720 — Reorganización y Liquidación de Activos de Empresas y Personas Deudoras',
+    norma: 'Ley 20.720, publicada el 9 de enero de 2014',
+    fuenteUrl: 'https://www.bcn.cl/leychile/navegar?idNorma=1058072',
+    fechaIndexacion: '2026-05-25',
+    notas: 'Reemplazó el antiguo Libro IV del Código de Comercio sobre quiebras. Crea la Superintendencia de Insolvencia y Reemprendimiento y los procedimientos de reorganización y liquidación tanto para empresas como para personas naturales.',
+    relacionadas: ['com', 'civ', 'pci'],
+  },
+  fam: {
+    tipo: 'fam',
+    nombreOficial: 'Ley 19.968 — Crea los Tribunales de Familia',
+    norma: 'Ley 19.968, publicada el 30 de agosto de 2004',
+    fuenteUrl: 'https://www.bcn.cl/leychile/navegar?idNorma=229557',
+    fechaIndexacion: '2026-05-25',
+    notas: 'Crea la judicatura especializada de familia y regula el procedimiento aplicable a divorcio, cuidado personal, alimentos, violencia intrafamiliar, adopción y demás materias del derecho de familia. Modificada por Ley 20.286 y otras.',
+    relacionadas: ['civ', 'pci', 'cot'],
+  },
 }
 
 /** Devuelve el nombre corto (3-4 palabras) usado en enlaces de la ficha. */
@@ -198,6 +216,8 @@ export function nombreCortoMetadata(tipo: CodigoTipo): string {
     acc: 'Ley 16.744 (Accidentes)',
     dro: 'Ley 20.000 (Drogas)',
     kar: 'Ley 21.643 (Karin)',
+    ins: 'Ley 20.720 (Insolvencia)',
+    fam: 'Ley 19.968 (Trib. Familia)',
   }
   return nombres[tipo] ?? tipo
 }
