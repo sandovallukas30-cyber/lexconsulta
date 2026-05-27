@@ -30,6 +30,7 @@ export type CategoriaCodigo =
   | 'sustantivos'
   | 'procedimentales'
   | 'especiales'
+  | 'tratados'
 
 export type VistaId =
   | 'consultar'

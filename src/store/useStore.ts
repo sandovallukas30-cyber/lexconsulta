@@ -90,8 +90,8 @@ interface AppState {
 }
 
 const codigosIniciales: CodigoActivo[] = [
-  { tipo: 'con', nombre: 'Constitución Política', nombreCorto: 'Constitución', descripcion: 'Carta fundamental de la República', categoria: 'fundamentales', activo: true, cargado: true, bloqueado: true },
-  { tipo: 'tra', nombre: 'Tratados Internacionales', nombreCorto: 'Tratados', descripcion: 'Convenios internacionales ratificados por Chile', categoria: 'fundamentales', activo: true, cargado: false, bloqueado: true },
+  { tipo: 'con', nombre: 'Constitución Política', nombreCorto: 'Constitución', descripcion: 'Carta fundamental de la República', categoria: 'fundamentales', activo: true, cargado: true },
+  { tipo: 'tra', nombre: 'Otros tratados internacionales', nombreCorto: 'Tratados', descripcion: 'Otros convenios internacionales ratificados por Chile (próximamente)', categoria: 'tratados', activo: false, cargado: false },
   { tipo: 'civ', nombre: 'Código Civil', nombreCorto: 'Civil', descripcion: 'Relaciones civiles, contratos, propiedad y familia', categoria: 'sustantivos', activo: true, cargado: true },
   { tipo: 'pen', nombre: 'Código Penal', nombreCorto: 'Penal', descripcion: 'Delitos y penas correspondientes', categoria: 'sustantivos', activo: true, cargado: true },
   { tipo: 'lab', nombre: 'Código del Trabajo', nombreCorto: 'Trabajo', descripcion: 'Legislación laboral y derechos de los trabajadores', categoria: 'sustantivos', activo: true, cargado: true },
@@ -112,7 +112,7 @@ const codigosIniciales: CodigoActivo[] = [
   { tipo: 'fam', nombre: 'Ley 19.968 - Tribunales de Familia', nombreCorto: 'Tribunales de Familia', descripcion: 'Crea los tribunales de familia y regula los procedimientos en materia de familia, alimentos, cuidado personal y VIF', categoria: 'especiales', activo: true, cargado: true },
   { tipo: 'trn', nombre: 'Ley 20.285 - Acceso a la Información Pública (Transparencia)', nombreCorto: 'Transparencia', descripcion: 'Principio de transparencia, derecho de acceso a la información de los órganos del Estado, Consejo para la Transparencia', categoria: 'especiales', activo: true, cargado: true },
   { tipo: 'rpa', nombre: 'Ley 20.084 - Responsabilidad Penal Adolescente', nombreCorto: 'Resp. Penal Adolescente', descripcion: 'Sistema especial de responsabilidad penal para adolescentes mayores de 14 y menores de 18 años', categoria: 'especiales', activo: true, cargado: true },
-  { tipo: 'pdc', nombre: 'Pacto Internacional de Derechos Civiles y Políticos', nombreCorto: 'Pacto Civiles y Políticos', descripcion: 'Tratado internacional de DDHH ratificado por Chile; en virtud del Art. 5° inc. 2° de la Constitución integra el bloque de constitucionalidad', categoria: 'fundamentales', activo: true, cargado: true },
+  { tipo: 'pdc', nombre: 'Pacto Internacional de Derechos Civiles y Políticos', nombreCorto: 'Pacto Civiles y Políticos', descripcion: 'Tratado internacional de DDHH ratificado por Chile; en virtud del Art. 5° inc. 2° de la Constitución integra el bloque de constitucionalidad', categoria: 'tratados', activo: true, cargado: true },
 ]
 
 export const useStore = create<AppState>()(
@@ -288,7 +288,7 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'prima-lex-storage-v3',
-      version: 20,
+      version: 21,
       partialize: (s) => ({
         perfil: s.perfil,
         codigos: s.codigos,
@@ -307,9 +307,10 @@ export const useStore = create<AppState>()(
           const state = persisted as { codigos?: unknown }
           return { ...(state ?? {}), codigos: codigosIniciales }
         }
-        if (version < 20) {
-          // v11-19: refrescar metadatos. v20: incorporar Pacto Internacional
-          // de Derechos Civiles y Políticos (pdc) como norma fundamental.
+        if (version < 21) {
+          // v11-20: refrescar metadatos. v21: nueva categoría 'tratados'; mover
+          // PIDCP y placeholder Tratados ahí; quitar bloqueo (preferencia del
+          // usuario) a Constitución y Tratados.
           const state = persisted as { codigos?: CodigoActivo[] }
           const prefs = new Map<string, boolean>()
           if (Array.isArray(state.codigos)) {

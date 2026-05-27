@@ -10,6 +10,7 @@ const tituloCategoria: Record<CategoriaCodigo, string> = {
   sustantivos: 'Códigos sustantivos',
   procedimentales: 'Códigos procedimentales',
   especiales: 'Leyes especiales',
+  tratados: 'Tratados internacionales',
 }
 
 const ordenCategorias: CategoriaCodigo[] = [
@@ -17,6 +18,7 @@ const ordenCategorias: CategoriaCodigo[] = [
   'sustantivos',
   'procedimentales',
   'especiales',
+  'tratados',
 ]
 
 interface Props {
@@ -47,6 +49,7 @@ export function ModalCodigos({ abierto, onCerrar }: Props) {
       sustantivos: [],
       procedimentales: [],
       especiales: [],
+      tratados: [],
     }
     for (const c of filtrados) {
       const cat = c.categoria ?? 'sustantivos'

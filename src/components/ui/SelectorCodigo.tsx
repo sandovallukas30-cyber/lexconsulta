@@ -36,10 +36,13 @@ export function SelectorCodigo({ titulo, descripcion, icono, onElegir }: Props) 
 
   const disponibles = lista.filter((c) => c.cargado)
   const pendientes = lista.filter((c) => !c.cargado)
-  // Dividir disponibles en dos secciones: códigos (incluye fundamentales,
-  // sustantivos y procedimentales) vs. leyes especiales.
-  const codigosDisponibles = disponibles.filter((c) => c.categoria !== 'especiales')
+  // Tres secciones: Códigos (fundamentales + sustantivos + procedimentales),
+  // Leyes especiales, y Tratados internacionales.
+  const codigosDisponibles = disponibles.filter(
+    (c) => c.categoria !== 'especiales' && c.categoria !== 'tratados'
+  )
   const leyesEspeciales = disponibles.filter((c) => c.categoria === 'especiales')
+  const tratadosDisponibles = disponibles.filter((c) => c.categoria === 'tratados')
 
   return (
     <div className={`h-full overflow-y-auto ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
@@ -108,6 +111,34 @@ export function SelectorCodigo({ titulo, descripcion, icono, onElegir }: Props) 
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {leyesEspeciales.map((c, i) => (
+                <CodigoCard
+                  key={c.tipo}
+                  codigo={c}
+                  onClick={() => onElegir(c.tipo)}
+                  modoOscuro={modoOscuro}
+                  delay={i * 0.03}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {tratadosDisponibles.length > 0 && (
+          <section className="mb-8">
+            <div className="flex items-baseline gap-2 mb-3">
+              <h2
+                className={`text-[11px] uppercase tracking-wider font-semibold ${
+                  modoOscuro ? 'text-zinc-500' : 'text-zinc-400'
+                }`}
+              >
+                Tratados internacionales ({tratadosDisponibles.length})
+              </h2>
+              <span className={`text-[10px] ${modoOscuro ? 'text-zinc-600' : 'text-zinc-400'}`}>
+                convenios ratificados por Chile (Art. 5 inc. 2° CPR)
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {tratadosDisponibles.map((c, i) => (
                 <CodigoCard
                   key={c.tipo}
                   codigo={c}
