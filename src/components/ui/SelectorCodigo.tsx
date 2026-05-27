@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
-import { motion } from 'framer-motion'
+import { useMemo, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { codigosCargados, obtenerCodigo } from '../../services/codigos'
 import type { CodigoTipo } from '../../types'
@@ -17,6 +17,7 @@ export function SelectorCodigo({ titulo, descripcion, icono, onElegir }: Props) 
   const codigos = useStore((s) => s.codigos)
   const modoOscuro = useStore((s) => s.modoOscuro)
   const cargados = codigosCargados()
+  const [tratadosAbierto, setTratadosAbierto] = useState(false)
 
   const lista = useMemo(() => {
     return codigos.map((c) => {
@@ -131,23 +132,68 @@ export function SelectorCodigo({ titulo, descripcion, icono, onElegir }: Props) 
                   modoOscuro ? 'text-zinc-500' : 'text-zinc-400'
                 }`}
               >
-                Tratados internacionales ({tratadosDisponibles.length})
+                Tratados internacionales
               </h2>
               <span className={`text-[10px] ${modoOscuro ? 'text-zinc-600' : 'text-zinc-400'}`}>
                 convenios ratificados por Chile (Art. 5 inc. 2° CPR)
               </span>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {tratadosDisponibles.map((c, i) => (
-                <CodigoCard
-                  key={c.tipo}
-                  codigo={c}
-                  onClick={() => onElegir(c.tipo)}
-                  modoOscuro={modoOscuro}
-                  delay={i * 0.03}
+
+            {/* Card-acordeón: una sola entrada que al abrirse despliega los tratados específicos. */}
+            <button
+              onClick={() => setTratadosAbierto((v) => !v)}
+              className={`w-full text-left rounded-xl border-2 p-5 transition-all ${
+                modoOscuro
+                  ? 'bg-zinc-800/40 border-zinc-800 hover:border-emerald-700'
+                  : 'bg-white border-zinc-200 hover:border-emerald-500'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <span
+                  className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 19%, transparent)' : 'color-mix(in srgb, var(--accent-base) 8%, transparent)' }}
+                >
+                  <i className="ti ti-world text-xl" style={{ color: 'var(--accent-base)' }} />
+                </span>
+                <div className="flex-1 min-w-0">
+                  <h3 className={`text-base font-serif font-semibold leading-tight ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+                    Tratados internacionales
+                  </h3>
+                  <p className={`text-[11px] mt-0.5 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                    {tratadosDisponibles.length} tratado{tratadosDisponibles.length !== 1 ? 's' : ''} indexado{tratadosDisponibles.length !== 1 ? 's' : ''}
+                    {' · '}
+                    {tratadosAbierto ? 'haz clic para ocultar' : 'haz clic para ver el detalle'}
+                  </p>
+                </div>
+                <i
+                  className={`ti ti-chevron-down text-xl transition-transform flex-shrink-0 ${tratadosAbierto ? 'rotate-180' : ''} ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}
                 />
-              ))}
-            </div>
+              </div>
+            </button>
+
+            <AnimatePresence initial={false}>
+              {tratadosAbierto && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.22 }}
+                  className="overflow-hidden"
+                >
+                  <div className="pl-6 pt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {tratadosDisponibles.map((c, i) => (
+                      <CodigoCard
+                        key={c.tipo}
+                        codigo={c}
+                        onClick={() => onElegir(c.tipo)}
+                        modoOscuro={modoOscuro}
+                        delay={i * 0.03}
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </section>
         )}
 

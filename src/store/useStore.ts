@@ -91,7 +91,6 @@ interface AppState {
 
 const codigosIniciales: CodigoActivo[] = [
   { tipo: 'con', nombre: 'Constitución Política', nombreCorto: 'Constitución', descripcion: 'Carta fundamental de la República', categoria: 'fundamentales', activo: true, cargado: true },
-  { tipo: 'tra', nombre: 'Otros tratados internacionales', nombreCorto: 'Tratados', descripcion: 'Otros convenios internacionales ratificados por Chile (próximamente)', categoria: 'tratados', activo: false, cargado: false },
   { tipo: 'civ', nombre: 'Código Civil', nombreCorto: 'Civil', descripcion: 'Relaciones civiles, contratos, propiedad y familia', categoria: 'sustantivos', activo: true, cargado: true },
   { tipo: 'pen', nombre: 'Código Penal', nombreCorto: 'Penal', descripcion: 'Delitos y penas correspondientes', categoria: 'sustantivos', activo: true, cargado: true },
   { tipo: 'lab', nombre: 'Código del Trabajo', nombreCorto: 'Trabajo', descripcion: 'Legislación laboral y derechos de los trabajadores', categoria: 'sustantivos', activo: true, cargado: true },
@@ -288,7 +287,7 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'prima-lex-storage-v3',
-      version: 21,
+      version: 22,
       partialize: (s) => ({
         perfil: s.perfil,
         codigos: s.codigos,
@@ -307,10 +306,10 @@ export const useStore = create<AppState>()(
           const state = persisted as { codigos?: unknown }
           return { ...(state ?? {}), codigos: codigosIniciales }
         }
-        if (version < 21) {
-          // v11-20: refrescar metadatos. v21: nueva categoría 'tratados'; mover
-          // PIDCP y placeholder Tratados ahí; quitar bloqueo (preferencia del
-          // usuario) a Constitución y Tratados.
+        if (version < 22) {
+          // v11-21: refrescar metadatos. v22: eliminar placeholder 'tra'
+          // (los tratados específicos se listan dentro de la sección
+          // expandible 'Tratados internacionales' del SelectorCodigo).
           const state = persisted as { codigos?: CodigoActivo[] }
           const prefs = new Map<string, boolean>()
           if (Array.isArray(state.codigos)) {
