@@ -36,6 +36,10 @@ export function SelectorCodigo({ titulo, descripcion, icono, onElegir }: Props) 
 
   const disponibles = lista.filter((c) => c.cargado)
   const pendientes = lista.filter((c) => !c.cargado)
+  // Dividir disponibles en dos secciones: códigos (incluye fundamentales,
+  // sustantivos y procedimentales) vs. leyes especiales.
+  const codigosDisponibles = disponibles.filter((c) => c.categoria !== 'especiales')
+  const leyesEspeciales = disponibles.filter((c) => c.categoria === 'especiales')
 
   return (
     <div className={`h-full overflow-y-auto ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
@@ -60,26 +64,61 @@ export function SelectorCodigo({ titulo, descripcion, icono, onElegir }: Props) 
           </p>
         </motion.div>
 
-        <section className="mb-8">
-          <h2
-            className={`text-[11px] uppercase tracking-wider font-semibold mb-3 ${
-              modoOscuro ? 'text-zinc-500' : 'text-zinc-400'
-            }`}
-          >
-            Disponibles ({disponibles.length})
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {disponibles.map((c, i) => (
-              <CodigoCard
-                key={c.tipo}
-                codigo={c}
-                onClick={() => onElegir(c.tipo)}
-                modoOscuro={modoOscuro}
-                delay={i * 0.03}
-              />
-            ))}
-          </div>
-        </section>
+        {codigosDisponibles.length > 0 && (
+          <section className="mb-8">
+            <div className="flex items-baseline gap-2 mb-3">
+              <h2
+                className={`text-[11px] uppercase tracking-wider font-semibold ${
+                  modoOscuro ? 'text-zinc-500' : 'text-zinc-400'
+                }`}
+              >
+                Códigos ({codigosDisponibles.length})
+              </h2>
+              <span className={`text-[10px] ${modoOscuro ? 'text-zinc-600' : 'text-zinc-400'}`}>
+                fundamentales, sustantivos y procedimentales
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {codigosDisponibles.map((c, i) => (
+                <CodigoCard
+                  key={c.tipo}
+                  codigo={c}
+                  onClick={() => onElegir(c.tipo)}
+                  modoOscuro={modoOscuro}
+                  delay={i * 0.03}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {leyesEspeciales.length > 0 && (
+          <section className="mb-8">
+            <div className="flex items-baseline gap-2 mb-3">
+              <h2
+                className={`text-[11px] uppercase tracking-wider font-semibold ${
+                  modoOscuro ? 'text-zinc-500' : 'text-zinc-400'
+                }`}
+              >
+                Leyes especiales ({leyesEspeciales.length})
+              </h2>
+              <span className={`text-[10px] ${modoOscuro ? 'text-zinc-600' : 'text-zinc-400'}`}>
+                normas que regulan materias específicas
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {leyesEspeciales.map((c, i) => (
+                <CodigoCard
+                  key={c.tipo}
+                  codigo={c}
+                  onClick={() => onElegir(c.tipo)}
+                  modoOscuro={modoOscuro}
+                  delay={i * 0.03}
+                />
+              ))}
+            </div>
+          </section>
+        )}
 
         {pendientes.length > 0 && (
           <section>
