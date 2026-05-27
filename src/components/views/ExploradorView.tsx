@@ -712,10 +712,14 @@ function ModalBusqueda({
       let score = 0
 
       if (qSoloIdArticulo && qNumPuro) {
-        // Búsqueda por identificador: solo importa el número del artículo,
-        // NO las menciones a ese número dentro del texto de otros artículos.
-        if (numArt === qNumPuro) score = 10000
-        else if (numArt.startsWith(qNumPuro)) score = 1000 - (numArt.length - qNumPuro.length)
+        // Búsqueda por identificador: el match por id pesa muchísimo más,
+        // así Art. 161 sale primero. Pero NO descartamos las menciones a
+        // ese número dentro del texto de otros artículos — solo quedan abajo.
+        if (numArt === qNumPuro) score += 10000
+        else if (numArt.startsWith(qNumPuro)) score += 1000 - (numArt.length - qNumPuro.length)
+        // Menciones del número en el texto (con peso bajo)
+        const lower = a.t.toLowerCase()
+        if (lower.includes(qNumPuro)) score += 5
       } else {
         // Búsqueda mixta o de texto libre.
         if (a.a.toLowerCase().includes(q)) score += 500
