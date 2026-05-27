@@ -244,8 +244,15 @@ export function CanvasView() {
             const nuevoContenido = res.contenidoNuevo
               ? `${n.data.contenido}${separador}${res.contenidoNuevo}`
               : n.data.contenido
+            // Liberar la altura fija para que el nodo se ajuste solo al
+            // contenido nuevo. Mantenemos el ancho que el usuario haya
+            // elegido. React Flow re-mide el nodo automáticamente cuando
+            // style.height pasa a undefined.
+            const { height: _altoViejo, ...restoStyle } = (n.style ?? {}) as Record<string, unknown>
+            void _altoViejo
             return {
               ...n,
+              style: restoStyle,
               data: {
                 ...n.data,
                 contenido: nuevoContenido,
@@ -885,7 +892,11 @@ function NodoBase(props: NodeProps<NodoFlow>) {
           borderLeftWidth: 5,
           borderLeftColor: color,
           width: '100%',
-          height: data.colapsado ? 'auto' : '100%',
+          // Si el nodo es colapsado o no tiene altura fija, dejamos que crezca
+          // con su contenido (auto). Si el usuario fijó una altura manual al
+          // arrastrar el resizer, la respetamos llenándola con min-height.
+          height: 'auto',
+          minHeight: data.colapsado ? undefined : '100%',
         }}
       >
         <Handle type="target" position={Position.Top} style={{ background: color, width: 8, height: 8 }} />
