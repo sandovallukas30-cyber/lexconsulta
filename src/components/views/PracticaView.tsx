@@ -222,9 +222,13 @@ function Pasapalabra({ partida, modoOscuro }: { partida: PartidaPasapalabra; mod
 
   return (
     <div className={`h-full overflow-y-auto ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
-      <div className="max-w-4xl mx-auto px-6 py-6">
-        {/* Header con stats */}
-        <div className="flex items-center justify-between mb-6">
+      {/* Header sticky: el tiempo siempre visible, aunque el usuario scrollee hacia el input */}
+      <div
+        className={`sticky top-0 z-10 backdrop-blur-sm border-b ${
+          modoOscuro ? 'bg-zinc-900/85 border-zinc-800' : 'bg-zinc-50/85 border-zinc-200'
+        }`}
+      >
+        <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className={`text-sm ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
             Área: <strong className={modoOscuro ? 'text-white' : 'text-zinc-900'}>{labelArea(partida.area)}</strong>
           </div>
@@ -239,14 +243,16 @@ function Pasapalabra({ partida, modoOscuro }: { partida: PartidaPasapalabra; mod
             <i className="ti ti-x text-sm" /> Abandonar
           </button>
         </div>
+      </div>
 
+      <div className="max-w-4xl mx-auto px-6 py-5">
         {/* Rosco visual */}
         <Rosco rosco={partida.rosco} letraActualIdx={partida.letraActualIdx} modoOscuro={modoOscuro} />
 
         {/* Panel central */}
         {actual && (
           <div
-            className={`max-w-2xl mx-auto mt-8 p-6 rounded-2xl border ${
+            className={`max-w-2xl mx-auto mt-4 p-5 rounded-2xl border ${
               modoOscuro ? 'bg-zinc-800/50 border-zinc-700' : 'bg-white border-zinc-200'
             }`}
           >
@@ -343,13 +349,22 @@ function Rosco({
   letraActualIdx: number
   modoOscuro: boolean
 }) {
-  const radio = 170
-  const tam = 40
+  // Letras más chicas + radio holgado: la circunferencia (2πr ≈ 1100) dividida
+  // por 27 letras deja unos 41 px por letra; con círculos de 30 px sobra ~11 px
+  // de espacio entre cada una.
+  const radio = 175
+  const tam = 30
   const centro = radio + tam
   const diametro = (radio + tam) * 2
   return (
     <div className="flex justify-center">
-      <svg width={diametro} height={diametro} viewBox={`0 0 ${diametro} ${diametro}`}>
+      <svg
+        width={diametro}
+        height={diametro}
+        viewBox={`0 0 ${diametro} ${diametro}`}
+        className="max-w-full h-auto"
+        style={{ maxHeight: '52vh' }}
+      >
         {rosco.map((r, i) => {
           const angulo = (i / rosco.length) * 2 * Math.PI - Math.PI / 2
           const x = centro + radio * Math.cos(angulo)
@@ -388,7 +403,7 @@ function Rosco({
                 y={y}
                 textAnchor="middle"
                 dominantBaseline="central"
-                fontSize={16}
+                fontSize={13}
                 fontWeight="600"
                 fontFamily="Georgia, serif"
                 fill={textFill}
