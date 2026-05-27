@@ -14,6 +14,7 @@ const moduloLabel: Record<VistaId, string> = {
   explorador: 'Explorador',
   historial: 'Historial',
   admin: 'Admin',
+  practica: 'Práctica',
 }
 
 const moduloIcono: Record<VistaId, string> = {
@@ -25,6 +26,7 @@ const moduloIcono: Record<VistaId, string> = {
   explorador: 'ti-book-2',
   historial: 'ti-history',
   admin: 'ti-settings-2',
+  practica: 'ti-puzzle',
 }
 
 export function HistorialView() {

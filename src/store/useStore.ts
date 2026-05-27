@@ -1,5 +1,17 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+
+// Devuelve el índice de la próxima letra "pendiente" del rosco, partiendo desde
+// la posición actual + 1 y volviendo al principio si es necesario (rosco
+// circular). Si no quedan pendientes, devuelve -1.
+function siguienteIdx(rosco: { estado: string }[], desde: number): number {
+  const n = rosco.length
+  for (let i = 1; i <= n; i++) {
+    const idx = (desde + i) % n
+    if (rosco[idx].estado === 'pendiente' || rosco[idx].estado === 'pasada') return idx
+  }
+  return -1
+}
 import type {
   PerfilUsuario,
   VistaId,
@@ -9,6 +21,7 @@ import type {
   Favorito,
   Mensaje,
   Canvas,
+  PartidaPasapalabra,
 } from '../types'
 
 interface AppState {
@@ -62,6 +75,15 @@ interface AppState {
   acercaPestana: 'acerca' | 'disclaimer' | 'privacidad' | 'terminos'
   abrirAcerca: (pestana?: 'acerca' | 'disclaimer' | 'privacidad' | 'terminos') => void
   cerrarAcerca: () => void
+  partidaPasapalabra: PartidaPasapalabra | null
+  iniciarPartidaPasapalabra: (partida: PartidaPasapalabra) => void
+  responderLetraActual: (resp: string, correcta: boolean) => void
+  pasarLetraActual: () => void
+  pausarPartidaPasapalabra: () => void
+  retomarPartidaPasapalabra: () => void
+  finalizarPartidaPasapalabra: () => void
+  abandonarPartidaPasapalabra: () => void
+  decrementarTiempoPasapalabra: (segundos: number) => void
 }
 
 const codigosIniciales: CodigoActivo[] = [
@@ -102,12 +124,23 @@ export const useStore = create<AppState>()(
       modalPerfilAbierto: false,
       acercaAbierto: false,
       acercaPestana: 'acerca',
+      partidaPasapalabra: null,
       consultaActivaId: null,
       codigoExploradorActivo: null,
       codigoMapaActivo: null,
 
       setPerfil: (perfil) => set({ perfil, modalPerfilAbierto: false }),
-      setVistaActiva: (vistaActiva) => set({ vistaActiva }),
+      setVistaActiva: (vistaActiva) =>
+        set((s) => {
+          // Si hay una partida de Pasapalabra en curso y el usuario sale de
+          // Práctica, pausarla automáticamente para preservar el tiempo restante.
+          const p = s.partidaPasapalabra
+          const debePausar =
+            vistaActiva !== 'practica' && p && !p.pausadaEn && !p.finalizada
+          return debePausar
+            ? { vistaActiva, partidaPasapalabra: { ...p!, pausadaEn: Date.now() } }
+            : { vistaActiva }
+        }),
       toggleCodigo: (tipo) =>
         set((s) => ({
           codigos: s.codigos.map((c) =>
@@ -191,6 +224,57 @@ export const useStore = create<AppState>()(
       cerrarModalPerfil: () => set({ modalPerfilAbierto: false }),
       abrirAcerca: (pestana = 'acerca') => set({ acercaAbierto: true, acercaPestana: pestana }),
       cerrarAcerca: () => set({ acercaAbierto: false }),
+
+      iniciarPartidaPasapalabra: (partida) => set({ partidaPasapalabra: partida }),
+      responderLetraActual: (resp, correcta) =>
+        set((s) => {
+          const p = s.partidaPasapalabra
+          if (!p) return {}
+          const rosco = p.rosco.map((r, i) =>
+            i === p.letraActualIdx
+              ? { ...r, estado: (correcta ? 'acertada' : 'fallada') as 'acertada' | 'fallada', respuestaUsuario: resp }
+              : r
+          )
+          return { partidaPasapalabra: { ...p, rosco, letraActualIdx: siguienteIdx(rosco, p.letraActualIdx) } }
+        }),
+      pasarLetraActual: () =>
+        set((s) => {
+          const p = s.partidaPasapalabra
+          if (!p) return {}
+          const rosco = p.rosco.map((r, i) =>
+            i === p.letraActualIdx && r.estado === 'pendiente' ? { ...r, estado: 'pasada' as const } : r
+          )
+          return { partidaPasapalabra: { ...p, rosco, letraActualIdx: siguienteIdx(rosco, p.letraActualIdx) } }
+        }),
+      pausarPartidaPasapalabra: () =>
+        set((s) => {
+          if (!s.partidaPasapalabra || s.partidaPasapalabra.pausadaEn || s.partidaPasapalabra.finalizada) return {}
+          return { partidaPasapalabra: { ...s.partidaPasapalabra, pausadaEn: Date.now() } }
+        }),
+      retomarPartidaPasapalabra: () =>
+        set((s) => {
+          if (!s.partidaPasapalabra) return {}
+          return { partidaPasapalabra: { ...s.partidaPasapalabra, pausadaEn: null } }
+        }),
+      finalizarPartidaPasapalabra: () =>
+        set((s) => {
+          if (!s.partidaPasapalabra) return {}
+          return { partidaPasapalabra: { ...s.partidaPasapalabra, finalizada: Date.now(), pausadaEn: null } }
+        }),
+      abandonarPartidaPasapalabra: () => set({ partidaPasapalabra: null }),
+      decrementarTiempoPasapalabra: (segundos) =>
+        set((s) => {
+          const p = s.partidaPasapalabra
+          if (!p || p.pausadaEn || p.finalizada) return {}
+          const nuevo = Math.max(0, p.segundosRestantes - segundos)
+          return {
+            partidaPasapalabra: {
+              ...p,
+              segundosRestantes: nuevo,
+              finalizada: nuevo === 0 ? Date.now() : null,
+            },
+          }
+        }),
     }),
     {
       name: 'prima-lex-storage-v3',
@@ -205,6 +289,7 @@ export const useStore = create<AppState>()(
         modoOscuro: s.modoOscuro,
         sidebarColapsado: s.sidebarColapsado,
         modernizarLenguaje: s.modernizarLenguaje,
+        partidaPasapalabra: s.partidaPasapalabra,
       }),
       migrate: (persisted: unknown, version: number) => {
         if (version < 3) {

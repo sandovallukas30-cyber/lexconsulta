@@ -35,6 +35,36 @@ export type VistaId =
   | 'explorador'
   | 'historial'
   | 'admin'
+  | 'practica'
+
+export type AreaPractica = 'general' | 'civil' | 'penal' | 'laboral' | 'procesal' | 'constitucional'
+
+export type ModoLetra = 'empieza' | 'contiene'
+export type EstadoLetra = 'pendiente' | 'acertada' | 'fallada' | 'pasada'
+
+export interface EntradaRosco {
+  letra: string // 'A' .. 'Z' incluyendo 'Ñ'
+  modo: ModoLetra
+  palabra: string // respuesta correcta (sin tildes ni mayúsculas para comparar)
+  palabraVisible: string // forma "bonita" para mostrar en el resumen
+  definicion: string
+  codigoOrigen?: CodigoTipo
+  articulo?: string
+  estado: EstadoLetra
+  respuestaUsuario?: string
+}
+
+export interface PartidaPasapalabra {
+  id: string
+  area: AreaPractica
+  rosco: EntradaRosco[]
+  letraActualIdx: number // posición en el rosco
+  segundosRestantes: number
+  pausadaEn: number | null // timestamp en que se pausó (null si corriendo o terminada)
+  iniciada: number
+  finalizada: number | null
+  duracionTotalSeg: number // duración originalmente otorgada (default 300)
+}
 
 export type TipoNodoCanvas = 'definicion' | 'articulos' | 'caso' | 'libre' | 'concepto'
 

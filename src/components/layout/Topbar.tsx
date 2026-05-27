@@ -9,6 +9,7 @@ const titulos: Record<string, string> = {
   explorador: 'Explorador de códigos',
   historial: 'Historial',
   admin: 'Administración',
+  practica: 'Práctica · Pasapalabra',
 }
 
 export function Topbar() {

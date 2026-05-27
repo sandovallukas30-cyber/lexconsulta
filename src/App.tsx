@@ -9,6 +9,7 @@ import { MapaView } from './components/views/MapaView'
 import { ExploradorView } from './components/views/ExploradorView'
 import { HistorialView } from './components/views/HistorialView'
 import { AdminView } from './components/views/AdminView'
+import { PracticaView } from './components/views/PracticaView'
 import { useStore } from './store/useStore'
 import type { VistaId } from './types'
 
@@ -21,6 +22,7 @@ const vistas: Record<VistaId, React.ComponentType> = {
   explorador: ExploradorView,
   historial: HistorialView,
   admin: AdminView,
+  practica: PracticaView,
 }
 
 function App() {

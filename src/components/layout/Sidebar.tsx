@@ -18,6 +18,7 @@ const items: ItemMenu[] = [
   { id: 'comparar', icono: 'ti-versions', label: 'Comparar' },
   { id: 'mapa', icono: 'ti-network', label: 'Mapa' },
   { id: 'explorador', icono: 'ti-book-2', label: 'Explorador' },
+  { id: 'practica', icono: 'ti-puzzle', label: 'Práctica' },
   { id: 'historial', icono: 'ti-history', label: 'Historial' },
   { id: 'admin', icono: 'ti-settings-2', label: 'Admin' },
 ]
