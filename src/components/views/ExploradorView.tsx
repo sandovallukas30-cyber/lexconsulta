@@ -695,15 +695,46 @@ function ModalBusqueda({
   const resultados = useMemo(() => {
     const q = busqueda.trim().toLowerCase()
     if (!q) return arts.slice(0, 50)
-    const qNum = q.replace(/[^\d]/g, '')
-    return arts
-      .filter((a) => {
-        const numMatch = qNum && a.a.replace(/[^\d]/g, '').startsWith(qNum)
-        const textMatch = a.t.toLowerCase().includes(q)
-        const labelMatch = a.a.toLowerCase().includes(q)
-        return numMatch || textMatch || labelMatch
-      })
+
+    // Si lo que escribió parece un identificador de artículo puro
+    // (ej. "161", "art 161", "art. 161", "artículo 161°"), buscamos por
+    // número de artículo en vez de por contenido — es lo que el usuario
+    // normalmente espera al teclear solo el número.
+    const matchSoloId = q.match(/^(?:art(?:[íi]culo)?\.?\s*)?(\d+)\s*[°ºo]?\s*$/i)
+    const qSoloIdArticulo = matchSoloId !== null
+    const qNumPuro = matchSoloId ? matchSoloId[1] : null
+
+    type Puntuado = { a: typeof arts[number]; score: number }
+    const puntuados: Puntuado[] = []
+
+    for (const a of arts) {
+      const numArt = a.a.replace(/[^\d]/g, '')
+      let score = 0
+
+      if (qSoloIdArticulo && qNumPuro) {
+        // Búsqueda por identificador: solo importa el número del artículo,
+        // NO las menciones a ese número dentro del texto de otros artículos.
+        if (numArt === qNumPuro) score = 10000
+        else if (numArt.startsWith(qNumPuro)) score = 1000 - (numArt.length - qNumPuro.length)
+      } else {
+        // Búsqueda mixta o de texto libre.
+        if (a.a.toLowerCase().includes(q)) score += 500
+        const lower = a.t.toLowerCase()
+        if (lower.includes(q)) score += 100
+        // Bonus por palabras individuales del query (>2 chars)
+        const palabras = q.split(/\s+/).filter((w) => w.length > 2)
+        for (const w of palabras) {
+          if (lower.includes(w)) score += 10
+        }
+      }
+
+      if (score > 0) puntuados.push({ a, score })
+    }
+
+    return puntuados
+      .sort((x, y) => y.score - x.score)
       .slice(0, 50)
+      .map((p) => p.a)
   }, [arts, busqueda])
 
   useEffect(() => {
