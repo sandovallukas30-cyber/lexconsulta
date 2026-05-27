@@ -4,7 +4,7 @@ import { useStore } from '../../store/useStore'
 import { useCodigo } from '../../hooks/useCodigo'
 import { SelectorCodigo } from '../ui/SelectorCodigo'
 import { modernizar, necesitaModernizacion } from '../../services/moderniza'
-import { obtenerMetadata, formatearFechaIndexacion } from '../../data/codigosMetadata'
+import { obtenerMetadata, formatearFechaIndexacion, nombreCortoMetadata } from '../../data/codigosMetadata'
 import type { Articulo, CodigoTipo } from '../../types'
 
 const VERDE = '#0F6E56'
@@ -826,6 +826,7 @@ function FichaCodigo({ tipo, modoOscuro }: { tipo: CodigoTipo; modoOscuro: boole
   const [abierto, setAbierto] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const meta = obtenerMetadata(tipo)
+  const setCodigoExplorador = useStore((s) => s.setCodigoExplorador)
 
   useEffect(() => {
     if (!abierto) return
@@ -903,6 +904,30 @@ function FichaCodigo({ tipo, modoOscuro }: { tipo: CodigoTipo; modoOscuro: boole
                   <i className="ti ti-alert-triangle text-xs mt-0.5 flex-shrink-0" />
                   <span>{meta.notas}</span>
                 </div>
+              )}
+              {meta.relacionadas && meta.relacionadas.length > 0 && (
+                <FichaFila label="Ver también" modoOscuro={modoOscuro}>
+                  <div className="flex flex-wrap gap-1.5">
+                    {meta.relacionadas.map((relTipo) => (
+                      <button
+                        key={relTipo}
+                        onClick={() => {
+                          setCodigoExplorador(relTipo)
+                          setAbierto(false)
+                        }}
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border transition-colors ${
+                          modoOscuro
+                            ? 'border-zinc-700 bg-zinc-800/50 text-emerald-400 hover:bg-zinc-800 hover:border-emerald-700'
+                            : 'border-zinc-200 bg-zinc-50 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300'
+                        }`}
+                        title={`Abrir ${nombreCortoMetadata(relTipo)} en el Explorador`}
+                      >
+                        <i className="ti ti-link text-[10px]" />
+                        {nombreCortoMetadata(relTipo)}
+                      </button>
+                    ))}
+                  </div>
+                </FichaFila>
               )}
               <p className={`text-[10px] leading-relaxed pt-1 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
                 La fecha indica cuándo se procesó el PDF oficial. <strong>Puede no incluir reformas legales posteriores</strong>. Verifica siempre contra el texto vigente en la fuente.
