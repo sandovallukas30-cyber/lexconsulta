@@ -171,21 +171,21 @@ function Acerca({ modoOscuro }: { modoOscuro: boolean }) {
         </Feat>
       </ul>
 
-      <H modoOscuro={modoOscuro}>Normas indexadas (15)</H>
+      <H modoOscuro={modoOscuro}>Normas indexadas (17)</H>
       <P modoOscuro={modoOscuro}>
         <strong>Códigos:</strong> Constitución · Civil · Penal · Trabajo · Tributario · Comercio · Procedimiento Civil ·
-        Procesal Penal · Orgánico de Tribunales · Minería · Aguas.
+        Procesal Penal · Orgánico de Tribunales · Minería · Aguas · Sanitario · Justicia Militar.
         <br />
         <strong>Leyes especiales:</strong> Ley 19.880 (Procedimiento Administrativo) · Ley 16.744 (Accidentes del Trabajo) ·
         Ley 20.000 (Drogas) · Ley 21.643 (Karin).
         <br />
-        <strong>+9.000 artículos</strong> oficiales de la Biblioteca del Congreso Nacional de Chile (leychile.cl).
+        <strong>+9.700 artículos</strong> oficiales de la Biblioteca del Congreso Nacional de Chile (leychile.cl).
       </P>
 
       <H modoOscuro={modoOscuro}>Próximamente</H>
       <P modoOscuro={modoOscuro}>
         Módulo de Comparación de normas · Panel de administración de jurisprudencia · Tratados internacionales ·
-        Código Sanitario y de Justicia Militar · Otras leyes especiales prioritarias.
+        Otras leyes especiales prioritarias.
       </P>
 
       <H modoOscuro={modoOscuro}>Versión</H>

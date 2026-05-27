@@ -139,6 +139,22 @@ export const CODIGOS_METADATA: Record<string, CodigoMetadata> = {
     fechaIndexacion: '2026-05-25',
     notas: 'LEY MODIFICATORIA. Sus 6 artículos no contienen regulación autónoma sino que insertan o sustituyen artículos en: Código del Trabajo (Art. 211-A a 211-E), Ley 18.575 (Bases de la Administración), Ley 18.834 (Estatuto Administrativo), Ley 18.883 (Municipalidades) y Ley 18.695 (Orgánica de Municipalidades). El texto vigente del Código del Trabajo indexado en Prima Lex ya debería contener estos cambios.',
   },
+  mil: {
+    tipo: 'mil',
+    nombreOficial: 'Código de Justicia Militar',
+    norma: 'DTO 2.226, publicado el 19 de diciembre de 1944',
+    fuenteUrl: 'https://www.bcn.cl/leychile/navegar?idNorma=18914',
+    fechaIndexacion: '2026-05-25',
+    notas: 'Cuerpo histórico (1944) sustancialmente modificado por la Ley 20.477 (2010), que restringió la competencia de los tribunales militares respecto de civiles. Su aplicación práctica se concentra hoy en delitos cometidos por militares en servicio.',
+  },
+  san: {
+    tipo: 'san',
+    nombreOficial: 'Código Sanitario',
+    norma: 'DFL 725, publicado el 31 de enero de 1968',
+    fuenteUrl: 'https://www.bcn.cl/leychile/navegar?idNorma=5595',
+    fechaIndexacion: '2026-05-25',
+    notas: 'Regula prácticamente toda la actividad relacionada con salud pública en Chile: alimentos, medicamentos, ejercicio profesional, profilaxis, residuos, cementerios y donación de órganos. Fuertemente complementado por reglamentos del Ministerio de Salud (DTO).',
+  },
 }
 
 export function obtenerMetadata(tipo: CodigoTipo): CodigoMetadata | null {

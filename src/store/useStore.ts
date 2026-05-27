@@ -73,13 +73,13 @@ const codigosIniciales: CodigoActivo[] = [
   { tipo: 'tri', nombre: 'Código Tributario', nombreCorto: 'Tributario', descripcion: 'Impuestos y obligaciones fiscales', categoria: 'sustantivos', activo: true, cargado: true },
   { tipo: 'com', nombre: 'Código de Comercio', nombreCorto: 'Comercio', descripcion: 'Actividades comerciales y sociedades', categoria: 'sustantivos', activo: true, cargado: true },
   { tipo: 'agu', nombre: 'Código de Aguas', nombreCorto: 'Aguas', descripcion: 'Uso y administración de recursos hídricos', categoria: 'sustantivos', activo: true, cargado: true },
-  { tipo: 'san', nombre: 'Código Sanitario', nombreCorto: 'Sanitario', descripcion: 'Salud pública y servicios sanitarios', categoria: 'sustantivos', activo: false, cargado: false },
+  { tipo: 'san', nombre: 'Código Sanitario', nombreCorto: 'Sanitario', descripcion: 'Salud pública, productos farmacéuticos, ejercicio de profesiones de la salud y servicios sanitarios', categoria: 'sustantivos', activo: true, cargado: true },
   { tipo: 'min', nombre: 'Código de Minería', nombreCorto: 'Minería', descripcion: 'Explotación y regulación de recursos mineros', categoria: 'sustantivos', activo: true, cargado: true },
   { tipo: 'pci', nombre: 'Código de Procedimiento Civil', nombreCorto: 'Proc. Civil', descripcion: 'Normas sobre procesos judiciales civiles', categoria: 'procedimentales', activo: true, cargado: true },
   { tipo: 'ppe', nombre: 'Código Procesal Penal', nombreCorto: 'Proc. Penal', descripcion: 'Reglas de los procesos penales', categoria: 'procedimentales', activo: true, cargado: true },
   { tipo: 'pad', nombre: 'Ley 19.880 - Bases del Procedimiento Administrativo', nombreCorto: 'Proc. Admin.', descripcion: 'Reglas que rigen los actos de los órganos del Estado y su relación con los ciudadanos', categoria: 'especiales', activo: true, cargado: true },
   { tipo: 'cot', nombre: 'Código Orgánico de Tribunales', nombreCorto: 'Orgánico Tribunales', descripcion: 'Organización y atribuciones de los tribunales chilenos', categoria: 'procedimentales', activo: true, cargado: true },
-  { tipo: 'mil', nombre: 'Código de Justicia Militar', nombreCorto: 'Justicia Militar', descripcion: 'Disciplina y procedimientos en las Fuerzas Armadas', categoria: 'especiales', activo: false, cargado: false },
+  { tipo: 'mil', nombre: 'Código de Justicia Militar', nombreCorto: 'Justicia Militar', descripcion: 'Organización de los tribunales militares, delitos y procedimientos en las Fuerzas Armadas y de Orden', categoria: 'especiales', activo: true, cargado: true },
   { tipo: 'acc', nombre: 'Ley 16.744 - Accidentes del Trabajo y Enfermedades Profesionales', nombreCorto: 'Accidentes del Trabajo', descripcion: 'Seguro social obligatorio: mutuales, prestaciones, prevención e indemnizaciones', categoria: 'especiales', activo: true, cargado: true },
   { tipo: 'dro', nombre: 'Ley 20.000 - Sanciona el Tráfico Ilícito de Estupefacientes', nombreCorto: 'Ley de Drogas', descripcion: 'Tipifica y sanciona delitos sobre estupefacientes y sustancias sicotrópicas', categoria: 'especiales', activo: true, cargado: true },
   { tipo: 'kar', nombre: 'Ley 21.643 - Ley Karin (acoso y violencia laboral)', nombreCorto: 'Ley Karin', descripcion: 'Modifica el Código del Trabajo y estatutos administrativos para prevenir y sancionar acoso laboral, sexual y violencia en el trabajo', categoria: 'especiales', activo: true, cargado: true },
@@ -194,7 +194,7 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'prima-lex-storage-v3',
-      version: 15,
+      version: 16,
       partialize: (s) => ({
         perfil: s.perfil,
         codigos: s.codigos,
@@ -211,8 +211,8 @@ export const useStore = create<AppState>()(
           const state = persisted as { codigos?: unknown }
           return { ...(state ?? {}), codigos: codigosIniciales }
         }
-        if (version < 15) {
-          // v11-14: refrescar metadatos. v15: mover Ley 19.880 (pad) a categoría 'especiales'.
+        if (version < 16) {
+          // v11-15: refrescar metadatos. v16: cargar Código Sanitario (san) y Justicia Militar (mil).
           const state = persisted as { codigos?: CodigoActivo[] }
           const prefs = new Map<string, boolean>()
           if (Array.isArray(state.codigos)) {
