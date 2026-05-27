@@ -176,15 +176,16 @@ function Acerca({ modoOscuro }: { modoOscuro: boolean }) {
         </Feat>
       </ul>
 
-      <H modoOscuro={modoOscuro}>Normas indexadas (19)</H>
+      <H modoOscuro={modoOscuro}>Normas indexadas (21)</H>
       <P modoOscuro={modoOscuro}>
         <strong>Códigos:</strong> Constitución · Civil · Penal · Trabajo · Tributario · Comercio · Procedimiento Civil ·
         Procesal Penal · Orgánico de Tribunales · Minería · Aguas · Sanitario · Justicia Militar.
         <br />
         <strong>Leyes especiales:</strong> Ley 19.880 (Proc. Administrativo) · Ley 16.744 (Accidentes del Trabajo) ·
-        Ley 20.000 (Drogas) · Ley 21.643 (Karin) · Ley 20.720 (Insolvencia) · Ley 19.968 (Tribunales de Familia).
+        Ley 20.000 (Drogas) · Ley 21.643 (Karin) · Ley 20.720 (Insolvencia) · Ley 19.968 (Tribunales de Familia) ·
+        Ley 20.285 (Transparencia) · Ley 20.084 (Resp. Penal Adolescente).
         <br />
-        <strong>+10.300 artículos</strong> oficiales de la Biblioteca del Congreso Nacional de Chile (leychile.cl).
+        <strong>+10.500 artículos</strong> oficiales de la Biblioteca del Congreso Nacional de Chile (leychile.cl).
       </P>
 
       <H modoOscuro={modoOscuro}>Próximamente</H>

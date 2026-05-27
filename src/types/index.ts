@@ -21,6 +21,8 @@ export type CodigoTipo =
   | 'kar'
   | 'ins'
   | 'fam'
+  | 'trn'
+  | 'rpa'
 
 export type CategoriaCodigo =
   | 'fundamentales'

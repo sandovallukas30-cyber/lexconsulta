@@ -110,6 +110,8 @@ const codigosIniciales: CodigoActivo[] = [
   { tipo: 'kar', nombre: 'Ley 21.643 - Ley Karin (acoso y violencia laboral)', nombreCorto: 'Ley Karin', descripcion: 'Modifica el Código del Trabajo y estatutos administrativos para prevenir y sancionar acoso laboral, sexual y violencia en el trabajo', categoria: 'especiales', activo: true, cargado: true },
   { tipo: 'ins', nombre: 'Ley 20.720 - Reorganización y Liquidación (Insolvencia)', nombreCorto: 'Insolvencia', descripcion: 'Procedimientos concursales de reorganización y liquidación de empresas y personas deudoras', categoria: 'especiales', activo: true, cargado: true },
   { tipo: 'fam', nombre: 'Ley 19.968 - Tribunales de Familia', nombreCorto: 'Tribunales de Familia', descripcion: 'Crea los tribunales de familia y regula los procedimientos en materia de familia, alimentos, cuidado personal y VIF', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'trn', nombre: 'Ley 20.285 - Acceso a la Información Pública (Transparencia)', nombreCorto: 'Transparencia', descripcion: 'Principio de transparencia, derecho de acceso a la información de los órganos del Estado, Consejo para la Transparencia', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'rpa', nombre: 'Ley 20.084 - Responsabilidad Penal Adolescente', nombreCorto: 'Resp. Penal Adolescente', descripcion: 'Sistema especial de responsabilidad penal para adolescentes mayores de 14 y menores de 18 años', categoria: 'especiales', activo: true, cargado: true },
 ]
 
 export const useStore = create<AppState>()(
@@ -285,7 +287,7 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'prima-lex-storage-v3',
-      version: 18,
+      version: 19,
       partialize: (s) => ({
         perfil: s.perfil,
         codigos: s.codigos,
@@ -304,9 +306,9 @@ export const useStore = create<AppState>()(
           const state = persisted as { codigos?: unknown }
           return { ...(state ?? {}), codigos: codigosIniciales }
         }
-        if (version < 18) {
-          // v11-17: refrescar metadatos. v18: incorporar Ley 20.720 (ins) y
-          // Ley 19.968 (fam) como leyes especiales cargadas.
+        if (version < 19) {
+          // v11-18: refrescar metadatos. v19: incorporar Ley 20.285 (trn) y
+          // Ley 20.084 (rpa) como leyes especiales cargadas.
           const state = persisted as { codigos?: CodigoActivo[] }
           const prefs = new Map<string, boolean>()
           if (Array.isArray(state.codigos)) {

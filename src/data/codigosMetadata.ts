@@ -34,7 +34,7 @@ export const CODIGOS_METADATA: Record<string, CodigoMetadata> = {
     norma: 'DTO 100 (texto refundido, coordinado y sistematizado)',
     fuenteUrl: 'https://www.bcn.cl/leychile/navegar?idNorma=242302',
     fechaIndexacion: '2026-05-22',
-    relacionadas: ['cot', 'pad'],
+    relacionadas: ['cot', 'pad', 'trn'],
   },
   civ: {
     tipo: 'civ',
@@ -61,7 +61,7 @@ export const CODIGOS_METADATA: Record<string, CodigoMetadata> = {
     fuenteUrl: 'https://www.bcn.cl/leychile/navegar?idNorma=1984',
     fechaIndexacion: '2026-05-22',
     notas: 'Texto histórico con lenguaje del siglo XIX. Reformado por múltiples leyes especiales posteriores.',
-    relacionadas: ['ppe', 'dro', 'mil'],
+    relacionadas: ['ppe', 'dro', 'mil', 'rpa'],
   },
   tri: {
     tipo: 'tri',
@@ -194,6 +194,24 @@ export const CODIGOS_METADATA: Record<string, CodigoMetadata> = {
     notas: 'Crea la judicatura especializada de familia y regula el procedimiento aplicable a divorcio, cuidado personal, alimentos, violencia intrafamiliar, adopción y demás materias del derecho de familia. Modificada por Ley 20.286 y otras.',
     relacionadas: ['civ', 'pci', 'cot'],
   },
+  trn: {
+    tipo: 'trn',
+    nombreOficial: 'Ley 20.285 — Sobre Acceso a la Información Pública',
+    norma: 'Ley 20.285, publicada el 20 de agosto de 2008',
+    fuenteUrl: 'https://www.bcn.cl/leychile/navegar?idNorma=276363',
+    fechaIndexacion: '2026-05-25',
+    notas: 'Conocida como "Ley de Transparencia". Consagra el derecho de acceso a la información pública, establece el principio de transparencia activa y crea el Consejo para la Transparencia (CPLT) como órgano garante. Causales tasadas de reserva en el artículo 21.',
+    relacionadas: ['con', 'pad'],
+  },
+  rpa: {
+    tipo: 'rpa',
+    nombreOficial: 'Ley 20.084 — Establece un sistema de responsabilidad penal de los adolescentes',
+    norma: 'Ley 20.084, publicada el 7 de diciembre de 2005',
+    fuenteUrl: 'https://www.bcn.cl/leychile/navegar?idNorma=244803',
+    fechaIndexacion: '2026-05-25',
+    notas: 'Sistema penal especial para adolescentes mayores de 14 y menores de 18 años. Sustituye penas del Código Penal por sanciones específicas (régimen cerrado, semicerrado, libertad asistida, servicios en beneficio de la comunidad). Modificada por Ley 21.527 y otras.',
+    relacionadas: ['pen', 'ppe', 'fam'],
+  },
 }
 
 /** Devuelve el nombre corto (3-4 palabras) usado en enlaces de la ficha. */
@@ -218,6 +236,8 @@ export function nombreCortoMetadata(tipo: CodigoTipo): string {
     kar: 'Ley 21.643 (Karin)',
     ins: 'Ley 20.720 (Insolvencia)',
     fam: 'Ley 19.968 (Trib. Familia)',
+    trn: 'Ley 20.285 (Transparencia)',
+    rpa: 'Ley 20.084 (RPA)',
   }
   return nombres[tipo] ?? tipo
 }
