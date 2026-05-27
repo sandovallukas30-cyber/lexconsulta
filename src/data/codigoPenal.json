@@ -2,7 +2,7 @@
   "codigo": "Código Penal",
   "tipo": "pen",
   "fuente": "Código Penal, publicado 12-NOV-1874, última versión 28-NOV-2025",
-  "total_articulos": 674,
+  "total_articulos": 672,
   "total_transitorios": 0,
   "articulos": [
     {
@@ -294,8 +294,8 @@
       "parrafo": null
     },
     {
-      "a": "Art. 32",
-      "t": "BIS\n\nLa imposición del presidio perpetuo calificado importa la privación de libertad del condenado de por vida, bajo un régimen especial de cumplimiento que se rige por las siguientes reglas:\n\n1.ª No se podrá conceder la libertad condicional sino una vez transcurridos cuarenta años de privación de libertad efectiva, debiendo en todo caso darse cumplimiento a las demás normas y requisitos que regulen su otorgamiento y revocación;\n\n2.ª El condenado no podrá ser favorecido con ninguno de los beneficios que contemple el reglamento de establecimientos penitenciarios, o cualquier otro cuerpo legal o reglamentario, que importe su puesta en libertad, aun en forma transitoria. Sin perjuicio de ello, podrá autorizarse su salida, con las medidas de seguridad que se requieran, cuando su cónyuge, su conviviente civil, o alguno de sus padres o hijos se encontrare en inminente riesgo de muerte o hubiere fallecido;\n\n3.ª No se favorecerá al condenado por las leyes que concedan amnistía ni indultos generales, salvo que se le hagan expresamente aplicables. Asimismo, sólo procederá a su respecto el indulto particular por razones de Estado o por el padecimiento de un estado de salud grave e irrecuperable, debidamente acreditado, que importe inminente riesgo de muerte o inutilidad física de tal magnitud que le impida valerse por sí mismo. En todo caso el beneficio del indulto deberá ser concedido de conformidad a las normas legales que lo regulen.",
+      "a": "Art. 32 bis",
+      "t": "La imposición del presidio perpetuo calificado importa la privación de libertad del condenado de por vida, bajo un régimen especial de cumplimiento que se rige por las siguientes reglas:\n\n1.ª No se podrá conceder la libertad condicional sino una vez transcurridos cuarenta años de privación de libertad efectiva, debiendo en todo caso darse cumplimiento a las demás normas y requisitos que regulen su otorgamiento y revocación;\n\n2.ª El condenado no podrá ser favorecido con ninguno de los beneficios que contemple el reglamento de establecimientos penitenciarios, o cualquier otro cuerpo legal o reglamentario, que importe su puesta en libertad, aun en forma transitoria. Sin perjuicio de ello, podrá autorizarse su salida, con las medidas de seguridad que se requieran, cuando su cónyuge, su conviviente civil, o alguno de sus padres o hijos se encontrare en inminente riesgo de muerte o hubiere fallecido;\n\n3.ª No se favorecerá al condenado por las leyes que concedan amnistía ni indultos generales, salvo que se le hagan expresamente aplicables. Asimismo, sólo procederá a su respecto el indulto particular por razones de Estado o por el padecimiento de un estado de salud grave e irrecuperable, debidamente acreditado, que importe inminente riesgo de muerte o inutilidad física de tal magnitud que le impida valerse por sí mismo. En todo caso el beneficio del indulto deberá ser concedido de conformidad a las normas legales que lo regulen.",
       "libro": "PRIMERO",
       "titulo": "TERCERO — DE LAS PENAS. § I. De las penas en general.",
       "capitulo": null,
@@ -2950,8 +2950,8 @@
       "parrafo": null
     },
     {
-      "a": "Art. 297",
-      "t": "BIS\n\nCuando las amenazas se hicieren contra los profesionales y funcionarios de los establecimientos de salud, públicos o privados, o contra los profesionales, funcionarios y manipuladores de alimentos de establecimientos educacionales, públicos o privados, al interior de sus dependencias o mientras éstos se encontraren en el ejercicio de sus funciones o en razón, con motivo u ocasión de ellas, se impondrá el grado máximo o el máximum de las penas previstas en los dos artículos anteriores en sus respectivos casos.",
+      "a": "Art. 297 bis",
+      "t": "Cuando las amenazas se hicieren contra los profesionales y funcionarios de los establecimientos de salud, públicos o privados, o contra los profesionales, funcionarios y manipuladores de alimentos de establecimientos educacionales, públicos o privados, al interior de sus dependencias o mientras éstos se encontraren en el ejercicio de sus funciones o en razón, con motivo u ocasión de ellas, se impondrá el grado máximo o el máximum de las penas previstas en los dos artículos anteriores en sus respectivos casos.",
       "libro": "SEGUNDO — CRÍMENES Y SIMPLES DELITOS Y SUS PENAS.",
       "titulo": "SEXTO — DE LOS CRÍMENES Y SIMPLES DELITOS CONTRA EL ORDEN Y LA SEGURIDAD PÚBLICOS COMETIDOS POR PARTICULARES.",
       "capitulo": null,
@@ -5224,22 +5224,6 @@
     {
       "a": "Art. 483",
       "t": "Se presume responsable de un incendio al comerciante en cuya casa o establecimiento tiene origen aquél, si no justificare con sus libros, documentos u otra clase de prueba, que no reportaba provecho alguno del siniestro.\n\nSe presume también responsable de un incendio al comerciante cuyo seguro sea exageradamente superior al valor real del objeto asegurado en el momento de producirse el siniestro. En los casos de seguros con pólizas flotantes se presumirá responsable al comerciante que, en la declaración inmediatamente anterior al siniestro, declare valores manifiestamente superiores a sus existencias. Asimismo, se presume responsable si en todo o en parte a disminuido o retirado las cosas aseguradas del lugar señalado en la póliza respectiva sin motivo justificado o sin dar aviso previo al asegurador.\n\nLas presunciones de este artículo no obstan a la apreciación de la prueba en conciencia.",
-      "libro": "SEGUNDO — CRÍMENES Y SIMPLES DELITOS Y SUS PENAS.",
-      "titulo": "NOVENO — CRÍMENES Y SIMPLES DELITOS CONTRA LA PROPIEDAD. § I. De la apropiación de las cosas muebles ajenas contra",
-      "capitulo": null,
-      "parrafo": null
-    },
-    {
-      "a": "Art. 483",
-      "t": "a)\n\nEl contador o cualquiera persona que falsee o adultere la contabilidad del comerciante que sufra un siniestro, será sancionado con la pena señalada en el inciso segundo del artículo 197; pero no le afectará responsabilidad al contador por las existencias y precios inventariados.",
-      "libro": "SEGUNDO — CRÍMENES Y SIMPLES DELITOS Y SUS PENAS.",
-      "titulo": "NOVENO — CRÍMENES Y SIMPLES DELITOS CONTRA LA PROPIEDAD. § I. De la apropiación de las cosas muebles ajenas contra",
-      "capitulo": null,
-      "parrafo": null
-    },
-    {
-      "a": "Art. 483",
-      "t": "b)\n\nA los comerciantes responsables del delito de incendio se les aplicará también una multa de veintiuna a cincuenta unidades tributarias mensuales, tomándose en cuenta para graduarla la naturaleza, entidad y gravedad del siniestro y las facultades económicas del condenado.\n\nSi no se paga la multa el condenado sufrirá por vía de sustitución y apremio, un día de reclusión por un un quinto de unidad tributaria mensual de multa, no pudiendo exceder la reclusión de seis meses.\n\nLa multa impuesta se mantendrá en una cuenta especial a la orden de la Superintendencia de Compañia de Seguros Sociedades Anónimas y Bolsas de Comercio, la cual anualmente la distribuirá proporcionalmente entre los distintos Cuerpos de Bomberos en el país.\n\n§ X.\n\nDe los daños.",
       "libro": "SEGUNDO — CRÍMENES Y SIMPLES DELITOS Y SUS PENAS.",
       "titulo": "NOVENO — CRÍMENES Y SIMPLES DELITOS CONTRA LA PROPIEDAD. § I. De la apropiación de las cosas muebles ajenas contra",
       "capitulo": null,

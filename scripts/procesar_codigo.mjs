@@ -245,6 +245,61 @@ for (let i = 0; i < cleaned.length; i++) {
 
 flush();
 
+// ============ Dedup post-flush ============
+// Tres casos a resolver:
+// 1. BIS/TER perdido: dos entradas comparten id porque la segunda empieza con
+//    "BIS", "TER", "QUÁTER" etc. Renombramos.
+// 2. Numeración que reinicia por un cuerpo adjunto en el PDF (reglamento,
+//    DTO complementario, otra ley en la misma página). Mantenemos solo la
+//    primera ocurrencia, que corresponde al texto principal.
+// 3. Fragmentos parásitos (notas, encabezados) parseados como artículos.
+//    Si la segunda ocurrencia empieza con marcadores no-articulo, se descarta.
+const SUFIJOS_BIS = /^(bis|ter|qu[áa]ter|quinquies|sexies|septies|octies|novies|decies)\b/i;
+const RE_RUIDO_INICIO = /^(?:N[°ºo]\s*\d|NOTA\b|D\.O\.|Lei\b|LEY\s+N[°º])/i;
+
+const dedupResumen = { renombrados: 0, descartados: 0 };
+const idsCount = new Map();
+for (const a of articulos) idsCount.set(a.a, (idsCount.get(a.a) || 0) + 1);
+
+const articulosFinal = [];
+const idsVistosFinal = new Set();
+for (const a of articulos) {
+  if (!idsVistosFinal.has(a.a)) {
+    articulosFinal.push(a);
+    idsVistosFinal.add(a.a);
+    continue;
+  }
+  // Duplicado: intentar rescatar como BIS/TER
+  const m = a.t.match(SUFIJOS_BIS);
+  if (m) {
+    const sufijo = m[1].toLowerCase();
+    let nuevoId = `${a.a} ${sufijo}`;
+    let n = 2;
+    while (idsVistosFinal.has(nuevoId)) {
+      nuevoId = `${a.a} ${sufijo}-${n}`;
+      n++;
+    }
+    a.a = nuevoId;
+    // Quitar el sufijo redundante del inicio del texto
+    a.t = a.t.replace(SUFIJOS_BIS, '').trimStart().replace(/^[.\-)\s]+/, '');
+    articulosFinal.push(a);
+    idsVistosFinal.add(a.a);
+    dedupResumen.renombrados++;
+    continue;
+  }
+  // Si empieza con ruido (notas, referencias) descartar
+  if (RE_RUIDO_INICIO.test(a.t)) {
+    dedupResumen.descartados++;
+    continue;
+  }
+  // Si llegamos aquí es contenido de "segundo cuerpo legal" del PDF
+  // (reglamento, decreto adjunto). Descartar para no contaminar el corpus.
+  dedupResumen.descartados++;
+}
+
+articulos.length = 0;
+articulos.push(...articulosFinal);
+
 const permanentes = articulos.filter((a) => !a.a.includes('transitorio')).length;
 const transitorios = articulos.filter((a) => a.a.includes('transitorio')).length;
 
@@ -262,6 +317,9 @@ fs.writeFileSync(OUT, JSON.stringify(out, null, 2), 'utf8');
 console.log(`Total artículos: ${articulos.length}`);
 console.log(`  Permanentes: ${permanentes}`);
 console.log(`  Transitorios: ${transitorios}`);
+if (dedupResumen.renombrados || dedupResumen.descartados) {
+  console.log(`  Dedup: ${dedupResumen.renombrados} renombrados (BIS/TER), ${dedupResumen.descartados} descartados`);
+}
 
 const libros = new Map();
 for (const a of articulos) {

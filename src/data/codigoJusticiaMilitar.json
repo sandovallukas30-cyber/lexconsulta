@@ -2,7 +2,7 @@
   "codigo": "Código de Justicia Militar",
   "tipo": "mil",
   "fuente": "DTO 2226, publicado 19-DIC-1944",
-  "total_articulos": 460,
+  "total_articulos": 459,
   "total_transitorios": 0,
   "articulos": [
     {
@@ -3664,14 +3664,6 @@
     {
       "a": "Art. 435",
       "t": "Se entiende por recinto militar o policial LEY 18342, todo espacio debidamente delimitado, vehículo, naves o",
-      "libro": null,
-      "titulo": "III — DISPOSICIONES COMPLEMENTARIAS",
-      "capitulo": null,
-      "parrafo": null
-    },
-    {
-      "a": "Art. 1",
-      "t": ", aeronaves en los cuales ejerce sus funciones específicas N° 34 una autoridad militar o policial.",
       "libro": null,
       "titulo": "III — DISPOSICIONES COMPLEMENTARIAS",
       "capitulo": null,

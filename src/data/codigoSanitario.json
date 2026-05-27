@@ -2,7 +2,7 @@
   "codigo": "Código Sanitario",
   "tipo": "san",
   "fuente": "DFL 725, publicado 31-ENE-1968",
-  "total_articulos": 223,
+  "total_articulos": 221,
   "total_transitorios": 0,
   "articulos": [
     {
@@ -102,14 +102,6 @@
       "parrafo": "II — DE LOS SERVICIOS DE SALUD"
     },
     {
-      "a": "Art. 11",
-      "t": "Sin perjuicio de las atribuciones que competen al Servicio Nacional de Salud, corresponde, en el orden sanitario, a las Municipalidades:\n\na) proveer a la limpieza y a las condiciones de seguridad de sitios públicos, de tránsito y de recreo;\n\nb) recolectar, transportar y eliminar por métodos adecuados, a juicio del Servicio Nacional de Salud, las basuras, residuos y desperdicios que se depositen o produzcan en la vía urbana;\n\nc) velar por el cumplimiento de las disposiciones que sobre higiene y seguridad se establecen en la Ordenanza General de Construcciones y Urbanización;\n\nd) reglamentar y controlar las condiciones de limpieza y conservación exterior de las casas-habitación, fábricas, edificios públicos, cuarteles, conventos, teatros y otros locales públicos y particulares;\n\ne) establecer plazas, parques o locales públicos de juego o recreo para adultos y niños, así como baños y servicios higiénicos públicos; y\n\nf) proveer a la limpieza y conservación de los canales, acequias y bebederos, considerando además las condiciones de seguridad necesarias para prevenir accidentes. NOTA\n\nVéase el Decreto ley 1.480, Salud Pública, publicado el 25 de junio de 1976, que faculta al Director General el Servicio Nacional de Salud para delegar en el Alcalde de la I. Municipalidad de Santiago las facultades que indica. Ver, además, el Art. 18 del Decreto ley 2.763, Salud Pública, publicado el 03.08.1979, en virtud del cual la facultad debe entenderse conferida al Director de Salud correspondiente de la Región Metropolitana, dentro del territorio asignado.",
-      "libro": null,
-      "titulo": "PRELIMINAR",
-      "capitulo": null,
-      "parrafo": "III — DE LAS ATRIBUCIONES Y OBLIGACIONES SANITARIAS DE LAS MUNICIPALIDADES"
-    },
-    {
       "a": "Art. 12",
       "t": "El Presidente de la República, por intermedio de los Ministerios del Interior y Salud Pública, y a propuesta del Director General de Salud, deberá, estableciendo servicios y obligaciones mínimas, reglamentar la forma cómo las Municipalidades ejercerán las funciones sanitarias que se les encomienden en la presente ley. Todo acto o reglamento municipal que esté en pugna con dichas normas sanitarias es nulo y esta nulidad será declarada por el Presidente de la República.",
       "libro": null,
@@ -120,14 +112,6 @@
     {
       "a": "Art. 13",
       "t": "En caso de negligencia grave de una Municipalidad en el cumplimiento de sus obligaciones sanitarias específicas, sin perjuicio de lo establecido en el artículo 165°, el Presidente de la República podrá transferir, por períodos que no excedan de dos años, el cumplimiento de tales obligaciones al Servicio Nacional de Salud, a costa de la Municipalidad respectiva, con acuerdo previo del Ministerio del Interior. NOTA:\n\nLa referencia al Art. 165 debe entenderse hecha al Art. 174 del presente Código en virtud de lo dispuesto en el",
-      "libro": null,
-      "titulo": "PRELIMINAR",
-      "capitulo": null,
-      "parrafo": "III — DE LAS ATRIBUCIONES Y OBLIGACIONES SANITARIAS DE LAS MUNICIPALIDADES"
-    },
-    {
-      "a": "Art. 3",
-      "t": "de la Ley N° 18.173, publicada el 15 de noviembre de 1982, que incorporó un nuevo Libro noveno y reenumeró los artículos que quedaron a continuación.",
       "libro": null,
       "titulo": "PRELIMINAR",
       "capitulo": null,

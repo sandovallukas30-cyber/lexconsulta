@@ -2,7 +2,7 @@
   "codigo": "Código de Procedimiento Civil",
   "tipo": "pci",
   "fuente": "Ley 1552, publicada 30-AGO-1902",
-  "total_articulos": 943,
+  "total_articulos": 930,
   "total_transitorios": 0,
   "articulos": [
     {
@@ -78,48 +78,8 @@
       "parrafo": null
     },
     {
-      "a": "Art. 2",
-      "t": "La reduccion de las plazas de fiscales de la Corte Suprema a una sola, se verificará cuando ocurra la primera vacante.",
-      "libro": null,
-      "titulo": null,
-      "capitulo": null,
-      "parrafo": null
-    },
-    {
-      "a": "Art. 3",
-      "t": "Los actuales miembros de la Corte Suprema tendrán derecho a jubilar dentro de seis meses, con una pension equivalente a las cuarentavas partes que les correspondan por el número de años de servicio sobre la base del sueldo íntegro que esta lei les asigna, no pudiendo exceder dicha pension del setenta i cinco por ciento del referido sueldo.",
-      "libro": null,
-      "titulo": null,
-      "capitulo": null,
-      "parrafo": null
-    },
-    {
-      "a": "Art. 4",
-      "t": "Concédese a don Luis Barriga la suma de seis mil pesos en remuneracion de los servicios que ha prestado como secretario de la Comision Mista de ámbas Cámaras, encargadas del estudio del Proyecto de Código de Procedimiento Civil.\n\nI por cuanto, oido el Consejo de Estado, he tenido a bien aprobarlo i sancionarlo; por tanto, promúlguese i llévese a efecto en todas sus partes como lei de la República.\n\nSantiago, a 28 de Agosto de 1902.- JERMAN RIESCO.- Rafael Balmaceda.\n\nLibro Primero\n\nDISPOSICIONES COMUNES A TODO PROCEDIMIENTO",
-      "libro": null,
-      "titulo": null,
-      "capitulo": null,
-      "parrafo": null
-    },
-    {
       "a": "Art. 1",
       "t": "Las disposiciones de este Código rigen el procedimiento de las contiendas civiles entre partes y de los actos de jurisdicción no contenciosa, cuyo conocimiento corresponda a los Tribunales de Justicia.",
-      "libro": null,
-      "titulo": "I — REGLAS GENERALES",
-      "capitulo": null,
-      "parrafo": null
-    },
-    {
-      "a": "Art. 2",
-      "t": "El procedimiento es ordinario o extraordinario. Es ordinario el que se somete a la tramitación común ordenada por la ley, y extraordinario el que se rige por las disposiciones especiales que para determinados casos ella establece.",
-      "libro": null,
-      "titulo": "I — REGLAS GENERALES",
-      "capitulo": null,
-      "parrafo": null
-    },
-    {
-      "a": "Art. 3",
-      "t": "Se aplicará el procedimiento ordinario en todas las gestiones, trámites y actuaciones que no estén sometidos a una regla especial diversa, cualquiera que sea su naturaleza.",
       "libro": null,
       "titulo": "I — REGLAS GENERALES",
       "capitulo": null,
@@ -130,62 +90,6 @@
       "t": "Es deber de los abogados, de los funcionarios de la administración de justicia y de los jueces, promover el empleo de métodos autocompositivos de resolución de conflictos, como la conciliación, la mediación, entre otros. Estos métodos no podrán restringir, sustituir o impedir la garantía de tutela jurisdiccional.",
       "libro": null,
       "titulo": "I — REGLAS GENERALES",
-      "capitulo": null,
-      "parrafo": null
-    },
-    {
-      "a": "Art. 4",
-      "t": "(5). Toda persona que deba comparecer en juicio a su propio nombre o como representante legal de otra, deberá hacerlo en la forma que determine la ley.",
-      "libro": null,
-      "titulo": "II — DE LA COMPARECENCIA EN JUICIO",
-      "capitulo": null,
-      "parrafo": null
-    },
-    {
-      "a": "Art. 5",
-      "t": "(6°). Si durante el juicio fallece alguna de las partes que obre por sí misma, quedará suspenso por este hecho el procedimiento, y se pondrá su estado en noticia de los herederos para que comparezcan a hacer uso de su derecho en un plazo igual al de emplazamiento para contestar demandas, que conceden los artículos 258 y 259.",
-      "libro": null,
-      "titulo": "II — DE LA COMPARECENCIA EN JUICIO",
-      "capitulo": null,
-      "parrafo": null
-    },
-    {
-      "a": "Art. 6",
-      "t": "(7°). El que comparezca en juicio a nombre de otro, en desempeño de un mandato o en ejercicio de un cargo que requiera especial nombramiento, deberá exhibir el título que acredite su representación.\n\nPara obrar como mandatario se considerará poder suficiente: 1° El constituido por escritura pública otorgada ante notario o ante oficial del Registro Civil a quien la ley confiera esta facultad; 2° el que conste de un acta extendida ante un juez de letras o ante un juez árbitro, y subscrita por todos los otorgantes; y 3° el que conste de una declaración escrita del mandante, autorizada por el secretario del tribunal que esté conociendo de la causa.\n\nPodrá, sin embargo, admitirse la comparecencia al juicio de una persona que obre sin poder en beneficio de otra, con tal que ofrezca garantía de que el interesado aprobará lo que se haya obrado en su nombre. El tribunal, para aceptar la representación, calificará las circunstancias del caso y la garantía ofrecida, y fijará un plazo para la ratificación del interesado.\n\nLos agentes oficiosos deberán ser personas capacitadas para comparecer ante el respectivo tribunal, en conformidad a la Ley Orgánica del Colegio de Abogados, o, en caso contrario, deberán hacerse representar en la forma que esa misma ley establece. NOTA:\n\nVéase el art. 398 del Código Orgánico de Tribunales. NOTA 1\n\nVéase la LEY 18120, publicada el 18.05.1982, que establece normas sobre comparecencia en juicio.",
-      "libro": null,
-      "titulo": "II — DE LA COMPARECENCIA EN JUICIO",
-      "capitulo": null,
-      "parrafo": null
-    },
-    {
-      "a": "Art. 7",
-      "t": "(8°). El poder para litigar se entenderá conferido para todo el juicio en que se presente, y aun cuando no exprese las facultades que se conceden, autorizará al procurador para tomar parte, del mismo modo que podría hacerlo el poderdante, en todos los trámites e incidentes del juicio y en todas las cuestiones que por vía de reconvención se promuevan, hasta la ejecución completa de la sentencia definitiva, salvo lo dispuesto en el artículo 4° o salvo que la ley exija intervención personal de la parte misma. Las cláusulas en que se nieguen o en que se limiten las facultades expresadas, son nulas. Podrá, asimismo, el procurador delegar el poder obligando al mandante, a menos que se le haya negado esta facultad.\n\nSin embargo, no se entenderán concedidas al procurador, sin expresa mención, las facultades de desistirse en primera instancia de la acción deducida, aceptar la demanda contraria, absolver posiciones, renunciar los recursos o los términos legales, transigir, comprometer, otorgar a los árbitros facultades de arbitradores, aprobar convenios y percibir.",
-      "libro": null,
-      "titulo": "II — DE LA COMPARECENCIA EN JUICIO",
-      "capitulo": null,
-      "parrafo": null
-    },
-    {
-      "a": "Art. 8",
-      "t": "(9°). El gerente o administrador de sociedades civiles o comerciales, o el presidente de las corporaciones o fundaciones con personalidad jurídica, se entenderán autorizados para litigar a nombre de ellas con las facultades que expresa el inciso 1° del artículo anterior, no obstante cualquiera limitación establecida en los estatutos o actos constitutivos de la sociedad o corporación.",
-      "libro": null,
-      "titulo": "II — DE LA COMPARECENCIA EN JUICIO",
-      "capitulo": null,
-      "parrafo": null
-    },
-    {
-      "a": "Art. 9",
-      "t": "(10). Si durante el curso del juicio termina por cualquiera causa el carácter con que una persona representa por ministerio de la ley derechos ajenos, continuará no obstante la representación y serán válidos los actos que ejecute, hasta la comparecencia de la parte representada, o hasta que haya testimonio en el proceso de haberse notificado a ésta la cesación de la representación y el estado del juicio. El representante deberá gestionar para que se practique esta diligencia dentro del plazo que el tribunal designe, bajo pena de pagar una multa de un cuarto a un sueldo vital y de abonar los perjuicios que resulten.",
-      "libro": null,
-      "titulo": "II — DE LA COMPARECENCIA EN JUICIO",
-      "capitulo": null,
-      "parrafo": null
-    },
-    {
-      "a": "Art. 10",
-      "t": "(11). Todo procurador legalmente constituido conservará su carácter de tal mientras en el proceso no haya testimonio de la expiración de su mandato.\n\nSi la causa de la expiración del mandato es la renuncia del procurador, estará éste obligado a ponerla en conocimiento de su mandante, junto con el estado del juicio, y se entenderá vigente el poder hasta que haya transcurrido el término de emplazamiento desde la notificación de la renuncia al mandante.",
-      "libro": null,
-      "titulo": "II — DE LA COMPARECENCIA EN JUICIO",
       "capitulo": null,
       "parrafo": null
     },
@@ -1888,14 +1792,6 @@
     {
       "a": "Art. 222",
       "t": "(447). En cumplimiento de las obligaciones impuestas por el artículo 373 del Código Orgánico de Tribunales, los relatores darán cuenta de los vicios y omisiones que hayan notado en las causas del día a fin de que el tribunal resuelva si ha de llenarse previamente algún trámite.\n\nLas causas que se ordene tramitar, las suspendidas y las que por cualquier motivo no hayan de verse, serán anunciadas en la tabla antes de comenzar la relación de las demás. Asimismo, en esa oportunidad deberán señalarse aquellas causas que no se verán durante la audiencia, por falta de tiempo. La audiencia se prorrogará, si fuere necesario, hasta ver la última de las causas que resten en la tabla. NOTA LEY 19317",
-      "libro": null,
-      "titulo": "XVIII — DE LA APELACION",
-      "capitulo": null,
-      "parrafo": null
-    },
-    {
-      "a": "Art. 1",
-      "t": "Nº 3 D.O. 08.08.1994 NOTA\n\nVéanse las letras d) y f) del Auto Acordado de la Corte de Apelaciones de Santiago, publicado el 19.08.1994.",
       "libro": null,
       "titulo": "XVIII — DE LA APELACION",
       "capitulo": null,

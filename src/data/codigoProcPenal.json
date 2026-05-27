@@ -2,7 +2,7 @@
   "codigo": "Código Procesal Penal",
   "tipo": "ppe",
   "fuente": "Ley 19696, publicada 12-OCT-2000",
-  "total_articulos": 562,
+  "total_articulos": 561,
   "total_transitorios": 0,
   "articulos": [
     {
@@ -3920,14 +3920,6 @@
     {
       "a": "Art. 415 octies",
       "t": "Recursos. Contra la sentencia definitiva podrá interponerse el recurso de nulidad previsto en el Título IV del Libro III, en cuanto se pretenda la impugnación de la imposición o denegación del comiso. Si lo impugnado fuere el monto procederá el recurso de apelación, el cual podrá en su caso interponerse en subsidio del recurso de nulidad.\n\nEl fiscal requirente y el querellante, en su caso, sólo podrán recurrir si concurrieron al juicio.\n\nEl tribunal que conozca del recurso podrá decretar la nulidad de la audiencia prevista en el artículo 415 sexies o, de tratarse exclusivamente de un error de derecho, anulará la sentencia y dictará sentencia de reemplazo.",
-      "libro": null,
-      "titulo": "III — Procedimiento abreviado",
-      "capitulo": null,
-      "parrafo": null
-    },
-    {
-      "a": "Art. 415",
-      "t": "nonies.- Ejecución. Una vez ejecutoriada la sentencia que impone el comiso, ella será ejecutada conforme a lo dispuesto en el artículo 468 bis.",
       "libro": null,
       "titulo": "III — Procedimiento abreviado",
       "capitulo": null,
