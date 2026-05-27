@@ -735,8 +735,20 @@ function ModalBusqueda({
       if (score > 0) puntuados.push({ a, score })
     }
 
+    // Deduplicar por id + primeros 80 chars del texto: si el JSON trae el
+    // mismo artículo duplicado (caso conocido del parser cuando varios
+    // libros reinician numeración), el buscador muestra solo la primera
+    // ocurrencia. Sigue diferenciando artículos distintos con mismo id
+    // (porque el snippet de texto será diferente).
+    const vistos = new Set<string>()
     return puntuados
       .sort((x, y) => y.score - x.score)
+      .filter((p) => {
+        const clave = `${p.a.a}::${p.a.t.slice(0, 80)}`
+        if (vistos.has(clave)) return false
+        vistos.add(clave)
+        return true
+      })
       .slice(0, 50)
       .map((p) => p.a)
   }, [arts, busqueda])
