@@ -2,8 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { generarRosco, esRespuestaCorrecta } from '../../services/pasapalabra'
-import { generarPreguntasRelaciones } from '../../services/relaciones'
-import type { AreaPractica, EntradaRosco, PartidaPasapalabra, PartidaRelaciones, TipoJuegoPractica } from '../../types'
+import type { AreaPractica, EntradaRosco, PartidaPasapalabra } from '../../types'
 
 const VERDE = 'var(--accent-base)'
 const DURACION_DEFAULT = 300 // 5 minutos
@@ -18,155 +17,48 @@ const AREAS: { id: AreaPractica; nombre: string; icono: string; descripcion: str
 ]
 
 export function PracticaView() {
-  const partidaPasapalabra = useStore((s) => s.partidaPasapalabra)
+  const partida = useStore((s) => s.partidaPasapalabra)
   const modoOscuro = useStore((s) => s.modoOscuro)
   const retomar = useStore((s) => s.retomarPartidaPasapalabra)
   const abandonar = useStore((s) => s.abandonarPartidaPasapalabra)
 
-  const [juego, setJuego] = useState<TipoJuegoPractica | null>(null)
   const [mostrarContinuar, setMostrarContinuar] = useState(false)
-  const [partidaRelaciones, setPartidaRelaciones] = useState<PartidaRelaciones | null>(null)
 
   // Si entramos a la vista y hay una partida pausada sin terminar, mostrar el modal
   useEffect(() => {
-    if (partidaPasapalabra && partidaPasapalabra.pausadaEn && !partidaPasapalabra.finalizada) {
+    if (partida && partida.pausadaEn && !partida.finalizada) {
       setMostrarContinuar(true)
-      setJuego('pasapalabra')
     }
-  }, [partidaPasapalabra])
+  }, [partida])
 
-  // Flujo Pasapalabra
-  if (juego === 'pasapalabra') {
-    if (partidaPasapalabra && partidaPasapalabra.finalizada) {
-      return <ResumenPartida partida={partidaPasapalabra} modoOscuro={modoOscuro} onVolver={() => setJuego(null)} />
-    }
-    if (partidaPasapalabra && !partidaPasapalabra.pausadaEn) {
-      return <Pasapalabra partida={partidaPasapalabra} modoOscuro={modoOscuro} />
-    }
-    return (
-      <>
-        <SeleccionArea modoOscuro={modoOscuro} />
-        <AnimatePresence>
-          {mostrarContinuar && partidaPasapalabra && (
-            <ModalContinuar
-              modoOscuro={modoOscuro}
-              partida={partidaPasapalabra}
-              onContinuar={() => {
-                retomar()
-                setMostrarContinuar(false)
-              }}
-              onAbandonar={() => {
-                abandonar()
-                setMostrarContinuar(false)
-                setJuego(null)
-              }}
-            />
-          )}
-        </AnimatePresence>
-      </>
-    )
+  if (partida && partida.finalizada) {
+    return <ResumenPartida partida={partida} modoOscuro={modoOscuro} />
   }
 
-  // Flujo Relaciones
-  if (juego === 'relaciones') {
-    if (partidaRelaciones && partidaRelaciones.finalizada) {
-      return <ResumenRelaciones partida={partidaRelaciones} modoOscuro={modoOscuro} onVolver={() => { setPartidaRelaciones(null); setJuego(null) }} />
-    }
-    if (partidaRelaciones) {
-      return <JuegoRelaciones partida={partidaRelaciones} setPartida={setPartidaRelaciones} modoOscuro={modoOscuro} />
-    }
-    return <InicioRelaciones modoOscuro={modoOscuro} onIniciar={(p) => setPartidaRelaciones(p)} onVolver={() => setJuego(null)} />
+  if (partida && !partida.pausadaEn) {
+    return <Pasapalabra partida={partida} modoOscuro={modoOscuro} />
   }
 
-  // Menú principal
-  return <MenuJuegos modoOscuro={modoOscuro} onSeleccionar={setJuego} />
-}
-
-// ============ Menú de juegos ============
-
-function MenuJuegos({ modoOscuro, onSeleccionar }: { modoOscuro: boolean; onSeleccionar: (juego: TipoJuegoPractica) => void }) {
   return (
-    <div className={`h-full overflow-y-auto ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
-      <div className="max-w-4xl mx-auto px-8 py-10">
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="text-center mb-10"
-        >
-          <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
-            style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
-          >
-            <i className="ti ti-puzzle text-3xl" style={{ color: VERDE }} />
-          </div>
-          <h1 className={`text-3xl font-serif font-bold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
-            Práctica jurídica
-          </h1>
-          <p className={`text-sm max-w-lg mx-auto ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
-            Elige un juego para mejorar tu conocimiento del derecho chileno
-          </p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-2xl mx-auto">
-          {/* Pasapalabra */}
-          <motion.button
-            whileHover={{ y: -4 }}
-            onClick={() => onSeleccionar('pasapalabra')}
-            className={`text-left rounded-xl border-2 p-6 transition-all ${
-              modoOscuro
-                ? 'bg-zinc-800/40 border-zinc-800 hover:border-[var(--accent-700)]'
-                : 'bg-white border-zinc-200 hover:border-[var(--accent-500)]'
-            }`}
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <span
-                className="w-12 h-12 rounded-lg flex items-center justify-center"
-                style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 19%, transparent)' : 'color-mix(in srgb, var(--accent-base) 8%, transparent)' }}
-              >
-                <i className="ti ti-puzzle text-2xl" style={{ color: VERDE }} />
-              </span>
-              <div>
-                <h2 className={`text-lg font-serif font-semibold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
-                  Pasapalabra
-                </h2>
-              </div>
-            </div>
-            <p className={`text-sm leading-relaxed ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
-              27 letras en 5 minutos. Completa el rosco con palabras clave del derecho chileno. Incluye 6 áreas de especialización.
-            </p>
-          </motion.button>
-
-          {/* Relaciones */}
-          <motion.button
-            whileHover={{ y: -4 }}
-            onClick={() => onSeleccionar('relaciones')}
-            className={`text-left rounded-xl border-2 p-6 transition-all ${
-              modoOscuro
-                ? 'bg-zinc-800/40 border-zinc-800 hover:border-[var(--accent-700)]'
-                : 'bg-white border-zinc-200 hover:border-[var(--accent-500)]'
-            }`}
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <span
-                className="w-12 h-12 rounded-lg flex items-center justify-center"
-                style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 19%, transparent)' : 'color-mix(in srgb, var(--accent-base) 8%, transparent)' }}
-              >
-                <i className="ti ti-link text-2xl" style={{ color: VERDE }} />
-              </span>
-              <div>
-                <h2 className={`text-lg font-serif font-semibold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
-                  Relaciones
-                </h2>
-              </div>
-            </div>
-            <p className={`text-sm leading-relaxed ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
-              Conecta artículos entre sí. Aprende cómo las normas se complementan, remiten y se relacionan en el código legal.
-            </p>
-          </motion.button>
-        </div>
-      </div>
-    </div>
+    <>
+      <SeleccionArea modoOscuro={modoOscuro} />
+      <AnimatePresence>
+        {mostrarContinuar && partida && (
+          <ModalContinuar
+            modoOscuro={modoOscuro}
+            partida={partida}
+            onContinuar={() => {
+              retomar()
+              setMostrarContinuar(false)
+            }}
+            onAbandonar={() => {
+              abandonar()
+              setMostrarContinuar(false)
+            }}
+          />
+        )}
+      </AnimatePresence>
+    </>
   )
 }
 
@@ -634,7 +526,7 @@ function Rosco({
 
 // ============ Resumen final ============
 
-function ResumenPartida({ partida, modoOscuro, onVolver }: { partida: PartidaPasapalabra; modoOscuro: boolean; onVolver?: () => void }) {
+function ResumenPartida({ partida, modoOscuro }: { partida: PartidaPasapalabra; modoOscuro: boolean }) {
   const abandonar = useStore((s) => s.abandonarPartidaPasapalabra)
   const setVistaActiva = useStore((s) => s.setVistaActiva)
   const setCodigoExplorador = useStore((s) => s.setCodigoExplorador)
@@ -776,26 +668,15 @@ function ResumenPartida({ partida, modoOscuro, onVolver }: { partida: PartidaPas
           ))}
         </div>
 
-        <div className="flex justify-center gap-3 mt-8">
+        <div className="flex justify-center mt-8">
           <button
             onClick={() => abandonar()}
             className="px-5 py-2.5 rounded-lg text-white font-medium text-sm"
             style={{ background: VERDE }}
           >
             <i className="ti ti-refresh mr-1" />
-            Otra partida
+            Jugar otra partida
           </button>
-          {onVolver && (
-            <button
-              onClick={onVolver}
-              className={`px-5 py-2.5 rounded-lg font-medium text-sm ${
-                modoOscuro ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700' : 'bg-zinc-200 text-zinc-700 hover:bg-zinc-300'
-              }`}
-            >
-              <i className="ti ti-arrow-left mr-1" />
-              Volver al menú
-            </button>
-          )}
         </div>
       </div>
     </div>
@@ -905,333 +786,4 @@ function formatearTiempo(seg: number): string {
   const m = Math.floor(seg / 60)
   const s = seg % 60
   return `${m}:${String(s).padStart(2, '0')}`
-}
-
-// ============ Juego de Relaciones ============
-
-function InicioRelaciones({
-  modoOscuro,
-  onIniciar,
-  onVolver,
-}: {
-  modoOscuro: boolean
-  onIniciar: (partida: PartidaRelaciones) => void
-  onVolver: () => void
-}) {
-  const [cargando, setCargando] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  function comenzar() {
-    setCargando(true)
-    setError(null)
-    try {
-      const preguntas = generarPreguntasRelaciones()
-      const partida: PartidaRelaciones = {
-        id: crypto.randomUUID(),
-        preguntas,
-        preguntaActualIdx: 0,
-        respuestasUsuario: [],
-        iniciada: Date.now(),
-        finalizada: null,
-        pausadaEn: null,
-      }
-      onIniciar(partida)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error generando preguntas')
-    } finally {
-      setCargando(false)
-    }
-  }
-
-  return (
-    <div className={`h-full overflow-y-auto ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
-      <div className="max-w-2xl mx-auto px-8 py-10">
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="text-center"
-        >
-          <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
-            style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
-          >
-            <i className="ti ti-link text-3xl" style={{ color: VERDE }} />
-          </div>
-          <h1 className={`text-3xl font-serif font-bold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
-            Relaciones entre normas
-          </h1>
-          <p className={`text-sm max-w-lg mx-auto mb-8 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
-            Comprende cómo los artículos del Código del Trabajo se relacionan entre sí. Conecta artículos indicando si uno complementa o remite a otro.
-          </p>
-
-          <div className={`rounded-xl border-2 p-6 mb-8 ${modoOscuro ? 'bg-zinc-800/30 border-zinc-700' : 'bg-zinc-50 border-zinc-200'}`}>
-            <h2 className={`text-sm font-semibold mb-3 ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>
-              Cómo funciona:
-            </h2>
-            <ul className={`text-xs space-y-2 text-left ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
-              <li>🔗 5 preguntas sobre relaciones entre artículos</li>
-              <li>🎯 Conecta dos artículos indicando su relación</li>
-              <li>✓ Feedback inmediato sobre tu respuesta</li>
-              <li>📚 Aprende la estructura del código laboral</li>
-            </ul>
-          </div>
-
-          {error && (
-            <div
-              className={`mb-6 p-3 rounded-lg text-sm ${
-                modoOscuro ? 'bg-rose-950/40 text-rose-300 border border-rose-900/60' : 'bg-rose-50 text-rose-700 border border-rose-200'
-              }`}
-            >
-              <i className="ti ti-alert-triangle mr-1" />
-              {error}
-            </div>
-          )}
-
-          <div className="flex gap-3">
-            <button
-              onClick={comenzar}
-              disabled={cargando}
-              className="flex-1 px-6 py-2.5 rounded-lg text-white font-medium text-base disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
-              style={{ background: VERDE }}
-            >
-              {cargando && <i className="ti ti-loader-2 animate-spin" />}
-              {cargando ? 'Generando...' : 'Comenzar'}
-            </button>
-            <button
-              onClick={onVolver}
-              className={`px-6 py-2.5 rounded-lg font-medium text-base ${
-                modoOscuro ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700' : 'bg-zinc-200 text-zinc-700 hover:bg-zinc-300'
-              }`}
-            >
-              <i className="ti ti-arrow-left mr-1" />
-              Volver
-            </button>
-          </div>
-        </motion.div>
-      </div>
-    </div>
-  )
-}
-
-function JuegoRelaciones({
-  partida,
-  setPartida,
-  modoOscuro,
-}: {
-  partida: PartidaRelaciones
-  setPartida: (p: PartidaRelaciones) => void
-  modoOscuro: boolean
-}) {
-  const preguntaActual = partida.preguntas[partida.preguntaActualIdx]
-  const [seleccionado, setSeleccionado] = useState<[number | null, number | null]>([null, null])
-  const [feedback, setFeedback] = useState<'ok' | 'fail' | null>(null)
-  const [tipoRelacion, setTipoRelacion] = useState<'complementa' | 'remite'>('complementa')
-
-  if (!preguntaActual) return null
-
-  function enviarRespuesta() {
-    if (seleccionado[0] === null || seleccionado[1] === null) return
-
-    const esCorrecta = preguntaActual.respuestasCorrectas.some(
-      (r) => r.desde === seleccionado[0] && r.hasta === seleccionado[1] && r.tipo === tipoRelacion
-    )
-
-    setFeedback(esCorrecta ? 'ok' : 'fail')
-
-    setTimeout(() => {
-      const nuevaPartida = { ...partida }
-      nuevaPartida.respuestasUsuario.push({
-        preguntaId: preguntaActual.id,
-        desde: seleccionado[0]!,
-        hasta: seleccionado[1]!,
-        tipo: tipoRelacion,
-      })
-
-      if (partida.preguntaActualIdx < partida.preguntas.length - 1) {
-        nuevaPartida.preguntaActualIdx += 1
-        setPartida(nuevaPartida)
-        setSeleccionado([null, null])
-        setFeedback(null)
-        setTipoRelacion('complementa')
-      } else {
-        nuevaPartida.finalizada = Date.now()
-        setPartida(nuevaPartida)
-      }
-    }, 500)
-  }
-
-  const progreso = partida.preguntaActualIdx + 1
-
-  return (
-    <div className={`h-full overflow-y-auto ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
-      <div
-        className={`sticky top-0 z-10 backdrop-blur-sm border-b ${
-          modoOscuro ? 'bg-zinc-900/85 border-zinc-800' : 'bg-zinc-50/85 border-zinc-200'
-        }`}
-      >
-        <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between">
-          <div className={`text-sm ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
-            Pregunta <strong className={modoOscuro ? 'text-white' : 'text-zinc-900'}>{progreso}</strong> / {partida.preguntas.length}
-          </div>
-          <div className="w-32 h-1.5 rounded-full" style={{ background: modoOscuro ? '#3f3f46' : '#e4e4e7' }}>
-            <div
-              className="h-full rounded-full"
-              style={{
-                background: VERDE,
-                width: `${(progreso / partida.preguntas.length) * 100}%`,
-                transition: 'width 0.3s ease',
-              }}
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-4xl mx-auto px-6 py-10">
-        <div className={`rounded-2xl border p-6 mb-8 ${modoOscuro ? 'bg-zinc-800/50 border-zinc-700' : 'bg-white border-zinc-200'}`}>
-          <h2 className={`text-base font-semibold mb-6 ${modoOscuro ? 'text-zinc-200' : 'text-zinc-800'}`}>
-            Conecta estos artículos:
-          </h2>
-
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            {preguntaActual.articulos.map((art, idx) => (
-              <button
-                key={idx}
-                onClick={() => {
-                  if (seleccionado[0] === null) {
-                    setSeleccionado([idx, null])
-                  } else if (seleccionado[0] !== idx && seleccionado[1] === null) {
-                    setSeleccionado([seleccionado[0], idx])
-                  } else {
-                    setSeleccionado([idx, null])
-                  }
-                }}
-                className={`p-4 rounded-lg border-2 transition-all ${
-                  seleccionado[0] === idx || seleccionado[1] === idx
-                    ? `border-[var(--accent-500)] ${modoOscuro ? 'bg-[var(--accent-950)]/40' : 'bg-[var(--accent-50)]'}`
-                    : modoOscuro
-                    ? 'bg-zinc-700/50 border-zinc-600 hover:border-zinc-500'
-                    : 'bg-zinc-100 border-zinc-200 hover:border-zinc-300'
-                }`}
-              >
-                <div className={`text-sm font-semibold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{art}</div>
-              </button>
-            ))}
-          </div>
-
-          <div className="mb-6">
-            <label className={`text-xs uppercase tracking-wider font-semibold ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
-              Tipo de relación:
-            </label>
-            <div className="flex gap-3 mt-2">
-              {(['complementa', 'remite'] as const).map((tipo) => (
-                <button
-                  key={tipo}
-                  onClick={() => setTipoRelacion(tipo)}
-                  className={`px-4 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
-                    tipoRelacion === tipo
-                      ? `border-[var(--accent-500)] ${modoOscuro ? 'bg-[var(--accent-950)]/40 text-[var(--accent-300)]' : 'bg-[var(--accent-50)] text-[var(--accent-800)]'}`
-                      : modoOscuro
-                      ? 'border-zinc-600 text-zinc-400 hover:border-zinc-500'
-                      : 'border-zinc-200 text-zinc-600 hover:border-zinc-300'
-                  }`}
-                >
-                  {tipo === 'complementa' ? 'Complementa' : 'Remite a'}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <button
-            onClick={enviarRespuesta}
-            disabled={seleccionado[0] === null || seleccionado[1] === null || feedback !== null}
-            className="w-full px-4 py-2.5 rounded-lg text-white font-medium disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ background: VERDE }}
-          >
-            {feedback === 'ok' ? (
-              <>
-                <i className="ti ti-check mr-1" />
-                ¡Correcto!
-              </>
-            ) : feedback === 'fail' ? (
-              <>
-                <i className="ti ti-x mr-1" />
-                Incorrecto
-              </>
-            ) : (
-              <>
-                <i className="ti ti-arrow-right mr-1" />
-                Continuar
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function ResumenRelaciones({
-  partida,
-  modoOscuro,
-  onVolver,
-}: {
-  partida: PartidaRelaciones
-  modoOscuro: boolean
-  onVolver: () => void
-}) {
-  const aciertos = partida.respuestasUsuario.filter((r) => {
-    const preg = partida.preguntas.find((p) => p.id === r.preguntaId)
-    return preg?.respuestasCorrectas.some((rc) => rc.desde === r.desde && rc.hasta === r.hasta && rc.tipo === r.tipo)
-  }).length
-
-  const porcentaje = Math.round((aciertos / partida.preguntas.length) * 100)
-
-  return (
-    <div className={`h-full overflow-y-auto ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
-      <div className="max-w-3xl mx-auto px-6 py-10">
-        <div className="text-center mb-8">
-          <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
-            style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
-          >
-            <i className="ti ti-trophy text-3xl" style={{ color: VERDE }} />
-          </div>
-          <h1 className={`text-3xl font-serif font-bold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
-            Partida terminada
-          </h1>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          <div
-            className={`rounded-xl p-4 text-center ${
-              modoOscuro ? 'bg-[var(--accent-950)]/40 text-[var(--accent-300)]' : 'bg-[var(--accent-50)] text-[var(--accent-800)]'
-            }`}
-          >
-            <div className="text-3xl font-bold">{aciertos}/{partida.preguntas.length}</div>
-            <div className="text-[11px] uppercase tracking-wider mt-1 opacity-80">Aciertos</div>
-          </div>
-          <div
-            className={`rounded-xl p-4 text-center ${
-              modoOscuro ? 'bg-[var(--accent-950)]/40 text-[var(--accent-300)]' : 'bg-[var(--accent-50)] text-[var(--accent-800)]'
-            }`}
-          >
-            <div className="text-3xl font-bold">{porcentaje}%</div>
-            <div className="text-[11px] uppercase tracking-wider mt-1 opacity-80">Porcentaje</div>
-          </div>
-        </div>
-
-        <div className="flex gap-3">
-          <button
-            onClick={onVolver}
-            className="flex-1 px-5 py-2.5 rounded-lg text-white font-medium text-sm"
-            style={{ background: VERDE }}
-          >
-            <i className="ti ti-arrow-left mr-1" />
-            Volver al menú
-          </button>
-        </div>
-      </div>
-    </div>
-  )
 }
