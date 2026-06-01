@@ -281,4 +281,31 @@ export interface RelacionNorma {
   desde: string
   hasta: string
   tipo: 'complementa' | 'modifica' | 'deroga' | 'remite'
+  explicacion?: string
+}
+
+export type TipoJuegoPractica = 'pasapalabra' | 'relaciones'
+export type TipoRelacionJuego = 'complementa' | 'remite'
+
+export interface PreguntaRelaciones {
+  id: string
+  articulos: [string, string, string]
+  respuestasCorrectas: { desde: number; hasta: number; tipo: TipoRelacionJuego }[]
+}
+
+export interface PartidaRelaciones {
+  id: string
+  preguntas: PreguntaRelaciones[]
+  preguntaActualIdx: number
+  respuestasUsuario: { preguntaId: string; desde: number; hasta: number; tipo: TipoRelacionJuego }[]
+  iniciada: number
+  finalizada: number | null
+  pausadaEn: number | null
+}
+
+export interface RecordRelaciones {
+  aciertos: number
+  totalPreguntas: number
+  tiempoUsadoSeg: number
+  fecha: number
 }
