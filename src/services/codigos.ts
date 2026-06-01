@@ -25,6 +25,7 @@ const LOADERS: Partial<Record<CodigoTipo, () => Promise<{ default: CodigoData }>
   trn: () => import('../data/leyTransparencia.json') as Promise<{ default: CodigoData }>,
   rpa: () => import('../data/leyRPA.json') as Promise<{ default: CodigoData }>,
   pdc: () => import('../data/pactoDerechosCiviles.json') as Promise<{ default: CodigoData }>,
+  pde: () => import('../data/pactoDerechosESC.json') as Promise<{ default: CodigoData }>,
 }
 
 const cache = new Map<CodigoTipo, CodigoData>()

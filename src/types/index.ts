@@ -24,6 +24,7 @@ export type CodigoTipo =
   | 'trn'
   | 'rpa'
   | 'pdc'
+  | 'pde'
 
 export type CategoriaCodigo =
   | 'fundamentales'
@@ -70,6 +71,18 @@ export interface PartidaPasapalabra {
   iniciada: number
   finalizada: number | null
   duracionTotalSeg: number // duración originalmente otorgada (default 300)
+  /** Modo estudio: sin cronómetro, no cuenta para récords. */
+  modoEstudio?: boolean
+  /** Pistas usadas en la partida (máx 3). Cada pista cuesta 15 segundos. */
+  pistasUsadas?: number
+}
+
+/** Mejor marca registrada por el usuario para un área. */
+export interface RecordPasapalabra {
+  aciertos: number
+  fallos: number
+  tiempoUsadoSeg: number
+  fecha: number
 }
 
 export type TipoNodoCanvas = 'definicion' | 'articulos' | 'caso' | 'libre' | 'concepto'

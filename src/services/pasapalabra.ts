@@ -36,7 +36,13 @@ Reglas estrictas:
 4. **REDACCIÓN PULIDA**: usa siempre los artículos definidos (el, la, los, las) cuando correspondan en castellano. Por ejemplo: "entre las veintidós horas y las seis horas" (no "entre veintidós horas y seis horas"); "el cónyuge sobreviviente" (no "cónyuge sobreviviente" sin artículo cuando es sujeto). Evita estilo telegráfico.
 5. Cada entrada DEBE incluir el código u norma chilena de respaldo cuando sea posible: una de las siguientes siglas en "codigoOrigen": con, civ, pen, lab, tri, com, pci, ppe, cot, min, agu, san, mil, pad, acc, dro, kar. Y un "articulo" como "Art. 161" o "Art. 19 N° 3".
 6. Si la palabra no se puede vincular a un artículo específico (concepto doctrinario general), omite codigoOrigen y articulo, pero sé conservador.
-7. Para K, Ñ, W, X, Y usa "contiene" con palabras conocidas (ej. K → "Karin" si aplica al área laboral; Ñ → "compañía" o "señalamiento"; X → "exhorto" en procesal; Y → "ayuda" o "leyes"; W → "Warrant").
+7. Para letras escasas en derecho chileno, ROTA entre variantes (no uses siempre la misma):
+   - K (modo "contiene"): "Karin" (laboral), "Krill" (pesca), "kilogramo" (sanitario), "Kafkiano" como sinónimo del exceso burocrático en Proc. Administrativo (uso doctrinal informal).
+   - W (modo "contiene"): "Warrant" (Comercio), "Workshop" solo si es término técnico real.
+   - X (modo "empieza" o "contiene"): "exhorto", "examen pericial", "extradición", "expropiación", "excepción dilatoria".
+   - Y (modo "contiene"): "leyes", "yerro", "ayuda" / "coadyuvar", "construye", "ensayar", "boyante".
+   - Ñ (modo "contiene"): "compañía", "diseño", "señalamiento", "daño", "albacea", "enseñanza", "tamaño", "pequeño", "engaño".
+   La elección debe variar partida a partida; nunca devuelvas el mismo término dos veces seguidas en la misma área.
 8. Devuelve ÚNICAMENTE un arreglo JSON, sin texto adicional, sin markdown, sin backticks.
 
 Esquema de cada entrada:
@@ -95,7 +101,12 @@ export async function generarRosco(area: AreaPractica): Promise<EntradaRosco[]> 
     model: MODELO,
     max_tokens: MAX_TOKENS,
     system: systemPrompt(area),
-    messages: [{ role: 'user', content: `Genera el rosco para el área: ${area}.` }],
+    messages: [
+      {
+        role: 'user',
+        content: `Genera un rosco para el área: ${area}. Variación ${Math.floor(Math.random() * 9999)}: usa palabras DIFERENTES a las más obvias; explora el corpus chileno completo y elige términos menos comunes cuando exista una alternativa académicamente válida.`,
+      },
+    ],
   })
 
   const texto = res.content

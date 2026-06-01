@@ -66,8 +66,10 @@ export function PracticaView() {
 
 function SeleccionArea({ modoOscuro }: { modoOscuro: boolean }) {
   const iniciar = useStore((s) => s.iniciarPartidaPasapalabra)
+  const records = useStore((s) => s.recordsPasapalabra)
   const [cargando, setCargando] = useState<AreaPractica | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [modoEstudio, setModoEstudio] = useState(false)
 
   async function comenzar(area: AreaPractica) {
     setCargando(area)
@@ -84,6 +86,8 @@ function SeleccionArea({ modoOscuro }: { modoOscuro: boolean }) {
         pausadaEn: null,
         iniciada: Date.now(),
         finalizada: null,
+        modoEstudio,
+        pistasUsadas: 0,
       }
       iniciar(partida)
     } catch (e) {
@@ -116,44 +120,77 @@ function SeleccionArea({ modoOscuro }: { modoOscuro: boolean }) {
           </p>
         </motion.div>
 
-        <h2
-          className={`text-[11px] uppercase tracking-wider font-semibold mb-3 ${
-            modoOscuro ? 'text-zinc-500' : 'text-zinc-400'
-          }`}
-        >
-          Elige un área
-        </h2>
+        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <h2
+            className={`text-[11px] uppercase tracking-wider font-semibold ${
+              modoOscuro ? 'text-zinc-500' : 'text-zinc-400'
+            }`}
+          >
+            Elige un área
+          </h2>
+          <label
+            className={`inline-flex items-center gap-2 text-xs cursor-pointer select-none ${
+              modoOscuro ? 'text-zinc-400' : 'text-zinc-600'
+            }`}
+            title="Sin cronómetro, ideal para repasar antes de un examen. No cuenta para récords."
+          >
+            <input
+              type="checkbox"
+              checked={modoEstudio}
+              onChange={(e) => setModoEstudio(e.target.checked)}
+              className="w-3.5 h-3.5 rounded accent-current"
+              style={{ accentColor: 'var(--accent-base)' }}
+            />
+            Modo estudio (sin cronómetro)
+          </label>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {AREAS.map((a) => (
-            <button
-              key={a.id}
-              onClick={() => comenzar(a.id)}
-              disabled={cargando !== null}
-              className={`text-left rounded-xl border-2 p-5 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:-translate-y-0.5 ${
-                modoOscuro
-                  ? 'bg-zinc-800/40 border-zinc-800 hover:border-[var(--accent-700)]'
-                  : 'bg-white border-zinc-200 hover:border-[var(--accent-500)]'
-              }`}
-            >
-              <div className="flex items-center gap-3 mb-2">
-                <span
-                  className="w-10 h-10 rounded-lg flex items-center justify-center"
-                  style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 19%, transparent)' : 'color-mix(in srgb, var(--accent-base) 8%, transparent)' }}
-                >
-                  <i className={`ti ${a.icono} text-xl`} style={{ color: VERDE }} />
-                </span>
-                <h3 className={`text-base font-serif font-semibold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
-                  {a.nombre}
-                </h3>
-                {cargando === a.id && (
-                  <i className="ti ti-loader-2 text-base animate-spin ml-auto" style={{ color: VERDE }} />
+          {AREAS.map((a) => {
+            const rec = records[a.id]
+            return (
+              <button
+                key={a.id}
+                onClick={() => comenzar(a.id)}
+                disabled={cargando !== null}
+                className={`text-left rounded-xl border-2 p-5 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:-translate-y-0.5 ${
+                  modoOscuro
+                    ? 'bg-zinc-800/40 border-zinc-800 hover:border-[var(--accent-700)]'
+                    : 'bg-white border-zinc-200 hover:border-[var(--accent-500)]'
+                }`}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <span
+                    className="w-10 h-10 rounded-lg flex items-center justify-center"
+                    style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 19%, transparent)' : 'color-mix(in srgb, var(--accent-base) 8%, transparent)' }}
+                  >
+                    <i className={`ti ${a.icono} text-xl`} style={{ color: VERDE }} />
+                  </span>
+                  <h3 className={`text-base font-serif font-semibold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+                    {a.nombre}
+                  </h3>
+                  {cargando === a.id && (
+                    <i className="ti ti-loader-2 text-base animate-spin ml-auto" style={{ color: VERDE }} />
+                  )}
+                </div>
+                <p className={`text-xs leading-relaxed ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                  {a.descripcion}
+                </p>
+                {rec && (
+                  <div
+                    className={`mt-3 inline-flex items-center gap-1.5 text-[11px] px-2 py-1 rounded-md ${
+                      modoOscuro
+                        ? 'bg-[color-mix(in_srgb,var(--accent-base)_15%,transparent)] text-[var(--accent-300)]'
+                        : 'bg-[color-mix(in_srgb,var(--accent-base)_8%,transparent)] text-[var(--accent-700)]'
+                    }`}
+                    title="Tu mejor marca en este área"
+                  >
+                    <i className="ti ti-trophy text-[11px]" />
+                    {rec.aciertos}/27 · {formatearTiempo(rec.tiempoUsadoSeg)}
+                  </div>
                 )}
-              </div>
-              <p className={`text-xs leading-relaxed ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                {a.descripcion}
-              </p>
-            </button>
-          ))}
+              </button>
+            )
+          })}
         </div>
 
         {error && (
@@ -179,8 +216,10 @@ function Pasapalabra({ partida, modoOscuro }: { partida: PartidaPasapalabra; mod
   const finalizar = useStore((s) => s.finalizarPartidaPasapalabra)
   const abandonar = useStore((s) => s.abandonarPartidaPasapalabra)
   const decrementar = useStore((s) => s.decrementarTiempoPasapalabra)
+  const usarPista = useStore((s) => s.usarPistaPasapalabra)
   const [valor, setValor] = useState('')
   const [feedback, setFeedback] = useState<'ok' | 'fail' | null>(null)
+  const [pistaRevelada, setPistaRevelada] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   // Timer
@@ -196,9 +235,10 @@ function Pasapalabra({ partida, modoOscuro }: { partida: PartidaPasapalabra; mod
     if (!quedan && !partida.finalizada) finalizar()
   }, [partida.rosco, partida.finalizada, finalizar])
 
-  // Auto-focus al input al cambiar de letra
+  // Auto-focus al input al cambiar de letra; limpiar la pista revelada
   useEffect(() => {
     inputRef.current?.focus()
+    setPistaRevelada(null)
   }, [partida.letraActualIdx])
 
   const actual = partida.rosco[partida.letraActualIdx]
@@ -220,6 +260,16 @@ function Pasapalabra({ partida, modoOscuro }: { partida: PartidaPasapalabra; mod
     setValor('')
   }
 
+  function manejarPista() {
+    if (!actual) return
+    if ((partida.pistasUsadas ?? 0) >= 3) return
+    // Revela la primera letra de la palabra esperada (en minúscula) y descuenta 15s.
+    const primera = actual.palabra.charAt(0).toUpperCase()
+    const longitud = actual.palabra.length
+    setPistaRevelada(`Empieza con "${primera}" · ${longitud} letras`)
+    usarPista()
+  }
+
   return (
     <div className={`h-full overflow-y-auto ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
       {/* Header sticky: el tiempo siempre visible, aunque el usuario scrollee hacia el input */}
@@ -229,10 +279,27 @@ function Pasapalabra({ partida, modoOscuro }: { partida: PartidaPasapalabra; mod
         }`}
       >
         <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between">
-          <div className={`text-sm ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
+          <div className={`text-sm flex items-center gap-2 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
             Área: <strong className={modoOscuro ? 'text-white' : 'text-zinc-900'}>{labelArea(partida.area)}</strong>
+            {partida.modoEstudio && (
+              <span
+                className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded font-semibold ${
+                  modoOscuro ? 'bg-[var(--accent-950)]/40 text-[var(--accent-300)]' : 'bg-[var(--accent-50)] text-[var(--accent-700)]'
+                }`}
+                title="Sin cronómetro · no cuenta para récords"
+              >
+                Estudio
+              </span>
+            )}
           </div>
-          <Tiempo segundos={partida.segundosRestantes} modoOscuro={modoOscuro} />
+          {partida.modoEstudio ? (
+            <div className={`text-sm font-mono ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
+              <i className="ti ti-infinity mr-1" />
+              sin tiempo
+            </div>
+          ) : (
+            <Tiempo segundos={partida.segundosRestantes} modoOscuro={modoOscuro} />
+          )}
           <button
             onClick={() => {
               if (confirm('¿Abandonar la partida en curso? Se perderá el progreso.')) abandonar()
@@ -267,10 +334,22 @@ function Pasapalabra({ partida, modoOscuro }: { partida: PartidaPasapalabra; mod
                 {actual.modo === 'empieza' ? 'empieza con la' : 'contiene la'} {actual.letra}
               </span>
             </div>
-            <p className={`text-base leading-relaxed mb-4 ${modoOscuro ? 'text-zinc-200' : 'text-zinc-800'}`}>
+            <p className={`text-base leading-relaxed mb-2 ${modoOscuro ? 'text-zinc-200' : 'text-zinc-800'}`}>
               {actual.definicion}
             </p>
-            <form onSubmit={manejarSubmit} className="flex flex-col sm:flex-row gap-2">
+            {pistaRevelada && (
+              <div
+                className={`mb-3 inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-md font-mono ${
+                  modoOscuro
+                    ? 'bg-[color-mix(in_srgb,var(--accent-base)_15%,transparent)] text-[var(--accent-300)] border border-[var(--accent-800)]'
+                    : 'bg-[color-mix(in_srgb,var(--accent-base)_8%,transparent)] text-[var(--accent-800)] border border-[var(--accent-200)]'
+                }`}
+              >
+                <i className="ti ti-bulb text-sm" />
+                {pistaRevelada}
+              </div>
+            )}
+            <form onSubmit={manejarSubmit} className="flex flex-col sm:flex-row gap-2 mt-2">
               <input
                 ref={inputRef}
                 type="text"
@@ -307,6 +386,33 @@ function Pasapalabra({ partida, modoOscuro }: { partida: PartidaPasapalabra; mod
                 title="Saltar esta letra y volver después"
               >
                 Pasapalabra
+              </button>
+              <button
+                type="button"
+                onClick={manejarPista}
+                disabled={
+                  (partida.pistasUsadas ?? 0) >= 3 ||
+                  pistaRevelada !== null ||
+                  actual.estado !== 'pendiente' && actual.estado !== 'pasada'
+                }
+                title={
+                  (partida.pistasUsadas ?? 0) >= 3
+                    ? 'Sin pistas disponibles (máximo 3)'
+                    : partida.modoEstudio
+                    ? 'Revela la primera letra y la longitud (sin costo en modo estudio)'
+                    : 'Revela la primera letra y la longitud · cuesta 15 segundos'
+                }
+                className={`px-4 py-2.5 rounded-lg text-sm font-medium inline-flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed ${
+                  modoOscuro
+                    ? 'bg-zinc-800 text-[var(--accent-300)] hover:bg-zinc-700 border border-zinc-700'
+                    : 'bg-white text-[var(--accent-700)] hover:bg-zinc-50 border border-zinc-200'
+                }`}
+              >
+                <i className="ti ti-bulb text-base" />
+                Pista
+                <span className="text-[10px] opacity-70">
+                  {3 - (partida.pistasUsadas ?? 0)}
+                </span>
               </button>
             </form>
           </div>
@@ -424,12 +530,26 @@ function ResumenPartida({ partida, modoOscuro }: { partida: PartidaPasapalabra; 
   const abandonar = useStore((s) => s.abandonarPartidaPasapalabra)
   const setVistaActiva = useStore((s) => s.setVistaActiva)
   const setCodigoExplorador = useStore((s) => s.setCodigoExplorador)
+  const registrarRecord = useStore((s) => s.registrarRecordSiCorresponde)
+  const recordPrevio = useStore((s) => s.recordsPasapalabra[partida.area])
   const aciertos = partida.rosco.filter((r) => r.estado === 'acertada').length
   const fallos = partida.rosco.filter((r) => r.estado === 'fallada').length
   const pasadas = partida.rosco.filter((r) => r.estado === 'pasada' || r.estado === 'pendiente').length
   const tiempoUsado = partida.duracionTotalSeg - partida.segundosRestantes
   const min = Math.floor(tiempoUsado / 60)
   const sec = tiempoUsado % 60
+
+  // Detectar si esta partida es récord ANTES de registrarla.
+  const esNuevoRecord = !partida.modoEstudio && (
+    !recordPrevio ||
+    aciertos > recordPrevio.aciertos ||
+    (aciertos === recordPrevio.aciertos && tiempoUsado < recordPrevio.tiempoUsadoSeg)
+  )
+
+  useEffect(() => {
+    if (!partida.modoEstudio) registrarRecord()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [partida.id])
 
   return (
     <div className={`h-full overflow-y-auto ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
@@ -449,11 +569,47 @@ function ResumenPartida({ partida, modoOscuro }: { partida: PartidaPasapalabra; 
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-3 gap-3 mb-3">
           <StatCard label="Aciertos" valor={aciertos} color="emerald" modoOscuro={modoOscuro} />
           <StatCard label="Fallos" valor={fallos} color="rose" modoOscuro={modoOscuro} />
           <StatCard label="Sin responder" valor={pasadas} color="zinc" modoOscuro={modoOscuro} />
         </div>
+
+        {partida.modoEstudio ? (
+          <div
+            className={`mb-6 px-4 py-2.5 rounded-lg text-xs flex items-center gap-2 ${
+              modoOscuro ? 'bg-zinc-800 text-zinc-400 border border-zinc-700' : 'bg-zinc-100 text-zinc-600 border border-zinc-200'
+            }`}
+          >
+            <i className="ti ti-book-2 text-sm" />
+            Modo estudio · esta partida no cuenta para récords personales
+          </div>
+        ) : esNuevoRecord ? (
+          <div
+            className={`mb-6 px-4 py-2.5 rounded-lg text-sm flex items-center gap-2 font-medium ${
+              modoOscuro
+                ? 'bg-[color-mix(in_srgb,var(--accent-base)_18%,transparent)] text-[var(--accent-200)] border border-[var(--accent-700)]'
+                : 'bg-[color-mix(in_srgb,var(--accent-base)_10%,transparent)] text-[var(--accent-800)] border border-[var(--accent-300)]'
+            }`}
+          >
+            <i className="ti ti-confetti text-base" />
+            ¡Nuevo récord personal en {labelArea(partida.area)}!
+            {recordPrevio && (
+              <span className="opacity-70 text-xs ml-1">
+                · previo: {recordPrevio.aciertos}/27 en {formatearTiempo(recordPrevio.tiempoUsadoSeg)}
+              </span>
+            )}
+          </div>
+        ) : recordPrevio ? (
+          <div
+            className={`mb-6 px-4 py-2.5 rounded-lg text-xs flex items-center gap-2 ${
+              modoOscuro ? 'bg-zinc-800/60 text-zinc-400 border border-zinc-700' : 'bg-zinc-50 text-zinc-600 border border-zinc-200'
+            }`}
+          >
+            <i className="ti ti-trophy text-sm" />
+            Tu mejor marca sigue siendo: <strong>{recordPrevio.aciertos}/27</strong> en {formatearTiempo(recordPrevio.tiempoUsadoSeg)}
+          </div>
+        ) : null}
 
         <h2 className={`text-[11px] uppercase tracking-wider font-semibold mb-3 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
           Revisión por letra

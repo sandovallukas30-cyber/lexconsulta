@@ -176,9 +176,9 @@ function Acerca({ modoOscuro }: { modoOscuro: boolean }) {
         </Feat>
       </ul>
 
-      <H modoOscuro={modoOscuro}>Normas indexadas (22)</H>
+      <H modoOscuro={modoOscuro}>Normas indexadas (23)</H>
       <P modoOscuro={modoOscuro}>
-        <strong>Fundamentales:</strong> Constitución · Pacto Internacional de Derechos Civiles y Políticos.
+        <strong>Fundamentales y tratados:</strong> Constitución · Pacto Internacional DCP · Pacto Internacional DESC.
         <br />
         <strong>Códigos:</strong> Civil · Penal · Trabajo · Tributario · Comercio · Procedimiento Civil ·
         Procesal Penal · Orgánico de Tribunales · Minería · Aguas · Sanitario · Justicia Militar.

@@ -23,6 +23,8 @@ import type {
   Mensaje,
   Canvas,
   PartidaPasapalabra,
+  RecordPasapalabra,
+  AreaPractica,
 } from '../types'
 
 interface AppState {
@@ -85,6 +87,9 @@ interface AppState {
   finalizarPartidaPasapalabra: () => void
   abandonarPartidaPasapalabra: () => void
   decrementarTiempoPasapalabra: (segundos: number) => void
+  recordsPasapalabra: Partial<Record<AreaPractica, RecordPasapalabra>>
+  usarPistaPasapalabra: () => void
+  registrarRecordSiCorresponde: () => void
   temaColor: TemaColorId
   setTemaColor: (id: TemaColorId) => void
 }
@@ -112,6 +117,7 @@ const codigosIniciales: CodigoActivo[] = [
   { tipo: 'trn', nombre: 'Ley 20.285 - Acceso a la Información Pública (Transparencia)', nombreCorto: 'Transparencia', descripcion: 'Principio de transparencia, derecho de acceso a la información de los órganos del Estado, Consejo para la Transparencia', categoria: 'especiales', activo: true, cargado: true },
   { tipo: 'rpa', nombre: 'Ley 20.084 - Responsabilidad Penal Adolescente', nombreCorto: 'Resp. Penal Adolescente', descripcion: 'Sistema especial de responsabilidad penal para adolescentes mayores de 14 y menores de 18 años', categoria: 'especiales', activo: true, cargado: true },
   { tipo: 'pdc', nombre: 'Pacto Internacional de Derechos Civiles y Políticos', nombreCorto: 'Pacto Civiles y Políticos', descripcion: 'Tratado internacional de DDHH ratificado por Chile; en virtud del Art. 5° inc. 2° de la Constitución integra el bloque de constitucionalidad', categoria: 'tratados', activo: true, cargado: true },
+  { tipo: 'pde', nombre: 'Pacto Internacional de Derechos Económicos, Sociales y Culturales', nombreCorto: 'Pacto DESC', descripcion: 'Tratado internacional de DDHH (PIDESC) ratificado por Chile; reconoce derechos al trabajo, salud, educación, alimentación, vivienda y cultura', categoria: 'tratados', activo: true, cargado: true },
 ]
 
 export const useStore = create<AppState>()(
@@ -132,6 +138,7 @@ export const useStore = create<AppState>()(
       acercaAbierto: false,
       acercaPestana: 'acerca',
       partidaPasapalabra: null,
+      recordsPasapalabra: {},
       temaColor: 'esmeralda' as TemaColorId,
       consultaActivaId: null,
       codigoExploradorActivo: null,
@@ -275,6 +282,8 @@ export const useStore = create<AppState>()(
         set((s) => {
           const p = s.partidaPasapalabra
           if (!p || p.pausadaEn || p.finalizada) return {}
+          // En modo estudio no decrementa: el tiempo no corre.
+          if (p.modoEstudio) return {}
           const nuevo = Math.max(0, p.segundosRestantes - segundos)
           return {
             partidaPasapalabra: {
@@ -284,10 +293,52 @@ export const useStore = create<AppState>()(
             },
           }
         }),
+      usarPistaPasapalabra: () =>
+        set((s) => {
+          const p = s.partidaPasapalabra
+          if (!p || p.pausadaEn || p.finalizada) return {}
+          const yaUsadas = p.pistasUsadas ?? 0
+          if (yaUsadas >= 3) return {}
+          // Cada pista resta 15 segundos (excepto en modo estudio donde no hay tiempo).
+          const nuevoTiempo = p.modoEstudio
+            ? p.segundosRestantes
+            : Math.max(0, p.segundosRestantes - 15)
+          return {
+            partidaPasapalabra: {
+              ...p,
+              pistasUsadas: yaUsadas + 1,
+              segundosRestantes: nuevoTiempo,
+              finalizada: nuevoTiempo === 0 && !p.modoEstudio ? Date.now() : null,
+            },
+          }
+        }),
+      registrarRecordSiCorresponde: () =>
+        set((s) => {
+          const p = s.partidaPasapalabra
+          if (!p || !p.finalizada) return {}
+          // Modo estudio no cuenta para récords.
+          if (p.modoEstudio) return {}
+          const aciertos = p.rosco.filter((r) => r.estado === 'acertada').length
+          const fallos = p.rosco.filter((r) => r.estado === 'fallada').length
+          const tiempoUsado = p.duracionTotalSeg - p.segundosRestantes
+          const previo = s.recordsPasapalabra[p.area]
+          // Es récord si: más aciertos, o igual aciertos con menos tiempo.
+          const esRecord =
+            !previo ||
+            aciertos > previo.aciertos ||
+            (aciertos === previo.aciertos && tiempoUsado < previo.tiempoUsadoSeg)
+          if (!esRecord) return {}
+          return {
+            recordsPasapalabra: {
+              ...s.recordsPasapalabra,
+              [p.area]: { aciertos, fallos, tiempoUsadoSeg: tiempoUsado, fecha: Date.now() },
+            },
+          }
+        }),
     }),
     {
       name: 'prima-lex-storage-v3',
-      version: 22,
+      version: 23,
       partialize: (s) => ({
         perfil: s.perfil,
         codigos: s.codigos,
@@ -299,6 +350,7 @@ export const useStore = create<AppState>()(
         sidebarColapsado: s.sidebarColapsado,
         modernizarLenguaje: s.modernizarLenguaje,
         partidaPasapalabra: s.partidaPasapalabra,
+        recordsPasapalabra: s.recordsPasapalabra,
         temaColor: s.temaColor,
       }),
       migrate: (persisted: unknown, version: number) => {
@@ -306,10 +358,9 @@ export const useStore = create<AppState>()(
           const state = persisted as { codigos?: unknown }
           return { ...(state ?? {}), codigos: codigosIniciales }
         }
-        if (version < 22) {
-          // v11-21: refrescar metadatos. v22: eliminar placeholder 'tra'
-          // (los tratados específicos se listan dentro de la sección
-          // expandible 'Tratados internacionales' del SelectorCodigo).
+        if (version < 23) {
+          // v11-22: refrescar metadatos. v23: incorporar PIDESC (pde) como
+          // tratado internacional cargado.
           const state = persisted as { codigos?: CodigoActivo[] }
           const prefs = new Map<string, boolean>()
           if (Array.isArray(state.codigos)) {
