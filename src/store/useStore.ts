@@ -92,6 +92,12 @@ interface AppState {
   registrarRecordSiCorresponde: () => void
   temaColor: TemaColorId
   setTemaColor: (id: TemaColorId) => void
+  omnibarAbierto: boolean
+  setOmnibarAbierto: (abierto: boolean) => void
+  rightSidebarAbierto: boolean
+  toggleRightSidebar: () => void
+  visitadosRecientes: Array<{ articulo: string; codigo: CodigoActivo['tipo']; timestamp: number }>
+  agregarVisitado: (articulo: string, codigo: CodigoActivo['tipo']) => void
 }
 
 const codigosIniciales: CodigoActivo[] = [
@@ -143,6 +149,9 @@ export const useStore = create<AppState>()(
       consultaActivaId: null,
       codigoExploradorActivo: null,
       codigoMapaActivo: null,
+      omnibarAbierto: false,
+      rightSidebarAbierto: false,
+      visitadosRecientes: [],
 
       setPerfil: (perfil) => set({ perfil, modalPerfilAbierto: false }),
       setVistaActiva: (vistaActiva) =>
@@ -335,6 +344,21 @@ export const useStore = create<AppState>()(
             },
           }
         }),
+      setOmnibarAbierto: (abierto) => set({ omnibarAbierto: abierto }),
+      toggleRightSidebar: () => set((s) => ({ rightSidebarAbierto: !s.rightSidebarAbierto })),
+      agregarVisitado: (articulo, codigo) =>
+        set((s) => {
+          // Agregar el artículo al inicio, máx 10 items
+          const visitado = { articulo, codigo, timestamp: Date.now() }
+          const existente = s.visitadosRecientes.findIndex(
+            (v) => v.articulo === articulo && v.codigo === codigo
+          )
+          const nuevos =
+            existente >= 0
+              ? [visitado, ...s.visitadosRecientes.filter((_, i) => i !== existente)]
+              : [visitado, ...s.visitadosRecientes]
+          return { visitadosRecientes: nuevos.slice(0, 10) }
+        }),
     }),
     {
       name: 'prima-lex-storage-v3',
@@ -352,6 +376,8 @@ export const useStore = create<AppState>()(
         partidaPasapalabra: s.partidaPasapalabra,
         recordsPasapalabra: s.recordsPasapalabra,
         temaColor: s.temaColor,
+        rightSidebarAbierto: s.rightSidebarAbierto,
+        visitadosRecientes: s.visitadosRecientes,
       }),
       migrate: (persisted: unknown, version: number) => {
         if (version < 3) {
