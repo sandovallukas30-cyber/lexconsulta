@@ -467,3 +467,11 @@ export function obtenerVariasPreguntasAleatorias(
 
   return resultado
 }
+
+/**
+ * Obtiene los códigos que tienen preguntas disponibles
+ */
+export function obtenerCodigosConPreguntas(): string[] {
+  const codigosSet = new Set(PREGUNTAS_DESTELLO.map((p) => p.codigo))
+  return Array.from(codigosSet).sort()
+}

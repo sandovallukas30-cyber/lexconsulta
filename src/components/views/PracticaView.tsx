@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { generarRosco, esRespuestaCorrecta } from '../../services/pasapalabra'
 import { useDestello } from '../../hooks/useDestello'
+import { obtenerCodigosConPreguntas } from '../../data/destelloPreguntas'
 import type { AreaPractica, EntradaRosco, PartidaPasapalabra, CodigoTipo } from '../../types'
 
 const VERDE = 'var(--accent-base)'
@@ -1008,7 +1009,8 @@ function SelectorCodigoQuiz({
   modoOscuro: boolean
 }) {
   const codigos = useStore((s) => s.codigos)
-  const codigosConPreguntas = codigos.filter((c) => c.activo)
+  const codigosDisponibles = obtenerCodigosConPreguntas()
+  const codigosConPreguntas = codigos.filter((c) => c.activo && codigosDisponibles.includes(c.tipo))
 
   return (
     <div className="max-w-4xl mx-auto px-8 py-10">
