@@ -36,7 +36,6 @@ export type CategoriaCodigo =
 export type VistaId =
   | 'consultar'
   | 'situacion'
-  | 'destello'
   | 'canvas'
   | 'comparar'
   | 'mapa'
