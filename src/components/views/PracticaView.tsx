@@ -24,6 +24,7 @@ export function PracticaView() {
   const modoOscuro = useStore((s) => s.modoOscuro)
   const retomar = useStore((s) => s.retomarPartidaPasapalabra)
   const abandonar = useStore((s) => s.abandonarPartidaPasapalabra)
+  const codigos = useStore((s) => s.codigos)
   const flujoQuiz = useDestello()
 
   const [mostrarContinuar, setMostrarContinuar] = useState(false)
@@ -75,7 +76,7 @@ export function PracticaView() {
       <QuizJuridicoWrapper
         flujo={flujoQuiz}
         modoOscuro={modoOscuro}
-        codigos={useStore((s) => s.codigos)}
+        codigos={codigos}
         onVolverAlMenu={() => {
           setJuegoSeleccionado('none')
           flujoQuiz.volverAInicio()
