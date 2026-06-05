@@ -962,56 +962,33 @@ function QuizJuridicoWrapper({
 }) {
   return (
     <div className={`h-full overflow-y-auto ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
-      <AnimatePresence mode="wait">
-        {flujo.estado === 'codigo' && (
-          <motion.div
-            key="codigo"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <SelectorCodigoQuiz
-              titulo="Quiz Jurídico"
-              descripcion="Preguntas sobre artículos clave con puntos, rachas y feedback"
-              onElegir={(tipo) => flujo.elegirCodigo(tipo as CodigoTipo)}
-              onVolverAlMenu={onVolverAlMenu}
-              modoOscuro={modoOscuro}
-            />
-          </motion.div>
-        )}
+      {flujo.estado === 'codigo' && (
+        <SelectorCodigoQuiz
+          titulo="Quiz Jurídico"
+          descripcion="Preguntas sobre artículos clave con puntos, rachas y feedback"
+          onElegir={(tipo) => flujo.elegirCodigo(tipo as CodigoTipo)}
+          onVolverAlMenu={onVolverAlMenu}
+          modoOscuro={modoOscuro}
+        />
+      )}
 
-        {flujo.estado === 'jugando' && flujo.preguntaActual && (
-          <motion.div
-            key="jugando"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <PantallaJuegoQuiz flujo={flujo} modoOscuro={modoOscuro} />
-          </motion.div>
-        )}
+      {flujo.estado === 'jugando' && flujo.preguntaActual && (
+        <PantallaJuegoQuiz flujo={flujo} modoOscuro={modoOscuro} />
+      )}
 
-        {flujo.estado === 'resultado' && (
-          <motion.div
-            key="resultado"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <PantallaResultadoQuiz
-              aciertos={flujo.aciertos}
-              errores={flujo.errores}
-              puntos={flujo.puntos}
-              racha={flujo.racha}
-              codigoMeta={codigos.find((c) => c.tipo === flujo.codigoElegido)}
-              modoOscuro={modoOscuro}
-              onJugarDeNuevo={() => {
-                onVolverAlMenu()
-              }}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {flujo.estado === 'resultado' && (
+        <PantallaResultadoQuiz
+          aciertos={flujo.aciertos}
+          errores={flujo.errores}
+          puntos={flujo.puntos}
+          racha={flujo.racha}
+          codigoMeta={codigos.find((c) => c.tipo === flujo.codigoElegido)}
+          modoOscuro={modoOscuro}
+          onJugarDeNuevo={() => {
+            onVolverAlMenu()
+          }}
+        />
+      )}
     </div>
   )
 }
