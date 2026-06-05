@@ -8,6 +8,7 @@ const VERDE = 'var(--accent-base)'
 const moduloLabel: Record<VistaId, string> = {
   consultar: 'Consultar',
   situacion: 'Situación',
+  destello: 'Destello',
   canvas: 'Canvas',
   comparar: 'Comparar',
   mapa: 'Mapa',
@@ -20,6 +21,7 @@ const moduloLabel: Record<VistaId, string> = {
 const moduloIcono: Record<VistaId, string> = {
   consultar: 'ti-messages',
   situacion: 'ti-list-numbers',
+  destello: 'ti-lightning-2',
   canvas: 'ti-affiliate',
   comparar: 'ti-versions',
   mapa: 'ti-network',

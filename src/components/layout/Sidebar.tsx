@@ -14,6 +14,7 @@ interface ItemMenu {
 const items: ItemMenu[] = [
   { id: 'consultar', icono: 'ti-messages', label: 'Consultar' },
   { id: 'situacion', icono: 'ti-list-numbers', label: 'Situación' },
+  { id: 'destello', icono: 'ti-lightning-2', label: 'Destello' },
   { id: 'canvas', icono: 'ti-affiliate', label: 'Canvas' },
   { id: 'comparar', icono: 'ti-versions', label: 'Comparar' },
   { id: 'mapa', icono: 'ti-network', label: 'Mapa' },

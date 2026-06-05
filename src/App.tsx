@@ -3,6 +3,7 @@ import { Topbar } from './components/layout/Topbar'
 import { ModalPerfil } from './components/ui/ModalPerfil'
 import { ConsultarView } from './components/views/ConsultarView'
 import { SituacionView } from './components/views/SituacionView'
+import { DestelloView } from './components/views/DestelloView'
 import { CanvasView } from './components/views/CanvasView'
 import { CompararView } from './components/views/CompararView'
 import { MapaView } from './components/views/MapaView'
@@ -21,6 +22,7 @@ import type { VistaId } from './types'
 const vistas: Record<VistaId, React.ComponentType> = {
   consultar: ConsultarView,
   situacion: SituacionView,
+  destello: DestelloView,
   canvas: CanvasView,
   comparar: CompararView,
   mapa: MapaView,

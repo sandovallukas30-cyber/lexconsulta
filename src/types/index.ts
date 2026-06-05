@@ -36,6 +36,7 @@ export type CategoriaCodigo =
 export type VistaId =
   | 'consultar'
   | 'situacion'
+  | 'destello'
   | 'canvas'
   | 'comparar'
   | 'mapa'
@@ -83,6 +84,31 @@ export interface RecordPasapalabra {
   fallos: number
   tiempoUsadoSeg: number
   fecha: number
+}
+
+// ============ DESTELLO LEGAL ============
+
+export interface PreguntaDestello {
+  id: string
+  articulo: string // "Art. 19 CPR"
+  pregunta: string
+  descripcionBreve?: string
+  opciones: string[]
+  respuestaCorrecta: number // índice de la opción correcta
+  codigo: CodigoTipo
+  dificultad: 'facil' | 'normal' | 'dificil'
+  explicacion: string // explicación de la respuesta correcta
+}
+
+export interface EstadisticasDestello {
+  codigoAcumulado: number // puntos totales
+  rachaActual: number // aciertos consecutivos actuales
+  rachaMaxima: number // racha más alta ever
+  ultimaPartida: number | null // timestamp última partida
+  dominioPorCodigo: Record<CodigoTipo, number> // % dominio por código (0-100)
+  preguntasRespondidas: number
+  tasaAcierto: number // porcentaje de aciertos históricos
+  nivelActual: number // 1-5 basado en dominio general
 }
 
 export type TipoNodoCanvas = 'definicion' | 'articulos' | 'caso' | 'libre' | 'concepto'
