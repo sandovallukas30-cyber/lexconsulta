@@ -1244,68 +1244,61 @@ function PantallaJuegoQuiz({
       </div>
 
       {/* Feedback y botón siguiente */}
-      <AnimatePresence>
-        {flujo.mostrarResultado && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="space-y-4"
-          >
-            {flujo.respuestaSeleccionada === pregunta.respuestaCorrecta ? (
-              <div
-                className={`p-4 rounded-lg border-l-4 ${
-                  modoOscuro
-                    ? 'bg-green-950/30 border-green-700 text-green-200'
-                    : 'bg-green-50 border-green-500 text-green-900'
-                }`}
-              >
-                <p className="font-semibold flex items-center gap-2">
-                  <i className="ti ti-check text-lg" />
-                  ¡Correcto!
-                </p>
-              </div>
-            ) : (
-              <div
-                className={`p-4 rounded-lg border-l-4 ${
-                  modoOscuro
-                    ? 'bg-red-950/30 border-red-700 text-red-200'
-                    : 'bg-red-50 border-red-500 text-red-900'
-                }`}
-              >
-                <p className="font-semibold flex items-center gap-2 mb-2">
-                  <i className="ti ti-x text-lg" />
-                  Incorrecto
-                </p>
-                <p className="text-sm">La respuesta correcta es: {pregunta.opciones[pregunta.respuestaCorrecta]}</p>
-              </div>
-            )}
-
+      {flujo.mostrarResultado && (
+        <div className="space-y-4">
+          {flujo.respuestaSeleccionada === pregunta.respuestaCorrecta ? (
             <div
-              className={`p-4 rounded-lg ${
-                modoOscuro ? 'bg-zinc-800/50' : 'bg-zinc-50'
+              className={`p-4 rounded-lg border-l-4 ${
+                modoOscuro
+                  ? 'bg-green-950/30 border-green-700 text-green-200'
+                  : 'bg-green-50 border-green-500 text-green-900'
               }`}
             >
-              <p className={`text-sm leading-relaxed ${modoOscuro ? 'text-zinc-200' : 'text-zinc-700'}`}>
-                {pregunta.explicacion}
+              <p className="font-semibold flex items-center gap-2">
+                <i className="ti ti-check text-lg" />
+                ¡Correcto!
               </p>
             </div>
-
-            <div className="flex justify-end">
-              <button
-                onClick={() => flujo.siguiente()}
-                className="flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-semibold text-white transition-all hover:shadow-lg"
-                style={{ background: VERDE }}
-              >
-                {flujo.preguntaIdx === flujo.preguntasActuales.length - 1
-                  ? 'Ver resultados'
-                  : 'Siguiente pregunta'}
-                <i className="ti ti-arrow-right text-base" />
-              </button>
+          ) : (
+            <div
+              className={`p-4 rounded-lg border-l-4 ${
+                modoOscuro
+                  ? 'bg-red-950/30 border-red-700 text-red-200'
+                  : 'bg-red-50 border-red-500 text-red-900'
+              }`}
+            >
+              <p className="font-semibold flex items-center gap-2 mb-2">
+                <i className="ti ti-x text-lg" />
+                Incorrecto
+              </p>
+              <p className="text-sm">La respuesta correcta es: {pregunta.opciones[pregunta.respuestaCorrecta]}</p>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+
+          <div
+            className={`p-4 rounded-lg ${
+              modoOscuro ? 'bg-zinc-800/50' : 'bg-zinc-50'
+            }`}
+          >
+            <p className={`text-sm leading-relaxed ${modoOscuro ? 'text-zinc-200' : 'text-zinc-700'}`}>
+              {pregunta.explicacion}
+            </p>
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              onClick={() => flujo.siguiente()}
+              className="flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-semibold text-white transition-all hover:shadow-lg"
+              style={{ background: VERDE }}
+            >
+              {flujo.preguntaIdx === flujo.preguntasActuales.length - 1
+                ? 'Ver resultados'
+                : 'Siguiente pregunta'}
+              <i className="ti ti-arrow-right text-base" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
