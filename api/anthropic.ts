@@ -17,9 +17,11 @@ const ALLOWED_MODELS = new Set([
 
 // ============ Rate limiting ============
 
-const VENTANA_MS = 60 * 60 * 1000 // 1 hora
-const LIMITE_POR_IP = 25 // requests por IP por hora
-const LIMITE_GLOBAL = 250 // requests totales por hora (techo de gasto)
+const VENTANA_MS = 24 * 60 * 60 * 1000 // 24 horas (1 día)
+const LIMITE_SIN_REGISTRO = 3 // 3 consultas/día para usuarios sin registrar
+const LIMITE_CON_REGISTRO = 10 // 10 consultas/día para usuarios registrados
+const LIMITE_POR_IP_MAXIMA = 50 // protección contra abuso por IP (fallback)
+const LIMITE_GLOBAL = 500 // requests totales por día (techo de gasto)
 const MAX_CHARS_INPUT = 60_000 // tamaño máximo del prompt (sistema + mensajes)
 
 // Map<clave, [timestamp, ...]>. Cada timestamp = 1 request reciente.
@@ -48,6 +50,21 @@ function obtenerIp(req: VercelRequest): string {
     return xff[0].trim()
   }
   return req.headers['x-real-ip']?.toString() ?? 'desconocida'
+}
+
+function obtenerUsuarioEmail(payload: unknown): string | null {
+  // Intenta extraer usuarioEmail del cuerpo del request
+  if (payload && typeof payload === 'object' && 'usuarioEmail' in payload) {
+    const email = (payload as { usuarioEmail?: unknown }).usuarioEmail
+    if (typeof email === 'string' && email.length > 0) {
+      return email.toLowerCase().trim()
+    }
+  }
+  return null
+}
+
+function obtenerLimite(usuarioEmail: string | null): number {
+  return usuarioEmail ? LIMITE_CON_REGISTRO : LIMITE_SIN_REGISTRO
 }
 
 function calcularRetryAfter(clave: string, ahora: number, limite: number): number {
@@ -89,36 +106,60 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: 'Falta ANTHROPIC_API_KEY en el servidor' })
   }
 
-  // ----- Rate limit -----
+  const { model, max_tokens, system, messages, usuarioEmail } = req.body ?? {}
+
+  // ----- Rate limit diferenciado por usuario -----
   const ahora = Date.now()
   const ip = obtenerIp(req)
+  const email = obtenerUsuarioEmail({ usuarioEmail })
+  const limiteUsuario = obtenerLimite(email)
 
-  const usoIp = podarYContar(`ip:${ip}`, ahora)
+  // Clave para usuario registrado o IP (si no registrado)
+  const claveUsuario = email ? `user:${email}` : `ip:${ip}`
+
+  const usoUsuario = podarYContar(claveUsuario, ahora)
   const usoGlobal = podarYContar('global', ahora)
+  const usoIpMaxima = podarYContar(`ip:${ip}`, ahora)
 
-  if (usoIp >= LIMITE_POR_IP) {
-    const retry = calcularRetryAfter(`ip:${ip}`, ahora, LIMITE_POR_IP)
+  // Validar límite POR USUARIO
+  if (usoUsuario >= limiteUsuario) {
+    const retry = calcularRetryAfter(claveUsuario, ahora, limiteUsuario)
+    const tipoUsuario = email ? 'registrado' : 'sin registrar'
+    const tiempoRestablecimiento = Math.ceil(retry / 3600) // horas
     res.setHeader('Retry-After', String(retry))
-    res.setHeader('X-RateLimit-Limit', String(LIMITE_POR_IP))
+    res.setHeader('X-RateLimit-Limit', String(limiteUsuario))
     res.setHeader('X-RateLimit-Remaining', '0')
+    res.setHeader('X-RateLimit-Type', tipoUsuario)
     return res.status(429).json({
-      error: 'Demasiadas consultas',
-      detalle: `Has alcanzado el límite de ${LIMITE_POR_IP} consultas por hora desde tu conexión. Intenta nuevamente en ~${Math.ceil(retry / 60)} minutos.`,
+      error: 'Límite de consultas alcanzado',
+      detalle: `Has alcanzado el límite de ${limiteUsuario} consultas por día (usuario ${tipoUsuario}). Intenta nuevamente en ~${tiempoRestablecimiento} hora(s).`,
+      retryAfterSeconds: retry,
+      tipoUsuario,
+      limiteActual: limiteUsuario,
+    })
+  }
+
+  // Protección: no permitir abuso masivo desde una IP
+  if (usoIpMaxima >= LIMITE_POR_IP_MAXIMA) {
+    const retry = calcularRetryAfter(`ip:${ip}`, ahora, LIMITE_POR_IP_MAXIMA)
+    res.setHeader('Retry-After', String(retry))
+    return res.status(429).json({
+      error: 'Demasiadas consultas desde tu conexión',
+      detalle: `Tu conexión ha alcanzado el límite máximo de ${LIMITE_POR_IP_MAXIMA} consultas. Intenta nuevamente en unos minutos.`,
       retryAfterSeconds: retry,
     })
   }
 
+  // Validar límite GLOBAL (techo de gasto)
   if (usoGlobal >= LIMITE_GLOBAL) {
     const retry = calcularRetryAfter('global', ahora, LIMITE_GLOBAL)
     res.setHeader('Retry-After', String(retry))
     return res.status(503).json({
       error: 'Servicio saturado',
-      detalle: 'Prima Lex está recibiendo más consultas de las que su cuota actual permite. Intenta nuevamente en unos minutos.',
+      detalle: 'Prima Lex está recibiendo más consultas de las que su cuota diaria permite. Intenta nuevamente en unos minutos.',
       retryAfterSeconds: retry,
     })
   }
-
-  const { model, max_tokens, system, messages } = req.body ?? {}
 
   // ----- Validación de payload -----
   if (typeof model !== 'string' || !ALLOWED_MODELS.has(model)) {
@@ -140,8 +181,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // ----- Registrar el hit ANTES de llamar al upstream para evitar carrera -----
-  registrarHit(`ip:${ip}`, ahora)
+  registrarHit(claveUsuario, ahora)
   registrarHit('global', ahora)
+  registrarHit(`ip:${ip}`, ahora)
 
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
@@ -160,8 +202,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     })
 
     const data = await r.json()
-    res.setHeader('X-RateLimit-Limit', String(LIMITE_POR_IP))
-    res.setHeader('X-RateLimit-Remaining', String(Math.max(0, LIMITE_POR_IP - usoIp - 1)))
+    res.setHeader('X-RateLimit-Limit', String(limiteUsuario))
+    res.setHeader('X-RateLimit-Remaining', String(Math.max(0, limiteUsuario - usoUsuario - 1)))
+    res.setHeader('X-RateLimit-Type', email ? 'registered' : 'anonymous')
+    res.setHeader('X-RateLimit-Reset', String(new Date(ahora + VENTANA_MS).toISOString()))
     return res.status(r.status).json(data)
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Error desconocido'

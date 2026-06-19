@@ -43,13 +43,14 @@ function getClienteDev(): Anthropic {
   return clienteDev
 }
 
-export async function callMessages(payload: PayloadMessages): Promise<RespuestaMessages> {
+export async function callMessages(payload: PayloadMessages, usuarioEmail?: string | null): Promise<RespuestaMessages> {
   if (import.meta.env.PROD) {
     // Producción: proxy seguro
+    const payloadConUsuario = usuarioEmail ? { ...payload, usuarioEmail } : payload
     const r = await fetch('/api/anthropic', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(payloadConUsuario),
     })
     if (!r.ok) {
       // Intentar leer un mensaje amigable del cuerpo (rate limit, validación, etc.)
