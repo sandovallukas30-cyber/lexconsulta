@@ -19,6 +19,7 @@ export function useChat() {
   const actualizarConsulta = useStore((s) => s.actualizarConsulta)
   const nuevaConsulta = useStore((s) => s.nuevaConsulta)
   const usuarioEmail = useStore((s) => s.usuarioEmail)
+  const setConsultasRestantes = useStore((s) => s.setConsultasRestantes)
 
   const [mensajes, setMensajes] = useState<Mensaje[]>([])
   const [cargando, setCargando] = useState(false)
@@ -75,7 +76,7 @@ export function useChat() {
       try {
         await precargar(activos)
         const resultados = buscar(texto, activos)
-        const respuesta = await consultar(texto, resultados, perfil, usuarioEmail)
+        const respuesta = await consultar(texto, resultados, perfil, usuarioEmail, setConsultasRestantes)
         const mensajeAsistente: Mensaje = {
           id: crypto.randomUUID(),
           rol: 'assistant',
@@ -103,7 +104,7 @@ export function useChat() {
         setCargando(false)
       }
     },
-    [cargando, codigos, perfil, mensajes, consultaActivaId, agregarConsulta, actualizarConsulta, usuarioEmail]
+    [cargando, codigos, perfil, mensajes, consultaActivaId, agregarConsulta, actualizarConsulta, usuarioEmail, setConsultasRestantes]
   )
 
   const limpiar = useCallback(() => {

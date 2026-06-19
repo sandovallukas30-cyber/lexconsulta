@@ -23,6 +23,7 @@ export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
   const toggleModoOscuro = useStore((s) => s.toggleModoOscuro)
   const abrirModalPerfil = useStore((s) => s.abrirModalPerfil)
   const usuarioEmail = useStore((s) => s.usuarioEmail)
+  const consultasRestantes = useStore((s) => s.consultasRestantes)
 
   return (
     <header
@@ -76,7 +77,11 @@ export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
           >
             <i className={`ti ${usuarioEmail ? 'ti-user-check' : 'ti-mail'} text-base`} />
             <span className="text-xs font-medium">
-              {usuarioEmail ? '10 consultas' : 'Registrarse'}
+              {usuarioEmail
+                ? consultasRestantes !== null
+                  ? `${consultasRestantes} consultas`
+                  : '10 consultas'
+                : 'Registrarse'}
             </span>
           </button>
         )}

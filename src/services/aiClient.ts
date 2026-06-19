@@ -43,7 +43,11 @@ function getClienteDev(): Anthropic {
   return clienteDev
 }
 
-export async function callMessages(payload: PayloadMessages, usuarioEmail?: string | null): Promise<RespuestaMessages> {
+export async function callMessages(
+  payload: PayloadMessages,
+  usuarioEmail?: string | null,
+  onConsultasRestantes?: (n: number) => void,
+): Promise<RespuestaMessages> {
   if (import.meta.env.PROD) {
     // Producción: proxy seguro
     const payloadConUsuario = usuarioEmail ? { ...payload, usuarioEmail } : payload
@@ -52,8 +56,14 @@ export async function callMessages(payload: PayloadMessages, usuarioEmail?: stri
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(payloadConUsuario),
     })
+
+    // Leer contador de consultas restantes del header
+    const remaining = r.headers.get('X-RateLimit-Remaining')
+    if (remaining !== null && onConsultasRestantes) {
+      onConsultasRestantes(parseInt(remaining, 10))
+    }
+
     if (!r.ok) {
-      // Intentar leer un mensaje amigable del cuerpo (rate limit, validación, etc.)
       const body = await r.text().catch(() => '')
       let detalle = body.slice(0, 300)
       try {

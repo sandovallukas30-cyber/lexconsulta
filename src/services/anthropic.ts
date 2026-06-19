@@ -66,7 +66,8 @@ export async function consultar(
   pregunta: string,
   contexto: ResultadoBusqueda[],
   perfil: PerfilUsuario,
-  usuarioEmail?: string | null
+  usuarioEmail?: string | null,
+  onConsultasRestantes?: (n: number) => void,
 ): Promise<RespuestaIA> {
   const system = systemPromptConsulta(perfil)
   const contextoTexto = formatearContexto(contexto)
@@ -82,7 +83,7 @@ ${pregunta}`
     max_tokens: MAX_TOKENS,
     system,
     messages: [{ role: 'user', content: userContent }],
-  }, usuarioEmail)
+  }, usuarioEmail, onConsultasRestantes)
 
   const texto = res.content
     .filter((b) => b.type === 'text')

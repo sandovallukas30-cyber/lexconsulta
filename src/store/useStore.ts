@@ -102,8 +102,10 @@ interface AppState {
   // Autenticación
   usuarioEmail: string | null
   usuarioRegistrado: boolean
+  consultasRestantes: number | null
   registrarUsuario: (email: string) => void
   cerrarSesion: () => void
+  setConsultasRestantes: (n: number) => void
 }
 
 const codigosIniciales: CodigoActivo[] = [
@@ -160,6 +162,7 @@ export const useStore = create<AppState>()(
       visitadosRecientes: [],
       usuarioEmail: null,
       usuarioRegistrado: false,
+      consultasRestantes: null,
 
       setPerfil: (perfil) => set({ perfil, modalPerfilAbierto: false }),
       setVistaActiva: (vistaActiva) =>
@@ -371,12 +374,15 @@ export const useStore = create<AppState>()(
         set({
           usuarioEmail: email,
           usuarioRegistrado: true,
+          consultasRestantes: null,
         }),
       cerrarSesion: () =>
         set({
           usuarioEmail: null,
           usuarioRegistrado: false,
+          consultasRestantes: null,
         }),
+      setConsultasRestantes: (n) => set({ consultasRestantes: n }),
     }),
     {
       name: 'prima-lex-storage-v3',
