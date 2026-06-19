@@ -83,7 +83,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     })
 
     if (result.error) {
-      return res.status(500).json({ error: 'Error al enviar email' })
+      return res.status(500).json({ error: 'Error al enviar email', detail: result.error })
     }
 
     return res.status(200).json({
@@ -92,8 +92,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       email: emailLimpio,
     })
   } catch (error) {
-    console.error('Error enviando email con Resend:', error)
-    return res.status(500).json({ error: 'Error al enviar email' })
+    const msg = error instanceof Error ? error.message : String(error)
+    return res.status(500).json({ error: 'Error al enviar email', detail: msg })
   }
 }
 
