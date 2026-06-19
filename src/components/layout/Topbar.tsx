@@ -23,7 +23,14 @@ export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
   const toggleModoOscuro = useStore((s) => s.toggleModoOscuro)
   const abrirModalPerfil = useStore((s) => s.abrirModalPerfil)
   const usuarioEmail = useStore((s) => s.usuarioEmail)
-  const consultasRestantes = useStore((s) => s.consultasRestantes)
+  const usuarioRegistrado = useStore((s) => s.usuarioRegistrado)
+  const consultasRestantesStore = useStore((s) => s.consultasRestantes)
+  const fechaConsultas = useStore((s) => s.fechaConsultas)
+
+  // Resetear contador si es un nuevo día
+  const hoy = new Date().toISOString().slice(0, 10)
+  const consultasRestantes = fechaConsultas === hoy ? consultasRestantesStore : null
+  const limiteMaximo = usuarioRegistrado ? 10 : 3
 
   return (
     <header
@@ -78,9 +85,9 @@ export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
             <i className={`ti ${usuarioEmail ? 'ti-user-check' : 'ti-mail'} text-base`} />
             <span className="text-xs font-medium">
               {usuarioEmail
-                ? consultasRestantes !== null
-                  ? `${consultasRestantes} consultas`
-                  : '10 consultas'
+                ? `${consultasRestantes ?? limiteMaximo} consultas`
+                : consultasRestantes !== null
+                ? `${consultasRestantes}/3 consultas`
                 : 'Registrarse'}
             </span>
           </button>

@@ -103,6 +103,7 @@ interface AppState {
   usuarioEmail: string | null
   usuarioRegistrado: boolean
   consultasRestantes: number | null
+  fechaConsultas: string | null // YYYY-MM-DD del día en que se guardó el contador
   registrarUsuario: (email: string) => void
   cerrarSesion: () => void
   setConsultasRestantes: (n: number) => void
@@ -163,6 +164,7 @@ export const useStore = create<AppState>()(
       usuarioEmail: null,
       usuarioRegistrado: false,
       consultasRestantes: null,
+      fechaConsultas: null,
 
       setPerfil: (perfil) => set({ perfil, modalPerfilAbierto: false }),
       setVistaActiva: (vistaActiva) =>
@@ -375,14 +377,20 @@ export const useStore = create<AppState>()(
           usuarioEmail: email,
           usuarioRegistrado: true,
           consultasRestantes: null,
+          fechaConsultas: null,
         }),
       cerrarSesion: () =>
         set({
           usuarioEmail: null,
           usuarioRegistrado: false,
           consultasRestantes: null,
+          fechaConsultas: null,
         }),
-      setConsultasRestantes: (n) => set({ consultasRestantes: n }),
+      setConsultasRestantes: (n) =>
+        set({
+          consultasRestantes: n,
+          fechaConsultas: new Date().toISOString().slice(0, 10),
+        }),
     }),
     {
       name: 'prima-lex-storage-v3',
@@ -404,6 +412,8 @@ export const useStore = create<AppState>()(
         visitadosRecientes: s.visitadosRecientes,
         usuarioEmail: s.usuarioEmail,
         usuarioRegistrado: s.usuarioRegistrado,
+        consultasRestantes: s.consultasRestantes,
+        fechaConsultas: s.fechaConsultas,
       }),
       migrate: (persisted: unknown, version: number) => {
         if (version < 3) {
