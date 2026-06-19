@@ -16,7 +16,7 @@ export function VerificarView() {
     const token = params.get('token')
     if (!token) {
       setEstado('error')
-      setMensaje('Token no encontrado')
+      setMensaje(`Token no encontrado. URL: ${window.location.href}`)
       return
     }
 
