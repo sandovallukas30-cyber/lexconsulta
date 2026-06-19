@@ -49,10 +49,10 @@ export function ModalRegistro({ abierto, onCerrar }: ModalRegistroProps) {
         body: JSON.stringify({ email: emailLimpio }),
       })
 
-      const data = (await res.json()) as { verificationLink?: string; error?: string; detail?: unknown }
+      const data = (await res.json()) as { verificationLink?: string; error?: string }
 
       if (!res.ok) {
-        setError((data.error || 'Error al enviar verificación') + (data.detail ? ` — ${JSON.stringify(data.detail)}` : ''))
+        setError(data.error || 'Error al enviar verificación')
         setCargando(false)
         return
       }

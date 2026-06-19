@@ -69,9 +69,10 @@ export function RightSidebar() {
                   key={fav.id}
                   onClick={() => {
                     if (fav.tipo === 'articulo') {
-                      // TODO: Navigate to article
+                      setVistaActiva('explorador')
                     } else {
                       cargarConsulta(fav.id)
+                      setVistaActiva('consultar')
                     }
                   }}
                   className={`w-full text-left px-2 py-1.5 rounded text-xs transition-colors line-clamp-2 ${

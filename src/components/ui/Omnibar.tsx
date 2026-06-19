@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
+import { buscar } from '../../services/busqueda'
+import { codigosCargados } from '../../services/codigos'
 import type { CodigoTipo } from '../../types'
 
 const VERDE = 'var(--accent-base)'
@@ -50,25 +52,21 @@ export function Omnibar({ onClose }: Props) {
     const q = busqueda.toLowerCase()
     const nuevoResultados: ResultadoBusqueda[] = []
 
-    // Buscar en artículos de códigos activos
-    const codigosActivos = codigos.filter((c) => c.activo && c.cargado)
-    for (const codigo of codigosActivos) {
-      // Aquí normalmente buscaríamos en código.articulos, pero como no están cargados en memoria,
-      // hacemos búsqueda simplista en números de artículo
-      if (`art. ${q}`.includes(q) || q.includes('art')) {
-        // Placeholder: búsqueda real requeriría cargar artículos
+    // Buscar artículos reales usando el servicio de búsqueda
+    const cargados = codigosCargados()
+    const activos = codigos.filter((c) => c.activo && cargados.includes(c.tipo)).map((c) => c.tipo)
+    if (activos.length > 0) {
+      const articulosEncontrados = buscar(busqueda, activos)
+      for (const r of articulosEncontrados.slice(0, 5)) {
         nuevoResultados.push({
           tipo: 'articulo',
-          id: `${codigo.tipo}-search`,
-          titulo: `Buscar en ${codigo.nombre}`,
-          subtitulo: `Art. ${q} o palabra clave`,
-          codigo: codigo.tipo,
+          id: `${r.codigo}-${r.articulo.a}`,
+          titulo: `Art. ${r.articulo.a} — ${r.nombreCodigo}`,
+          subtitulo: r.articulo.t.slice(0, 80) + (r.articulo.t.length > 80 ? '…' : ''),
+          codigo: r.codigo,
+          articulo: r.articulo.a,
         })
       }
-    }
-    // Limitar búsqueda de artículos a códigos disponibles
-    if (nuevoResultados.length > 0) {
-      nuevoResultados.pop() // Remover placeholder, agregar real
     }
 
     // Buscar en historial de consultas
@@ -138,7 +136,7 @@ export function Omnibar({ onClose }: Props) {
         cargarConsulta(resultado.id)
         break
       case 'favorito':
-        // TODO: Implementar navegación a favorito
+        setVistaActiva('historial')
         break
     }
     setOmnibarAbierto(false)
