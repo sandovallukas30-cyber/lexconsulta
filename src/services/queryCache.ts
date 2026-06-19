@@ -14,8 +14,9 @@ interface CacheStore {
   entries: Record<string, CacheEntry>
 }
 
-function hashQuery(query: string): string {
-  const normalizada = query.trim().toLowerCase().replace(/\s+/g, ' ')
+function hashQuery(query: string, codigos?: string[]): string {
+  const codigosStr = codigos ? codigos.slice().sort().join(',') : ''
+  const normalizada = query.trim().toLowerCase().replace(/\s+/g, ' ') + '|' + codigosStr
   let hash = 0
   for (let i = 0; i < normalizada.length; i++) {
     const char = normalizada.charCodeAt(i)
@@ -58,22 +59,22 @@ function evictarMasAntiguo(store: CacheStore): CacheStore {
   return { entries }
 }
 
-export function getCached(query: string): RespuestaIA | null {
+export function getCached(query: string, codigos?: string[]): RespuestaIA | null {
   const store = evictarExpirados(cargarStore())
-  const hash = hashQuery(query)
+  const hash = hashQuery(query, codigos)
   const entry = store.entries[hash]
   if (!entry) return null
   return entry.respuesta
 }
 
-export function setCached(query: string, respuesta: RespuestaIA): void {
+export function setCached(query: string, respuesta: RespuestaIA, codigos?: string[]): void {
   let store = evictarExpirados(cargarStore())
 
   if (Object.keys(store.entries).length >= MAX_ENTRIES) {
     store = evictarMasAntiguo(store)
   }
 
-  const hash = hashQuery(query)
+  const hash = hashQuery(query, codigos)
   store.entries[hash] = { respuesta, timestamp: Date.now(), query }
   guardarStore(store)
 }

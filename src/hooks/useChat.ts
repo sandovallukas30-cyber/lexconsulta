@@ -78,10 +78,10 @@ export function useChat() {
         await precargar(activos)
         const resultados = buscar(texto, activos)
 
-        // Verificar caché antes de llamar a la API
-        const cached = getCached(texto)
+        // Verificar caché antes de llamar a la API (clave incluye códigos activos)
+        const cached = getCached(texto, activos)
         const respuesta = cached ?? await consultar(texto, resultados, perfil, usuarioEmail, setConsultasRestantes)
-        if (!cached) setCached(texto, respuesta)
+        if (!cached) setCached(texto, respuesta, activos)
         const mensajeAsistente: Mensaje = {
           id: crypto.randomUUID(),
           rol: 'assistant',
