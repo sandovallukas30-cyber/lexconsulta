@@ -3,6 +3,7 @@ import { useStore } from '../store/useStore'
 import { buscar } from '../services/busqueda'
 import { consultar } from '../services/anthropic'
 import { codigosCargados, precargar } from '../services/codigos'
+import { getCached, setCached } from '../services/queryCache'
 import type { Mensaje, ConsultaHistorial } from '../types'
 
 function titularDesdePregunta(p: string): string {
@@ -76,7 +77,11 @@ export function useChat() {
       try {
         await precargar(activos)
         const resultados = buscar(texto, activos)
-        const respuesta = await consultar(texto, resultados, perfil, usuarioEmail, setConsultasRestantes)
+
+        // Verificar caché antes de llamar a la API
+        const cached = getCached(texto)
+        const respuesta = cached ?? await consultar(texto, resultados, perfil, usuarioEmail, setConsultasRestantes)
+        if (!cached) setCached(texto, respuesta)
         const mensajeAsistente: Mensaje = {
           id: crypto.randomUUID(),
           rol: 'assistant',
