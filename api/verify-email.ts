@@ -1,47 +1,45 @@
-// Vercel Function: Verificar email y completar registro
-
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { almacenTokens } from './send-verification'
+import crypto from 'crypto'
 
-const EXPIRACION_TOKEN = 10 * 60 * 1000 // 10 minutos
-const emailsVerificados = new Set<string>()
+function verificarToken(token: string): { email: string } | null {
+  try {
+    const secret = process.env.TOKEN_SECRET ?? 'dev-secret-local'
+    const [payload, sig] = token.split('.')
+    if (!payload || !sig) return null
+
+    const sigEsperada = crypto.createHmac('sha256', secret).update(payload).digest('base64url')
+    if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(sigEsperada))) return null
+
+    const data = JSON.parse(Buffer.from(payload, 'base64url').toString()) as { email: string; exp: number }
+    if (Date.now() > data.exp) return null
+
+    return { email: data.email }
+  } catch {
+    return null
+  }
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  // Aceptar token de query (GET) o body (POST)
   const token = (req.query.token as string) || req.body?.token
 
   if (!token || typeof token !== 'string') {
     return res.status(400).json({ error: 'Token requerido' })
   }
 
-  // Validar que el token existe
-  const tokenData = almacenTokens.get(token)
-  if (!tokenData) {
-    return res.status(400).json({ error: 'Token inválido o expirado' })
-  }
+  const resultado = verificarToken(token)
 
-  // Validar que no expiró
-  const ahora = Date.now()
-  if (ahora - tokenData.createdAt > EXPIRACION_TOKEN) {
-    almacenTokens.delete(token)
-    return res.status(400).json({ error: 'Token expirado. Solicita uno nuevo.' })
+  if (!resultado) {
+    return res.status(400).json({ error: 'Token inválido o expirado. Solicita uno nuevo.' })
   }
-
-  // Marcar email como verificado
-  const { email } = tokenData
-  emailsVerificados.add(email)
-  almacenTokens.delete(token)
 
   return res.status(200).json({
     success: true,
     message: 'Email verificado exitosamente',
-    email,
+    email: resultado.email,
     verified: true,
   })
 }
-
-export { emailsVerificados }

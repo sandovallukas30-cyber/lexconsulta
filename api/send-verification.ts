@@ -1,31 +1,17 @@
-// Vercel Function: Enviar link de verificación de email
-// Genera un token único y lo almacena en memoria con expiración
-// Envía email con Resend (o simula en desarrollo)
-
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import crypto from 'crypto'
 import { Resend } from 'resend'
 
-const EXPIRACION_TOKEN = 10 * 60 * 1000 // 10 minutos
-const almacenTokens = new Map<string, { email: string; createdAt: number }>()
-
-// Limpiar tokens expirados cada 5 minutos
-setInterval(() => {
-  const ahora = Date.now()
-  for (const [token, data] of almacenTokens.entries()) {
-    if (ahora - data.createdAt > EXPIRACION_TOKEN) {
-      almacenTokens.delete(token)
-    }
-  }
-}, 5 * 60 * 1000)
-
-function generarToken(): string {
-  return crypto.randomBytes(32).toString('hex')
+function validarEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
 
-function validarEmail(email: string): boolean {
-  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return re.test(email)
+function generarToken(email: string): string {
+  const secret = process.env.TOKEN_SECRET ?? 'dev-secret-local'
+  const exp = Date.now() + 10 * 60 * 1000 // 10 minutos
+  const payload = Buffer.from(JSON.stringify({ email, exp })).toString('base64url')
+  const sig = crypto.createHmac('sha256', secret).update(payload).digest('base64url')
+  return `${payload}.${sig}`
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -44,14 +30,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Email inválido' })
   }
 
-  // Generar token
-  const token = generarToken()
-  almacenTokens.set(token, { email: emailLimpio, createdAt: Date.now() })
-
-  const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:5173'
+  const token = generarToken(emailLimpio)
+  const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'
   const verificationLink = `${baseUrl}/verify?token=${token}`
 
-  // En desarrollo: no enviar email, solo retornar el link para testing
   if (process.env.NODE_ENV !== 'production') {
     return res.status(200).json({
       success: true,
@@ -61,7 +43,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     })
   }
 
-  // En producción: enviar email con Resend
   try {
     const resend = new Resend(process.env.RESEND_API_KEY)
     const result = await resend.emails.send({
@@ -69,16 +50,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       to: emailLimpio,
       subject: 'Verifica tu email - Prima Lex',
       html: `
-        <h2>Verifica tu email</h2>
-        <p>Haz clic en el siguiente link para completar tu registro en Prima Lex:</p>
-        <a href="${verificationLink}" style="display: inline-block; padding: 12px 24px; background-color: #10b981; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
-          Verificar email
-        </a>
-        <p>O copia este link en tu navegador:</p>
-        <p style="word-break: break-all; font-family: monospace; font-size: 12px; background-color: #f3f4f6; padding: 12px; border-radius: 4px;">
-          ${verificationLink}
-        </p>
-        <p style="color: #6b7280; font-size: 12px;">Este link expira en 10 minutos.</p>
+        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px;">
+          <h2 style="color: #111;">Verifica tu email</h2>
+          <p style="color: #555;">Haz clic en el botón para completar tu registro en Prima Lex y acceder a 10 consultas por día:</p>
+          <a href="${verificationLink}" style="display: inline-block; margin: 16px 0; padding: 12px 24px; background-color: #059669; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">
+            Verificar email
+          </a>
+          <p style="color: #888; font-size: 13px;">O copia este link en tu navegador:</p>
+          <p style="word-break: break-all; font-family: monospace; font-size: 12px; background-color: #f3f4f6; padding: 12px; border-radius: 4px; color: #333;">
+            ${verificationLink}
+          </p>
+          <p style="color: #aaa; font-size: 12px;">Este link expira en 10 minutos. Si no solicitaste esto, ignora este email.</p>
+        </div>
       `,
     })
 
@@ -86,15 +69,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'Error al enviar email', detail: result.error })
     }
 
-    return res.status(200).json({
-      success: true,
-      message: 'Email de verificación enviado',
-      email: emailLimpio,
-    })
+    return res.status(200).json({ success: true, message: 'Email de verificación enviado', email: emailLimpio })
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)
     return res.status(500).json({ error: 'Error al enviar email', detail: msg })
   }
 }
-
-export { almacenTokens, generarToken }
