@@ -65,7 +65,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const resend = new Resend(process.env.RESEND_API_KEY)
     const result = await resend.emails.send({
-      from: 'Prima Lex <noreply@primalex.app>',
+      from: 'Prima Lex <onboarding@resend.dev>',
       to: emailLimpio,
       subject: 'Verifica tu email - Prima Lex',
       html: `
