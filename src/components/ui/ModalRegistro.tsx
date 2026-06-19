@@ -10,48 +10,74 @@ interface ModalRegistroProps {
 }
 
 export function ModalRegistro({ abierto, onCerrar }: ModalRegistroProps) {
-  const registrarUsuario = useStore((s) => s.registrarUsuario)
   const usuarioEmail = useStore((s) => s.usuarioEmail)
   const cerrarSesion = useStore((s) => s.cerrarSesion)
   const modoOscuro = useStore((s) => s.modoOscuro)
 
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
-  const [enviado, setEnviado] = useState(false)
+  const [cargando, setCargando] = useState(false)
+  const [estado, setEstado] = useState<'inicio' | 'enviado'>('inicio')
+  const [verificationLink, setVerificationLink] = useState('')
 
   const validarEmail = (e: string): boolean => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     return re.test(e)
   }
 
-  const handleRegistro = (e: React.FormEvent) => {
+  const handleEnviarVerificacion = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setCargando(true)
 
     const emailLimpio = email.trim().toLowerCase()
     if (!emailLimpio) {
       setError('Ingresa tu email')
+      setCargando(false)
       return
     }
     if (!validarEmail(emailLimpio)) {
       setError('Email inválido')
+      setCargando(false)
       return
     }
 
-    registrarUsuario(emailLimpio)
-    setEnviado(true)
-    setTimeout(() => {
-      setEmail('')
-      setEnviado(false)
-      onCerrar()
-    }, 2000)
+    try {
+      const res = await fetch('/api/send-verification', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email: emailLimpio }),
+      })
+
+      const data = (await res.json()) as { verificationLink?: string; error?: string }
+
+      if (!res.ok) {
+        setError(data.error || 'Error al enviar verificación')
+        setCargando(false)
+        return
+      }
+
+      if (data.verificationLink) {
+        setVerificationLink(data.verificationLink)
+      }
+      setEstado('enviado')
+    } catch (err) {
+      setError('Error al conectar con el servidor')
+      setCargando(false)
+    }
+  }
+
+  const handleClickVerificacion = () => {
+    if (verificationLink) {
+      window.location.href = verificationLink
+    }
   }
 
   const handleCerrarSesion = () => {
     cerrarSesion()
     setEmail('')
     setError('')
-    setEnviado(false)
+    setEstado('inicio')
     onCerrar()
   }
 
@@ -96,22 +122,8 @@ export function ModalRegistro({ abierto, onCerrar }: ModalRegistroProps) {
                     </p>
                   </div>
 
-                  {enviado ? (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className={`text-center py-6 rounded-lg ${
-                        modoOscuro ? 'bg-green-950/30 border border-green-700' : 'bg-green-50 border border-green-300'
-                      }`}
-                    >
-                      <i className="ti ti-check text-3xl text-green-500 mb-3 block" />
-                      <p className="text-green-700 font-semibold">¡Registro exitoso!</p>
-                      <p className={`text-sm mt-1 ${modoOscuro ? 'text-green-400' : 'text-green-600'}`}>
-                        Ahora tienes 10 consultas por día
-                      </p>
-                    </motion.div>
-                  ) : (
-                    <form onSubmit={handleRegistro} className="space-y-4">
+                  {estado === 'inicio' && (
+                    <form onSubmit={handleEnviarVerificacion} className="space-y-4">
                       <div>
                         <label
                           htmlFor="email"
@@ -135,6 +147,7 @@ export function ModalRegistro({ abierto, onCerrar }: ModalRegistroProps) {
                               ? 'bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-[var(--accent-600)] outline-none'
                               : 'bg-white border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-[var(--accent-600)] outline-none'
                           }`}
+                          disabled={cargando}
                         />
                       </div>
 
@@ -150,12 +163,88 @@ export function ModalRegistro({ abierto, onCerrar }: ModalRegistroProps) {
 
                       <button
                         type="submit"
-                        className="w-full py-2.5 rounded-lg text-white font-medium text-sm transition-all hover:shadow-lg"
+                        disabled={cargando}
+                        className="w-full py-2.5 rounded-lg text-white font-medium text-sm transition-all hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                         style={{ background: VERDE }}
                       >
-                        Registrarse
+                        {cargando ? 'Enviando...' : 'Registrarse'}
                       </button>
                     </form>
+                  )}
+
+                  {estado === 'enviado' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="space-y-4"
+                    >
+                      <div className="text-center">
+                        <div
+                          className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center"
+                          style={{
+                            background: modoOscuro
+                              ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)'
+                              : 'color-mix(in srgb, var(--accent-base) 6%, transparent)',
+                          }}
+                        >
+                          <i className="ti ti-mail text-2xl" style={{ color: VERDE }} />
+                        </div>
+                        <h3 className={`text-xl font-semibold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+                          Verifica tu email
+                        </h3>
+                        <p className={`text-sm ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                          Hemos enviado un link de verificación a:
+                        </p>
+                        <p className="text-sm font-medium mt-1" style={{ color: VERDE }}>
+                          {email}
+                        </p>
+                      </div>
+
+                      {verificationLink && (
+                        <div
+                          className={`p-3 rounded-lg break-all text-xs ${
+                            modoOscuro ? 'bg-zinc-800 border border-zinc-700' : 'bg-zinc-100 border border-zinc-300'
+                          }`}
+                        >
+                          <p className={`mb-2 font-medium ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>
+                            Link de verificación (desarrollo):
+                          </p>
+                          <code className={modoOscuro ? 'text-green-400' : 'text-green-600'}>
+                            {verificationLink}
+                          </code>
+                        </div>
+                      )}
+
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleClickVerificacion}
+                          disabled={!verificationLink}
+                          className="flex-1 py-2.5 rounded-lg text-white font-medium text-sm transition-all hover:shadow-lg disabled:opacity-50"
+                          style={{ background: VERDE }}
+                        >
+                          Verificar email
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEstado('inicio')
+                            setEmail('')
+                            setError('')
+                            setVerificationLink('')
+                          }}
+                          className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                            modoOscuro
+                              ? 'bg-zinc-800 hover:bg-zinc-700 text-white'
+                              : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-900'
+                          }`}
+                        >
+                          Volver
+                        </button>
+                      </div>
+
+                      <p className={`text-xs text-center ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                        El link expira en 10 minutos
+                      </p>
+                    </motion.div>
                   )}
 
                   <p
