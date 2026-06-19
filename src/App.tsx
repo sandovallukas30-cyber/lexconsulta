@@ -1,6 +1,7 @@
 import { Sidebar } from './components/layout/Sidebar'
 import { Topbar } from './components/layout/Topbar'
 import { ModalPerfil } from './components/ui/ModalPerfil'
+import { ModalRegistro } from './components/ui/ModalRegistro'
 import { ConsultarView } from './components/views/ConsultarView'
 import { SituacionView } from './components/views/SituacionView'
 import { CanvasView } from './components/views/CanvasView'
@@ -10,7 +11,7 @@ import { ExploradorView } from './components/views/ExploradorView'
 import { HistorialView } from './components/views/HistorialView'
 import { AdminView } from './components/views/AdminView'
 import { PracticaView } from './components/views/PracticaView'
-import { useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { useStore } from './store/useStore'
 import { aplicarTema } from './theme'
@@ -37,6 +38,7 @@ function App() {
   const omnibarAbierto = useStore((s) => s.omnibarAbierto)
   const setOmnibarAbierto = useStore((s) => s.setOmnibarAbierto)
   const VistaComponente = vistas[vistaActiva]
+  const [modalRegistroAbierto, setModalRegistroAbierto] = useState(false)
 
   // Aplicar el tema de color al :root cada vez que cambia. Se ejecuta también
   // al montar la app, así si el usuario tenía guardada una preferencia previa
@@ -65,7 +67,7 @@ function App() {
     >
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Topbar />
+        <Topbar onAbrirRegistro={() => setModalRegistroAbierto(true)} />
         <div className="flex-1 flex overflow-hidden">
           <main className="flex-1 overflow-y-auto">
             <VistaComponente />
@@ -74,6 +76,7 @@ function App() {
         </div>
       </div>
       <ModalPerfil />
+      <ModalRegistro abierto={modalRegistroAbierto} onCerrar={() => setModalRegistroAbierto(false)} />
       <AnimatePresence>
         {omnibarAbierto && <Omnibar onClose={() => setOmnibarAbierto(false)} />}
       </AnimatePresence>

@@ -98,6 +98,12 @@ interface AppState {
   toggleRightSidebar: () => void
   visitadosRecientes: Array<{ articulo: string; codigo: CodigoActivo['tipo']; timestamp: number }>
   agregarVisitado: (articulo: string, codigo: CodigoActivo['tipo']) => void
+
+  // Autenticación
+  usuarioEmail: string | null
+  usuarioRegistrado: boolean
+  registrarUsuario: (email: string) => void
+  cerrarSesion: () => void
 }
 
 const codigosIniciales: CodigoActivo[] = [
@@ -152,6 +158,8 @@ export const useStore = create<AppState>()(
       omnibarAbierto: false,
       rightSidebarAbierto: false,
       visitadosRecientes: [],
+      usuarioEmail: null,
+      usuarioRegistrado: false,
 
       setPerfil: (perfil) => set({ perfil, modalPerfilAbierto: false }),
       setVistaActiva: (vistaActiva) =>
@@ -359,6 +367,16 @@ export const useStore = create<AppState>()(
               : [visitado, ...s.visitadosRecientes]
           return { visitadosRecientes: nuevos.slice(0, 10) }
         }),
+      registrarUsuario: (email) =>
+        set({
+          usuarioEmail: email,
+          usuarioRegistrado: true,
+        }),
+      cerrarSesion: () =>
+        set({
+          usuarioEmail: null,
+          usuarioRegistrado: false,
+        }),
     }),
     {
       name: 'prima-lex-storage-v3',
@@ -378,6 +396,8 @@ export const useStore = create<AppState>()(
         temaColor: s.temaColor,
         rightSidebarAbierto: s.rightSidebarAbierto,
         visitadosRecientes: s.visitadosRecientes,
+        usuarioEmail: s.usuarioEmail,
+        usuarioRegistrado: s.usuarioRegistrado,
       }),
       migrate: (persisted: unknown, version: number) => {
         if (version < 3) {

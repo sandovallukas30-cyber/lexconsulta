@@ -1,5 +1,9 @@
 import { useStore } from '../../store/useStore'
 
+interface TopbarProps {
+  onAbrirRegistro?: () => void
+}
+
 const titulos: Record<string, string> = {
   consultar: 'Consultar',
   situacion: 'Situación concreta',
@@ -12,12 +16,13 @@ const titulos: Record<string, string> = {
   practica: 'Práctica · Pasapalabra',
 }
 
-export function Topbar() {
+export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
   const perfil = useStore((s) => s.perfil)
   const vistaActiva = useStore((s) => s.vistaActiva)
   const modoOscuro = useStore((s) => s.modoOscuro)
   const toggleModoOscuro = useStore((s) => s.toggleModoOscuro)
   const abrirModalPerfil = useStore((s) => s.abrirModalPerfil)
+  const usuarioEmail = useStore((s) => s.usuarioEmail)
 
   return (
     <header
@@ -54,6 +59,27 @@ export function Topbar() {
         >
           <i className={`ti ${modoOscuro ? 'ti-sun' : 'ti-moon'} text-lg`} />
         </button>
+
+        {onAbrirRegistro && (
+          <button
+            onClick={onAbrirRegistro}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+              usuarioEmail
+                ? modoOscuro
+                  ? 'bg-green-950/30 text-green-400 hover:bg-green-950/50'
+                  : 'bg-green-50 text-green-700 hover:bg-green-100'
+                : modoOscuro
+                ? 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700'
+                : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+            }`}
+            title={usuarioEmail ? `Registrado como: ${usuarioEmail}` : 'Registrarse para más consultas'}
+          >
+            <i className={`ti ${usuarioEmail ? 'ti-user-check' : 'ti-mail'} text-base`} />
+            <span className="text-xs font-medium">
+              {usuarioEmail ? '10 consultas' : 'Registrarse'}
+            </span>
+          </button>
+        )}
 
         <button
           onClick={abrirModalPerfil}
