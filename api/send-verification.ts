@@ -8,7 +8,6 @@ import { Resend } from 'resend'
 
 const EXPIRACION_TOKEN = 10 * 60 * 1000 // 10 minutos
 const almacenTokens = new Map<string, { email: string; createdAt: number }>()
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 // Limpiar tokens expirados cada 5 minutos
 setInterval(() => {
@@ -64,6 +63,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // En producción: enviar email con Resend
   try {
+    const resend = new Resend(process.env.RESEND_API_KEY)
     const result = await resend.emails.send({
       from: 'Prima Lex <noreply@primalex.app>',
       to: emailLimpio,
