@@ -31,8 +31,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const token = generarToken(emailLimpio)
-  const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'
-  const verificationLink = `${baseUrl}/verify?token=${token}`
+  const baseUrl = process.env.APP_URL ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
+  const verificationLink = `${baseUrl}/verify/${token}`
 
   if (process.env.NODE_ENV !== 'production') {
     return res.status(200).json({

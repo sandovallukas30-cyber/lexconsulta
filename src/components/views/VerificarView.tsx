@@ -12,11 +12,14 @@ export function VerificarView() {
   const [email, setEmail] = useState('')
 
   useEffect(() => {
+    // Soporta tanto /verify/TOKEN como /verify?token=TOKEN
+    const pathParts = window.location.pathname.split('/')
+    const tokenFromPath = pathParts[pathParts.length - 1] || ''
     const params = new URLSearchParams(window.location.search)
-    const token = params.get('token')
+    const token = (tokenFromPath !== 'verify' ? tokenFromPath : '') || params.get('token') || ''
     if (!token) {
       setEstado('error')
-      setMensaje(`Token no encontrado. URL: ${window.location.href}`)
+      setMensaje('Token no encontrado')
       return
     }
 
