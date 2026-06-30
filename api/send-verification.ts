@@ -6,8 +6,17 @@ function validarEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
 
+function getTokenSecret(): string {
+  const secret = process.env.TOKEN_SECRET
+  if (secret) return secret
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('TOKEN_SECRET no está configurado en producción')
+  }
+  return 'dev-secret-local'
+}
+
 function generarToken(email: string): string {
-  const secret = process.env.TOKEN_SECRET ?? 'dev-secret-local'
+  const secret = getTokenSecret()
   const exp = Date.now() + 10 * 60 * 1000 // 10 minutos
   const payload = Buffer.from(JSON.stringify({ email, exp })).toString('base64url')
   const sig = crypto.createHmac('sha256', secret).update(payload).digest('base64url')
@@ -30,7 +39,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Email inválido' })
   }
 
-  const token = generarToken(emailLimpio)
+  let token: string
+  try {
+    token = generarToken(emailLimpio)
+  } catch {
+    return res.status(500).json({ error: 'Servicio de verificación no disponible' })
+  }
   const baseUrl = process.env.APP_URL ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
   const verificationLink = `${baseUrl}/verify/${token}`
 

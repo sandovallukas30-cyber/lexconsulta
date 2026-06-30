@@ -1,9 +1,19 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import crypto from 'crypto'
 
+function getTokenSecret(): string {
+  const secret = process.env.TOKEN_SECRET
+  if (secret) return secret
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('TOKEN_SECRET no está configurado en producción')
+  }
+  return 'dev-secret-local'
+}
+
 function verificarToken(token: string): { email: string } | null {
+  const secret = getTokenSecret() // deja propagar si falta config en producción
+
   try {
-    const secret = process.env.TOKEN_SECRET ?? 'dev-secret-local'
     const [payload, sig] = token.split('.')
     if (!payload || !sig) return null
 
@@ -30,7 +40,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Token requerido' })
   }
 
-  const resultado = verificarToken(token)
+  let resultado: { email: string } | null
+  try {
+    resultado = verificarToken(token)
+  } catch (e) {
+    console.error('verify-email: fallo de configuración', e)
+    return res.status(500).json({ error: 'Servicio de verificación no disponible' })
+  }
 
   if (!resultado) {
     return res.status(400).json({ error: 'Token inválido o expirado. Solicita uno nuevo.' })
