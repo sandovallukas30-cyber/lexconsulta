@@ -30,11 +30,11 @@ function verificarToken(token: string): { email: string } | null {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'GET' && req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' })
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Método no permitido' })
   }
 
-  const token = (req.query.token as string) || req.body?.token
+  const token = req.body?.token
 
   if (!token || typeof token !== 'string') {
     return res.status(400).json({ error: 'Token requerido' })
