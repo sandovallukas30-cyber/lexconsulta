@@ -6,6 +6,38 @@ function validarEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
 
+// ============ Rate limiting (previene email bombing / agotar cuota de Resend) ============
+
+const VENTANA_MS = 60 * 60 * 1000 // 1 hora
+const LIMITE_POR_IP = 5
+const LIMITE_POR_EMAIL = 3
+
+const registro = new Map<string, number[]>()
+
+function podarYContar(clave: string, ahora: number): number {
+  const lista = registro.get(clave) ?? []
+  const vigentes = lista.filter((t) => ahora - t < VENTANA_MS)
+  registro.set(clave, vigentes)
+  return vigentes.length
+}
+
+function registrarHit(clave: string, ahora: number): void {
+  const lista = registro.get(clave) ?? []
+  lista.push(ahora)
+  registro.set(clave, lista)
+}
+
+function obtenerIp(req: VercelRequest): string {
+  const xff = req.headers['x-forwarded-for']
+  if (typeof xff === 'string' && xff.length > 0) {
+    return xff.split(',')[0].trim()
+  }
+  if (Array.isArray(xff) && xff.length > 0) {
+    return xff[0].trim()
+  }
+  return req.headers['x-real-ip']?.toString() ?? 'desconocida'
+}
+
 function getTokenSecret(): string {
   const secret = process.env.TOKEN_SECRET
   if (secret) return secret
@@ -38,6 +70,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!validarEmail(emailLimpio)) {
     return res.status(400).json({ error: 'Email inválido' })
   }
+
+  const ahora = Date.now()
+  const ip = obtenerIp(req)
+  const usoIp = podarYContar(`ip:${ip}`, ahora)
+  const usoEmail = podarYContar(`email:${emailLimpio}`, ahora)
+
+  if (usoIp >= LIMITE_POR_IP || usoEmail >= LIMITE_POR_EMAIL) {
+    res.setHeader('Retry-After', '3600')
+    return res.status(429).json({
+      error: 'Demasiadas solicitudes. Intenta nuevamente en una hora.',
+    })
+  }
+
+  registrarHit(`ip:${ip}`, ahora)
+  registrarHit(`email:${emailLimpio}`, ahora)
 
   let token: string
   try {

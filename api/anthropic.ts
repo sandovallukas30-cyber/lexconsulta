@@ -40,6 +40,13 @@ function registrarHit(clave: string, ahora: number): void {
   registro.set(clave, lista)
 }
 
+function revertirHit(clave: string, ahora: number): void {
+  const lista = registro.get(clave) ?? []
+  const indice = lista.lastIndexOf(ahora)
+  if (indice !== -1) lista.splice(indice, 1)
+  registro.set(clave, lista)
+}
+
 function obtenerIp(req: VercelRequest): string {
   // Vercel pone la IP real en x-forwarded-for (puede venir lista separada por coma).
   const xff = req.headers['x-forwarded-for']
@@ -202,12 +209,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     })
 
     const data = await r.json()
+
+    if (!r.ok) {
+      // El fallo es del upstream (Anthropic), no un uso legítimo: no se cobra cuota al usuario.
+      revertirHit(claveUsuario, ahora)
+      revertirHit('global', ahora)
+      revertirHit(`ip:${ip}`, ahora)
+      res.setHeader('X-RateLimit-Limit', String(limiteUsuario))
+      res.setHeader('X-RateLimit-Remaining', String(Math.max(0, limiteUsuario - usoUsuario)))
+      res.setHeader('X-RateLimit-Type', email ? 'registered' : 'anonymous')
+      return res.status(r.status).json(data)
+    }
+
     res.setHeader('X-RateLimit-Limit', String(limiteUsuario))
     res.setHeader('X-RateLimit-Remaining', String(Math.max(0, limiteUsuario - usoUsuario - 1)))
     res.setHeader('X-RateLimit-Type', email ? 'registered' : 'anonymous')
     res.setHeader('X-RateLimit-Reset', String(new Date(ahora + VENTANA_MS).toISOString()))
     return res.status(r.status).json(data)
   } catch (e) {
+    revertirHit(claveUsuario, ahora)
+    revertirHit('global', ahora)
+    revertirHit(`ip:${ip}`, ahora)
     const msg = e instanceof Error ? e.message : 'Error desconocido'
     return res.status(502).json({ error: 'Upstream error', detalle: msg })
   }
