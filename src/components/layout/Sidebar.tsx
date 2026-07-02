@@ -72,6 +72,7 @@ export function Sidebar() {
             <button
               onClick={toggleSidebar}
               title="Expandir (Ctrl+B)"
+              aria-label="Expandir menú lateral"
               className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-zinc-800/10 transition-colors"
             >
               <span
@@ -91,13 +92,14 @@ export function Sidebar() {
                 >
                   Prima<span style={{ color: VERDE }}> Lex</span>
                 </h1>
-                <p className={`text-[11px] mt-0.5 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
+                <p className={`text-[11px] mt-0.5 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
                   Consultor jurídico con IA
                 </p>
               </div>
               <button
                 onClick={toggleSidebar}
                 title="Colapsar (Ctrl+B)"
+                aria-label="Colapsar menú lateral"
                 className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${
                   modoOscuro
                     ? 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
@@ -190,7 +192,7 @@ export function Sidebar() {
                   className="flex-1 overflow-hidden whitespace-nowrap"
                 >
                   <span className="block">Códigos</span>
-                  <span className={`block text-[11px] font-normal ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
+                  <span className={`block text-[11px] font-normal ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
                     {activos} de {total} activos · incl. leyes
                   </span>
                 </motion.span>
@@ -207,7 +209,7 @@ export function Sidebar() {
             className={`w-full mt-1 rounded-lg text-xs transition-colors flex items-center ${
               colapsado ? 'justify-center px-0 py-2' : 'gap-2 px-3 py-2'
             } ${
-              modoOscuro ? 'text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300' : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700'
+              modoOscuro ? 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200' : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700'
             }`}
           >
             <i className="ti ti-settings text-base flex-shrink-0" />

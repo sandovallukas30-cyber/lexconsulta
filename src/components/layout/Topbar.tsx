@@ -67,6 +67,7 @@ export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
               : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
           }`}
           title={modoOscuro ? 'Modo claro' : 'Modo oscuro'}
+          aria-label={modoOscuro ? 'Activar modo claro' : 'Activar modo oscuro'}
         >
           <i className={`ti ${modoOscuro ? 'ti-sun' : 'ti-moon'} text-lg`} />
         </button>

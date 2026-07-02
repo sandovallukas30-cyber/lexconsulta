@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { MotionConfig } from 'framer-motion'
 import './index.css'
 import App from './App.tsx'
 import { VerificarView } from './components/views/VerificarView.tsx'
@@ -9,6 +10,8 @@ const esVerificacion = window.location.pathname.startsWith('/verify')
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    {esVerificacion ? <VerificarView /> : <App />}
+    <MotionConfig reducedMotion="user">
+      {esVerificacion ? <VerificarView /> : <App />}
+    </MotionConfig>
   </StrictMode>,
 )

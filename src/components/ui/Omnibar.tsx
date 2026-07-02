@@ -186,6 +186,7 @@ export function Omnibar({ onClose }: Props) {
           {busqueda && (
             <button
               onClick={() => setBusqueda('')}
+              aria-label="Limpiar búsqueda"
               className={`text-sm px-2 py-1 rounded ${
                 modoOscuro
                   ? 'text-zinc-400 hover:bg-zinc-800'

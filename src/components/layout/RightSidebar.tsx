@@ -16,10 +16,19 @@ export function RightSidebar() {
   const nuevaConsulta = useStore((s) => s.nuevaConsulta)
   const setCanvasActivo = useStore((s) => s.setCanvasActivo)
 
+  const MOBILE_BREAKPOINT = 768
+
+  const cerrarEnMobile = () => {
+    if (window.innerWidth < MOBILE_BREAKPOINT && rightSidebarAbierto) {
+      toggleRightSidebar()
+    }
+  }
+
   const handleAbrirArticulo = (articulo: string, codigo: any) => {
     setCodigoExplorador(codigo)
     setVistaActiva('explorador')
     agregarVisitado(articulo, codigo)
+    cerrarEnMobile()
   }
 
   return (
@@ -43,6 +52,7 @@ export function RightSidebar() {
         <button
           onClick={toggleRightSidebar}
           title="Cerrar panel"
+          aria-label="Cerrar panel de accesos rápidos"
           className={`w-6 h-6 rounded flex items-center justify-center transition-colors ${
             modoOscuro
               ? 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
@@ -74,6 +84,7 @@ export function RightSidebar() {
                       cargarConsulta(fav.id)
                       setVistaActiva('consultar')
                     }
+                    cerrarEnMobile()
                   }}
                   className={`w-full text-left px-2 py-1.5 rounded text-xs transition-colors line-clamp-2 ${
                     modoOscuro
@@ -138,6 +149,7 @@ export function RightSidebar() {
               onClick={() => {
                 nuevaConsulta()
                 setVistaActiva('consultar')
+                cerrarEnMobile()
               }}
               className={`w-full flex items-center gap-2 px-3 py-2 rounded text-xs transition-colors font-medium ${
                 modoOscuro
@@ -152,6 +164,7 @@ export function RightSidebar() {
               onClick={() => {
                 setCanvasActivo(null)
                 setVistaActiva('canvas')
+                cerrarEnMobile()
               }}
               className={`w-full flex items-center gap-2 px-3 py-2 rounded text-xs transition-colors font-medium ${
                 modoOscuro
@@ -163,7 +176,10 @@ export function RightSidebar() {
               <span>Nuevo canvas</span>
             </button>
             <button
-              onClick={() => setVistaActiva('practica')}
+              onClick={() => {
+                setVistaActiva('practica')
+                cerrarEnMobile()
+              }}
               className={`w-full flex items-center gap-2 px-3 py-2 rounded text-xs transition-colors font-medium ${
                 modoOscuro
                   ? 'text-zinc-300 hover:bg-zinc-800 hover:text-white'

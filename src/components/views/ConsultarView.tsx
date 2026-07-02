@@ -143,8 +143,9 @@ export function ConsultarView() {
             <button
               type="submit"
               disabled={!pregunta.trim() || cargando}
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-              style={{ background: VERDE }}
+              aria-label="Enviar consulta"
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+              style={{ background: VERDE, '--tw-ring-color': VERDE } as React.CSSProperties}
             >
               {cargando ? (
                 <i className="ti ti-loader-2 text-xl animate-spin" />
@@ -450,6 +451,7 @@ function Feedback({ mensaje, modoOscuro }: { mensaje: Mensaje; modoOscuro: boole
         <button
           onClick={manejarUtil}
           title="Sí, me fue útil"
+          aria-label="Valorar respuesta como útil"
           className={`w-7 h-7 rounded-md border flex items-center justify-center transition-colors ${claseBtn(valoracion === 'util', 'verde')}`}
         >
           <i className="ti ti-thumb-up text-sm" />
@@ -457,6 +459,7 @@ function Feedback({ mensaje, modoOscuro }: { mensaje: Mensaje; modoOscuro: boole
         <button
           onClick={manejarNoUtil}
           title="No, fue mejorable"
+          aria-label="Valorar respuesta como mejorable"
           className={`w-7 h-7 rounded-md border flex items-center justify-center transition-colors ${claseBtn(valoracion === 'no_util', 'rojo')}`}
         >
           <i className="ti ti-thumb-down text-sm" />

@@ -111,6 +111,7 @@ export function ModalCodigos({ abierto, onCerrar }: Props) {
               </div>
               <button
                 onClick={onCerrar}
+                aria-label="Cerrar"
                 className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
                   modoOscuro
                     ? 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
@@ -141,6 +142,7 @@ export function ModalCodigos({ abierto, onCerrar }: Props) {
                 {busqueda && (
                   <button
                     onClick={() => setBusqueda('')}
+                    aria-label="Limpiar búsqueda"
                     className={modoOscuro ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-zinc-900'}
                   >
                     <i className="ti ti-x text-sm" />

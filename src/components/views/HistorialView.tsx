@@ -130,6 +130,7 @@ export function HistorialView() {
           {busqueda && (
             <button
               onClick={() => setBusqueda('')}
+              aria-label="Limpiar búsqueda"
               className={modoOscuro ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-zinc-900'}
             >
               <i className="ti ti-x text-sm" />
@@ -322,6 +323,7 @@ function ConsultaCard({
                     : 'text-zinc-400 hover:bg-zinc-100 hover:text-red-500'
                 }`}
                 title="Eliminar"
+                aria-label="Eliminar consulta"
               >
                 <i className="ti ti-trash text-sm" />
               </button>

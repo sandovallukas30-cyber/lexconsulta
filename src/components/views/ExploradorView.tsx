@@ -114,6 +114,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
             modoOscuro ? 'hover:bg-zinc-800' : 'hover:bg-zinc-100'
           }`}
           title="Cambiar código"
+          aria-label="Cambiar código"
         >
           <span
             className="w-7 h-7 rounded-lg flex items-center justify-center"
@@ -434,6 +435,7 @@ function ModalIndice({
               </div>
               <button
                 onClick={onCerrar}
+                aria-label="Cerrar índice"
                 className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
                   modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'
                 }`}

@@ -46,3 +46,15 @@ html, body, #root { height: 100%; width: 100%; overflow: hidden; }
 /* Firefox */
 * { scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.2) transparent; }
 .dark * { scrollbar-color: rgba(255,255,255,0.15) transparent; }
+
+/* Respeta la preferencia de movimiento reducido del sistema operativo.
+   Framer Motion se controla por separado con <MotionConfig reducedMotion="user"> en main.tsx;
+   esto cubre las transiciones CSS (hover, colores, etc.) de Tailwind. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

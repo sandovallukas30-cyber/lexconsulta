@@ -54,6 +54,7 @@ export function ModalAcercaDe({ abierto, onCerrar, pestanaInicial = 'acerca' }: 
               </h2>
               <button
                 onClick={onCerrar}
+                aria-label="Cerrar"
                 className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
                   modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'
                 }`}

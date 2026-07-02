@@ -605,6 +605,7 @@ export function CanvasView() {
                 onClick={undo}
                 disabled={historyIdx.current <= 0}
                 title="Deshacer (Ctrl+Z)"
+                aria-label="Deshacer"
                 className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors disabled:opacity-30 ${
                   modoOscuro ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-zinc-100 text-zinc-600'
                 }`}
@@ -615,6 +616,7 @@ export function CanvasView() {
                 onClick={redo}
                 disabled={historyIdx.current >= history.current.length - 1}
                 title="Rehacer (Ctrl+Y)"
+                aria-label="Rehacer"
                 className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors disabled:opacity-30 ${
                   modoOscuro ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-zinc-100 text-zinc-600'
                 }`}
@@ -797,6 +799,7 @@ function NodoBase(props: NodeProps<NodoFlow>) {
                     modoOscuro ? 'bg-zinc-700' : 'bg-zinc-200'
                   }`}
                   title="Reset"
+                  aria-label="Restablecer color"
                 >
                   <i className="ti ti-x text-[8px]" />
                 </button>
@@ -1280,7 +1283,7 @@ function ListaCanvases({
           <h3 className={`text-sm font-semibold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
             Mis canvas ({canvases.length})
           </h3>
-          <button onClick={onCerrar} className={modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}>
+          <button onClick={onCerrar} aria-label="Cerrar lista de canvas" className={modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}>
             <i className="ti ti-x text-lg" />
           </button>
         </div>
