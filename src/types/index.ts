@@ -44,7 +44,17 @@ export type VistaId =
   | 'admin'
   | 'practica'
 
-export type AreaPractica = 'general' | 'civil' | 'penal' | 'laboral' | 'procesal' | 'constitucional'
+export type AreaPractica =
+  | 'general'
+  | 'civil'
+  | 'penal'
+  | 'laboral'
+  | 'procesal'
+  | 'constitucional'
+  | 'comercial'
+  | 'tributario'
+  | 'administrativo'
+  | 'recursos_naturales'
 
 export type ModoLetra = 'empieza' | 'contiene'
 export type EstadoLetra = 'pendiente' | 'acertada' | 'fallada' | 'pasada'

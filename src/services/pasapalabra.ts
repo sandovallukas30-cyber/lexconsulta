@@ -16,6 +16,10 @@ const AREA_DESCRIPCION: Record<AreaPractica, string> = {
   laboral: 'derecho del trabajo chileno (Código del Trabajo, Ley 16.744, Ley 21.643 Karin)',
   procesal: 'derecho procesal chileno (Procedimiento Civil, Procesal Penal, Orgánico de Tribunales)',
   constitucional: 'derecho constitucional chileno (Constitución Política, derechos fundamentales)',
+  comercial: 'derecho comercial chileno (Código de Comercio, sociedades, títulos de crédito, Ley de Insolvencia)',
+  tributario: 'derecho tributario chileno (Código Tributario, impuestos, fiscalización del SII)',
+  administrativo: 'derecho administrativo chileno (Ley de Procedimiento Administrativo, Ley de Transparencia, derecho sanitario)',
+  recursos_naturales: 'derecho de minería y aguas chileno (Código de Minería, Código de Aguas, concesiones, servidumbres)',
 }
 
 function systemPrompt(area: AreaPractica): string {
