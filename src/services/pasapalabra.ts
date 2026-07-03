@@ -9,7 +9,7 @@ const MAX_TOKENS = 3500
 
 const LETRAS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'Ñ', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
 
-const AREA_DESCRIPCION: Record<AreaPractica, string> = {
+export const AREA_DESCRIPCION: Record<AreaPractica, string> = {
   general: 'cualquier rama del derecho chileno (mezcla equilibrada)',
   civil: 'derecho civil chileno (contratos, familia, sucesiones, propiedad, obligaciones)',
   penal: 'derecho penal chileno (delitos, penas, procedimiento penal, leyes especiales como Ley 20.000)',
@@ -62,12 +62,12 @@ Esquema de cada entrada:
 Devuelve el arreglo JSON con las 27 entradas en orden A → Z (incluyendo Ñ entre N y O).`
 }
 
-const TIPOS_VALIDOS: CodigoTipo[] = [
+export const TIPOS_VALIDOS: CodigoTipo[] = [
   'con', 'tra', 'civ', 'pen', 'lab', 'tri', 'com', 'agu', 'san', 'min',
   'pci', 'ppe', 'pad', 'mil', 'cot', 'acc' as CodigoTipo, 'dro' as CodigoTipo, 'kar' as CodigoTipo,
 ]
 
-function normalizar(s: string): string {
+export function normalizar(s: string): string {
   return s
     .toLowerCase()
     .normalize('NFD')

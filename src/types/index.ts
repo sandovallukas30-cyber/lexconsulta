@@ -95,6 +95,36 @@ export interface RecordPasapalabra {
   fecha: number
 }
 
+// ============ EL ACUSADO (ahorcado jurídico) ============
+
+export type EstadoAhorcado = 'jugando' | 'ganada' | 'perdida'
+
+export interface PartidaAhorcado {
+  id: string
+  area: AreaPractica
+  /** Palabra o expresión, normalizada (mayúsculas, sin tildes) para comparar letras. */
+  palabra: string
+  /** Forma "bonita" original, para mostrar en el resumen. */
+  palabraVisible: string
+  definicion: string
+  codigoOrigen?: CodigoTipo
+  articulo?: string
+  letrasIntentadas: string[]
+  erroresRestantes: number
+  estado: EstadoAhorcado
+  iniciada: number
+  finalizada: number | null
+  modoEstudio?: boolean
+}
+
+/** Estadísticas acumuladas por área para El Acusado. */
+export interface RecordAhorcado {
+  partidasJugadas: number
+  partidasGanadas: number
+  rachaActual: number
+  rachaMaxima: number
+}
+
 // ============ DESTELLO LEGAL ============
 
 export interface PreguntaDestello {

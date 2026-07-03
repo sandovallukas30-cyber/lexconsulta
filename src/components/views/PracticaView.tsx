@@ -2,9 +2,21 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { generarRosco, esRespuestaCorrecta } from '../../services/pasapalabra'
+import { generarPalabraAhorcado, ERRORES_MAXIMOS } from '../../services/ahorcado'
 import { useDestello } from '../../hooks/useDestello'
 import { obtenerCodigosConPreguntas } from '../../data/destelloPreguntas'
-import type { AreaPractica, EntradaRosco, PartidaPasapalabra, CodigoTipo } from '../../types'
+import type { AreaPractica, EntradaRosco, PartidaPasapalabra, PartidaAhorcado, CodigoTipo } from '../../types'
+
+const LETRAS_TECLADO = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'Ñ', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+
+const ETAPAS_CASO = [
+  'Denuncia',
+  'Investigación',
+  'Formalización',
+  'Acusación',
+  'Juicio oral',
+  'Sentencia condenatoria',
+]
 
 const VERDE = 'var(--accent-base)'
 const DURACION_DEFAULT = 300 // 5 minutos
@@ -22,10 +34,11 @@ const AREAS: { id: AreaPractica; nombre: string; icono: string; descripcion: str
   { id: 'recursos_naturales', nombre: 'Minería y Aguas', icono: 'ti-mountain', descripcion: 'Código de Minería y Código de Aguas' },
 ]
 
-type JuegoSeleccionado = 'none' | 'pasapalabra' | 'quiz'
+type JuegoSeleccionado = 'none' | 'pasapalabra' | 'quiz' | 'ahorcado'
 
 export function PracticaView() {
   const partida = useStore((s) => s.partidaPasapalabra)
+  const partidaAhorcado = useStore((s) => s.partidaAhorcado)
   const modoOscuro = useStore((s) => s.modoOscuro)
   const retomar = useStore((s) => s.retomarPartidaPasapalabra)
   const abandonar = useStore((s) => s.abandonarPartidaPasapalabra)
@@ -90,6 +103,19 @@ export function PracticaView() {
     )
   }
 
+  // Lógica para El Acusado (ahorcado)
+  if (juegoSeleccionado === 'ahorcado') {
+    if (partidaAhorcado && partidaAhorcado.estado !== 'jugando') {
+      return <ResultadoAhorcado partida={partidaAhorcado} modoOscuro={modoOscuro} />
+    }
+
+    if (partidaAhorcado && partidaAhorcado.estado === 'jugando') {
+      return <Ahorcado partida={partidaAhorcado} modoOscuro={modoOscuro} />
+    }
+
+    return <SeleccionAreaAhorcado modoOscuro={modoOscuro} onVolverAlMenu={() => setJuegoSeleccionado('none')} />
+  }
+
   // Menú de selección inicial
   return <MenuSeleccionJuegos modoOscuro={modoOscuro} onSeleccionar={setJuegoSeleccionado} />
 }
@@ -130,7 +156,7 @@ function MenuSeleccionJuegos({
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
           {/* Pasapalabra */}
           <motion.button
             initial={{ opacity: 0, y: 10 }}
@@ -206,6 +232,45 @@ function MenuSeleccionJuegos({
             </p>
             <div className={`mt-4 text-xs uppercase tracking-wider font-semibold ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
               Aprendizaje con puntos
+            </div>
+          </motion.button>
+
+          {/* El Acusado (ahorcado) */}
+          <motion.button
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, delay: 0.2 }}
+            onClick={() => onSeleccionar('ahorcado')}
+            className={`group text-left rounded-2xl border-2 p-6 transition-all hover:shadow-lg hover:-translate-y-1 ${
+              modoOscuro
+                ? 'bg-zinc-800/40 border-zinc-800 hover:border-[var(--accent-700)]'
+                : 'bg-white border-zinc-200 hover:border-[var(--accent-500)]'
+            }`}
+          >
+            <div className="flex items-start justify-between mb-4">
+              <span
+                className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{
+                  background: modoOscuro
+                    ? 'color-mix(in srgb, var(--accent-base) 19%, transparent)'
+                    : 'color-mix(in srgb, var(--accent-base) 8%, transparent)',
+                }}
+              >
+                <i className="ti ti-user-exclamation text-2xl" style={{ color: VERDE }} />
+              </span>
+              <i
+                className="ti ti-arrow-right text-lg transition-transform group-hover:translate-x-1"
+                style={{ color: VERDE }}
+              />
+            </div>
+            <h2 className={`text-xl font-serif font-bold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+              El Acusado
+            </h2>
+            <p className={`text-sm leading-relaxed ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
+              Adivina el término jurídico letra por letra antes de que el caso llegue a sentencia condenatoria.
+            </p>
+            <div className={`mt-4 text-xs uppercase tracking-wider font-semibold ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
+              Ahorcado jurídico
             </div>
           </motion.button>
         </div>
@@ -950,6 +1015,440 @@ function ModalContinuar({
         </div>
       </motion.div>
     </motion.div>
+  )
+}
+
+// ============ El Acusado (ahorcado) ============
+
+function SeleccionAreaAhorcado({
+  modoOscuro,
+  onVolverAlMenu,
+}: {
+  modoOscuro: boolean
+  onVolverAlMenu: () => void
+}) {
+  const iniciar = useStore((s) => s.iniciarPartidaAhorcado)
+  const stats = useStore((s) => s.statsAhorcado)
+  const [cargando, setCargando] = useState<AreaPractica | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [modoEstudio, setModoEstudio] = useState(false)
+  const usadasRef = useRef<string[]>([])
+
+  async function comenzar(area: AreaPractica) {
+    setCargando(area)
+    setError(null)
+    try {
+      const p = await generarPalabraAhorcado(area, usadasRef.current)
+      usadasRef.current = [...usadasRef.current, p.palabra].slice(-20)
+      const partida: PartidaAhorcado = {
+        id: crypto.randomUUID(),
+        area,
+        palabra: p.palabra,
+        palabraVisible: p.palabraVisible,
+        definicion: p.definicion,
+        codigoOrigen: p.codigoOrigen,
+        articulo: p.articulo,
+        letrasIntentadas: [],
+        erroresRestantes: ERRORES_MAXIMOS,
+        estado: 'jugando',
+        iniciada: Date.now(),
+        finalizada: null,
+        modoEstudio,
+      }
+      iniciar(partida)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error generando la palabra')
+    } finally {
+      setCargando(null)
+    }
+  }
+
+  return (
+    <div className={`h-full overflow-y-auto ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
+      <div className="max-w-5xl mx-auto px-8 py-10">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="text-center mb-10"
+        >
+          <div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
+            style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
+          >
+            <i className="ti ti-user-exclamation text-3xl" style={{ color: VERDE }} />
+          </div>
+          <h1 className={`text-3xl font-serif font-bold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+            El Acusado
+          </h1>
+          <p className={`text-sm max-w-lg mx-auto ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
+            Adivina el término letra por letra. Cada error avanza el caso una etapa; tras {ETAPAS_CASO.length} errores, sentencia condenatoria.
+          </p>
+        </motion.div>
+
+        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onVolverAlMenu}
+              className={`flex items-center gap-1 text-xs font-medium transition-colors ${
+                modoOscuro
+                  ? 'text-zinc-400 hover:text-white'
+                  : 'text-zinc-500 hover:text-zinc-900'
+              }`}
+            >
+              <i className="ti ti-arrow-left text-sm" />
+              Volver
+            </button>
+            <div className={`text-[11px] uppercase tracking-wider font-semibold ${
+              modoOscuro ? 'text-zinc-500' : 'text-zinc-400'
+            }`}>
+              Elige un área
+            </div>
+          </div>
+          <label
+            className={`inline-flex items-center gap-2 text-xs cursor-pointer select-none ${
+              modoOscuro ? 'text-zinc-400' : 'text-zinc-600'
+            }`}
+            title="No cuenta para las estadísticas del área."
+          >
+            <input
+              type="checkbox"
+              checked={modoEstudio}
+              onChange={(e) => setModoEstudio(e.target.checked)}
+              className="w-3.5 h-3.5 rounded accent-current"
+              style={{ accentColor: 'var(--accent-base)' }}
+            />
+            Modo estudio (no cuenta para estadísticas)
+          </label>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {AREAS.map((a) => {
+            const rec = stats[a.id]
+            return (
+              <button
+                key={a.id}
+                onClick={() => comenzar(a.id)}
+                disabled={cargando !== null}
+                className={`text-left rounded-xl border-2 p-5 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:-translate-y-0.5 ${
+                  modoOscuro
+                    ? 'bg-zinc-800/40 border-zinc-800 hover:border-[var(--accent-700)]'
+                    : 'bg-white border-zinc-200 hover:border-[var(--accent-500)]'
+                }`}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <span
+                    className="w-10 h-10 rounded-lg flex items-center justify-center"
+                    style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 19%, transparent)' : 'color-mix(in srgb, var(--accent-base) 8%, transparent)' }}
+                  >
+                    <i className={`ti ${a.icono} text-xl`} style={{ color: VERDE }} />
+                  </span>
+                  <h3 className={`text-base font-serif font-semibold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+                    {a.nombre}
+                  </h3>
+                  {cargando === a.id && (
+                    <i className="ti ti-loader-2 text-base animate-spin ml-auto" style={{ color: VERDE }} />
+                  )}
+                </div>
+                <p className={`text-xs leading-relaxed ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                  {a.descripcion}
+                </p>
+                {rec && rec.partidasJugadas > 0 && (
+                  <div
+                    className={`mt-3 inline-flex items-center gap-1.5 text-[11px] px-2 py-1 rounded-md ${
+                      modoOscuro
+                        ? 'bg-[color-mix(in_srgb,var(--accent-base)_15%,transparent)] text-[var(--accent-300)]'
+                        : 'bg-[color-mix(in_srgb,var(--accent-base)_8%,transparent)] text-[var(--accent-700)]'
+                    }`}
+                    title="Partidas ganadas / jugadas y racha actual"
+                  >
+                    <i className="ti ti-trophy text-[11px]" />
+                    {rec.partidasGanadas}/{rec.partidasJugadas} · racha {rec.rachaActual}
+                  </div>
+                )}
+              </button>
+            )
+          })}
+        </div>
+
+        {error && (
+          <div
+            className={`mt-6 p-3 rounded-lg text-sm ${
+              modoOscuro ? 'bg-rose-950/40 text-rose-300 border border-rose-900/60' : 'bg-rose-50 text-rose-700 border border-rose-200'
+            }`}
+          >
+            <i className="ti ti-alert-triangle mr-1" />
+            {error}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function Ahorcado({ partida, modoOscuro }: { partida: PartidaAhorcado; modoOscuro: boolean }) {
+  const intentarLetra = useStore((s) => s.intentarLetraAhorcado)
+  const abandonar = useStore((s) => s.abandonarPartidaAhorcado)
+  const errorsCometidos = ERRORES_MAXIMOS - partida.erroresRestantes
+
+  return (
+    <div className={`h-full overflow-y-auto ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
+      <div
+        className={`sticky top-0 z-10 backdrop-blur-sm border-b ${
+          modoOscuro ? 'bg-zinc-900/85 border-zinc-800' : 'bg-zinc-50/85 border-zinc-200'
+        }`}
+      >
+        <div className="max-w-3xl mx-auto px-6 py-3 flex items-center justify-between">
+          <div className={`text-sm ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
+            Área: <strong className={modoOscuro ? 'text-white' : 'text-zinc-900'}>{labelArea(partida.area)}</strong>
+          </div>
+          <button
+            onClick={() => {
+              if (confirm('¿Abandonar la partida en curso? Se perderá el progreso.')) abandonar()
+            }}
+            className={`text-xs px-2.5 py-1 rounded-md ${modoOscuro ? 'text-zinc-500 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'}`}
+            title="Abandonar partida"
+          >
+            <i className="ti ti-x text-sm" /> Abandonar
+          </button>
+        </div>
+      </div>
+
+      <div className="max-w-3xl mx-auto px-6 py-6">
+        <EtapasCaso errorsCometidos={errorsCometidos} modoOscuro={modoOscuro} />
+
+        <div
+          className={`max-w-xl mx-auto mt-6 p-5 rounded-2xl border ${
+            modoOscuro ? 'bg-zinc-800/50 border-zinc-700' : 'bg-white border-zinc-200'
+          }`}
+        >
+          <p className={`text-sm leading-relaxed mb-4 text-center ${modoOscuro ? 'text-zinc-200' : 'text-zinc-800'}`}>
+            {partida.definicion}
+          </p>
+          <PalabraOculta palabra={partida.palabra} letrasIntentadas={partida.letrasIntentadas} modoOscuro={modoOscuro} />
+        </div>
+
+        <TecladoAhorcado
+          letrasIntentadas={partida.letrasIntentadas}
+          palabra={partida.palabra}
+          onLetra={intentarLetra}
+          modoOscuro={modoOscuro}
+        />
+      </div>
+    </div>
+  )
+}
+
+function EtapasCaso({ errorsCometidos, modoOscuro }: { errorsCometidos: number; modoOscuro: boolean }) {
+  return (
+    <div className="max-w-xl mx-auto">
+      <div className="flex gap-1.5">
+        {ETAPAS_CASO.map((_, i) => (
+          <div
+            key={i}
+            className={`h-2 flex-1 rounded-full transition-colors ${
+              i < errorsCometidos
+                ? 'bg-rose-500'
+                : modoOscuro
+                ? 'bg-zinc-800'
+                : 'bg-zinc-200'
+            }`}
+          />
+        ))}
+      </div>
+      <p
+        className={`mt-2 text-center text-xs font-medium ${
+          errorsCometidos >= ETAPAS_CASO.length
+            ? 'text-rose-500'
+            : modoOscuro
+            ? 'text-zinc-400'
+            : 'text-zinc-600'
+        }`}
+      >
+        {errorsCometidos === 0
+          ? 'El caso aún no avanza'
+          : `Etapa del caso: ${ETAPAS_CASO[Math.min(errorsCometidos, ETAPAS_CASO.length) - 1]}`}
+      </p>
+    </div>
+  )
+}
+
+function PalabraOculta({
+  palabra,
+  letrasIntentadas,
+  modoOscuro,
+}: {
+  palabra: string
+  letrasIntentadas: string[]
+  modoOscuro: boolean
+}) {
+  return (
+    <div className="flex flex-wrap justify-center gap-2">
+      {palabra.split('').map((c, i) =>
+        c === ' ' ? (
+          <div key={i} className="w-4" />
+        ) : (
+          <div
+            key={i}
+            className={`w-8 h-10 rounded-md border-b-2 flex items-center justify-center text-lg font-bold font-mono ${
+              modoOscuro ? 'border-zinc-600 text-white' : 'border-zinc-400 text-zinc-900'
+            }`}
+          >
+            {letrasIntentadas.includes(c) ? c : ''}
+          </div>
+        )
+      )}
+    </div>
+  )
+}
+
+function TecladoAhorcado({
+  letrasIntentadas,
+  palabra,
+  onLetra,
+  modoOscuro,
+}: {
+  letrasIntentadas: string[]
+  palabra: string
+  onLetra: (letra: string) => void
+  modoOscuro: boolean
+}) {
+  return (
+    <div className="flex flex-wrap justify-center gap-1.5 mt-6 max-w-xl mx-auto">
+      {LETRAS_TECLADO.map((l) => {
+        const usada = letrasIntentadas.includes(l)
+        const acierto = usada && palabra.includes(l)
+        return (
+          <button
+            key={l}
+            onClick={() => onLetra(l)}
+            disabled={usada}
+            className={`w-9 h-9 rounded-lg text-sm font-semibold transition-colors disabled:cursor-not-allowed ${
+              usada
+                ? acierto
+                  ? 'bg-[var(--accent-base)] text-white opacity-90'
+                  : modoOscuro
+                  ? 'bg-rose-950/60 text-rose-400'
+                  : 'bg-rose-100 text-rose-500'
+                : modoOscuro
+                ? 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700 border border-zinc-700'
+                : 'bg-white text-zinc-700 hover:bg-zinc-100 border border-zinc-200'
+            }`}
+          >
+            {l}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function ResultadoAhorcado({
+  partida,
+  modoOscuro,
+}: {
+  partida: PartidaAhorcado
+  modoOscuro: boolean
+}) {
+  const abandonar = useStore((s) => s.abandonarPartidaAhorcado)
+  const setVistaActiva = useStore((s) => s.setVistaActiva)
+  const setCodigoExplorador = useStore((s) => s.setCodigoExplorador)
+  const registrarStats = useStore((s) => s.registrarStatsAhorcadoSiCorresponde)
+  const stats = useStore((s) => s.statsAhorcado[partida.area])
+  const gano = partida.estado === 'ganada'
+
+  useEffect(() => {
+    registrarStats()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [partida.id])
+
+  return (
+    <div className={`h-full overflow-y-auto ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
+      <div className="max-w-2xl mx-auto px-6 py-10">
+        <div className="text-center mb-8">
+          <div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
+            style={{
+              background: gano
+                ? modoOscuro
+                  ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)'
+                  : 'color-mix(in srgb, var(--accent-base) 6%, transparent)'
+                : modoOscuro
+                ? 'rgba(244,63,94,0.15)'
+                : 'rgba(244,63,94,0.08)',
+            }}
+          >
+            <i
+              className={`ti ${gano ? 'ti-confetti' : 'ti-gavel'} text-3xl`}
+              style={{ color: gano ? VERDE : '#f43f5e' }}
+            />
+          </div>
+          <h1 className={`text-3xl font-serif font-bold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+            {gano ? '¡Absuelto!' : 'Sentencia condenatoria'}
+          </h1>
+          <p className={`text-sm ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
+            Área: {labelArea(partida.area)}
+          </p>
+        </div>
+
+        <div
+          className={`rounded-2xl p-6 mb-6 border text-center ${
+            modoOscuro ? 'bg-zinc-800/50 border-zinc-700' : 'bg-white border-zinc-200'
+          }`}
+        >
+          <p className={`text-2xl font-bold font-mono mb-3 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+            {partida.palabraVisible}
+          </p>
+          <p className={`text-sm leading-relaxed ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>
+            {partida.definicion}
+          </p>
+          {partida.codigoOrigen && partida.articulo && (
+            <button
+              onClick={() => {
+                setCodigoExplorador(partida.codigoOrigen!)
+                setVistaActiva('explorador')
+              }}
+              className={`mt-3 inline-flex items-center gap-1 text-xs underline ${
+                modoOscuro ? 'text-[var(--accent-400)] hover:text-[var(--accent-300)]' : 'text-[var(--accent-700)] hover:text-[var(--accent-800)]'
+              }`}
+            >
+              <i className="ti ti-external-link text-[10px]" />
+              {partida.articulo} en el Explorador
+            </button>
+          )}
+        </div>
+
+        {partida.modoEstudio ? (
+          <div
+            className={`mb-6 px-4 py-2.5 rounded-lg text-xs flex items-center gap-2 ${
+              modoOscuro ? 'bg-zinc-800 text-zinc-400 border border-zinc-700' : 'bg-zinc-100 text-zinc-600 border border-zinc-200'
+            }`}
+          >
+            <i className="ti ti-book-2 text-sm" />
+            Modo estudio · esta partida no cuenta para estadísticas
+          </div>
+        ) : stats ? (
+          <div
+            className={`mb-6 px-4 py-2.5 rounded-lg text-xs flex items-center gap-2 ${
+              modoOscuro ? 'bg-zinc-800/60 text-zinc-400 border border-zinc-700' : 'bg-zinc-50 text-zinc-600 border border-zinc-200'
+            }`}
+          >
+            <i className="ti ti-trophy text-sm" />
+            {labelArea(partida.area)}: {stats.partidasGanadas}/{stats.partidasJugadas} ganadas · racha actual {stats.rachaActual} · mejor racha {stats.rachaMaxima}
+          </div>
+        ) : null}
+
+        <div className="flex justify-center">
+          <button
+            onClick={() => abandonar()}
+            className="px-5 py-2.5 rounded-lg text-white font-medium text-sm"
+            style={{ background: VERDE }}
+          >
+            <i className="ti ti-refresh mr-1" />
+            Jugar otra partida
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }
 

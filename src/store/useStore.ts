@@ -25,6 +25,8 @@ import type {
   PartidaPasapalabra,
   RecordPasapalabra,
   AreaPractica,
+  PartidaAhorcado,
+  RecordAhorcado,
 } from '../types'
 
 interface AppState {
@@ -90,6 +92,12 @@ interface AppState {
   recordsPasapalabra: Partial<Record<AreaPractica, RecordPasapalabra>>
   usarPistaPasapalabra: () => void
   registrarRecordSiCorresponde: () => void
+  partidaAhorcado: PartidaAhorcado | null
+  statsAhorcado: Partial<Record<AreaPractica, RecordAhorcado>>
+  iniciarPartidaAhorcado: (partida: PartidaAhorcado) => void
+  intentarLetraAhorcado: (letra: string) => void
+  abandonarPartidaAhorcado: () => void
+  registrarStatsAhorcadoSiCorresponde: () => void
   temaColor: TemaColorId
   setTemaColor: (id: TemaColorId) => void
   omnibarAbierto: boolean
@@ -154,6 +162,8 @@ export const useStore = create<AppState>()(
       acercaPestana: 'acerca',
       partidaPasapalabra: null,
       recordsPasapalabra: {},
+      partidaAhorcado: null,
+      statsAhorcado: {},
       temaColor: 'esmeralda' as TemaColorId,
       consultaActivaId: null,
       codigoExploradorActivo: null,
@@ -357,6 +367,55 @@ export const useStore = create<AppState>()(
             },
           }
         }),
+      iniciarPartidaAhorcado: (partida) => set({ partidaAhorcado: partida }),
+      intentarLetraAhorcado: (letra) =>
+        set((s) => {
+          const p = s.partidaAhorcado
+          if (!p || p.estado !== 'jugando') return {}
+          const L = letra.toUpperCase()
+          if (p.letrasIntentadas.includes(L)) return {}
+          const letrasIntentadas = [...p.letrasIntentadas, L]
+          const acierto = p.palabra.includes(L)
+          const erroresRestantes = acierto ? p.erroresRestantes : p.erroresRestantes - 1
+          const letrasNecesarias = Array.from(new Set(p.palabra.replace(/[^A-ZÑ]/g, '').split('')))
+          const gano = letrasNecesarias.every((l) => letrasIntentadas.includes(l))
+          const estado = gano ? 'ganada' : erroresRestantes <= 0 ? 'perdida' : 'jugando'
+          return {
+            partidaAhorcado: {
+              ...p,
+              letrasIntentadas,
+              erroresRestantes,
+              estado,
+              finalizada: estado !== 'jugando' ? Date.now() : null,
+            },
+          }
+        }),
+      abandonarPartidaAhorcado: () => set({ partidaAhorcado: null }),
+      registrarStatsAhorcadoSiCorresponde: () =>
+        set((s) => {
+          const p = s.partidaAhorcado
+          if (!p || p.estado === 'jugando') return {}
+          if (p.modoEstudio) return {}
+          const previo = s.statsAhorcado[p.area] ?? {
+            partidasJugadas: 0,
+            partidasGanadas: 0,
+            rachaActual: 0,
+            rachaMaxima: 0,
+          }
+          const gano = p.estado === 'ganada'
+          const rachaActual = gano ? previo.rachaActual + 1 : 0
+          return {
+            statsAhorcado: {
+              ...s.statsAhorcado,
+              [p.area]: {
+                partidasJugadas: previo.partidasJugadas + 1,
+                partidasGanadas: previo.partidasGanadas + (gano ? 1 : 0),
+                rachaActual,
+                rachaMaxima: Math.max(previo.rachaMaxima, rachaActual),
+              },
+            },
+          }
+        }),
       setOmnibarAbierto: (abierto) => set({ omnibarAbierto: abierto }),
       toggleRightSidebar: () => set((s) => ({ rightSidebarAbierto: !s.rightSidebarAbierto })),
       agregarVisitado: (articulo, codigo) =>
@@ -407,6 +466,8 @@ export const useStore = create<AppState>()(
         modernizarLenguaje: s.modernizarLenguaje,
         partidaPasapalabra: s.partidaPasapalabra,
         recordsPasapalabra: s.recordsPasapalabra,
+        partidaAhorcado: s.partidaAhorcado,
+        statsAhorcado: s.statsAhorcado,
         temaColor: s.temaColor,
         rightSidebarAbierto: s.rightSidebarAbierto,
         visitadosRecientes: s.visitadosRecientes,
