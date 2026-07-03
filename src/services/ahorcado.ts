@@ -61,19 +61,25 @@ function extraerJSONObjeto(texto: string): unknown {
 
 export async function generarPalabraAhorcado(
   area: AreaPractica,
-  evitar: string[] = []
+  evitar: string[] = [],
+  usuarioEmail?: string | null,
+  onConsultasRestantes?: (n: number) => void
 ): Promise<PalabraAhorcado> {
-  const res = await callMessages({
-    model: MODELO,
-    max_tokens: MAX_TOKENS,
-    system: systemPrompt(area, evitar),
-    messages: [
-      {
-        role: 'user',
-        content: `Genera una palabra para el área: ${area}. Variación ${Math.floor(Math.random() * 9999)}: elige un término distinto a los más obvios.`,
-      },
-    ],
-  })
+  const res = await callMessages(
+    {
+      model: MODELO,
+      max_tokens: MAX_TOKENS,
+      system: systemPrompt(area, evitar),
+      messages: [
+        {
+          role: 'user',
+          content: `Genera una palabra para el área: ${area}. Variación ${Math.floor(Math.random() * 9999)}: elige un término distinto a los más obvios.`,
+        },
+      ],
+    },
+    usuarioEmail,
+    onConsultasRestantes
+  )
 
   const texto = res.content
     .filter((b) => b.type === 'text')

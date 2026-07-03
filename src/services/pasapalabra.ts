@@ -100,18 +100,26 @@ interface EntradaCruda {
   articulo?: string
 }
 
-export async function generarRosco(area: AreaPractica): Promise<EntradaRosco[]> {
-  const res = await callMessages({
-    model: MODELO,
-    max_tokens: MAX_TOKENS,
-    system: systemPrompt(area),
-    messages: [
-      {
-        role: 'user',
-        content: `Genera un rosco para el área: ${area}. Variación ${Math.floor(Math.random() * 9999)}: usa palabras DIFERENTES a las más obvias; explora el corpus chileno completo y elige términos menos comunes cuando exista una alternativa académicamente válida.`,
-      },
-    ],
-  })
+export async function generarRosco(
+  area: AreaPractica,
+  usuarioEmail?: string | null,
+  onConsultasRestantes?: (n: number) => void
+): Promise<EntradaRosco[]> {
+  const res = await callMessages(
+    {
+      model: MODELO,
+      max_tokens: MAX_TOKENS,
+      system: systemPrompt(area),
+      messages: [
+        {
+          role: 'user',
+          content: `Genera un rosco para el área: ${area}. Variación ${Math.floor(Math.random() * 9999)}: usa palabras DIFERENTES a las más obvias; explora el corpus chileno completo y elige términos menos comunes cuando exista una alternativa académicamente válida.`,
+        },
+      ],
+    },
+    usuarioEmail,
+    onConsultasRestantes
+  )
 
   const texto = res.content
     .filter((b) => b.type === 'text')
