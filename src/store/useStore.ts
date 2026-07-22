@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { TemaColorId } from '../theme'
+import { JURISPRUDENCIA_SEED } from '../data/jurisprudenciaSeed'
 
 // Devuelve el índice de la próxima letra "pendiente" del rosco, partiendo desde
 // la posición actual + 1 y volviendo al principio si es necesario (rosco
@@ -149,7 +150,7 @@ export const useStore = create<AppState>()(
       perfil: null,
       vistaActiva: 'consultar',
       codigos: codigosIniciales,
-      jurisprudencia: [],
+      jurisprudencia: JURISPRUDENCIA_SEED,
       historial: [],
       favoritos: [],
       canvases: [],
@@ -453,7 +454,7 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'prima-lex-storage-v3',
-      version: 23,
+      version: 24,
       partialize: (s) => ({
         perfil: s.perfil,
         codigos: s.codigos,
@@ -496,6 +497,16 @@ export const useStore = create<AppState>()(
               activo: c.bloqueado ? true : prefs.get(c.tipo) ?? c.activo,
             })),
           }
+        }
+        if (version < 24) {
+          // v24: incorporar el lote inicial de jurisprudencia curada (DT +
+          // Tribunal Ambiental). Se deduplica por id para no reinsertar si el
+          // usuario ya la tenía (p. ej. tras una migración previa).
+          const state = persisted as { jurisprudencia?: EntradaJurisprudencia[] }
+          const existentes = Array.isArray(state.jurisprudencia) ? state.jurisprudencia : []
+          const idsExistentes = new Set(existentes.map((j) => j.id))
+          const nuevas = JURISPRUDENCIA_SEED.filter((j) => !idsExistentes.has(j.id))
+          return { ...state, jurisprudencia: [...nuevas, ...existentes] }
         }
         return persisted as never
       },
