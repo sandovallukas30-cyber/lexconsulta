@@ -256,7 +256,9 @@ export interface EntradaJurisprudencia {
   organo: string
   referencia: string
   fecha: string
-  codigo: CodigoTipo
+  /** Código indexado en Prima Lex al que se asocia (si corresponde). Fuentes como el
+   * Tribunal Ambiental o Poder Judicial en materias no indexadas quedan sin código. */
+  codigo?: CodigoTipo
   materia: string
   resumen: string
   texto_completo?: string
