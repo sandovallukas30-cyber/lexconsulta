@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { ModalCodigos } from '../ui/ModalCodigos'
 import { ModalAcercaDe } from '../ui/ModalAcercaDe'
+import { esAdmin } from '../../config/admin'
 import type { VistaId } from '../../types'
 
 interface ItemMenu {
@@ -20,8 +21,9 @@ const items: ItemMenu[] = [
   { id: 'explorador', icono: 'ti-book-2', label: 'Explorador' },
   { id: 'practica', icono: 'ti-puzzle', label: 'Práctica' },
   { id: 'historial', icono: 'ti-history', label: 'Historial' },
-  { id: 'admin', icono: 'ti-settings-2', label: 'Admin' },
 ]
+
+const itemAdmin: ItemMenu = { id: 'admin', icono: 'ti-settings-2', label: 'Admin' }
 
 const VERDE = 'var(--accent-base)'
 
@@ -29,6 +31,7 @@ export function Sidebar() {
   const vistaActiva = useStore((s) => s.vistaActiva)
   const setVistaActiva = useStore((s) => s.setVistaActiva)
   const codigos = useStore((s) => s.codigos)
+  const usuarioEmail = useStore((s) => s.usuarioEmail)
   const modoOscuro = useStore((s) => s.modoOscuro)
   const colapsado = useStore((s) => s.sidebarColapsado)
   const toggleSidebar = useStore((s) => s.toggleSidebar)
@@ -52,6 +55,7 @@ export function Sidebar() {
 
   const activos = codigos.filter((c) => c.activo).length
   const total = codigos.length
+  const itemsVisibles = esAdmin(usuarioEmail) ? [...items, itemAdmin] : items
 
   return (
     <>
@@ -113,7 +117,7 @@ export function Sidebar() {
         </div>
 
         <nav className={`flex-1 py-4 space-y-0.5 overflow-y-auto ${colapsado ? 'px-2' : 'px-3'}`}>
-          {items.map((item) => {
+          {itemsVisibles.map((item) => {
             const activo = vistaActiva === item.id
             return (
               <button

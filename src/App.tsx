@@ -17,6 +17,7 @@ import { useStore } from './store/useStore'
 import { aplicarTema } from './theme'
 import { Omnibar } from './components/ui/Omnibar'
 import { RightSidebar } from './components/layout/RightSidebar'
+import { esAdmin } from './config/admin'
 import type { VistaId } from './types'
 
 const vistas: Record<VistaId, React.ComponentType> = {
@@ -33,11 +34,12 @@ const vistas: Record<VistaId, React.ComponentType> = {
 
 function App() {
   const vistaActiva = useStore((s) => s.vistaActiva)
+  const usuarioEmail = useStore((s) => s.usuarioEmail)
   const modoOscuro = useStore((s) => s.modoOscuro)
   const temaColor = useStore((s) => s.temaColor)
   const omnibarAbierto = useStore((s) => s.omnibarAbierto)
   const setOmnibarAbierto = useStore((s) => s.setOmnibarAbierto)
-  const VistaComponente = vistas[vistaActiva]
+  const VistaComponente = vistaActiva === 'admin' && !esAdmin(usuarioEmail) ? vistas.consultar : vistas[vistaActiva]
   const [modalRegistroAbierto, setModalRegistroAbierto] = useState(false)
 
   // Aplicar el tema de color al :root cada vez que cambia. Se ejecuta también
