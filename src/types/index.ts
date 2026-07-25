@@ -37,7 +37,6 @@ export type VistaId =
   | 'consultar'
   | 'situacion'
   | 'canvas'
-  | 'comparar'
   | 'mapa'
   | 'explorador'
   | 'historial'

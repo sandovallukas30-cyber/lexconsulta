@@ -8,7 +8,6 @@ const titulos: Record<string, string> = {
   consultar: 'Consultar',
   situacion: 'Situación concreta',
   canvas: 'Canvas jurídico',
-  comparar: 'Comparar normas',
   mapa: 'Mapa de normas',
   explorador: 'Explorador de códigos',
   historial: 'Historial',

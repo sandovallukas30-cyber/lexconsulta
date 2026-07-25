@@ -5,7 +5,6 @@ import { ModalRegistro } from './components/ui/ModalRegistro'
 import { ConsultarView } from './components/views/ConsultarView'
 import { SituacionView } from './components/views/SituacionView'
 import { CanvasView } from './components/views/CanvasView'
-import { CompararView } from './components/views/CompararView'
 import { MapaView } from './components/views/MapaView'
 import { ExploradorView } from './components/views/ExploradorView'
 import { HistorialView } from './components/views/HistorialView'
@@ -24,7 +23,6 @@ const vistas: Record<VistaId, React.ComponentType> = {
   consultar: ConsultarView,
   situacion: SituacionView,
   canvas: CanvasView,
-  comparar: CompararView,
   mapa: MapaView,
   explorador: ExploradorView,
   historial: HistorialView,
