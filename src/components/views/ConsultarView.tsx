@@ -110,18 +110,19 @@ export function ConsultarView() {
         }`}
       >
         <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
-          <div className="mb-3 space-y-2">
-            <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-2 gap-4">
+            <div className="flex items-center gap-2">
               <ToggleModo modoOscuro={modoOscuro} />
-              <span className={`text-[10px] ${modoOscuro ? 'text-zinc-600' : 'text-zinc-400'}`}>
-                {codigosActivos} código{codigosActivos !== 1 ? 's' : ''} activo{codigosActivos !== 1 ? 's' : ''}
-              </span>
+              <div className={`w-px h-6 ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-200'}`} />
+              <JurisprudenciaToggle
+                checked={incluirJurisprudencia}
+                onChange={setIncluirJurisprudencia}
+                disabled={cargando}
+              />
             </div>
-            <JurisprudenciaToggle
-              checked={incluirJurisprudencia}
-              onChange={setIncluirJurisprudencia}
-              disabled={cargando}
-            />
+            <span className={`text-[10px] ${modoOscuro ? 'text-zinc-600' : 'text-zinc-400'}`}>
+              {codigosActivos} código{codigosActivos !== 1 ? 's' : ''} activo{codigosActivos !== 1 ? 's' : ''}
+            </span>
           </div>
           <div
             className={`flex items-end gap-2 p-2 rounded-2xl border-2 transition-colors ${
