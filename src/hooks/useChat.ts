@@ -39,7 +39,7 @@ export function useChat() {
   }, [consultaActivaId])
 
   const enviar = useCallback(
-    async (pregunta: string) => {
+    async (pregunta: string, incluirJurisprudencia: boolean = false) => {
       const texto = pregunta.trim()
       if (!texto || cargando) return
 
@@ -80,7 +80,7 @@ export function useChat() {
 
         // Verificar caché antes de llamar a la API (clave incluye códigos activos)
         const cached = getCached(texto, activos)
-        const respuesta = cached ?? await consultar(texto, resultados, perfil, usuarioEmail, setConsultasRestantes)
+        const respuesta = cached ?? await consultar(texto, resultados, perfil, usuarioEmail, setConsultasRestantes, incluirJurisprudencia)
         if (!cached) setCached(texto, respuesta, activos)
         const mensajeAsistente: Mensaje = {
           id: crypto.randomUUID(),

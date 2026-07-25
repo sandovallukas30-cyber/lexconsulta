@@ -29,6 +29,7 @@ export function ConsultarView() {
   const modoOscuro = useStore((s) => s.modoOscuro)
   const { mensajes, cargando, enviar, limpiar } = useChat()
   const [pregunta, setPregunta] = useState('')
+  const [incluirJurisprudencia, setIncluirJurisprudencia] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const sugerencias = perfil === 'profesional' ? sugerenciasProfesional : sugerenciasCiudadano
@@ -45,7 +46,7 @@ export function ConsultarView() {
     const q = pregunta.trim()
     if (!q || cargando) return
     setPregunta('')
-    await enviar(q)
+    await enviar(q, incluirJurisprudencia)
   }
 
   const enviarSugerencia = (s: string) => {
@@ -108,8 +109,23 @@ export function ConsultarView() {
         }`}
       >
         <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
-          <div className="flex items-center justify-between mb-2">
-            <ToggleModo modoOscuro={modoOscuro} />
+          <div className="flex items-center justify-between mb-2 gap-4">
+            <div className="flex items-center gap-4">
+              <ToggleModo modoOscuro={modoOscuro} />
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={incluirJurisprudencia}
+                  onChange={(e) => setIncluirJurisprudencia(e.target.checked)}
+                  disabled={cargando}
+                  style={{ accentColor: VERDE }}
+                  className="rounded w-4 h-4 disabled:opacity-50"
+                />
+                <span className={`text-xs ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                  Incluir jurisprudencia
+                </span>
+              </label>
+            </div>
             <span className={`text-[10px] ${modoOscuro ? 'text-zinc-600' : 'text-zinc-400'}`}>
               {codigosActivos} código{codigosActivos !== 1 ? 's' : ''} activo{codigosActivos !== 1 ? 's' : ''}
             </span>

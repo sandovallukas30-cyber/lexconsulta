@@ -1,6 +1,7 @@
 import { callMessages } from './aiClient'
 import type { PerfilUsuario, Articulo, Cita } from '../types'
 import type { ResultadoBusqueda } from './busqueda'
+import { buscarJurisprudenciaRelevante, formatearJurisprudenciaMarkdown } from './jurisprudencia'
 export { precargar } from './codigos'
 
 const MODELO = 'claude-sonnet-4-5'
@@ -68,12 +69,20 @@ export async function consultar(
   perfil: PerfilUsuario,
   usuarioEmail?: string | null,
   onConsultasRestantes?: (n: number) => void,
+  incluirJurisprudencia: boolean = false,
 ): Promise<RespuestaIA> {
   const system = systemPromptConsulta(perfil)
   const contextoTexto = formatearContexto(contexto)
 
+  // Buscar jurisprudencia si el usuario lo solicitó
+  let jurisprudenciaTexto = ''
+  if (incluirJurisprudencia) {
+    const entradasJurisprudencia = buscarJurisprudenciaRelevante(pregunta)
+    jurisprudenciaTexto = formatearJurisprudenciaMarkdown(entradasJurisprudencia)
+  }
+
   const userContent = `CONTEXTO (artículos más relevantes para esta consulta):
-${contextoTexto}
+${contextoTexto}${jurisprudenciaTexto}
 
 CONSULTA DEL USUARIO:
 ${pregunta}`
