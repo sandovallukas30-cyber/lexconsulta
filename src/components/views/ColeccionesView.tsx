@@ -450,7 +450,7 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-6 py-6">
+        <div className="max-w-6xl mx-auto px-6 py-6">
           {coleccion.articulos.length === 0 ? (
             <div className="text-center py-16">
               <p className={`text-sm mb-4 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
@@ -466,7 +466,7 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
               </button>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="flex flex-wrap gap-4 items-start">
               {articulosResueltos.map((ar, i) => (
                 <TarjetaArticulo
                   key={`${ar.codigo}::${ar.articulo}`}
@@ -512,61 +512,67 @@ function TarjetaArticulo({
   const color = 'var(--accent-base)'
 
   return (
-    <div className={`rounded-xl border overflow-hidden ${modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
-      <div className={`flex items-center gap-2 px-3 py-2.5 ${expandido ? (modoOscuro ? 'border-b border-zinc-800' : 'border-b border-zinc-100') : ''}`}>
-        <div className="flex flex-col flex-shrink-0">
+    <div
+      className={`w-full sm:w-[380px] flex-shrink-0 rounded-xl border overflow-hidden ${
+        modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
+      }`}
+    >
+      {/* Tira de control: reordenar y quitar, discreta */}
+      <div className={`flex items-center justify-between px-2 py-1 ${modoOscuro ? 'bg-zinc-800/40' : 'bg-zinc-50'}`}>
+        <div className="flex items-center gap-0.5">
           <button
             onClick={() => onMover(-1)}
             disabled={posicion === 0}
-            title="Mover arriba"
-            className={`w-5 h-4 flex items-center justify-center rounded disabled:opacity-20 disabled:cursor-not-allowed ${
-              modoOscuro ? 'hover:bg-zinc-800 text-zinc-500' : 'hover:bg-zinc-100 text-zinc-400'
+            title="Mover antes"
+            className={`w-6 h-6 flex items-center justify-center rounded disabled:opacity-20 disabled:cursor-not-allowed ${
+              modoOscuro ? 'hover:bg-zinc-800 text-zinc-500' : 'hover:bg-zinc-200 text-zinc-400'
             }`}
           >
-            <i className="ti ti-chevron-up text-xs" />
+            <i className="ti ti-chevron-left text-sm" />
           </button>
           <button
             onClick={() => onMover(1)}
             disabled={posicion === total - 1}
-            title="Mover abajo"
-            className={`w-5 h-4 flex items-center justify-center rounded disabled:opacity-20 disabled:cursor-not-allowed ${
-              modoOscuro ? 'hover:bg-zinc-800 text-zinc-500' : 'hover:bg-zinc-100 text-zinc-400'
+            title="Mover después"
+            className={`w-6 h-6 flex items-center justify-center rounded disabled:opacity-20 disabled:cursor-not-allowed ${
+              modoOscuro ? 'hover:bg-zinc-800 text-zinc-500' : 'hover:bg-zinc-200 text-zinc-400'
             }`}
           >
-            <i className="ti ti-chevron-down text-xs" />
+            <i className="ti ti-chevron-right text-sm" />
           </button>
         </div>
-
-        <button
-          onClick={() => setExpandido(!expandido)}
-          className="flex-1 min-w-0 flex items-center gap-2.5 text-left py-0.5"
-        >
-          <div className="w-1 h-8 rounded-full flex-shrink-0" style={{ background: color }} />
-          <div className="flex items-baseline gap-2 flex-wrap min-w-0">
-            <span className="font-mono text-sm font-semibold flex-shrink-0" style={{ color }}>
-              {item.articulo}
-            </span>
-            <span className={`text-[10px] uppercase tracking-wide flex-shrink-0 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
-              {item.nombreCodigo}
-            </span>
-          </div>
-          <i
-            className={`ti ti-chevron-down text-base transition-transform ml-auto flex-shrink-0 ${expandido ? 'rotate-180' : ''} ${
-              modoOscuro ? 'text-zinc-500' : 'text-zinc-400'
-            }`}
-          />
-        </button>
-
         <button
           onClick={onQuitar}
           title="Quitar de la colección"
-          className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
-            modoOscuro ? 'text-zinc-500 hover:bg-zinc-800 hover:text-red-400' : 'text-zinc-400 hover:bg-zinc-100 hover:text-red-500'
+          className={`w-6 h-6 flex items-center justify-center rounded transition-colors ${
+            modoOscuro ? 'text-zinc-500 hover:bg-zinc-800 hover:text-red-400' : 'text-zinc-400 hover:bg-zinc-200 hover:text-red-500'
           }`}
         >
           <i className="ti ti-x text-sm" />
         </button>
       </div>
+
+      {/* Encabezado grande, mismo estilo que el título de artículo en Explorador */}
+      <button
+        onClick={() => setExpandido(!expandido)}
+        className={`w-full flex items-start justify-between gap-2 px-4 py-3 text-left ${
+          expandido ? (modoOscuro ? 'border-b border-zinc-800' : 'border-b border-zinc-100') : ''
+        }`}
+      >
+        <div className="min-w-0">
+          <div className={`text-[10px] uppercase tracking-wider font-semibold mb-0.5 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
+            {item.nombreCodigo}
+          </div>
+          <div className="font-serif text-2xl font-bold leading-none" style={{ color }}>
+            {item.articulo}
+          </div>
+        </div>
+        <i
+          className={`ti ti-chevron-down text-lg mt-1 transition-transform flex-shrink-0 ${expandido ? 'rotate-180' : ''} ${
+            modoOscuro ? 'text-zinc-500' : 'text-zinc-400'
+          }`}
+        />
+      </button>
 
       <AnimatePresence initial={false}>
         {expandido && (
