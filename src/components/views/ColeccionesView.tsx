@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { useCodigo } from '../../hooks/useCodigo'
 import { precargar, obtenerCodigo } from '../../services/codigos'
-import type { Articulo, ArticuloColeccion, Coleccion, CodigoTipo } from '../../types'
+import { COLECCIONES_PLANTILLA } from '../../data/coleccionesPlantilla'
+import type { Articulo, ArticuloColeccion, Coleccion, CodigoTipo, EstadoRepaso } from '../../types'
 
 const VERDE = 'var(--accent-base)'
 
@@ -78,9 +79,85 @@ function ListaColecciones() {
             ))}
           </div>
         )}
+
+        <SeccionPlantillas expandidaPorDefecto={ordenadas.length === 0} modoOscuro={modoOscuro} />
       </div>
 
       <ModalNuevaColeccion abierto={modalNueva} onCerrar={() => setModalNueva(false)} modoOscuro={modoOscuro} />
+    </div>
+  )
+}
+
+function SeccionPlantillas({
+  expandidaPorDefecto,
+  modoOscuro,
+}: {
+  expandidaPorDefecto: boolean
+  modoOscuro: boolean
+}) {
+  const [abierta, setAbierta] = useState(expandidaPorDefecto)
+  const crearColeccion = useStore((s) => s.crearColeccion)
+  const agregarArticulo = useStore((s) => s.agregarArticuloAColeccion)
+  const setColeccionActiva = useStore((s) => s.setColeccionActiva)
+
+  const usarPlantilla = (plantillaId: string) => {
+    const plantilla = COLECCIONES_PLANTILLA.find((p) => p.id === plantillaId)
+    if (!plantilla) return
+    const id = crearColeccion(plantilla.titulo)
+    for (const art of plantilla.articulos) agregarArticulo(id, art)
+    setColeccionActiva(id)
+  }
+
+  return (
+    <div className="mt-10">
+      <button
+        onClick={() => setAbierta(!abierta)}
+        className={`flex items-center gap-2 text-sm font-semibold mb-4 ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}
+      >
+        <i className={`ti ti-chevron-right text-sm transition-transform ${abierta ? 'rotate-90' : ''}`} />
+        Plantillas para empezar
+        <span className={`text-xs font-normal ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
+          ({COLECCIONES_PLANTILLA.length})
+        </span>
+      </button>
+
+      <AnimatePresence initial={false}>
+        {abierta && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <p className={`text-xs mb-4 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
+              Temas clásicos de Derecho Civil, ya armados. Al usar una se crea una copia propia
+              que puedes editar libremente.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pb-2">
+              {COLECCIONES_PLANTILLA.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => usarPlantilla(p.id)}
+                  className={`text-left rounded-lg border p-4 transition-colors ${
+                    modoOscuro
+                      ? 'bg-zinc-900 border-zinc-800 hover:border-zinc-700'
+                      : 'bg-white border-zinc-200 hover:border-zinc-300'
+                  }`}
+                >
+                  <h4 className={`text-sm font-serif font-semibold mb-1 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+                    {p.titulo}
+                  </h4>
+                  <p className={`text-xs mb-2 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>{p.descripcion}</p>
+                  <span className={`text-[11px] font-medium ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                    {p.articulos.length} artículos · usar plantilla
+                  </span>
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
@@ -301,6 +378,8 @@ interface ArticuloResuelto {
   art: Articulo | null
   nombreCodigo: string
   cargando: boolean
+  estado: EstadoRepaso
+  nota: string
 }
 
 /** Resuelve el texto completo de cada artículo de la colección, cargando en
@@ -335,8 +414,22 @@ function useArticulosResueltos(articulos: ArticuloColeccion[]): ArticuloResuelto
       art,
       nombreCodigo: meta?.nombreCorto ?? ac.codigo,
       cargando: !data,
+      estado: ac.estado ?? 'pendiente',
+      nota: ac.nota ?? '',
     }
   })
+}
+
+const ESTADO_SIGUIENTE: Record<EstadoRepaso, EstadoRepaso> = {
+  pendiente: 'repasando',
+  repasando: 'dominado',
+  dominado: 'pendiente',
+}
+
+const ESTADO_INFO: Record<EstadoRepaso, { icono: string; label: string; colorLight: string; colorDark: string }> = {
+  pendiente: { icono: 'ti-circle', label: 'Pendiente', colorLight: 'text-zinc-400', colorDark: 'text-zinc-600' },
+  repasando: { icono: 'ti-circle-half-2', label: 'Repasando', colorLight: 'text-amber-600', colorDark: 'text-amber-400' },
+  dominado: { icono: 'ti-circle-check-filled', label: 'Dominado', colorLight: 'text-emerald-600', colorDark: 'text-emerald-400' },
 }
 
 function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
@@ -346,10 +439,13 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
   const eliminarColeccion = useStore((s) => s.eliminarColeccion)
   const quitarArticulo = useStore((s) => s.quitarArticuloDeColeccion)
   const moverArticulo = useStore((s) => s.moverArticuloColeccion)
+  const marcarEstado = useStore((s) => s.marcarEstadoArticulo)
+  const guardarNota = useStore((s) => s.guardarNotaArticulo)
 
   const [editandoTitulo, setEditandoTitulo] = useState(false)
   const [tituloTmp, setTituloTmp] = useState(coleccion.titulo)
   const [modalAgregar, setModalAgregar] = useState(false)
+  const [modoRepaso, setModoRepaso] = useState(false)
   const inputTituloRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -368,6 +464,8 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
   }
 
   const articulosResueltos = useArticulosResueltos(coleccion.articulos)
+
+  const dominados = articulosResueltos.filter((a) => a.estado === 'dominado').length
 
   // Leyenda de colores: solo tiene sentido mostrarla si la colección mezcla
   // más de un área (si es puro Civil, por ejemplo, no hay nada que distinguir).
@@ -428,9 +526,29 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
           </button>
         )}
 
-        <span className={`text-xs flex-shrink-0 hidden sm:inline ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
-          {coleccion.articulos.length} artículo{coleccion.articulos.length !== 1 ? 's' : ''}
-        </span>
+        {coleccion.articulos.length > 0 && (
+          <span className={`text-xs flex-shrink-0 hidden sm:inline ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
+            {dominados}/{coleccion.articulos.length} dominados
+          </span>
+        )}
+
+        {coleccion.articulos.length > 0 && (
+          <button
+            onClick={() => setModoRepaso(!modoRepaso)}
+            title="En modo repaso, las fichas empiezan ocultas: intenta recordar antes de tocarlas"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium flex-shrink-0 transition-colors ${
+              modoRepaso
+                ? 'text-white'
+                : modoOscuro
+                  ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+                  : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+            }`}
+            style={modoRepaso ? { background: VERDE } : undefined}
+          >
+            <i className="ti ti-brain text-base" />
+            <span className="hidden md:inline">Modo repaso</span>
+          </button>
+        )}
 
         <button
           onClick={() => setModalAgregar(true)}
@@ -500,6 +618,9 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
                     total={articulosResueltos.length}
                     onQuitar={() => quitarArticulo(coleccion.id, { codigo: ar.codigo, articulo: ar.articulo })}
                     onMover={(dir) => moverArticulo(coleccion.id, i, dir)}
+                    onCambiarEstado={(estado) => marcarEstado(coleccion.id, { codigo: ar.codigo, articulo: ar.articulo }, estado)}
+                    onGuardarNota={(nota) => guardarNota(coleccion.id, { codigo: ar.codigo, articulo: ar.articulo }, nota)}
+                    modoRepaso={modoRepaso}
                     modoOscuro={modoOscuro}
                   />
                 </div>
@@ -626,6 +747,9 @@ function TarjetaArticulo({
   total,
   onQuitar,
   onMover,
+  onCambiarEstado,
+  onGuardarNota,
+  modoRepaso,
   modoOscuro,
 }: {
   item: ArticuloResuelto
@@ -633,10 +757,26 @@ function TarjetaArticulo({
   total: number
   onQuitar: () => void
   onMover: (direccion: -1 | 1) => void
+  onCambiarEstado: (estado: EstadoRepaso) => void
+  onGuardarNota: (nota: string) => void
+  modoRepaso: boolean
   modoOscuro: boolean
 }) {
-  const [expandido, setExpandido] = useState(true)
+  const [expandido, setExpandido] = useState(!modoRepaso)
+  const [notaTmp, setNotaTmp] = useState(item.nota)
   const { texto: colorTexto, barra: colorBarra } = colorParaCodigo(item.codigo, modoOscuro)
+  const estadoInfo = ESTADO_INFO[item.estado]
+
+  // Al entrar/salir de modo repaso, todas las fichas se re-colapsan o
+  // re-expanden en bloque. Después de eso, cada clic individual (para
+  // "voltear" una ficha y revisar si acertaste) funciona con normalidad.
+  useEffect(() => {
+    setExpandido(!modoRepaso)
+  }, [modoRepaso])
+
+  useEffect(() => {
+    setNotaTmp(item.nota)
+  }, [item.nota])
 
   return (
     <div
@@ -672,15 +812,26 @@ function TarjetaArticulo({
               <i className="ti ti-chevron-right text-sm" />
             </button>
           </div>
-          <button
-            onClick={onQuitar}
-            title="Quitar de la colección"
-            className={`w-6 h-6 flex items-center justify-center rounded transition-colors ${
-              modoOscuro ? 'text-zinc-500 hover:bg-zinc-800 hover:text-red-400' : 'text-zinc-400 hover:bg-zinc-200 hover:text-red-500'
-            }`}
-          >
-            <i className="ti ti-x text-sm" />
-          </button>
+          <div className="flex items-center gap-0.5">
+            <button
+              onClick={() => onCambiarEstado(ESTADO_SIGUIENTE[item.estado])}
+              title={`${estadoInfo.label} · clic para cambiar`}
+              className={`w-6 h-6 flex items-center justify-center rounded transition-colors ${
+                modoOscuro ? estadoInfo.colorDark : estadoInfo.colorLight
+              } ${modoOscuro ? 'hover:bg-zinc-800' : 'hover:bg-zinc-200'}`}
+            >
+              <i className={`ti ${estadoInfo.icono} text-sm`} />
+            </button>
+            <button
+              onClick={onQuitar}
+              title="Quitar de la colección"
+              className={`w-6 h-6 flex items-center justify-center rounded transition-colors ${
+                modoOscuro ? 'text-zinc-500 hover:bg-zinc-800 hover:text-red-400' : 'text-zinc-400 hover:bg-zinc-200 hover:text-red-500'
+              }`}
+            >
+              <i className="ti ti-x text-sm" />
+            </button>
+          </div>
         </div>
 
         {/* Encabezado grande, mismo estilo que el título de artículo en Explorador */}
@@ -731,6 +882,29 @@ function TarjetaArticulo({
                     </p>
                   ))
                 )}
+              </div>
+
+              {/* Nota propia: opcional, se guarda al salir del campo */}
+              <div className={`px-4 py-2.5 border-t ${modoOscuro ? 'border-zinc-800' : 'border-zinc-100'}`}>
+                <textarea
+                  value={notaTmp}
+                  onChange={(e) => setNotaTmp(e.target.value)}
+                  onBlur={() => {
+                    if (notaTmp !== item.nota) onGuardarNota(notaTmp)
+                  }}
+                  onKeyDown={(e) => {
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                      e.preventDefault()
+                      if (notaTmp !== item.nota) onGuardarNota(notaTmp)
+                      e.currentTarget.blur()
+                    }
+                  }}
+                  placeholder="Agrega tu propia nota o acordeón mental... (Ctrl+Enter guarda)"
+                  rows={notaTmp ? 2 : 1}
+                  className={`w-full bg-transparent outline-none text-xs resize-none placeholder:italic ${
+                    modoOscuro ? 'text-zinc-300 placeholder:text-zinc-600' : 'text-zinc-700 placeholder:text-zinc-400'
+                  }`}
+                />
               </div>
             </motion.div>
           )}

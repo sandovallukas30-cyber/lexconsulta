@@ -30,6 +30,7 @@ import type {
   RecordAhorcado,
   Coleccion,
   ArticuloColeccion,
+  EstadoRepaso,
 } from '../types'
 
 interface AppState {
@@ -81,6 +82,8 @@ interface AppState {
   agregarArticuloAColeccion: (id: string, articulo: ArticuloColeccion) => void
   quitarArticuloDeColeccion: (id: string, articulo: ArticuloColeccion) => void
   moverArticuloColeccion: (id: string, indice: number, direccion: -1 | 1) => void
+  marcarEstadoArticulo: (id: string, ref: { codigo: CodigoActivo['tipo']; articulo: string }, estado: EstadoRepaso) => void
+  guardarNotaArticulo: (id: string, ref: { codigo: CodigoActivo['tipo']; articulo: string }, nota: string) => void
   toggleModoOscuro: () => void
   toggleSidebar: () => void
   toggleModernizar: () => void
@@ -335,6 +338,34 @@ export const useStore = create<AppState>()(
             articulos.splice(destino, 0, item)
             return { ...c, articulos, fechaModificacion: Date.now() }
           }),
+        })),
+      marcarEstadoArticulo: (id, ref, estado) =>
+        set((s) => ({
+          colecciones: s.colecciones.map((c) =>
+            c.id === id
+              ? {
+                  ...c,
+                  articulos: c.articulos.map((a) =>
+                    a.codigo === ref.codigo && a.articulo === ref.articulo ? { ...a, estado } : a
+                  ),
+                }
+              : c
+          ),
+        })),
+      guardarNotaArticulo: (id, ref, nota) =>
+        set((s) => ({
+          colecciones: s.colecciones.map((c) =>
+            c.id === id
+              ? {
+                  ...c,
+                  articulos: c.articulos.map((a) =>
+                    a.codigo === ref.codigo && a.articulo === ref.articulo
+                      ? { ...a, nota: nota.trim() ? nota : undefined }
+                      : a
+                  ),
+                }
+              : c
+          ),
         })),
       toggleModoOscuro: () => set((s) => ({ modoOscuro: !s.modoOscuro })),
       toggleSidebar: () => set((s) => ({ sidebarColapsado: !s.sidebarColapsado })),

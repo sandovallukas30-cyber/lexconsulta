@@ -190,10 +190,18 @@ export interface Canvas {
 
 // ============ COLECCIONES (fichas de estudio por tema) ============
 
+/** Nivel de repaso que el propio usuario le asigna a un artículo dentro de
+ * una colección. Sin relación con IA: es autoevaluación manual. */
+export type EstadoRepaso = 'pendiente' | 'repasando' | 'dominado'
+
 /** Referencia a un artículo específico de un código, dentro de una colección. */
 export interface ArticuloColeccion {
   codigo: CodigoTipo
   articulo: string // formato "a" del Articulo, ej. "Art. 1545"
+  /** Autoevaluación del usuario. Sin valor = 'pendiente'. */
+  estado?: EstadoRepaso
+  /** Nota propia del usuario sobre este artículo, opcional. */
+  nota?: string
 }
 
 /** Agrupación libre de artículos (potencialmente de distintos códigos) bajo
