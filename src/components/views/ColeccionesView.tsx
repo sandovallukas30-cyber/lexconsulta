@@ -466,17 +466,21 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
               </button>
             </div>
           ) : (
-            <div className="flex flex-wrap gap-4 items-start">
+            // Mampostería con columnas CSS: cada ficha "cae" al primer hueco
+            // disponible en su columna, en vez de dejar espacio muerto al
+            // lado de una ficha larga (como pasaba con flex-wrap por filas).
+            <div className="columns-1 sm:columns-2 xl:columns-3 gap-4">
               {articulosResueltos.map((ar, i) => (
-                <TarjetaArticulo
-                  key={`${ar.codigo}::${ar.articulo}`}
-                  item={ar}
-                  posicion={i}
-                  total={articulosResueltos.length}
-                  onQuitar={() => quitarArticulo(coleccion.id, { codigo: ar.codigo, articulo: ar.articulo })}
-                  onMover={(dir) => moverArticulo(coleccion.id, i, dir)}
-                  modoOscuro={modoOscuro}
-                />
+                <div key={`${ar.codigo}::${ar.articulo}`} className="break-inside-avoid mb-4">
+                  <TarjetaArticulo
+                    item={ar}
+                    posicion={i}
+                    total={articulosResueltos.length}
+                    onQuitar={() => quitarArticulo(coleccion.id, { codigo: ar.codigo, articulo: ar.articulo })}
+                    onMover={(dir) => moverArticulo(coleccion.id, i, dir)}
+                    modoOscuro={modoOscuro}
+                  />
+                </div>
               ))}
             </div>
           )}
@@ -513,7 +517,7 @@ function TarjetaArticulo({
 
   return (
     <div
-      className={`w-full sm:w-[380px] flex-shrink-0 rounded-xl border overflow-hidden ${
+      className={`w-full rounded-xl border overflow-hidden ${
         modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
       }`}
     >
