@@ -497,6 +497,30 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
   )
 }
 
+// Paleta fija: cada código de la colección se "pinta" siempre con el mismo
+// color (hash determinístico del tipo), para distinguir de un vistazo qué
+// ficha viene de qué código en una colección mezclada — sin depender del
+// acento único del tema activo, que ya se usa para otras cosas (botones, etc).
+const PALETA_CODIGO: { textoLight: string; textoDark: string; barra: string }[] = [
+  { textoLight: 'text-teal-700', textoDark: 'text-teal-400', barra: '#14b8a6' },
+  { textoLight: 'text-indigo-700', textoDark: 'text-indigo-400', barra: '#6366f1' },
+  { textoLight: 'text-amber-700', textoDark: 'text-amber-400', barra: '#f59e0b' },
+  { textoLight: 'text-rose-700', textoDark: 'text-rose-400', barra: '#f43f5e' },
+  { textoLight: 'text-cyan-700', textoDark: 'text-cyan-400', barra: '#06b6d4' },
+  { textoLight: 'text-fuchsia-700', textoDark: 'text-fuchsia-400', barra: '#d946ef' },
+  { textoLight: 'text-lime-700', textoDark: 'text-lime-400', barra: '#84cc16' },
+  { textoLight: 'text-sky-700', textoDark: 'text-sky-400', barra: '#0ea5e9' },
+  { textoLight: 'text-orange-700', textoDark: 'text-orange-400', barra: '#f97316' },
+  { textoLight: 'text-violet-700', textoDark: 'text-violet-400', barra: '#8b5cf6' },
+]
+
+function colorParaCodigo(tipo: CodigoTipo, modoOscuro: boolean): { texto: string; barra: string } {
+  let hash = 0
+  for (let i = 0; i < tipo.length; i++) hash = (hash * 31 + tipo.charCodeAt(i)) | 0
+  const c = PALETA_CODIGO[Math.abs(hash) % PALETA_CODIGO.length]
+  return { texto: modoOscuro ? c.textoDark : c.textoLight, barra: c.barra }
+}
+
 function TarjetaArticulo({
   item,
   posicion,
@@ -513,101 +537,106 @@ function TarjetaArticulo({
   modoOscuro: boolean
 }) {
   const [expandido, setExpandido] = useState(true)
-  const color = 'var(--accent-base)'
+  const { texto: colorTexto, barra: colorBarra } = colorParaCodigo(item.codigo, modoOscuro)
 
   return (
     <div
-      className={`w-full rounded-xl border overflow-hidden ${
+      className={`w-full rounded-xl border overflow-hidden flex ${
         modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
       }`}
     >
-      {/* Tira de control: reordenar y quitar, discreta */}
-      <div className={`flex items-center justify-between px-2 py-1 ${modoOscuro ? 'bg-zinc-800/40' : 'bg-zinc-50'}`}>
-        <div className="flex items-center gap-0.5">
+      {/* Lomo de color: identifica el código de origen de un vistazo */}
+      <div className="w-1.5 flex-shrink-0" style={{ background: colorBarra }} />
+
+      <div className="flex-1 min-w-0">
+        {/* Tira de control: reordenar y quitar, discreta */}
+        <div className={`flex items-center justify-between px-2 py-1 ${modoOscuro ? 'bg-zinc-800/40' : 'bg-zinc-50'}`}>
+          <div className="flex items-center gap-0.5">
+            <button
+              onClick={() => onMover(-1)}
+              disabled={posicion === 0}
+              title="Mover antes"
+              className={`w-6 h-6 flex items-center justify-center rounded disabled:opacity-20 disabled:cursor-not-allowed ${
+                modoOscuro ? 'hover:bg-zinc-800 text-zinc-500' : 'hover:bg-zinc-200 text-zinc-400'
+              }`}
+            >
+              <i className="ti ti-chevron-left text-sm" />
+            </button>
+            <button
+              onClick={() => onMover(1)}
+              disabled={posicion === total - 1}
+              title="Mover después"
+              className={`w-6 h-6 flex items-center justify-center rounded disabled:opacity-20 disabled:cursor-not-allowed ${
+                modoOscuro ? 'hover:bg-zinc-800 text-zinc-500' : 'hover:bg-zinc-200 text-zinc-400'
+              }`}
+            >
+              <i className="ti ti-chevron-right text-sm" />
+            </button>
+          </div>
           <button
-            onClick={() => onMover(-1)}
-            disabled={posicion === 0}
-            title="Mover antes"
-            className={`w-6 h-6 flex items-center justify-center rounded disabled:opacity-20 disabled:cursor-not-allowed ${
-              modoOscuro ? 'hover:bg-zinc-800 text-zinc-500' : 'hover:bg-zinc-200 text-zinc-400'
+            onClick={onQuitar}
+            title="Quitar de la colección"
+            className={`w-6 h-6 flex items-center justify-center rounded transition-colors ${
+              modoOscuro ? 'text-zinc-500 hover:bg-zinc-800 hover:text-red-400' : 'text-zinc-400 hover:bg-zinc-200 hover:text-red-500'
             }`}
           >
-            <i className="ti ti-chevron-left text-sm" />
-          </button>
-          <button
-            onClick={() => onMover(1)}
-            disabled={posicion === total - 1}
-            title="Mover después"
-            className={`w-6 h-6 flex items-center justify-center rounded disabled:opacity-20 disabled:cursor-not-allowed ${
-              modoOscuro ? 'hover:bg-zinc-800 text-zinc-500' : 'hover:bg-zinc-200 text-zinc-400'
-            }`}
-          >
-            <i className="ti ti-chevron-right text-sm" />
+            <i className="ti ti-x text-sm" />
           </button>
         </div>
+
+        {/* Encabezado grande, mismo estilo que el título de artículo en Explorador */}
         <button
-          onClick={onQuitar}
-          title="Quitar de la colección"
-          className={`w-6 h-6 flex items-center justify-center rounded transition-colors ${
-            modoOscuro ? 'text-zinc-500 hover:bg-zinc-800 hover:text-red-400' : 'text-zinc-400 hover:bg-zinc-200 hover:text-red-500'
+          onClick={() => setExpandido(!expandido)}
+          className={`w-full flex items-start justify-between gap-2 px-4 py-3 text-left ${
+            expandido ? (modoOscuro ? 'border-b border-zinc-800' : 'border-b border-zinc-100') : ''
           }`}
         >
-          <i className="ti ti-x text-sm" />
-        </button>
-      </div>
-
-      {/* Encabezado grande, mismo estilo que el título de artículo en Explorador */}
-      <button
-        onClick={() => setExpandido(!expandido)}
-        className={`w-full flex items-start justify-between gap-2 px-4 py-3 text-left ${
-          expandido ? (modoOscuro ? 'border-b border-zinc-800' : 'border-b border-zinc-100') : ''
-        }`}
-      >
-        <div className="min-w-0">
-          <div className={`text-[10px] uppercase tracking-wider font-semibold mb-0.5 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
-            {item.nombreCodigo}
-          </div>
-          <div className="font-serif text-2xl font-bold leading-none" style={{ color }}>
-            {item.articulo}
-          </div>
-        </div>
-        <i
-          className={`ti ti-chevron-down text-lg mt-1 transition-transform flex-shrink-0 ${expandido ? 'rotate-180' : ''} ${
-            modoOscuro ? 'text-zinc-500' : 'text-zinc-400'
-          }`}
-        />
-      </button>
-
-      <AnimatePresence initial={false}>
-        {expandido && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <div
-              className={`px-4 py-3 text-sm leading-relaxed ${modoOscuro ? 'text-zinc-300 bg-zinc-900/50' : 'text-zinc-700 bg-zinc-50/50'}`}
-              style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
-            >
-              {item.cargando ? (
-                <p className={`text-xs italic ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>Cargando…</p>
-              ) : !item.art ? (
-                <p className={`text-xs italic ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                  No se encontró este artículo en el código cargado.
-                </p>
-              ) : (
-                dividirIncisos(item.art.t).map((p, i) => (
-                  <p key={i} className="mb-2 last:mb-0 whitespace-pre-line" style={i === 0 ? undefined : { textIndent: '1rem' }}>
-                    {p}
-                  </p>
-                ))
-              )}
+          <div className="min-w-0">
+            <div className={`text-[10px] uppercase tracking-wider font-semibold mb-0.5 ${colorTexto}`}>
+              {item.nombreCodigo}
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <div className={`font-serif text-2xl font-bold leading-none ${colorTexto}`}>
+              {item.articulo}
+            </div>
+          </div>
+          <i
+            className={`ti ti-chevron-down text-lg mt-1 transition-transform flex-shrink-0 ${expandido ? 'rotate-180' : ''} ${
+              modoOscuro ? 'text-zinc-500' : 'text-zinc-400'
+            }`}
+          />
+        </button>
+
+        <AnimatePresence initial={false}>
+          {expandido && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div
+                className={`px-4 py-3 text-sm leading-relaxed ${modoOscuro ? 'text-zinc-300 bg-zinc-900/50' : 'text-zinc-700 bg-zinc-50/50'}`}
+                style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
+              >
+                {item.cargando ? (
+                  <p className={`text-xs italic ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>Cargando…</p>
+                ) : !item.art ? (
+                  <p className={`text-xs italic ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                    No se encontró este artículo en el código cargado.
+                  </p>
+                ) : (
+                  dividirIncisos(item.art.t).map((p, i) => (
+                    <p key={i} className="mb-2 last:mb-0 whitespace-pre-line" style={i === 0 ? undefined : { textIndent: '1rem' }}>
+                      {p}
+                    </p>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   )
 }
