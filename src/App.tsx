@@ -7,6 +7,7 @@ import { SituacionView } from './components/views/SituacionView'
 import { CanvasView } from './components/views/CanvasView'
 import { MapaView } from './components/views/MapaView'
 import { ExploradorView } from './components/views/ExploradorView'
+import { ColeccionesView } from './components/views/ColeccionesView'
 import { HistorialView } from './components/views/HistorialView'
 import { AdminView } from './components/views/AdminView'
 import { PracticaView } from './components/views/PracticaView'
@@ -25,6 +26,7 @@ const vistas: Record<VistaId, React.ComponentType> = {
   canvas: CanvasView,
   mapa: MapaView,
   explorador: ExploradorView,
+  colecciones: ColeccionesView,
   historial: HistorialView,
   admin: AdminView,
   practica: PracticaView,

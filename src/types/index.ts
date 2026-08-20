@@ -39,6 +39,7 @@ export type VistaId =
   | 'canvas'
   | 'mapa'
   | 'explorador'
+  | 'colecciones'
   | 'historial'
   | 'admin'
   | 'practica'
@@ -185,6 +186,26 @@ export interface Canvas {
   conexiones: ConexionCanvas[]
   fechaCreacion: Date
   fechaModificacion: Date
+}
+
+// ============ COLECCIONES (fichas de estudio por tema) ============
+
+/** Referencia a un artículo específico de un código, dentro de una colección. */
+export interface ArticuloColeccion {
+  codigo: CodigoTipo
+  articulo: string // formato "a" del Articulo, ej. "Art. 1545"
+}
+
+/** Agrupación libre de artículos (potencialmente de distintos códigos) bajo
+ * un tema elegido por el usuario, ej. "Extinción de los contratos". A
+ * diferencia de Canvas (que representa relaciones), acá se muestran los
+ * artículos completos, literalmente, uno tras otro. */
+export interface Coleccion {
+  id: string
+  titulo: string
+  articulos: ArticuloColeccion[]
+  fechaCreacion: number
+  fechaModificacion: number
 }
 
 export interface ConsultaHistorial {

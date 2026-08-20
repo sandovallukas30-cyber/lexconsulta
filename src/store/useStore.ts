@@ -28,6 +28,8 @@ import type {
   AreaPractica,
   PartidaAhorcado,
   RecordAhorcado,
+  Coleccion,
+  ArticuloColeccion,
 } from '../types'
 
 interface AppState {
@@ -39,6 +41,8 @@ interface AppState {
   favoritos: Favorito[]
   canvases: Canvas[]
   canvasActivoId: string | null
+  colecciones: Coleccion[]
+  coleccionActivaId: string | null
   modoOscuro: boolean
   sidebarColapsado: boolean
   modernizarLenguaje: boolean
@@ -70,6 +74,13 @@ interface AppState {
   actualizarCanvas: (id: string, cambios: Partial<Canvas>) => void
   eliminarCanvas: (id: string) => void
   setCanvasActivo: (id: string | null) => void
+  crearColeccion: (titulo: string) => string
+  renombrarColeccion: (id: string, titulo: string) => void
+  eliminarColeccion: (id: string) => void
+  setColeccionActiva: (id: string | null) => void
+  agregarArticuloAColeccion: (id: string, articulo: ArticuloColeccion) => void
+  quitarArticuloDeColeccion: (id: string, articulo: ArticuloColeccion) => void
+  moverArticuloColeccion: (id: string, indice: number, direccion: -1 | 1) => void
   toggleModoOscuro: () => void
   toggleSidebar: () => void
   toggleModernizar: () => void
@@ -155,6 +166,8 @@ export const useStore = create<AppState>()(
       favoritos: [],
       canvases: [],
       canvasActivoId: null,
+      colecciones: [],
+      coleccionActivaId: null,
       modoOscuro: false,
       sidebarColapsado: false,
       modernizarLenguaje: false,
@@ -263,6 +276,66 @@ export const useStore = create<AppState>()(
           canvasActivoId: s.canvasActivoId === id ? null : s.canvasActivoId,
         })),
       setCanvasActivo: (id) => set({ canvasActivoId: id }),
+      crearColeccion: (titulo) => {
+        const id = crypto.randomUUID()
+        const ahora = Date.now()
+        set((s) => ({
+          colecciones: [
+            { id, titulo, articulos: [], fechaCreacion: ahora, fechaModificacion: ahora },
+            ...s.colecciones,
+          ],
+        }))
+        return id
+      },
+      renombrarColeccion: (id, titulo) =>
+        set((s) => ({
+          colecciones: s.colecciones.map((c) =>
+            c.id === id ? { ...c, titulo, fechaModificacion: Date.now() } : c
+          ),
+        })),
+      eliminarColeccion: (id) =>
+        set((s) => ({
+          colecciones: s.colecciones.filter((c) => c.id !== id),
+          coleccionActivaId: s.coleccionActivaId === id ? null : s.coleccionActivaId,
+        })),
+      setColeccionActiva: (id) => set({ coleccionActivaId: id }),
+      agregarArticuloAColeccion: (id, articulo) =>
+        set((s) => ({
+          colecciones: s.colecciones.map((c) => {
+            if (c.id !== id) return c
+            const yaExiste = c.articulos.some(
+              (a) => a.codigo === articulo.codigo && a.articulo === articulo.articulo
+            )
+            if (yaExiste) return c
+            return { ...c, articulos: [...c.articulos, articulo], fechaModificacion: Date.now() }
+          }),
+        })),
+      quitarArticuloDeColeccion: (id, articulo) =>
+        set((s) => ({
+          colecciones: s.colecciones.map((c) =>
+            c.id === id
+              ? {
+                  ...c,
+                  articulos: c.articulos.filter(
+                    (a) => !(a.codigo === articulo.codigo && a.articulo === articulo.articulo)
+                  ),
+                  fechaModificacion: Date.now(),
+                }
+              : c
+          ),
+        })),
+      moverArticuloColeccion: (id, indice, direccion) =>
+        set((s) => ({
+          colecciones: s.colecciones.map((c) => {
+            if (c.id !== id) return c
+            const destino = indice + direccion
+            if (destino < 0 || destino >= c.articulos.length) return c
+            const articulos = [...c.articulos]
+            const [item] = articulos.splice(indice, 1)
+            articulos.splice(destino, 0, item)
+            return { ...c, articulos, fechaModificacion: Date.now() }
+          }),
+        })),
       toggleModoOscuro: () => set((s) => ({ modoOscuro: !s.modoOscuro })),
       toggleSidebar: () => set((s) => ({ sidebarColapsado: !s.sidebarColapsado })),
       toggleModernizar: () => set((s) => ({ modernizarLenguaje: !s.modernizarLenguaje })),
@@ -462,6 +535,7 @@ export const useStore = create<AppState>()(
         historial: s.historial,
         favoritos: s.favoritos,
         canvases: s.canvases,
+        colecciones: s.colecciones,
         modoOscuro: s.modoOscuro,
         sidebarColapsado: s.sidebarColapsado,
         modernizarLenguaje: s.modernizarLenguaje,

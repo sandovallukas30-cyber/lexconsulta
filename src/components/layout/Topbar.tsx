@@ -10,6 +10,7 @@ const titulos: Record<string, string> = {
   canvas: 'Canvas jurídico',
   mapa: 'Mapa de normas',
   explorador: 'Explorador de códigos',
+  colecciones: 'Colecciones',
   historial: 'Historial',
   admin: 'Administración',
   practica: 'Práctica · Pasapalabra',
