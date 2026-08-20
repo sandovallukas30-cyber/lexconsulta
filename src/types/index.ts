@@ -202,7 +202,13 @@ export interface ArticuloColeccion {
   estado?: EstadoRepaso
   /** Nota propia del usuario sobre este artículo, opcional. */
   nota?: string
+  /** EXPERIMENTAL (rama experimento-visualizacion): posición libre en modo
+   * pizarra. No existe en la rama main. */
+  posicion?: { x: number; y: number }
 }
+
+/** EXPERIMENTAL: modo de visualización de las fichas dentro de una colección. */
+export type ModoVistaColeccion = 'mamposteria' | 'horizontal' | 'pizarra'
 
 /** Agrupación libre de artículos (potencialmente de distintos códigos) bajo
  * un tema elegido por el usuario, ej. "Extinción de los contratos". A

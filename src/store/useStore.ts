@@ -84,6 +84,8 @@ interface AppState {
   moverArticuloColeccion: (id: string, indice: number, direccion: -1 | 1) => void
   marcarEstadoArticulo: (id: string, ref: { codigo: CodigoActivo['tipo']; articulo: string }, estado: EstadoRepaso) => void
   guardarNotaArticulo: (id: string, ref: { codigo: CodigoActivo['tipo']; articulo: string }, nota: string) => void
+  /** EXPERIMENTAL (rama experimento-visualizacion): no existe en main. */
+  moverArticuloPosicionLibre: (id: string, ref: { codigo: CodigoActivo['tipo']; articulo: string }, posicion: { x: number; y: number }) => void
   toggleModoOscuro: () => void
   toggleSidebar: () => void
   toggleModernizar: () => void
@@ -362,6 +364,19 @@ export const useStore = create<AppState>()(
                     a.codigo === ref.codigo && a.articulo === ref.articulo
                       ? { ...a, nota: nota.trim() ? nota : undefined }
                       : a
+                  ),
+                }
+              : c
+          ),
+        })),
+      moverArticuloPosicionLibre: (id, ref, posicion) =>
+        set((s) => ({
+          colecciones: s.colecciones.map((c) =>
+            c.id === id
+              ? {
+                  ...c,
+                  articulos: c.articulos.map((a) =>
+                    a.codigo === ref.codigo && a.articulo === ref.articulo ? { ...a, posicion } : a
                   ),
                 }
               : c

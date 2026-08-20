@@ -4,7 +4,7 @@ import { useStore } from '../../store/useStore'
 import { useCodigo } from '../../hooks/useCodigo'
 import { precargar, obtenerCodigo } from '../../services/codigos'
 import { COLECCIONES_PLANTILLA } from '../../data/coleccionesPlantilla'
-import type { Articulo, ArticuloColeccion, Coleccion, CodigoTipo, EstadoRepaso } from '../../types'
+import type { Articulo, ArticuloColeccion, Coleccion, CodigoTipo, EstadoRepaso, ModoVistaColeccion } from '../../types'
 
 const VERDE = 'var(--accent-base)'
 
@@ -380,6 +380,8 @@ interface ArticuloResuelto {
   cargando: boolean
   estado: EstadoRepaso
   nota: string
+  /** EXPERIMENTAL (rama experimento-visualizacion): no existe en main. */
+  posicion?: { x: number; y: number }
 }
 
 /** Resuelve el texto completo de cada artículo de la colección, cargando en
@@ -416,6 +418,7 @@ function useArticulosResueltos(articulos: ArticuloColeccion[]): ArticuloResuelto
       cargando: !data,
       estado: ac.estado ?? 'pendiente',
       nota: ac.nota ?? '',
+      posicion: ac.posicion,
     }
   })
 }
@@ -441,11 +444,14 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
   const moverArticulo = useStore((s) => s.moverArticuloColeccion)
   const marcarEstado = useStore((s) => s.marcarEstadoArticulo)
   const guardarNota = useStore((s) => s.guardarNotaArticulo)
+  const moverPosicionLibre = useStore((s) => s.moverArticuloPosicionLibre)
 
   const [editandoTitulo, setEditandoTitulo] = useState(false)
   const [tituloTmp, setTituloTmp] = useState(coleccion.titulo)
   const [modalAgregar, setModalAgregar] = useState(false)
   const [modoRepaso, setModoRepaso] = useState(false)
+  // EXPERIMENTAL (rama experimento-visualizacion): selector de layout, no existe en main.
+  const [modoVista, setModoVista] = useState<ModoVistaColeccion>('mamposteria')
   const inputTituloRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -550,6 +556,36 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
           </button>
         )}
 
+        {/* EXPERIMENTAL: selector de layout, no existe en main */}
+        {coleccion.articulos.length > 0 && (
+          <div className={`flex items-center gap-0.5 p-0.5 rounded-lg flex-shrink-0 ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-100'}`}>
+            {(
+              [
+                { id: 'mamposteria' as const, icono: 'ti-layout-grid', title: 'Mampostería (actual)' },
+                { id: 'horizontal' as const, icono: 'ti-arrows-horizontal', title: 'Fila horizontal' },
+                { id: 'pizarra' as const, icono: 'ti-drag-drop', title: 'Pizarra libre (arrastrar)' },
+              ]
+            ).map((op) => (
+              <button
+                key={op.id}
+                onClick={() => setModoVista(op.id)}
+                title={op.title}
+                className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors ${
+                  modoVista === op.id
+                    ? modoOscuro
+                      ? 'bg-zinc-700 text-white'
+                      : 'bg-white text-zinc-900 shadow-sm'
+                    : modoOscuro
+                      ? 'text-zinc-500 hover:text-zinc-300'
+                      : 'text-zinc-400 hover:text-zinc-600'
+                }`}
+              >
+                <i className={`ti ${op.icono} text-sm`} />
+              </button>
+            ))}
+          </div>
+        )}
+
         <button
           onClick={() => setModalAgregar(true)}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-white flex-shrink-0 transition-opacity hover:opacity-90"
@@ -589,46 +625,77 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-6xl mx-auto px-6 py-6">
-          {coleccion.articulos.length === 0 ? (
-            <div className="text-center py-16">
-              <p className={`text-sm mb-4 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                Esta colección está vacía. Agrega los artículos que quieres tener juntos.
-              </p>
-              <button
-                onClick={() => setModalAgregar(true)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90"
-                style={{ background: VERDE }}
-              >
-                <i className="ti ti-plus text-base" />
-                Agregar artículo
-              </button>
-            </div>
-          ) : (
-            // Mampostería con columnas CSS: cada ficha "cae" al primer hueco
-            // disponible en su columna, en vez de dejar espacio muerto al
-            // lado de una ficha larga (como pasaba con flex-wrap por filas).
-            <div className="columns-1 sm:columns-2 xl:columns-3 gap-4">
-              {articulosResueltos.map((ar, i) => (
-                <div key={`${ar.codigo}::${ar.articulo}`} className="break-inside-avoid mb-4">
-                  <TarjetaArticulo
-                    item={ar}
-                    posicion={i}
-                    total={articulosResueltos.length}
-                    onQuitar={() => quitarArticulo(coleccion.id, { codigo: ar.codigo, articulo: ar.articulo })}
-                    onMover={(dir) => moverArticulo(coleccion.id, i, dir)}
-                    onCambiarEstado={(estado) => marcarEstado(coleccion.id, { codigo: ar.codigo, articulo: ar.articulo }, estado)}
-                    onGuardarNota={(nota) => guardarNota(coleccion.id, { codigo: ar.codigo, articulo: ar.articulo }, nota)}
-                    modoRepaso={modoRepaso}
-                    modoOscuro={modoOscuro}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
+      {coleccion.articulos.length > 0 && modoVista === 'pizarra' ? (
+        // EXPERIMENTAL: pizarra libre, no existe en main.
+        <VistaPizarra
+          articulos={articulosResueltos}
+          onQuitar={(ref) => quitarArticulo(coleccion.id, ref)}
+          onCambiarEstado={(ref, estado) => marcarEstado(coleccion.id, ref, estado)}
+          onGuardarNota={(ref, nota) => guardarNota(coleccion.id, ref, nota)}
+          onMoverPosicion={(ref, pos) => moverPosicionLibre(coleccion.id, ref, pos)}
+          modoOscuro={modoOscuro}
+        />
+      ) : (
+        <div className="flex-1 overflow-y-auto">
+          <div className={modoVista === 'horizontal' ? 'py-6' : 'max-w-6xl mx-auto px-6 py-6'}>
+            {coleccion.articulos.length === 0 ? (
+              <div className="text-center py-16 px-6">
+                <p className={`text-sm mb-4 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                  Esta colección está vacía. Agrega los artículos que quieres tener juntos.
+                </p>
+                <button
+                  onClick={() => setModalAgregar(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                  style={{ background: VERDE }}
+                >
+                  <i className="ti ti-plus text-base" />
+                  Agregar artículo
+                </button>
+              </div>
+            ) : modoVista === 'horizontal' ? (
+              // EXPERIMENTAL: fila única con scroll horizontal, no existe en main.
+              <div className="flex gap-4 overflow-x-auto px-6 pb-4">
+                {articulosResueltos.map((ar, i) => (
+                  <div key={`${ar.codigo}::${ar.articulo}`} className="flex-shrink-0 w-[380px]">
+                    <TarjetaArticulo
+                      item={ar}
+                      posicion={i}
+                      total={articulosResueltos.length}
+                      onQuitar={() => quitarArticulo(coleccion.id, { codigo: ar.codigo, articulo: ar.articulo })}
+                      onMover={(dir) => moverArticulo(coleccion.id, i, dir)}
+                      onCambiarEstado={(estado) => marcarEstado(coleccion.id, { codigo: ar.codigo, articulo: ar.articulo }, estado)}
+                      onGuardarNota={(nota) => guardarNota(coleccion.id, { codigo: ar.codigo, articulo: ar.articulo }, nota)}
+                      modoRepaso={modoRepaso}
+                      modoOscuro={modoOscuro}
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              // Mampostería con columnas CSS: cada ficha "cae" al primer hueco
+              // disponible en su columna, en vez de dejar espacio muerto al
+              // lado de una ficha larga (como pasaba con flex-wrap por filas).
+              <div className="columns-1 sm:columns-2 xl:columns-3 gap-4">
+                {articulosResueltos.map((ar, i) => (
+                  <div key={`${ar.codigo}::${ar.articulo}`} className="break-inside-avoid mb-4">
+                    <TarjetaArticulo
+                      item={ar}
+                      posicion={i}
+                      total={articulosResueltos.length}
+                      onQuitar={() => quitarArticulo(coleccion.id, { codigo: ar.codigo, articulo: ar.articulo })}
+                      onMover={(dir) => moverArticulo(coleccion.id, i, dir)}
+                      onCambiarEstado={(estado) => marcarEstado(coleccion.id, { codigo: ar.codigo, articulo: ar.articulo }, estado)}
+                      onGuardarNota={(nota) => guardarNota(coleccion.id, { codigo: ar.codigo, articulo: ar.articulo }, nota)}
+                      modoRepaso={modoRepaso}
+                      modoOscuro={modoOscuro}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <ModalAgregarArticulo
         abierto={modalAgregar}
@@ -929,6 +996,115 @@ function TarjetaArticulo({
 function dividirIncisos(texto: string): string[] {
   if (!texto || !texto.trim()) return []
   return texto.split(/\n{2,}/).map((p) => p.trim()).filter((p) => p.length > 0)
+}
+
+// ============================================================
+// EXPERIMENTAL: PIZARRA LIBRE (rama experimento-visualizacion, no existe en main)
+// ============================================================
+
+type RefArticulo = { codigo: CodigoTipo; articulo: string }
+
+/** Posición inicial en grilla simple para fichas que aún no se han arrastrado
+ * nunca (sin `posicion` guardada). Una vez que el usuario arrastra una, su
+ * posición pasa a ser la guardada y deja de depender del índice. */
+function posicionPorDefecto(indice: number): { x: number; y: number } {
+  const columnas = 4
+  return { x: (indice % columnas) * 360 + 24, y: Math.floor(indice / columnas) * 320 + 24 }
+}
+
+function VistaPizarra({
+  articulos,
+  onQuitar,
+  onCambiarEstado,
+  onGuardarNota,
+  onMoverPosicion,
+  modoOscuro,
+}: {
+  articulos: ArticuloResuelto[]
+  onQuitar: (ref: RefArticulo) => void
+  onCambiarEstado: (ref: RefArticulo, estado: EstadoRepaso) => void
+  onGuardarNota: (ref: RefArticulo, nota: string) => void
+  onMoverPosicion: (ref: RefArticulo, pos: { x: number; y: number }) => void
+  modoOscuro: boolean
+}) {
+  const filas = Math.ceil(articulos.length / 4)
+  const anchoCanvas = Math.max(1600, 4 * 360 + 48)
+  const altoCanvas = Math.max(1000, filas * 320 + 48)
+
+  return (
+    <div className={`flex-1 overflow-auto ${modoOscuro ? 'bg-zinc-950' : 'bg-zinc-100'}`}>
+      <div
+        className="relative"
+        style={{
+          width: anchoCanvas,
+          height: altoCanvas,
+          backgroundImage: `radial-gradient(circle, ${modoOscuro ? '#3f3f46' : '#d4d4d8'} 1.5px, transparent 1.5px)`,
+          backgroundSize: '28px 28px',
+        }}
+      >
+        {articulos.map((ar, i) => (
+          <TarjetaLibre
+            key={`${ar.codigo}::${ar.articulo}`}
+            item={ar}
+            indice={i}
+            onQuitar={() => onQuitar({ codigo: ar.codigo, articulo: ar.articulo })}
+            onCambiarEstado={(estado) => onCambiarEstado({ codigo: ar.codigo, articulo: ar.articulo }, estado)}
+            onGuardarNota={(nota) => onGuardarNota({ codigo: ar.codigo, articulo: ar.articulo }, nota)}
+            onMoverPosicion={(pos) => onMoverPosicion({ codigo: ar.codigo, articulo: ar.articulo }, pos)}
+            modoOscuro={modoOscuro}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function TarjetaLibre({
+  item,
+  indice,
+  onQuitar,
+  onCambiarEstado,
+  onGuardarNota,
+  onMoverPosicion,
+  modoOscuro,
+}: {
+  item: ArticuloResuelto
+  indice: number
+  onQuitar: () => void
+  onCambiarEstado: (estado: EstadoRepaso) => void
+  onGuardarNota: (nota: string) => void
+  onMoverPosicion: (pos: { x: number; y: number }) => void
+  modoOscuro: boolean
+}) {
+  const pos = item.posicion ?? posicionPorDefecto(indice)
+
+  return (
+    <motion.div
+      // La key incluye la posición: fuerza a React a remontar el nodo tras
+      // cada arrastre, así el transform interno de drag de framer-motion no
+      // se acumula sobre el nuevo left/top (que es la fuente de verdad real).
+      key={`${pos.x}-${pos.y}`}
+      drag
+      dragMomentum={false}
+      onDragEnd={(_e, info) => {
+        onMoverPosicion({ x: Math.round(pos.x + info.offset.x), y: Math.round(pos.y + info.offset.y) })
+      }}
+      whileDrag={{ zIndex: 20, boxShadow: '0 12px 28px rgba(0,0,0,0.28)' }}
+      style={{ position: 'absolute', left: pos.x, top: pos.y, width: 340, cursor: 'grab' }}
+    >
+      <TarjetaArticulo
+        item={item}
+        posicion={0}
+        total={1}
+        onQuitar={onQuitar}
+        onMover={() => {}}
+        onCambiarEstado={onCambiarEstado}
+        onGuardarNota={onGuardarNota}
+        modoRepaso={false}
+        modoOscuro={modoOscuro}
+      />
+    </motion.div>
+  )
 }
 
 // ============================================================
