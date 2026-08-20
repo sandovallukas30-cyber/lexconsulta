@@ -497,28 +497,86 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
   )
 }
 
-// Paleta fija: cada código de la colección se "pinta" siempre con el mismo
-// color (hash determinístico del tipo), para distinguir de un vistazo qué
-// ficha viene de qué código en una colección mezclada — sin depender del
-// acento único del tema activo, que ya se usa para otras cosas (botones, etc).
-const PALETA_CODIGO: { textoLight: string; textoDark: string; barra: string }[] = [
-  { textoLight: 'text-teal-700', textoDark: 'text-teal-400', barra: '#14b8a6' },
-  { textoLight: 'text-indigo-700', textoDark: 'text-indigo-400', barra: '#6366f1' },
-  { textoLight: 'text-amber-700', textoDark: 'text-amber-400', barra: '#f59e0b' },
-  { textoLight: 'text-rose-700', textoDark: 'text-rose-400', barra: '#f43f5e' },
-  { textoLight: 'text-cyan-700', textoDark: 'text-cyan-400', barra: '#06b6d4' },
-  { textoLight: 'text-fuchsia-700', textoDark: 'text-fuchsia-400', barra: '#d946ef' },
-  { textoLight: 'text-lime-700', textoDark: 'text-lime-400', barra: '#84cc16' },
-  { textoLight: 'text-sky-700', textoDark: 'text-sky-400', barra: '#0ea5e9' },
-  { textoLight: 'text-orange-700', textoDark: 'text-orange-400', barra: '#f97316' },
-  { textoLight: 'text-violet-700', textoDark: 'text-violet-400', barra: '#8b5cf6' },
-]
+// Colores por área del derecho, siguiendo la asociación informal chilena
+// (civil = azul, penal = negro, laboral = naranja, etc.), no un hash al
+// azar. Las leyes especiales se agrupan bajo el color del área a la que
+// pertenecen en la práctica (ej. Ley Karin y Accidentes del Trabajo → con
+// Laboral; Insolvencia → con Comercial, que el usuario pidió en amarillo
+// en vez del verde oscuro tradicional).
+type FamiliaColor =
+  | 'red' | 'blue' | 'indigo' | 'zinc' | 'rose' | 'orange' | 'purple'
+  | 'yellow' | 'sky' | 'slate' | 'lime' | 'teal' | 'stone' | 'cyan'
+  | 'emerald' | 'fuchsia'
+
+const COLOR_POR_CODIGO: Record<CodigoTipo, FamiliaColor> = {
+  con: 'red', // Constitucional
+  civ: 'blue', // Civil
+  pci: 'indigo', // Procesal Civil
+  pen: 'zinc', // Penal
+  ppe: 'rose', // Procesal Penal
+  rpa: 'zinc', // Resp. Penal Adolescente → familia Penal
+  dro: 'zinc', // Ley de Drogas → familia Penal
+  lab: 'orange', // Laboral
+  acc: 'orange', // Accidentes del Trabajo → familia Laboral
+  kar: 'orange', // Ley Karin → familia Laboral
+  tra: 'orange', // alias legado de 'lab', no usado en el catálogo activo
+  tri: 'purple', // Tributario
+  com: 'yellow', // Comercial (pedido explícito: amarillo, no verde oscuro)
+  ins: 'yellow', // Insolvencia → familia Comercial
+  pad: 'sky', // Administrativo
+  trn: 'sky', // Transparencia → familia Administrativo
+  cot: 'slate', // Orgánico de Tribunales (organización judicial, sin área fija)
+  mil: 'lime', // Justicia Militar
+  pdc: 'teal', // Internacional (Pacto Civiles y Políticos)
+  pde: 'teal', // Internacional (Pacto DESC)
+  min: 'stone', // Minería
+  agu: 'cyan', // Aguas
+  san: 'emerald', // Sanitario (sin área fija en la lista, verde por salud)
+  fam: 'fuchsia', // Familia
+}
+
+const HEX_POR_FAMILIA: Record<FamiliaColor, string> = {
+  red: '#ef4444',
+  blue: '#3b82f6',
+  indigo: '#6366f1',
+  zinc: '#71717a',
+  rose: '#f43f5e',
+  orange: '#f97316',
+  purple: '#a855f7',
+  yellow: '#eab308',
+  sky: '#0ea5e9',
+  slate: '#64748b',
+  lime: '#84cc16',
+  teal: '#14b8a6',
+  stone: '#78716c',
+  cyan: '#06b6d4',
+  emerald: '#10b981',
+  fuchsia: '#d946ef',
+}
+
+const CLASE_TEXTO_POR_FAMILIA: Record<FamiliaColor, { light: string; dark: string }> = {
+  red: { light: 'text-red-700', dark: 'text-red-400' },
+  blue: { light: 'text-blue-700', dark: 'text-blue-400' },
+  indigo: { light: 'text-indigo-700', dark: 'text-indigo-400' },
+  zinc: { light: 'text-zinc-700', dark: 'text-zinc-400' },
+  rose: { light: 'text-rose-700', dark: 'text-rose-400' },
+  orange: { light: 'text-orange-700', dark: 'text-orange-400' },
+  purple: { light: 'text-purple-700', dark: 'text-purple-400' },
+  yellow: { light: 'text-yellow-700', dark: 'text-yellow-400' },
+  sky: { light: 'text-sky-700', dark: 'text-sky-400' },
+  slate: { light: 'text-slate-700', dark: 'text-slate-400' },
+  lime: { light: 'text-lime-700', dark: 'text-lime-400' },
+  teal: { light: 'text-teal-700', dark: 'text-teal-400' },
+  stone: { light: 'text-stone-700', dark: 'text-stone-400' },
+  cyan: { light: 'text-cyan-700', dark: 'text-cyan-400' },
+  emerald: { light: 'text-emerald-700', dark: 'text-emerald-400' },
+  fuchsia: { light: 'text-fuchsia-700', dark: 'text-fuchsia-400' },
+}
 
 function colorParaCodigo(tipo: CodigoTipo, modoOscuro: boolean): { texto: string; barra: string } {
-  let hash = 0
-  for (let i = 0; i < tipo.length; i++) hash = (hash * 31 + tipo.charCodeAt(i)) | 0
-  const c = PALETA_CODIGO[Math.abs(hash) % PALETA_CODIGO.length]
-  return { texto: modoOscuro ? c.textoDark : c.textoLight, barra: c.barra }
+  const familia = COLOR_POR_CODIGO[tipo]
+  const clases = CLASE_TEXTO_POR_FAMILIA[familia]
+  return { texto: modoOscuro ? clases.dark : clases.light, barra: HEX_POR_FAMILIA[familia] }
 }
 
 function TarjetaArticulo({
