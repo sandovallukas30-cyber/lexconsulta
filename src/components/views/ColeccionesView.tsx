@@ -764,6 +764,7 @@ function TarjetaArticulo({
 }) {
   const [expandido, setExpandido] = useState(!modoRepaso)
   const [notaTmp, setNotaTmp] = useState(item.nota)
+  const notaRef = useRef<HTMLTextAreaElement>(null)
   const { texto: colorTexto, barra: colorBarra } = colorParaCodigo(item.codigo, modoOscuro)
   const estadoInfo = ESTADO_INFO[item.estado]
 
@@ -777,6 +778,16 @@ function TarjetaArticulo({
   useEffect(() => {
     setNotaTmp(item.nota)
   }, [item.nota])
+
+  // Auto-crece con el contenido: la tarjeta entera (y la mampostería) se
+  // ajustan solas porque no hay alto fijo en ningún contenedor padre.
+  useEffect(() => {
+    if (!expandido) return
+    const el = notaRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }, [notaTmp, expandido])
 
   return (
     <div
@@ -887,6 +898,7 @@ function TarjetaArticulo({
               {/* Nota propia: opcional, se guarda al salir del campo */}
               <div className={`px-4 py-2.5 border-t ${modoOscuro ? 'border-zinc-800' : 'border-zinc-100'}`}>
                 <textarea
+                  ref={notaRef}
                   value={notaTmp}
                   onChange={(e) => setNotaTmp(e.target.value)}
                   onBlur={() => {
@@ -900,8 +912,8 @@ function TarjetaArticulo({
                     }
                   }}
                   placeholder="Agrega tu propia nota o acordeón mental... (Ctrl+Enter guarda)"
-                  rows={notaTmp ? 2 : 1}
-                  className={`w-full bg-transparent outline-none text-xs resize-none placeholder:italic ${
+                  rows={1}
+                  className={`w-full bg-transparent outline-none text-xs resize-none overflow-hidden placeholder:italic ${
                     modoOscuro ? 'text-zinc-300 placeholder:text-zinc-600' : 'text-zinc-700 placeholder:text-zinc-400'
                   }`}
                 />
