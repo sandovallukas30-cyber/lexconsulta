@@ -369,6 +369,13 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
 
   const articulosResueltos = useArticulosResueltos(coleccion.articulos)
 
+  // Leyenda de colores: solo tiene sentido mostrarla si la colección mezcla
+  // más de un área (si es puro Civil, por ejemplo, no hay nada que distinguir).
+  const areasPresentes = useMemo(() => {
+    const familias = new Set(coleccion.articulos.map((a) => COLOR_POR_CODIGO[a.codigo]))
+    return Array.from(familias).map((f) => ({ familia: f, nombre: NOMBRE_FAMILIA[f], hex: HEX_POR_FAMILIA[f] }))
+  }, [coleccion.articulos])
+
   return (
     <div className={`h-full flex flex-col ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
       <div
@@ -448,6 +455,21 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
           <i className="ti ti-trash text-base" />
         </button>
       </div>
+
+      {areasPresentes.length > 1 && (
+        <div
+          className={`flex flex-wrap items-center gap-x-4 gap-y-1.5 px-6 py-2 border-b text-xs ${
+            modoOscuro ? 'bg-zinc-900/60 border-zinc-800 text-zinc-400' : 'bg-zinc-50 border-zinc-200 text-zinc-500'
+          }`}
+        >
+          {areasPresentes.map((a) => (
+            <span key={a.familia} className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: a.hex }} />
+              {a.nombre}
+            </span>
+          ))}
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-6xl mx-auto px-6 py-6">
@@ -552,6 +574,25 @@ const HEX_POR_FAMILIA: Record<FamiliaColor, string> = {
   cyan: '#06b6d4',
   emerald: '#10b981',
   fuchsia: '#d946ef',
+}
+
+const NOMBRE_FAMILIA: Record<FamiliaColor, string> = {
+  red: 'Constitucional',
+  blue: 'Civil',
+  indigo: 'Procesal civil',
+  zinc: 'Penal',
+  rose: 'Procesal penal',
+  orange: 'Laboral',
+  purple: 'Tributario',
+  yellow: 'Comercial',
+  sky: 'Administrativo',
+  slate: 'Orgánico judicial',
+  lime: 'Justicia militar',
+  teal: 'Internacional',
+  stone: 'Minería',
+  cyan: 'Aguas',
+  emerald: 'Sanitario',
+  fuchsia: 'Familia',
 }
 
 const CLASE_TEXTO_POR_FAMILIA: Record<FamiliaColor, { light: string; dark: string }> = {
