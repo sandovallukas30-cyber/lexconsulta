@@ -1028,32 +1028,86 @@ function VistaPizarra({
   modoOscuro: boolean
 }) {
   const filas = Math.ceil(articulos.length / 4)
-  const anchoCanvas = Math.max(1600, 4 * 360 + 48)
-  const altoCanvas = Math.max(1000, filas * 320 + 48)
+  const anchoBase = Math.max(1600, 4 * 360 + 48)
+  const altoBase = Math.max(1000, filas * 320 + 48)
+
+  // Nivel de expansión manual del lienzo: 0 = tamaño base (el mínimo que
+  // ordena las fichas sin amontonarlas), hasta 4 = harto más espacio para
+  // desparramarlas. No se persiste: cada vez que se entra a la pizarra
+  // vuelve al tamaño base.
+  const NIVEL_MAX = 4
+  const INCREMENTO_ANCHO = 500
+  const INCREMENTO_ALTO = 400
+  const [nivelExpansion, setNivelExpansion] = useState(0)
+
+  const anchoCanvas = anchoBase + nivelExpansion * INCREMENTO_ANCHO
+  const altoCanvas = altoBase + nivelExpansion * INCREMENTO_ALTO
 
   return (
-    <div className={`flex-1 overflow-auto ${modoOscuro ? 'bg-zinc-950' : 'bg-zinc-100'}`}>
+    <div className="flex-1 relative">
+      {/* Controles de expandir/retraer: posición fija en la esquina, no se
+          mueven con el scroll del lienzo (viven fuera del div con overflow). */}
       <div
-        className="relative"
-        style={{
-          width: anchoCanvas,
-          height: altoCanvas,
-          backgroundImage: `radial-gradient(circle, ${modoOscuro ? '#3f3f46' : '#d4d4d8'} 1.5px, transparent 1.5px)`,
-          backgroundSize: '28px 28px',
-        }}
+        className={`absolute top-3 right-3 z-30 flex items-center gap-2 px-2 py-1.5 rounded-lg border shadow-sm ${
+          modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
+        }`}
       >
-        {articulos.map((ar, i) => (
-          <TarjetaLibre
-            key={`${ar.codigo}::${ar.articulo}`}
-            item={ar}
-            indice={i}
-            onQuitar={() => onQuitar({ codigo: ar.codigo, articulo: ar.articulo })}
-            onCambiarEstado={(estado) => onCambiarEstado({ codigo: ar.codigo, articulo: ar.articulo }, estado)}
-            onGuardarNota={(nota) => onGuardarNota({ codigo: ar.codigo, articulo: ar.articulo }, nota)}
-            onMoverPosicion={(pos) => onMoverPosicion({ codigo: ar.codigo, articulo: ar.articulo }, pos)}
-            modoOscuro={modoOscuro}
-          />
-        ))}
+        <button
+          onClick={() => setNivelExpansion((n) => Math.max(0, n - 1))}
+          disabled={nivelExpansion === 0}
+          title="Retraer pizarra"
+          className={`w-7 h-7 rounded-md flex items-center justify-center disabled:opacity-25 disabled:cursor-not-allowed transition-colors ${
+            modoOscuro ? 'hover:bg-zinc-800 text-zinc-300' : 'hover:bg-zinc-100 text-zinc-600'
+          }`}
+        >
+          <i className="ti ti-minus text-sm" />
+        </button>
+        <div className="flex items-center gap-0.5" title={`Espacio del lienzo: nivel ${nivelExpansion} de ${NIVEL_MAX}`}>
+          {Array.from({ length: NIVEL_MAX }).map((_, i) => (
+            <span
+              key={i}
+              className="w-1.5 h-1.5 rounded-full"
+              style={{
+                background: i < nivelExpansion ? VERDE : modoOscuro ? '#3f3f46' : '#d4d4d8',
+              }}
+            />
+          ))}
+        </div>
+        <button
+          onClick={() => setNivelExpansion((n) => Math.min(NIVEL_MAX, n + 1))}
+          disabled={nivelExpansion === NIVEL_MAX}
+          title="Expandir pizarra"
+          className={`w-7 h-7 rounded-md flex items-center justify-center disabled:opacity-25 disabled:cursor-not-allowed transition-colors ${
+            modoOscuro ? 'hover:bg-zinc-800 text-zinc-300' : 'hover:bg-zinc-100 text-zinc-600'
+          }`}
+        >
+          <i className="ti ti-plus text-sm" />
+        </button>
+      </div>
+
+      <div className={`h-full overflow-auto ${modoOscuro ? 'bg-zinc-950' : 'bg-zinc-100'}`}>
+        <div
+          className="relative"
+          style={{
+            width: anchoCanvas,
+            height: altoCanvas,
+            backgroundImage: `radial-gradient(circle, ${modoOscuro ? '#3f3f46' : '#d4d4d8'} 1.5px, transparent 1.5px)`,
+            backgroundSize: '28px 28px',
+          }}
+        >
+          {articulos.map((ar, i) => (
+            <TarjetaLibre
+              key={`${ar.codigo}::${ar.articulo}`}
+              item={ar}
+              indice={i}
+              onQuitar={() => onQuitar({ codigo: ar.codigo, articulo: ar.articulo })}
+              onCambiarEstado={(estado) => onCambiarEstado({ codigo: ar.codigo, articulo: ar.articulo }, estado)}
+              onGuardarNota={(nota) => onGuardarNota({ codigo: ar.codigo, articulo: ar.articulo }, nota)}
+              onMoverPosicion={(pos) => onMoverPosicion({ codigo: ar.codigo, articulo: ar.articulo }, pos)}
+              modoOscuro={modoOscuro}
+            />
+          ))}
+        </div>
       </div>
     </div>
   )
