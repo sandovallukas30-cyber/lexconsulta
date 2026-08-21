@@ -33,6 +33,7 @@ import type {
   EstadoRepaso,
   TipoRelacion,
   RefArticuloColeccion,
+  FuncionJuridica,
 } from '../types'
 
 interface AppState {
@@ -90,6 +91,10 @@ interface AppState {
   moverArticuloPosicionLibre: (id: string, ref: { codigo: CodigoActivo['tipo']; articulo: string }, posicion: { x: number; y: number }) => void
   crearConexionColeccion: (id: string, desde: RefArticuloColeccion, hasta: RefArticuloColeccion, tipo: TipoRelacion) => void
   eliminarConexionColeccion: (id: string, conexionId: string) => void
+  asignarFuncionArticulo: (id: string, ref: RefArticuloColeccion, funcion: FuncionJuridica | undefined) => void
+  crearGrupoColeccion: (id: string, titulo: string, articulos: RefArticuloColeccion[]) => void
+  eliminarGrupoColeccion: (id: string, grupoId: string) => void
+  organizarPorConexiones: (id: string, posiciones: { ref: RefArticuloColeccion; posicion: { x: number; y: number } }[]) => void
   toggleModoOscuro: () => void
   toggleSidebar: () => void
   toggleModernizar: () => void
@@ -408,6 +413,44 @@ export const useStore = create<AppState>()(
           colecciones: s.colecciones.map((c) =>
             c.id === id ? { ...c, conexiones: (c.conexiones ?? []).filter((cx) => cx.id !== conexionId) } : c
           ),
+        })),
+      asignarFuncionArticulo: (id, ref, funcion) =>
+        set((s) => ({
+          colecciones: s.colecciones.map((c) =>
+            c.id === id
+              ? {
+                  ...c,
+                  articulos: c.articulos.map((a) =>
+                    a.codigo === ref.codigo && a.articulo === ref.articulo ? { ...a, funcion } : a
+                  ),
+                }
+              : c
+          ),
+        })),
+      crearGrupoColeccion: (id, titulo, articulos) =>
+        set((s) => ({
+          colecciones: s.colecciones.map((c) =>
+            c.id === id
+              ? { ...c, grupos: [...(c.grupos ?? []), { id: crypto.randomUUID(), titulo, articulos }] }
+              : c
+          ),
+        })),
+      eliminarGrupoColeccion: (id, grupoId) =>
+        set((s) => ({
+          colecciones: s.colecciones.map((c) =>
+            c.id === id ? { ...c, grupos: (c.grupos ?? []).filter((g) => g.id !== grupoId) } : c
+          ),
+        })),
+      organizarPorConexiones: (id, posiciones) =>
+        set((s) => ({
+          colecciones: s.colecciones.map((c) => {
+            if (c.id !== id) return c
+            const articulos = c.articulos.map((a) => {
+              const encontrado = posiciones.find((p) => p.ref.codigo === a.codigo && p.ref.articulo === a.articulo)
+              return encontrado ? { ...a, posicion: encontrado.posicion } : a
+            })
+            return { ...c, articulos }
+          }),
         })),
       toggleModoOscuro: () => set((s) => ({ modoOscuro: !s.modoOscuro })),
       toggleSidebar: () => set((s) => ({ sidebarColapsado: !s.sidebarColapsado })),

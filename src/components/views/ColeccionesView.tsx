@@ -13,6 +13,8 @@ import type {
   ModoVistaColeccion,
   TipoRelacion,
   ConexionColeccion,
+  FuncionJuridica,
+  GrupoColeccion,
 } from '../../types'
 
 const VERDE = 'var(--accent-base)'
@@ -391,6 +393,7 @@ interface ArticuloResuelto {
   nota: string
   /** EXPERIMENTAL (rama experimento-visualizacion): no existe en main. */
   posicion?: { x: number; y: number }
+  funcion?: FuncionJuridica
 }
 
 /** Resuelve el texto completo de cada artículo de la colección, cargando en
@@ -428,6 +431,7 @@ function useArticulosResueltos(articulos: ArticuloColeccion[]): ArticuloResuelto
       estado: ac.estado ?? 'pendiente',
       nota: ac.nota ?? '',
       posicion: ac.posicion,
+      funcion: ac.funcion,
     }
   })
 }
@@ -456,6 +460,10 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
   const moverPosicionLibre = useStore((s) => s.moverArticuloPosicionLibre)
   const crearConexion = useStore((s) => s.crearConexionColeccion)
   const eliminarConexion = useStore((s) => s.eliminarConexionColeccion)
+  const asignarFuncion = useStore((s) => s.asignarFuncionArticulo)
+  const crearGrupo = useStore((s) => s.crearGrupoColeccion)
+  const eliminarGrupo = useStore((s) => s.eliminarGrupoColeccion)
+  const organizarPorConexiones = useStore((s) => s.organizarPorConexiones)
 
   const [editandoTitulo, setEditandoTitulo] = useState(false)
   const [tituloTmp, setTituloTmp] = useState(coleccion.titulo)
@@ -575,6 +583,7 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
                 { id: 'mamposteria' as const, icono: 'ti-layout-grid', title: 'Mampostería (actual)' },
                 { id: 'horizontal' as const, icono: 'ti-arrows-horizontal', title: 'Fila horizontal' },
                 { id: 'pizarra' as const, icono: 'ti-drag-drop', title: 'Pizarra libre (arrastrar)' },
+                { id: 'arbol' as const, icono: 'ti-sitemap', title: 'Vista árbol (según conexiones)' },
               ]
             ).map((op) => (
               <button
@@ -641,14 +650,22 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
         <VistaPizarra
           articulos={articulosResueltos}
           conexiones={coleccion.conexiones ?? []}
+          grupos={coleccion.grupos ?? []}
           onQuitar={(ref) => quitarArticulo(coleccion.id, ref)}
           onCambiarEstado={(ref, estado) => marcarEstado(coleccion.id, ref, estado)}
           onGuardarNota={(ref, nota) => guardarNota(coleccion.id, ref, nota)}
           onMoverPosicion={(ref, pos) => moverPosicionLibre(coleccion.id, ref, pos)}
           onCrearConexion={(desde, hasta, tipo) => crearConexion(coleccion.id, desde, hasta, tipo)}
           onEliminarConexion={(conexionId) => eliminarConexion(coleccion.id, conexionId)}
+          onAsignarFuncion={(ref, funcion) => asignarFuncion(coleccion.id, ref, funcion)}
+          onCrearGrupo={(titulo, refs) => crearGrupo(coleccion.id, titulo, refs)}
+          onEliminarGrupo={(grupoId) => eliminarGrupo(coleccion.id, grupoId)}
+          onOrganizarPorConexiones={(posiciones) => organizarPorConexiones(coleccion.id, posiciones)}
           modoOscuro={modoOscuro}
         />
+      ) : coleccion.articulos.length > 0 && modoVista === 'arbol' ? (
+        // EXPERIMENTAL: vista árbol, no existe en main.
+        <VistaArbol articulos={articulosResueltos} conexiones={coleccion.conexiones ?? []} modoOscuro={modoOscuro} />
       ) : (
         <div className="flex-1 overflow-y-auto">
           <div className={modoVista === 'horizontal' ? 'py-6' : 'max-w-6xl mx-auto px-6 py-6'}>
@@ -1064,25 +1081,90 @@ const TIPOS_RELACION: { id: TipoRelacion; icono: string }[] = [
   { id: 'mismo_concepto', icono: 'ti-copy' },
 ]
 
+const FUNCIONES_JURIDICAS: { id: FuncionJuridica; label: string; color: string }[] = [
+  { id: 'regla_general', label: 'Regla general', color: '#3b82f6' },
+  { id: 'excepcion', label: 'Excepción', color: '#22c55e' },
+  { id: 'concepto', label: 'Concepto', color: '#f97316' },
+  { id: 'procedimiento', label: 'Procedimiento', color: '#a855f7' },
+  { id: 'sancion', label: 'Sanción', color: '#ef4444' },
+  { id: 'complementaria', label: 'Complementaria', color: '#a1a1aa' },
+]
+
+/** Layout determinístico por capas (sin IA): cada artículo queda en la fila
+ * que corresponde a la ruta más larga de conexiones que llega hasta él
+ * (relajación tipo Bellman-Ford, tolera ciclos porque se acota el número de
+ * iteraciones). Usa solo las conexiones que el propio usuario creó. */
+function calcularLayoutPorCapas(
+  articulos: ArticuloResuelto[],
+  conexiones: ConexionColeccion[]
+): { ref: RefArticulo; posicion: { x: number; y: number } }[] {
+  const key = (r: RefArticulo) => `${r.codigo}::${r.articulo}`
+  const capa = new Map<string, number>()
+  for (const a of articulos) capa.set(key(a), 0)
+
+  for (let iter = 0; iter < articulos.length + 1; iter++) {
+    let cambio = false
+    for (const cx of conexiones) {
+      const kd = key(cx.desde)
+      const kh = key(cx.hasta)
+      if (!capa.has(kd) || !capa.has(kh)) continue
+      const nueva = capa.get(kd)! + 1
+      if (nueva > capa.get(kh)!) {
+        capa.set(kh, nueva)
+        cambio = true
+      }
+    }
+    if (!cambio) break
+  }
+
+  const porCapa = new Map<number, ArticuloResuelto[]>()
+  for (const a of articulos) {
+    const c = capa.get(key(a))!
+    if (!porCapa.has(c)) porCapa.set(c, [])
+    porCapa.get(c)!.push(a)
+  }
+
+  const resultado: { ref: RefArticulo; posicion: { x: number; y: number } }[] = []
+  for (const c of [...porCapa.keys()].sort((a, b) => a - b)) {
+    porCapa.get(c)!.forEach((item, i) => {
+      resultado.push({
+        ref: { codigo: item.codigo, articulo: item.articulo },
+        posicion: { x: i * 380 + 40, y: c * 260 + 40 },
+      })
+    })
+  }
+  return resultado
+}
+
 function VistaPizarra({
   articulos,
   conexiones,
+  grupos,
   onQuitar,
   onCambiarEstado,
   onGuardarNota,
   onMoverPosicion,
   onCrearConexion,
   onEliminarConexion,
+  onAsignarFuncion,
+  onCrearGrupo,
+  onEliminarGrupo,
+  onOrganizarPorConexiones,
   modoOscuro,
 }: {
   articulos: ArticuloResuelto[]
   conexiones: ConexionColeccion[]
+  grupos: GrupoColeccion[]
   onQuitar: (ref: RefArticulo) => void
   onCambiarEstado: (ref: RefArticulo, estado: EstadoRepaso) => void
   onGuardarNota: (ref: RefArticulo, nota: string) => void
   onMoverPosicion: (ref: RefArticulo, pos: { x: number; y: number }) => void
   onCrearConexion: (desde: RefArticulo, hasta: RefArticulo, tipo: TipoRelacion) => void
   onEliminarConexion: (conexionId: string) => void
+  onAsignarFuncion: (ref: RefArticulo, funcion: FuncionJuridica | undefined) => void
+  onCrearGrupo: (titulo: string, articulos: RefArticulo[]) => void
+  onEliminarGrupo: (grupoId: string) => void
+  onOrganizarPorConexiones: (posiciones: { ref: RefArticulo; posicion: { x: number; y: number } }[]) => void
   modoOscuro: boolean
 }) {
   const filas = Math.ceil(articulos.length / 4)
@@ -1104,7 +1186,19 @@ function VistaPizarra({
   const [punteroActual, setPunteroActual] = useState<{ x: number; y: number } | null>(null)
   const [menuTipo, setMenuTipo] = useState<{ desde: RefArticulo; hasta: RefArticulo; x: number; y: number } | null>(null)
   const [conexionSeleccionada, setConexionSeleccionada] = useState<string | null>(null)
+
+  // Selección múltiple (Shift/Ctrl+clic en una ficha) para agrupar.
+  const [seleccionados, setSeleccionados] = useState<Set<string>>(new Set())
+  const [modalGrupoAbierto, setModalGrupoAbierto] = useState(false)
+
+  // Pan del lienzo: clic sostenido sobre el fondo vacío (no una ficha, no
+  // una conexión) y arrastrar mueve la vista, como en Miro/FigJam.
+  const [panActivo, setPanActivo] = useState(false)
+  const panRef = useRef<{ x: number; y: number; scrollLeft: number; scrollTop: number } | null>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
   const lienzoRef = useRef<HTMLDivElement>(null)
+
+  const keyRef = (ref: RefArticulo) => `${ref.codigo}::${ref.articulo}`
 
   const iniciarConexion = (ref: RefArticulo) => {
     setOrigenConexion(ref)
@@ -1125,6 +1219,16 @@ function VistaPizarra({
   const cancelarConexion = () => {
     setOrigenConexion(null)
     setPunteroActual(null)
+  }
+
+  const alternarSeleccion = (ref: RefArticulo) => {
+    setSeleccionados((prev) => {
+      const next = new Set(prev)
+      const k = keyRef(ref)
+      if (next.has(k)) next.delete(k)
+      else next.add(k)
+      return next
+    })
   }
 
   useEffect(() => {
@@ -1179,7 +1283,10 @@ function VistaPizarra({
         </button>
       </div>
 
-      {origenConexion && (
+      {/* Aviso de conexión en curso, u organizar automático cuando no se está
+          conectando: mismo lugar (esquina superior izquierda), mutuamente
+          excluyentes. */}
+      {origenConexion ? (
         <div
           className={`absolute top-3 left-3 z-30 px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm ${
             modoOscuro ? 'bg-zinc-900 text-zinc-300 border border-zinc-800' : 'bg-white text-zinc-600 border border-zinc-200'
@@ -1187,11 +1294,55 @@ function VistaPizarra({
         >
           Suelta sobre otra ficha para conectar · Esc o clic vacío para cancelar
         </div>
+      ) : (
+        <button
+          onClick={() => onOrganizarPorConexiones(calcularLayoutPorCapas(articulos, conexiones))}
+          disabled={conexiones.length === 0}
+          title="Reordena las fichas según las conexiones creadas. Sin IA: solo usa lo que tú ya conectaste."
+          className={`absolute top-3 left-3 z-30 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm disabled:opacity-40 disabled:cursor-not-allowed transition-colors ${
+            modoOscuro ? 'bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-zinc-800' : 'bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50'
+          }`}
+        >
+          <i className="ti ti-sitemap text-sm" />
+          Organizar según conexiones
+        </button>
+      )}
+
+      {/* Barra de selección múltiple: aparece con 2+ fichas seleccionadas
+          (Shift/Ctrl+clic), para agruparlas. */}
+      {seleccionados.size >= 2 && (
+        <div
+          className={`absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 px-3 py-2 rounded-lg border shadow-lg ${
+            modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
+          }`}
+        >
+          <span className={`text-xs ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
+            {seleccionados.size} fichas seleccionadas
+          </span>
+          <button
+            onClick={() => setModalGrupoAbierto(true)}
+            className="px-3 py-1 rounded-md text-xs font-semibold text-white"
+            style={{ background: VERDE }}
+          >
+            Agrupar
+          </button>
+          <button
+            onClick={() => setSeleccionados(new Set())}
+            className={`px-2 py-1 rounded-md text-xs ${modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'}`}
+          >
+            Cancelar
+          </button>
+        </div>
       )}
 
       <div
+        ref={scrollRef}
         className={`h-full overflow-auto ${modoOscuro ? 'bg-zinc-950' : 'bg-zinc-100'}`}
-        onPointerUp={cancelarConexion}
+        onPointerUp={() => {
+          cancelarConexion()
+          setPanActivo(false)
+        }}
+        onPointerLeave={() => setPanActivo(false)}
       >
         <div
           ref={lienzoRef}
@@ -1201,17 +1352,82 @@ function VistaPizarra({
             height: altoCanvas,
             backgroundImage: `radial-gradient(circle, ${modoOscuro ? '#3f3f46' : '#d4d4d8'} 1.5px, transparent 1.5px)`,
             backgroundSize: '28px 28px',
-            cursor: origenConexion ? 'crosshair' : undefined,
+            cursor: origenConexion ? 'crosshair' : panActivo ? 'grabbing' : 'grab',
+          }}
+          onPointerDown={(e) => {
+            // Solo si el clic aterrizó directo en el fondo (no en una ficha,
+            // ni en una línea de conexión, ni en el popup de una etiqueta).
+            if (e.target !== lienzoRef.current || origenConexion) return
+            if (seleccionados.size > 0) setSeleccionados(new Set())
+            setConexionSeleccionada(null)
+            setPanActivo(true)
+            panRef.current = {
+              x: e.clientX,
+              y: e.clientY,
+              scrollLeft: scrollRef.current?.scrollLeft ?? 0,
+              scrollTop: scrollRef.current?.scrollTop ?? 0,
+            }
           }}
           onPointerMove={(e) => {
+            if (panActivo && panRef.current && scrollRef.current) {
+              scrollRef.current.scrollLeft = panRef.current.scrollLeft - (e.clientX - panRef.current.x)
+              scrollRef.current.scrollTop = panRef.current.scrollTop - (e.clientY - panRef.current.y)
+              return
+            }
             if (!origenConexion || !lienzoRef.current) return
             const r = lienzoRef.current.getBoundingClientRect()
             setPunteroActual({ x: e.clientX - r.left, y: e.clientY - r.top })
           }}
         >
-          {/* Líneas de conexión, debajo de las fichas. pointer-events: none en
-              el contenedor para no bloquear arrastres; cada línea reactiva
-              su propio pointer-events para poder seleccionarla. */}
+          {/* Recuadros de agrupación: debajo de todo lo demás. El tamaño se
+              recalcula en vivo desde la posición actual de sus miembros. */}
+          {grupos.map((g) => {
+            const posiciones = g.articulos
+              .map((ref) => {
+                const idx = articulos.findIndex((a) => mismoArticulo(a, ref))
+                if (idx < 0) return null
+                return articulos[idx].posicion ?? posicionPorDefecto(idx)
+              })
+              .filter((p): p is { x: number; y: number } => p !== null)
+            if (posiciones.length === 0) return null
+            const minX = Math.min(...posiciones.map((p) => p.x)) - 16
+            const minY = Math.min(...posiciones.map((p) => p.y)) - 40
+            const maxX = Math.max(...posiciones.map((p) => p.x)) + 340 + 16
+            const maxY = Math.max(...posiciones.map((p) => p.y)) + 280 + 16
+            return (
+              <div
+                key={g.id}
+                className="absolute rounded-xl border-2 border-dashed"
+                style={{
+                  left: minX,
+                  top: minY,
+                  width: maxX - minX,
+                  height: maxY - minY,
+                  borderColor: modoOscuro ? '#52525b' : '#a1a1aa',
+                  background: modoOscuro ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
+                }}
+              >
+                <div
+                  className={`absolute -top-3 left-3 px-2 py-0.5 rounded flex items-center gap-1.5 text-xs font-semibold ${
+                    modoOscuro ? 'bg-zinc-900 text-zinc-300' : 'bg-white text-zinc-700'
+                  }`}
+                >
+                  {g.titulo}
+                  <button
+                    onClick={() => onEliminarGrupo(g.id)}
+                    title="Eliminar grupo (no borra los artículos)"
+                    className={`${modoOscuro ? 'text-zinc-500 hover:text-red-400' : 'text-zinc-400 hover:text-red-500'}`}
+                  >
+                    <i className="ti ti-x text-[10px]" />
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+
+          {/* Líneas de conexión, sobre los grupos pero bajo las fichas.
+              pointer-events: none en el contenedor para no bloquear
+              arrastres/pan; cada línea reactiva su propio pointer-events. */}
           <svg className="absolute inset-0" style={{ width: anchoCanvas, height: altoCanvas, pointerEvents: 'none' }}>
             <defs>
               <marker id="flecha-conexion" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -1297,6 +1513,9 @@ function VistaPizarra({
               conectando={!!origenConexion}
               onIniciarConexion={() => iniciarConexion({ codigo: ar.codigo, articulo: ar.articulo })}
               onCompletarConexion={(clientX, clientY) => completarConexion({ codigo: ar.codigo, articulo: ar.articulo }, clientX, clientY)}
+              onCambiarFuncion={(funcion) => onAsignarFuncion({ codigo: ar.codigo, articulo: ar.articulo }, funcion)}
+              seleccionado={seleccionados.has(keyRef({ codigo: ar.codigo, articulo: ar.articulo }))}
+              onAlternarSeleccion={() => alternarSeleccion({ codigo: ar.codigo, articulo: ar.articulo })}
               modoOscuro={modoOscuro}
             />
           ))}
@@ -1315,7 +1534,95 @@ function VistaPizarra({
           modoOscuro={modoOscuro}
         />
       )}
+
+      {modalGrupoAbierto && (
+        <ModalNombreGrupo
+          onCrear={(titulo) => {
+            onCrearGrupo(
+              titulo,
+              [...seleccionados].map((k) => {
+                const [codigo, articulo] = k.split('::')
+                return { codigo: codigo as CodigoTipo, articulo }
+              })
+            )
+            setSeleccionados(new Set())
+            setModalGrupoAbierto(false)
+          }}
+          onCerrar={() => setModalGrupoAbierto(false)}
+          modoOscuro={modoOscuro}
+        />
+      )}
     </div>
+  )
+}
+
+function ModalNombreGrupo({
+  onCrear,
+  onCerrar,
+  modoOscuro,
+}: {
+  onCrear: (titulo: string) => void
+  onCerrar: () => void
+  modoOscuro: boolean
+}) {
+  const [titulo, setTitulo] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    setTimeout(() => inputRef.current?.focus(), 50)
+  }, [])
+
+  const crear = () => {
+    const t = titulo.trim()
+    if (t) onCrear(t)
+  }
+
+  return (
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }} onClick={onCerrar}>
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className={`w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden ${modoOscuro ? 'bg-zinc-900' : 'bg-white'}`}
+        >
+          <div className={`px-5 py-4 border-b ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
+            <h2 className={`text-base font-serif font-semibold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>Nombrar grupo</h2>
+            <p className={`text-xs mt-0.5 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>Ej. "Modos de extinción"</p>
+          </div>
+          <div className="px-5 py-4">
+            <input
+              ref={inputRef}
+              value={titulo}
+              onChange={(e) => setTitulo(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && crear()}
+              placeholder="Nombre del grupo"
+              className={`w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition-colors ${
+                modoOscuro
+                  ? 'bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-[var(--accent-600)]'
+                  : 'bg-white border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-[var(--accent-500)]'
+              }`}
+            />
+          </div>
+          <div className={`px-5 py-3 border-t flex justify-end gap-2 ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
+            <button
+              onClick={onCerrar}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                modoOscuro ? 'text-zinc-300 hover:bg-zinc-800' : 'text-zinc-600 hover:bg-zinc-100'
+              }`}
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={crear}
+              disabled={!titulo.trim()}
+              className="px-4 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-40 transition-opacity"
+              style={{ background: VERDE }}
+            >
+              Crear grupo
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
   )
 }
 
@@ -1374,6 +1681,9 @@ function TarjetaLibre({
   conectando,
   onIniciarConexion,
   onCompletarConexion,
+  onCambiarFuncion,
+  seleccionado,
+  onAlternarSeleccion,
   modoOscuro,
 }: {
   item: ArticuloResuelto
@@ -1385,6 +1695,9 @@ function TarjetaLibre({
   conectando: boolean
   onIniciarConexion: () => void
   onCompletarConexion: (clientX: number, clientY: number) => void
+  onCambiarFuncion: (funcion: FuncionJuridica | undefined) => void
+  seleccionado: boolean
+  onAlternarSeleccion: () => void
   modoOscuro: boolean
 }) {
   const pos = item.posicion ?? posicionPorDefecto(indice)
@@ -1401,11 +1714,26 @@ function TarjetaLibre({
         onMoverPosicion({ x: Math.round(pos.x + info.offset.x), y: Math.round(pos.y + info.offset.y) })
       }}
       whileDrag={{ zIndex: 20, boxShadow: '0 12px 28px rgba(0,0,0,0.28)' }}
-      style={{ position: 'absolute', left: pos.x, top: pos.y, width: 340, cursor: conectando ? 'crosshair' : 'grab' }}
+      style={{
+        position: 'absolute',
+        left: pos.x,
+        top: pos.y,
+        width: 340,
+        cursor: conectando ? 'crosshair' : 'grab',
+        outline: seleccionado ? `2px solid ${VERDE}` : undefined,
+        outlineOffset: 3,
+        borderRadius: 14,
+      }}
       onPointerUp={(e) => {
         if (conectando) {
           e.stopPropagation()
           onCompletarConexion(e.clientX, e.clientY)
+        }
+      }}
+      onClick={(e) => {
+        if (e.shiftKey || e.ctrlKey || e.metaKey) {
+          e.stopPropagation()
+          onAlternarSeleccion()
         }
       }}
     >
@@ -1425,6 +1753,8 @@ function TarjetaLibre({
         <span className={`w-1.5 h-1.5 rounded-full ${modoOscuro ? 'bg-zinc-400' : 'bg-zinc-500'}`} />
       </button>
 
+      <SelectorFuncion funcion={item.funcion} onCambiar={onCambiarFuncion} modoOscuro={modoOscuro} />
+
       <TarjetaArticulo
         item={item}
         posicion={0}
@@ -1437,6 +1767,210 @@ function TarjetaLibre({
         modoOscuro={modoOscuro}
       />
     </motion.div>
+  )
+}
+
+function SelectorFuncion({
+  funcion,
+  onCambiar,
+  modoOscuro,
+}: {
+  funcion?: FuncionJuridica
+  onCambiar: (funcion: FuncionJuridica | undefined) => void
+  modoOscuro: boolean
+}) {
+  const [abierto, setAbierto] = useState(false)
+  const actual = funcion ? FUNCIONES_JURIDICAS.find((f) => f.id === funcion) : undefined
+
+  return (
+    <div className="absolute z-10" style={{ left: -10, top: 48 }}>
+      <button
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation()
+          setAbierto((v) => !v)
+        }}
+        title={actual ? `Función: ${actual.label}` : 'Asignar función jurídica'}
+        className="w-5 h-5 rounded-full border-2 flex-shrink-0"
+        style={{
+          background: actual ? actual.color : modoOscuro ? '#27272a' : '#ffffff',
+          borderColor: actual ? actual.color : modoOscuro ? '#71717a' : '#a1a1aa',
+        }}
+      />
+      {abierto && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setAbierto(false)} />
+          <div
+            className={`absolute z-50 top-6 left-0 rounded-lg border shadow-xl py-1 overflow-hidden ${
+              modoOscuro ? 'bg-zinc-900 border-zinc-700' : 'bg-white border-zinc-200'
+            }`}
+            style={{ width: 170 }}
+          >
+            {FUNCIONES_JURIDICAS.map((f) => (
+              <button
+                key={f.id}
+                onClick={() => {
+                  onCambiar(f.id)
+                  setAbierto(false)
+                }}
+                className={`w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 transition-colors ${
+                  modoOscuro ? 'hover:bg-zinc-800 text-zinc-200' : 'hover:bg-zinc-50 text-zinc-700'
+                }`}
+              >
+                <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: f.color }} />
+                {f.label}
+              </button>
+            ))}
+            {actual && (
+              <button
+                onClick={() => {
+                  onCambiar(undefined)
+                  setAbierto(false)
+                }}
+                className={`w-full text-left px-3 py-1.5 text-xs border-t ${
+                  modoOscuro ? 'border-zinc-800 text-red-400 hover:bg-zinc-800' : 'border-zinc-100 text-red-500 hover:bg-zinc-50'
+                }`}
+              >
+                Quitar función
+              </button>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ============================================================
+// EXPERIMENTAL: VISTA ÁRBOL (rama experimento-visualizacion, no existe en main)
+// ============================================================
+
+/** Artículos sin ninguna conexión entrante son las raíces del árbol. Si el
+ * grafo no tiene raíces (ej. todo forma un ciclo), se usan todos los
+ * artículos como raíz para no dejar la vista vacía. */
+function VistaArbol({
+  articulos,
+  conexiones,
+  modoOscuro,
+}: {
+  articulos: ArticuloResuelto[]
+  conexiones: ConexionColeccion[]
+  modoOscuro: boolean
+}) {
+  const porDesde = useMemo(() => {
+    const mapa = new Map<string, ConexionColeccion[]>()
+    for (const cx of conexiones) {
+      const k = `${cx.desde.codigo}::${cx.desde.articulo}`
+      if (!mapa.has(k)) mapa.set(k, [])
+      mapa.get(k)!.push(cx)
+    }
+    return mapa
+  }, [conexiones])
+
+  const tieneEntrante = useMemo(() => {
+    const set = new Set<string>()
+    for (const cx of conexiones) set.add(`${cx.hasta.codigo}::${cx.hasta.articulo}`)
+    return set
+  }, [conexiones])
+
+  const raices = useMemo(() => {
+    const propias = articulos.filter((a) => !tieneEntrante.has(`${a.codigo}::${a.articulo}`))
+    return propias.length > 0 ? propias : articulos
+  }, [articulos, tieneEntrante])
+
+  return (
+    <div className={`flex-1 overflow-y-auto ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
+      <div className="max-w-3xl mx-auto px-6 py-8">
+        {conexiones.length === 0 && (
+          <p className={`text-sm mb-6 px-4 py-3 rounded-lg border ${modoOscuro ? 'bg-zinc-800/40 border-zinc-800 text-zinc-400' : 'bg-white border-zinc-200 text-zinc-500'}`}>
+            Todavía no hay conexiones creadas en esta colección, así que cada artículo aparece como una raíz suelta.
+            Crea conexiones en la pizarra para armar la jerarquía.
+          </p>
+        )}
+        <div className="space-y-1">
+          {raices.map((raiz) => (
+            <NodoArbol
+              key={`${raiz.codigo}::${raiz.articulo}`}
+              articulo={raiz}
+              porDesde={porDesde}
+              articulos={articulos}
+              visitados={new Set([`${raiz.codigo}::${raiz.articulo}`])}
+              nivel={0}
+              modoOscuro={modoOscuro}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function NodoArbol({
+  articulo,
+  porDesde,
+  articulos,
+  visitados,
+  nivel,
+  tipoRelacionEntrante,
+  modoOscuro,
+}: {
+  articulo: ArticuloResuelto
+  porDesde: Map<string, ConexionColeccion[]>
+  articulos: ArticuloResuelto[]
+  visitados: Set<string>
+  nivel: number
+  tipoRelacionEntrante?: TipoRelacion
+  modoOscuro: boolean
+}) {
+  const key = `${articulo.codigo}::${articulo.articulo}`
+  const hijos = porDesde.get(key) ?? []
+  const { texto: colorTexto } = colorParaCodigo(articulo.codigo, modoOscuro)
+
+  return (
+    <div style={{ marginLeft: nivel * 28 }}>
+      <div className="flex items-center gap-2 py-1.5">
+        {nivel > 0 && <i className={`ti ti-corner-down-right text-xs flex-shrink-0 ${modoOscuro ? 'text-zinc-700' : 'text-zinc-300'}`} />}
+        {tipoRelacionEntrante && (
+          <span
+            className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ${
+              modoOscuro ? 'bg-zinc-800 text-zinc-400' : 'bg-zinc-100 text-zinc-500'
+            }`}
+          >
+            {NOMBRE_RELACION[tipoRelacionEntrante]}
+          </span>
+        )}
+        <span className={`font-serif font-semibold text-sm ${colorTexto}`}>{articulo.articulo}</span>
+        <span className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>{articulo.nombreCodigo}</span>
+      </div>
+      {hijos.map((cx) => {
+        const hijoKey = `${cx.hasta.codigo}::${cx.hasta.articulo}`
+        const hijoItem = articulos.find((a) => a.codigo === cx.hasta.codigo && a.articulo === cx.hasta.articulo)
+        if (!hijoItem) return null
+        if (visitados.has(hijoKey)) {
+          return (
+            <div
+              key={cx.id}
+              style={{ marginLeft: (nivel + 1) * 28 }}
+              className={`text-xs italic py-1 ${modoOscuro ? 'text-zinc-600' : 'text-zinc-400'}`}
+            >
+              ↺ {cx.hasta.articulo} (vuelve a un artículo ya mostrado más arriba)
+            </div>
+          )
+        }
+        return (
+          <NodoArbol
+            key={cx.id}
+            articulo={hijoItem}
+            porDesde={porDesde}
+            articulos={articulos}
+            visitados={new Set([...visitados, hijoKey])}
+            nivel={nivel + 1}
+            tipoRelacionEntrante={cx.tipo}
+            modoOscuro={modoOscuro}
+          />
+        )
+      })}
+    </div>
   )
 }
 

@@ -205,10 +205,17 @@ export interface ArticuloColeccion {
   /** EXPERIMENTAL (rama experimento-visualizacion): posición libre en modo
    * pizarra. No existe en la rama main. */
   posicion?: { x: number; y: number }
+  /** EXPERIMENTAL: función jurídica asignada libremente por el usuario. */
+  funcion?: FuncionJuridica
 }
 
 /** EXPERIMENTAL: modo de visualización de las fichas dentro de una colección. */
-export type ModoVistaColeccion = 'mamposteria' | 'horizontal' | 'pizarra'
+export type ModoVistaColeccion = 'mamposteria' | 'horizontal' | 'pizarra' | 'arbol'
+
+/** EXPERIMENTAL: función que cumple un artículo dentro del razonamiento
+ * jurídico, elegida libremente por el usuario (no se infiere del código de
+ * origen, que ya tiene su propio color). */
+export type FuncionJuridica = 'regla_general' | 'excepcion' | 'concepto' | 'procedimiento' | 'sancion' | 'complementaria'
 
 /** EXPERIMENTAL: tipo de relación jurídica entre dos artículos, elegido por
  * el usuario al crear una conexión en la pizarra. */
@@ -239,6 +246,16 @@ export interface ConexionColeccion {
   tipo: TipoRelacion
 }
 
+/** EXPERIMENTAL: agrupación visual de varios artículos en la pizarra, con
+ * nombre propio (ej. "Modos de extinción"). El recuadro se calcula en vivo
+ * a partir de la posición actual de sus miembros, no se guarda una posición
+ * ni tamaño fijo del grupo. */
+export interface GrupoColeccion {
+  id: string
+  titulo: string
+  articulos: RefArticuloColeccion[]
+}
+
 /** Agrupación libre de artículos (potencialmente de distintos códigos) bajo
  * un tema elegido por el usuario, ej. "Extinción de los contratos". A
  * diferencia de Canvas (que representa relaciones), acá se muestran los
@@ -252,6 +269,9 @@ export interface Coleccion {
   /** EXPERIMENTAL (rama experimento-visualizacion): conexiones tipadas entre
    * artículos, creadas en modo pizarra. No existe en main. */
   conexiones?: ConexionColeccion[]
+  /** EXPERIMENTAL (rama experimento-visualizacion): agrupaciones visuales
+   * creadas en modo pizarra. No existe en main. */
+  grupos?: GrupoColeccion[]
 }
 
 export interface ConsultaHistorial {
