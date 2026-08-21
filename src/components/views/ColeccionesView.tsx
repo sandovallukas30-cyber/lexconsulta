@@ -1879,15 +1879,15 @@ function VistaArbol({
   }, [articulos, tieneEntrante])
 
   return (
-    <div className={`flex-1 overflow-y-auto ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
-      <div className="max-w-3xl mx-auto px-6 py-8">
+    <div className={`flex-1 overflow-auto ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
+      <div className="max-w-5xl mx-auto px-6 py-8">
         {conexiones.length === 0 && (
           <p className={`text-sm mb-6 px-4 py-3 rounded-lg border ${modoOscuro ? 'bg-zinc-800/40 border-zinc-800 text-zinc-400' : 'bg-white border-zinc-200 text-zinc-500'}`}>
             Todavía no hay conexiones creadas en esta colección, así que cada artículo aparece como una raíz suelta.
             Crea conexiones en la pizarra para armar la jerarquía.
           </p>
         )}
-        <div className="space-y-1">
+        <div className="space-y-8">
           {raices.map((raiz) => (
             <NodoArbol
               key={`${raiz.codigo}::${raiz.articulo}`}
@@ -1924,52 +1924,83 @@ function NodoArbol({
 }) {
   const key = `${articulo.codigo}::${articulo.articulo}`
   const hijos = porDesde.get(key) ?? []
-  const { texto: colorTexto } = colorParaCodigo(articulo.codigo, modoOscuro)
+  const { texto: colorTexto, barra: colorBarra } = colorParaCodigo(articulo.codigo, modoOscuro)
+  const colorLinea = modoOscuro ? '#3f3f46' : '#d4d4d8'
 
   return (
-    <div style={{ marginLeft: nivel * 28 }}>
-      <div className="flex items-center gap-2 py-1.5">
-        {nivel > 0 && <i className={`ti ti-corner-down-right text-xs flex-shrink-0 ${modoOscuro ? 'text-zinc-700' : 'text-zinc-300'}`} />}
-        {tipoRelacionEntrante && (
-          <span
-            className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ${
-              modoOscuro ? 'bg-zinc-800 text-zinc-400' : 'bg-zinc-100 text-zinc-500'
-            }`}
-          >
-            {NOMBRE_RELACION[tipoRelacionEntrante]}
-          </span>
-        )}
-        <span className={`font-serif font-semibold text-sm ${colorTexto}`}>{articulo.articulo}</span>
-        <span className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>{articulo.nombreCodigo}</span>
-      </div>
-      {hijos.map((cx) => {
-        const hijoKey = `${cx.hasta.codigo}::${cx.hasta.articulo}`
-        const hijoItem = articulos.find((a) => a.codigo === cx.hasta.codigo && a.articulo === cx.hasta.articulo)
-        if (!hijoItem) return null
-        if (visitados.has(hijoKey)) {
-          return (
-            <div
-              key={cx.id}
-              style={{ marginLeft: (nivel + 1) * 28 }}
-              className={`text-xs italic py-1 ${modoOscuro ? 'text-zinc-600' : 'text-zinc-400'}`}
+    <div className="relative">
+      {/* Muesca horizontal que conecta esta tarjeta con el tronco vertical
+          del padre (el border-left del contenedor de hermanos). */}
+      {nivel > 0 && (
+        <div className="absolute top-8 -left-6 w-6 h-0.5" style={{ background: colorLinea }} />
+      )}
+
+      {/* La tarjeta del nodo, con más presencia visual: lomo de color,
+          "Art. X" grande igual que en el resto de la app, y la etiqueta de
+          relación como chip arriba (no un texto suelto). */}
+      <div
+        className={`inline-flex items-stretch rounded-xl border shadow-sm overflow-hidden ${
+          modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
+        }`}
+        style={{ minWidth: 220 }}
+      >
+        <div className="w-1.5 flex-shrink-0" style={{ background: colorBarra }} />
+        <div className="px-4 py-3">
+          {tipoRelacionEntrante && (
+            <span
+              className={`inline-block mb-1.5 text-[10px] px-2 py-0.5 rounded-full font-semibold ${
+                modoOscuro ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-600'
+              }`}
             >
-              ↺ {cx.hasta.articulo} (vuelve a un artículo ya mostrado más arriba)
-            </div>
-          )
-        }
-        return (
-          <NodoArbol
-            key={cx.id}
-            articulo={hijoItem}
-            porDesde={porDesde}
-            articulos={articulos}
-            visitados={new Set([...visitados, hijoKey])}
-            nivel={nivel + 1}
-            tipoRelacionEntrante={cx.tipo}
-            modoOscuro={modoOscuro}
-          />
-        )
-      })}
+              {NOMBRE_RELACION[tipoRelacionEntrante]}
+            </span>
+          )}
+          <div className="flex items-baseline gap-2">
+            <span className={`font-serif font-bold text-lg leading-none ${colorTexto}`}>{articulo.articulo}</span>
+            <span className={`text-[11px] uppercase tracking-wide ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
+              {articulo.nombreCodigo}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Hijos: tronco vertical (border-left) del que cuelgan las ramas. */}
+      {hijos.length > 0 && (
+        <div className="ml-4 pl-6 mt-4 border-l-2 space-y-4" style={{ borderColor: colorLinea }}>
+          {hijos.map((cx) => {
+            const hijoKey = `${cx.hasta.codigo}::${cx.hasta.articulo}`
+            const hijoItem = articulos.find((a) => a.codigo === cx.hasta.codigo && a.articulo === cx.hasta.articulo)
+            if (!hijoItem) return null
+            if (visitados.has(hijoKey)) {
+              return (
+                <div key={cx.id} className="relative">
+                  <div className="absolute top-4 -left-6 w-6 h-0.5" style={{ background: colorLinea }} />
+                  <div
+                    className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-dashed text-xs italic ${
+                      modoOscuro ? 'border-zinc-700 text-zinc-500' : 'border-zinc-300 text-zinc-400'
+                    }`}
+                  >
+                    <i className="ti ti-corner-up-left text-xs" />
+                    {cx.hasta.articulo} (vuelve a un artículo ya mostrado más arriba)
+                  </div>
+                </div>
+              )
+            }
+            return (
+              <NodoArbol
+                key={cx.id}
+                articulo={hijoItem}
+                porDesde={porDesde}
+                articulos={articulos}
+                visitados={new Set([...visitados, hijoKey])}
+                nivel={nivel + 1}
+                tipoRelacionEntrante={cx.tipo}
+                modoOscuro={modoOscuro}
+              />
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
