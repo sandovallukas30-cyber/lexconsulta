@@ -849,6 +849,7 @@ function TarjetaArticulo({
   onGuardarNota,
   modoRepaso,
   modoOscuro,
+  ocultarReordenar,
 }: {
   item: ArticuloResuelto
   posicion: number
@@ -859,6 +860,9 @@ function TarjetaArticulo({
   onGuardarNota: (nota: string) => void
   modoRepaso: boolean
   modoOscuro: boolean
+  /** En pizarra libre "mover antes/después" no tiene sentido (no hay una
+   * secuencia lineal) y quedaba siempre deshabilitado — se oculta del todo. */
+  ocultarReordenar?: boolean
 }) {
   const [expandido, setExpandido] = useState(!modoRepaso)
   const [notaTmp, setNotaTmp] = useState(item.nota)
@@ -898,29 +902,31 @@ function TarjetaArticulo({
 
       <div className="flex-1 min-w-0">
         {/* Tira de control: reordenar y quitar, discreta */}
-        <div className={`flex items-center justify-between px-2 py-1 ${modoOscuro ? 'bg-zinc-800/40' : 'bg-zinc-50'}`}>
-          <div className="flex items-center gap-0.5">
-            <button
-              onClick={() => onMover(-1)}
-              disabled={posicion === 0}
-              title="Mover antes"
-              className={`w-6 h-6 flex items-center justify-center rounded disabled:opacity-20 disabled:cursor-not-allowed ${
-                modoOscuro ? 'hover:bg-zinc-800 text-zinc-500' : 'hover:bg-zinc-200 text-zinc-400'
-              }`}
-            >
-              <i className="ti ti-chevron-left text-sm" />
-            </button>
-            <button
-              onClick={() => onMover(1)}
-              disabled={posicion === total - 1}
-              title="Mover después"
-              className={`w-6 h-6 flex items-center justify-center rounded disabled:opacity-20 disabled:cursor-not-allowed ${
-                modoOscuro ? 'hover:bg-zinc-800 text-zinc-500' : 'hover:bg-zinc-200 text-zinc-400'
-              }`}
-            >
-              <i className="ti ti-chevron-right text-sm" />
-            </button>
-          </div>
+        <div className={`flex items-center px-2 py-1 ${ocultarReordenar ? 'justify-end' : 'justify-between'} ${modoOscuro ? 'bg-zinc-800/40' : 'bg-zinc-50'}`}>
+          {!ocultarReordenar && (
+            <div className="flex items-center gap-0.5">
+              <button
+                onClick={() => onMover(-1)}
+                disabled={posicion === 0}
+                title="Mover antes"
+                className={`w-6 h-6 flex items-center justify-center rounded disabled:opacity-20 disabled:cursor-not-allowed ${
+                  modoOscuro ? 'hover:bg-zinc-800 text-zinc-500' : 'hover:bg-zinc-200 text-zinc-400'
+                }`}
+              >
+                <i className="ti ti-chevron-left text-sm" />
+              </button>
+              <button
+                onClick={() => onMover(1)}
+                disabled={posicion === total - 1}
+                title="Mover después"
+                className={`w-6 h-6 flex items-center justify-center rounded disabled:opacity-20 disabled:cursor-not-allowed ${
+                  modoOscuro ? 'hover:bg-zinc-800 text-zinc-500' : 'hover:bg-zinc-200 text-zinc-400'
+                }`}
+              >
+                <i className="ti ti-chevron-right text-sm" />
+              </button>
+            </div>
+          )}
           <div className="flex items-center gap-0.5">
             <button
               onClick={() => onCambiarEstado(ESTADO_SIGUIENTE[item.estado])}
@@ -1081,6 +1087,19 @@ const TIPOS_RELACION: { id: TipoRelacion; icono: string }[] = [
   { id: 'mismo_concepto', icono: 'ti-copy' },
 ]
 
+/** Agrupa los 9 tipos de relación en 3 familias, para que el menú se pueda
+ * escanear más rápido y para colorear el chip de relación en Vista árbol
+ * según qué tan "fuerte" es el vínculo, en vez de un gris plano para las 9. */
+const FAMILIAS_RELACION: { label: string; color: string; tipos: TipoRelacion[] }[] = [
+  { label: 'Estructurales', color: '#3b82f6', tipos: ['desarrolla', 'complementa', 'remite_a'] },
+  { label: 'De tensión', color: '#ef4444', tipos: ['limita', 'excepcion', 'contradice'] },
+  { label: 'Neutras', color: '#71717a', tipos: ['consecuencia', 'relacionado_con', 'mismo_concepto'] },
+]
+
+function familiaDeRelacion(tipo: TipoRelacion): { label: string; color: string } {
+  return FAMILIAS_RELACION.find((f) => f.tipos.includes(tipo)) ?? FAMILIAS_RELACION[2]
+}
+
 const FUNCIONES_JURIDICAS: { id: FuncionJuridica; label: string; color: string }[] = [
   { id: 'regla_general', label: 'Regla general', color: '#3b82f6' },
   { id: 'excepcion', label: 'Excepción', color: '#22c55e' },
@@ -1190,6 +1209,15 @@ function VistaPizarra({
   // Selección múltiple (Shift/Ctrl+clic en una ficha) para agrupar.
   const [seleccionados, setSeleccionados] = useState<Set<string>>(new Set())
   const [modalGrupoAbierto, setModalGrupoAbierto] = useState(false)
+
+  // Alto real (medido con ResizeObserver) de cada ficha, para que el
+  // recuadro de un grupo se ajuste a su contenido real y no a una altura
+  // fija estimada que quedaba corta o con espacio de más según el largo
+  // de la nota o si la ficha está expandida.
+  const [alturas, setAlturas] = useState<Map<string, number>>(new Map())
+  const reportarAltura = (key: string, h: number) => {
+    setAlturas((prev) => (prev.get(key) === h ? prev : new Map(prev).set(key, h)))
+  }
 
   // Pan del lienzo: clic sostenido sobre el fondo vacío (no una ficha, no
   // una conexión) y arrastrar mueve la vista, como en Miro/FigJam.
@@ -1382,18 +1410,21 @@ function VistaPizarra({
           {/* Recuadros de agrupación: debajo de todo lo demás. El tamaño se
               recalcula en vivo desde la posición actual de sus miembros. */}
           {grupos.map((g) => {
-            const posiciones = g.articulos
+            const ALTO_ESTIMADO_INICIAL = 160 // respaldo solo hasta la primera medición real
+            const datos = g.articulos
               .map((ref) => {
                 const idx = articulos.findIndex((a) => mismoArticulo(a, ref))
                 if (idx < 0) return null
-                return articulos[idx].posicion ?? posicionPorDefecto(idx)
+                const pos = articulos[idx].posicion ?? posicionPorDefecto(idx)
+                const h = alturas.get(keyRef(ref)) ?? ALTO_ESTIMADO_INICIAL
+                return { x: pos.x, y: pos.y, h }
               })
-              .filter((p): p is { x: number; y: number } => p !== null)
-            if (posiciones.length === 0) return null
-            const minX = Math.min(...posiciones.map((p) => p.x)) - 16
-            const minY = Math.min(...posiciones.map((p) => p.y)) - 40
-            const maxX = Math.max(...posiciones.map((p) => p.x)) + 340 + 16
-            const maxY = Math.max(...posiciones.map((p) => p.y)) + 280 + 16
+              .filter((p): p is { x: number; y: number; h: number } => p !== null)
+            if (datos.length === 0) return null
+            const minX = Math.min(...datos.map((p) => p.x)) - 16
+            const minY = Math.min(...datos.map((p) => p.y)) - 40
+            const maxX = Math.max(...datos.map((p) => p.x)) + 340 + 16
+            const maxY = Math.max(...datos.map((p) => p.y + p.h)) + 16
             return (
               <div
                 key={g.id}
@@ -1516,6 +1547,7 @@ function VistaPizarra({
               onCambiarFuncion={(funcion) => onAsignarFuncion({ codigo: ar.codigo, articulo: ar.articulo }, funcion)}
               seleccionado={seleccionados.has(keyRef({ codigo: ar.codigo, articulo: ar.articulo }))}
               onAlternarSeleccion={() => alternarSeleccion({ codigo: ar.codigo, articulo: ar.articulo })}
+              onAlturaCambio={(h) => reportarAltura(keyRef({ codigo: ar.codigo, articulo: ar.articulo }), h)}
               modoOscuro={modoOscuro}
             />
           ))}
@@ -1639,8 +1671,8 @@ function MenuTipoRelacion({
   onCerrar: () => void
   modoOscuro: boolean
 }) {
-  const left = Math.min(x, (typeof window !== 'undefined' ? window.innerWidth : 1200) - 220)
-  const top = Math.min(y, (typeof window !== 'undefined' ? window.innerHeight : 800) - 380)
+  const left = Math.min(x, (typeof window !== 'undefined' ? window.innerWidth : 1200) - 230)
+  const top = Math.min(y, (typeof window !== 'undefined' ? window.innerHeight : 800) - 460)
 
   return (
     <>
@@ -1649,22 +1681,37 @@ function MenuTipoRelacion({
         className={`fixed z-50 rounded-lg border shadow-xl overflow-hidden py-1 ${
           modoOscuro ? 'bg-zinc-900 border-zinc-700' : 'bg-white border-zinc-200'
         }`}
-        style={{ left: Math.max(8, left), top: Math.max(8, top), width: 200 }}
+        style={{ left: Math.max(8, left), top: Math.max(8, top), width: 210 }}
       >
         <div className={`px-3 py-1.5 text-[10px] uppercase tracking-wide font-semibold ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
           Tipo de relación
         </div>
-        {TIPOS_RELACION.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => onElegir(t.id)}
-            className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 transition-colors ${
-              modoOscuro ? 'hover:bg-zinc-800 text-zinc-200' : 'hover:bg-zinc-50 text-zinc-700'
-            }`}
-          >
-            <i className={`ti ${t.icono} text-sm flex-shrink-0`} style={{ color: VERDE }} />
-            {NOMBRE_RELACION[t.id]}
-          </button>
+        {/* Agrupadas por familia (estructurales / de tensión / neutras) en
+            vez de una lista plana de 9: más rápido de escanear, y el color
+            de cada familia se reutiliza en el chip de Vista árbol. */}
+        {FAMILIAS_RELACION.map((familia, fi) => (
+          <div key={familia.label}>
+            {fi > 0 && <div className={`my-1 mx-2 border-t ${modoOscuro ? 'border-zinc-800' : 'border-zinc-100'}`} />}
+            <div className="px-3 pt-1 pb-0.5 text-[9px] uppercase tracking-wide font-semibold" style={{ color: familia.color }}>
+              {familia.label}
+            </div>
+            {familia.tipos.map((id) => {
+              const t = TIPOS_RELACION.find((x) => x.id === id)
+              if (!t) return null
+              return (
+                <button
+                  key={id}
+                  onClick={() => onElegir(id)}
+                  className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 transition-colors ${
+                    modoOscuro ? 'hover:bg-zinc-800 text-zinc-200' : 'hover:bg-zinc-50 text-zinc-700'
+                  }`}
+                >
+                  <i className={`ti ${t.icono} text-sm flex-shrink-0`} style={{ color: familia.color }} />
+                  {NOMBRE_RELACION[id]}
+                </button>
+              )
+            })}
+          </div>
         ))}
       </div>
     </>
@@ -1684,6 +1731,7 @@ function TarjetaLibre({
   onCambiarFuncion,
   seleccionado,
   onAlternarSeleccion,
+  onAlturaCambio,
   modoOscuro,
 }: {
   item: ArticuloResuelto
@@ -1698,9 +1746,25 @@ function TarjetaLibre({
   onCambiarFuncion: (funcion: FuncionJuridica | undefined) => void
   seleccionado: boolean
   onAlternarSeleccion: () => void
+  onAlturaCambio?: (alturaPx: number) => void
   modoOscuro: boolean
 }) {
   const pos = item.posicion ?? posicionPorDefecto(indice)
+  const raizRef = useRef<HTMLDivElement>(null)
+
+  // Alto real de la tarjeta (cambia al expandir/colapsar o con notas largas):
+  // se reporta al lienzo para que el recuadro de grupo se ajuste a contenido
+  // real en vez de una altura fija adivinada.
+  useEffect(() => {
+    const el = raizRef.current
+    if (!el || !onAlturaCambio) return
+    const ro = new ResizeObserver((entries) => {
+      const h = entries[0]?.contentRect.height
+      if (h) onAlturaCambio(Math.round(h))
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [onAlturaCambio])
 
   return (
     <motion.div
@@ -1708,6 +1772,7 @@ function TarjetaLibre({
       // cada arrastre, así el transform interno de drag de framer-motion no
       // se acumula sobre el nuevo left/top (que es la fuente de verdad real).
       key={`${pos.x}-${pos.y}`}
+      ref={raizRef}
       drag={!conectando}
       dragMomentum={false}
       onDragEnd={(_e, info) => {
@@ -1720,7 +1785,7 @@ function TarjetaLibre({
         top: pos.y,
         width: 340,
         cursor: conectando ? 'crosshair' : 'grab',
-        outline: seleccionado ? `2px solid ${VERDE}` : undefined,
+        outline: seleccionado ? '3px solid #3b82f6' : undefined,
         outlineOffset: 3,
         borderRadius: 14,
       }}
@@ -1737,23 +1802,38 @@ function TarjetaLibre({
         }
       }}
     >
-      {/* Punto de conexión: arrastra desde acá hacia otra ficha. stopPropagation
-          en pointerdown para no activar el arrastre de toda la tarjeta. */}
+      {/* Punto de conexión: arrastra desde acá hacia otra ficha. Más grande
+          que un botón de clic normal porque el gesto es un arrastre (necesita
+          más margen de error), y con ícono propio en vez de un punto ambiguo
+          para que se lea como "conectar" a simple vista. stopPropagation en
+          pointerdown para no activar el arrastre de toda la tarjeta. */}
       <button
         onPointerDown={(e) => {
           e.stopPropagation()
           onIniciarConexion()
         }}
         title="Arrastra hasta otra ficha para conectarlas"
-        className={`absolute z-10 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+        className={`absolute z-10 w-7 h-7 rounded-full border-2 flex items-center justify-center transition-colors ${
           modoOscuro ? 'bg-zinc-800 border-zinc-500 hover:border-white' : 'bg-white border-zinc-400 hover:border-zinc-900'
         }`}
-        style={{ right: -10, top: 48, cursor: 'crosshair' }}
+        style={{ right: -13, top: 44, cursor: 'crosshair' }}
       >
-        <span className={`w-1.5 h-1.5 rounded-full ${modoOscuro ? 'bg-zinc-400' : 'bg-zinc-500'}`} />
+        <i className={`ti ti-link text-xs ${modoOscuro ? 'text-zinc-300' : 'text-zinc-600'}`} />
       </button>
 
       <SelectorFuncion funcion={item.funcion} onCambiar={onCambiarFuncion} modoOscuro={modoOscuro} />
+
+      {/* Insignia de selección múltiple: azul a propósito, distinto del
+          verde que ya significa "conexión" en las líneas y en el aviso de
+          "dibujando conexión" — dos estados distintos no deben compartir color. */}
+      {seleccionado && (
+        <div
+          className="absolute z-10 w-6 h-6 rounded-full flex items-center justify-center text-white shadow-md"
+          style={{ right: -8, bottom: -8, background: '#3b82f6' }}
+        >
+          <i className="ti ti-check text-sm" />
+        </div>
+      )}
 
       <TarjetaArticulo
         item={item}
@@ -1765,6 +1845,7 @@ function TarjetaLibre({
         onGuardarNota={onGuardarNota}
         modoRepaso={false}
         modoOscuro={modoOscuro}
+        ocultarReordenar
       />
     </motion.div>
   )
@@ -1783,7 +1864,11 @@ function SelectorFuncion({
   const actual = funcion ? FUNCIONES_JURIDICAS.find((f) => f.id === funcion) : undefined
 
   return (
-    <div className="absolute z-10" style={{ left: -10, top: 48 }}>
+    // Abajo a la izquierda a propósito: el lomo de color (código de origen)
+    // ya ocupa toda la orilla izquierda de arriba a abajo, así que la función
+    // jurídica —un dato distinto— se separa hacia la esquina inferior en vez
+    // de competir con el lomo justo en la esquina superior.
+    <div className="absolute z-10" style={{ left: -13, bottom: 14 }}>
       <button
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => {
@@ -1791,12 +1876,14 @@ function SelectorFuncion({
           setAbierto((v) => !v)
         }}
         title={actual ? `Función: ${actual.label}` : 'Asignar función jurídica'}
-        className="w-5 h-5 rounded-full border-2 flex-shrink-0"
+        className="w-7 h-7 rounded-full border-2 flex-shrink-0 flex items-center justify-center"
         style={{
           background: actual ? actual.color : modoOscuro ? '#27272a' : '#ffffff',
           borderColor: actual ? actual.color : modoOscuro ? '#71717a' : '#a1a1aa',
         }}
-      />
+      >
+        {!actual && <i className={`ti ti-tag text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`} />}
+      </button>
       {abierto && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setAbierto(false)} />
@@ -1926,6 +2013,10 @@ function NodoArbol({
   const hijos = porDesde.get(key) ?? []
   const { texto: colorTexto, barra: colorBarra } = colorParaCodigo(articulo.codigo, modoOscuro)
   const colorLinea = modoOscuro ? '#3f3f46' : '#d4d4d8'
+  // Mismo color por familia que en el menú de conexión: "Contradice" (tensión)
+  // y "Complementa" (estructural) ahora se distinguen a simple vista, en vez
+  // de un chip gris plano para las 9 relaciones por igual.
+  const familiaEntrante = tipoRelacionEntrante ? familiaDeRelacion(tipoRelacionEntrante) : undefined
 
   return (
     <div className="relative">
@@ -1946,11 +2037,10 @@ function NodoArbol({
       >
         <div className="w-1.5 flex-shrink-0" style={{ background: colorBarra }} />
         <div className="px-4 py-3">
-          {tipoRelacionEntrante && (
+          {tipoRelacionEntrante && familiaEntrante && (
             <span
-              className={`inline-block mb-1.5 text-[10px] px-2 py-0.5 rounded-full font-semibold ${
-                modoOscuro ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-600'
-              }`}
+              className="inline-block mb-1.5 text-[10px] px-2 py-0.5 rounded-full font-semibold"
+              style={{ color: familiaEntrante.color, background: `${familiaEntrante.color}22` }}
             >
               {NOMBRE_RELACION[tipoRelacionEntrante]}
             </span>
