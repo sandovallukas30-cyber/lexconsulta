@@ -210,6 +210,35 @@ export interface ArticuloColeccion {
 /** EXPERIMENTAL: modo de visualización de las fichas dentro de una colección. */
 export type ModoVistaColeccion = 'mamposteria' | 'horizontal' | 'pizarra'
 
+/** EXPERIMENTAL: tipo de relación jurídica entre dos artículos, elegido por
+ * el usuario al crear una conexión en la pizarra. */
+export type TipoRelacion =
+  | 'desarrolla'
+  | 'complementa'
+  | 'limita'
+  | 'excepcion'
+  | 'consecuencia'
+  | 'remite_a'
+  | 'relacionado_con'
+  | 'contradice'
+  | 'mismo_concepto'
+
+/** EXPERIMENTAL: referencia liviana a un artículo dentro de una colección,
+ * usada para apuntar los extremos de una conexión. */
+export interface RefArticuloColeccion {
+  codigo: CodigoTipo
+  articulo: string
+}
+
+/** EXPERIMENTAL: conexión dirigida entre dos artículos de la misma colección,
+ * creada a mano por el usuario en modo pizarra. No existe en main. */
+export interface ConexionColeccion {
+  id: string
+  desde: RefArticuloColeccion
+  hasta: RefArticuloColeccion
+  tipo: TipoRelacion
+}
+
 /** Agrupación libre de artículos (potencialmente de distintos códigos) bajo
  * un tema elegido por el usuario, ej. "Extinción de los contratos". A
  * diferencia de Canvas (que representa relaciones), acá se muestran los
@@ -220,6 +249,9 @@ export interface Coleccion {
   articulos: ArticuloColeccion[]
   fechaCreacion: number
   fechaModificacion: number
+  /** EXPERIMENTAL (rama experimento-visualizacion): conexiones tipadas entre
+   * artículos, creadas en modo pizarra. No existe en main. */
+  conexiones?: ConexionColeccion[]
 }
 
 export interface ConsultaHistorial {

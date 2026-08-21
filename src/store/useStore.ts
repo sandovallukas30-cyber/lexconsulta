@@ -31,6 +31,8 @@ import type {
   Coleccion,
   ArticuloColeccion,
   EstadoRepaso,
+  TipoRelacion,
+  RefArticuloColeccion,
 } from '../types'
 
 interface AppState {
@@ -86,6 +88,8 @@ interface AppState {
   guardarNotaArticulo: (id: string, ref: { codigo: CodigoActivo['tipo']; articulo: string }, nota: string) => void
   /** EXPERIMENTAL (rama experimento-visualizacion): no existe en main. */
   moverArticuloPosicionLibre: (id: string, ref: { codigo: CodigoActivo['tipo']; articulo: string }, posicion: { x: number; y: number }) => void
+  crearConexionColeccion: (id: string, desde: RefArticuloColeccion, hasta: RefArticuloColeccion, tipo: TipoRelacion) => void
+  eliminarConexionColeccion: (id: string, conexionId: string) => void
   toggleModoOscuro: () => void
   toggleSidebar: () => void
   toggleModernizar: () => void
@@ -380,6 +384,29 @@ export const useStore = create<AppState>()(
                   ),
                 }
               : c
+          ),
+        })),
+      crearConexionColeccion: (id, desde, hasta, tipo) =>
+        set((s) => ({
+          colecciones: s.colecciones.map((c) => {
+            if (c.id !== id) return c
+            const yaExiste = c.articulos.length > 0 && (c.conexiones ?? []).some(
+              (cx) =>
+                cx.desde.codigo === desde.codigo &&
+                cx.desde.articulo === desde.articulo &&
+                cx.hasta.codigo === hasta.codigo &&
+                cx.hasta.articulo === hasta.articulo &&
+                cx.tipo === tipo
+            )
+            if (yaExiste) return c
+            const nueva = { id: crypto.randomUUID(), desde, hasta, tipo }
+            return { ...c, conexiones: [...(c.conexiones ?? []), nueva] }
+          }),
+        })),
+      eliminarConexionColeccion: (id, conexionId) =>
+        set((s) => ({
+          colecciones: s.colecciones.map((c) =>
+            c.id === id ? { ...c, conexiones: (c.conexiones ?? []).filter((cx) => cx.id !== conexionId) } : c
           ),
         })),
       toggleModoOscuro: () => set((s) => ({ modoOscuro: !s.modoOscuro })),

@@ -4,7 +4,16 @@ import { useStore } from '../../store/useStore'
 import { useCodigo } from '../../hooks/useCodigo'
 import { precargar, obtenerCodigo } from '../../services/codigos'
 import { COLECCIONES_PLANTILLA } from '../../data/coleccionesPlantilla'
-import type { Articulo, ArticuloColeccion, Coleccion, CodigoTipo, EstadoRepaso, ModoVistaColeccion } from '../../types'
+import type {
+  Articulo,
+  ArticuloColeccion,
+  Coleccion,
+  CodigoTipo,
+  EstadoRepaso,
+  ModoVistaColeccion,
+  TipoRelacion,
+  ConexionColeccion,
+} from '../../types'
 
 const VERDE = 'var(--accent-base)'
 
@@ -445,6 +454,8 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
   const marcarEstado = useStore((s) => s.marcarEstadoArticulo)
   const guardarNota = useStore((s) => s.guardarNotaArticulo)
   const moverPosicionLibre = useStore((s) => s.moverArticuloPosicionLibre)
+  const crearConexion = useStore((s) => s.crearConexionColeccion)
+  const eliminarConexion = useStore((s) => s.eliminarConexionColeccion)
 
   const [editandoTitulo, setEditandoTitulo] = useState(false)
   const [tituloTmp, setTituloTmp] = useState(coleccion.titulo)
@@ -629,10 +640,13 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
         // EXPERIMENTAL: pizarra libre, no existe en main.
         <VistaPizarra
           articulos={articulosResueltos}
+          conexiones={coleccion.conexiones ?? []}
           onQuitar={(ref) => quitarArticulo(coleccion.id, ref)}
           onCambiarEstado={(ref, estado) => marcarEstado(coleccion.id, ref, estado)}
           onGuardarNota={(ref, nota) => guardarNota(coleccion.id, ref, nota)}
           onMoverPosicion={(ref, pos) => moverPosicionLibre(coleccion.id, ref, pos)}
+          onCrearConexion={(desde, hasta, tipo) => crearConexion(coleccion.id, desde, hasta, tipo)}
+          onEliminarConexion={(conexionId) => eliminarConexion(coleccion.id, conexionId)}
           modoOscuro={modoOscuro}
         />
       ) : (
@@ -1012,29 +1026,69 @@ function posicionPorDefecto(indice: number): { x: number; y: number } {
   return { x: (indice % columnas) * 360 + 24, y: Math.floor(indice / columnas) * 320 + 24 }
 }
 
+function mismoArticulo(a: RefArticulo, b: RefArticulo): boolean {
+  return a.codigo === b.codigo && a.articulo === b.articulo
+}
+
+/** Punto de anclaje de las líneas de conexión: centro horizontal de la
+ * ficha, altura fija cerca del encabezado (así no depende del alto
+ * dinámico y variable del cuerpo/nota de cada ficha). */
+function anchorDe(ref: RefArticulo, articulos: ArticuloResuelto[]): { x: number; y: number } {
+  const idx = articulos.findIndex((a) => mismoArticulo(a, ref))
+  const item = idx >= 0 ? articulos[idx] : undefined
+  const pos = item?.posicion ?? posicionPorDefecto(Math.max(0, idx))
+  return { x: pos.x + 170, y: pos.y + 56 }
+}
+
+const NOMBRE_RELACION: Record<TipoRelacion, string> = {
+  desarrolla: 'Desarrolla',
+  complementa: 'Complementa',
+  limita: 'Limita',
+  excepcion: 'Excepción',
+  consecuencia: 'Consecuencia',
+  remite_a: 'Remite a',
+  relacionado_con: 'Relacionado con',
+  contradice: 'Contradice',
+  mismo_concepto: 'Mismo concepto',
+}
+
+const TIPOS_RELACION: { id: TipoRelacion; icono: string }[] = [
+  { id: 'desarrolla', icono: 'ti-arrow-big-right' },
+  { id: 'complementa', icono: 'ti-plus' },
+  { id: 'limita', icono: 'ti-shield' },
+  { id: 'excepcion', icono: 'ti-alert-triangle' },
+  { id: 'consecuencia', icono: 'ti-arrow-right' },
+  { id: 'remite_a', icono: 'ti-external-link' },
+  { id: 'relacionado_con', icono: 'ti-link' },
+  { id: 'contradice', icono: 'ti-alert-octagon' },
+  { id: 'mismo_concepto', icono: 'ti-copy' },
+]
+
 function VistaPizarra({
   articulos,
+  conexiones,
   onQuitar,
   onCambiarEstado,
   onGuardarNota,
   onMoverPosicion,
+  onCrearConexion,
+  onEliminarConexion,
   modoOscuro,
 }: {
   articulos: ArticuloResuelto[]
+  conexiones: ConexionColeccion[]
   onQuitar: (ref: RefArticulo) => void
   onCambiarEstado: (ref: RefArticulo, estado: EstadoRepaso) => void
   onGuardarNota: (ref: RefArticulo, nota: string) => void
   onMoverPosicion: (ref: RefArticulo, pos: { x: number; y: number }) => void
+  onCrearConexion: (desde: RefArticulo, hasta: RefArticulo, tipo: TipoRelacion) => void
+  onEliminarConexion: (conexionId: string) => void
   modoOscuro: boolean
 }) {
   const filas = Math.ceil(articulos.length / 4)
   const anchoBase = Math.max(1600, 4 * 360 + 48)
   const altoBase = Math.max(1000, filas * 320 + 48)
 
-  // Nivel de expansión manual del lienzo: 0 = tamaño base (el mínimo que
-  // ordena las fichas sin amontonarlas), hasta 4 = harto más espacio para
-  // desparramarlas. No se persiste: cada vez que se entra a la pizarra
-  // vuelve al tamaño base.
   const NIVEL_MAX = 4
   const INCREMENTO_ANCHO = 500
   const INCREMENTO_ALTO = 400
@@ -1042,6 +1096,46 @@ function VistaPizarra({
 
   const anchoCanvas = anchoBase + nivelExpansion * INCREMENTO_ANCHO
   const altoCanvas = altoBase + nivelExpansion * INCREMENTO_ALTO
+
+  // Estado de la conexión que se está dibujando (arrastrando desde el punto
+  // de una ficha hacia otra), del menú de tipo de relación, y de la
+  // conexión seleccionada (solo ella muestra su etiqueta).
+  const [origenConexion, setOrigenConexion] = useState<RefArticulo | null>(null)
+  const [punteroActual, setPunteroActual] = useState<{ x: number; y: number } | null>(null)
+  const [menuTipo, setMenuTipo] = useState<{ desde: RefArticulo; hasta: RefArticulo; x: number; y: number } | null>(null)
+  const [conexionSeleccionada, setConexionSeleccionada] = useState<string | null>(null)
+  const lienzoRef = useRef<HTMLDivElement>(null)
+
+  const iniciarConexion = (ref: RefArticulo) => {
+    setOrigenConexion(ref)
+    setConexionSeleccionada(null)
+  }
+
+  const completarConexion = (hasta: RefArticulo, clientX: number, clientY: number) => {
+    if (!origenConexion || mismoArticulo(origenConexion, hasta)) {
+      setOrigenConexion(null)
+      setPunteroActual(null)
+      return
+    }
+    setMenuTipo({ desde: origenConexion, hasta, x: clientX, y: clientY })
+    setOrigenConexion(null)
+    setPunteroActual(null)
+  }
+
+  const cancelarConexion = () => {
+    setOrigenConexion(null)
+    setPunteroActual(null)
+  }
+
+  useEffect(() => {
+    if (!origenConexion) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') cancelarConexion()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [origenConexion])
 
   return (
     <div className="flex-1 relative">
@@ -1085,16 +1179,112 @@ function VistaPizarra({
         </button>
       </div>
 
-      <div className={`h-full overflow-auto ${modoOscuro ? 'bg-zinc-950' : 'bg-zinc-100'}`}>
+      {origenConexion && (
         <div
+          className={`absolute top-3 left-3 z-30 px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm ${
+            modoOscuro ? 'bg-zinc-900 text-zinc-300 border border-zinc-800' : 'bg-white text-zinc-600 border border-zinc-200'
+          }`}
+        >
+          Suelta sobre otra ficha para conectar · Esc o clic vacío para cancelar
+        </div>
+      )}
+
+      <div
+        className={`h-full overflow-auto ${modoOscuro ? 'bg-zinc-950' : 'bg-zinc-100'}`}
+        onPointerUp={cancelarConexion}
+      >
+        <div
+          ref={lienzoRef}
           className="relative"
           style={{
             width: anchoCanvas,
             height: altoCanvas,
             backgroundImage: `radial-gradient(circle, ${modoOscuro ? '#3f3f46' : '#d4d4d8'} 1.5px, transparent 1.5px)`,
             backgroundSize: '28px 28px',
+            cursor: origenConexion ? 'crosshair' : undefined,
+          }}
+          onPointerMove={(e) => {
+            if (!origenConexion || !lienzoRef.current) return
+            const r = lienzoRef.current.getBoundingClientRect()
+            setPunteroActual({ x: e.clientX - r.left, y: e.clientY - r.top })
           }}
         >
+          {/* Líneas de conexión, debajo de las fichas. pointer-events: none en
+              el contenedor para no bloquear arrastres; cada línea reactiva
+              su propio pointer-events para poder seleccionarla. */}
+          <svg className="absolute inset-0" style={{ width: anchoCanvas, height: altoCanvas, pointerEvents: 'none' }}>
+            <defs>
+              <marker id="flecha-conexion" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill={modoOscuro ? '#71717a' : '#a1a1aa'} />
+              </marker>
+            </defs>
+            {conexiones.map((cx) => {
+              const desde = anchorDe(cx.desde, articulos)
+              const hasta = anchorDe(cx.hasta, articulos)
+              const seleccionada = conexionSeleccionada === cx.id
+              const midX = (desde.x + hasta.x) / 2
+              const midY = (desde.y + hasta.y) / 2
+              return (
+                <g key={cx.id}>
+                  <line
+                    x1={desde.x}
+                    y1={desde.y}
+                    x2={hasta.x}
+                    y2={hasta.y}
+                    stroke={seleccionada ? VERDE : modoOscuro ? '#71717a' : '#a1a1aa'}
+                    strokeWidth={seleccionada ? 2.5 : 1.5}
+                    markerEnd="url(#flecha-conexion)"
+                  />
+                  {/* hitbox invisible más ancha, para hacer clic fácil */}
+                  <line
+                    x1={desde.x}
+                    y1={desde.y}
+                    x2={hasta.x}
+                    y2={hasta.y}
+                    stroke="transparent"
+                    strokeWidth={14}
+                    style={{ pointerEvents: 'stroke', cursor: 'pointer' }}
+                    onClick={() => setConexionSeleccionada(seleccionada ? null : cx.id)}
+                  />
+                  {seleccionada && (
+                    <foreignObject x={midX - 75} y={midY - 13} width={150} height={26} style={{ pointerEvents: 'auto' }}>
+                      <div
+                        className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium shadow-md border ${
+                          modoOscuro ? 'bg-zinc-800 text-zinc-200 border-zinc-700' : 'bg-white text-zinc-700 border-zinc-200'
+                        }`}
+                      >
+                        <span className="truncate flex-1">{NOMBRE_RELACION[cx.tipo]}</span>
+                        <button
+                          onClick={() => {
+                            onEliminarConexion(cx.id)
+                            setConexionSeleccionada(null)
+                          }}
+                          title="Eliminar conexión"
+                          className={`flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center ${
+                            modoOscuro ? 'hover:bg-zinc-700 text-zinc-400' : 'hover:bg-zinc-100 text-zinc-500'
+                          }`}
+                        >
+                          <i className="ti ti-x text-[10px]" />
+                        </button>
+                      </div>
+                    </foreignObject>
+                  )}
+                </g>
+              )
+            })}
+            {origenConexion && punteroActual && (
+              <line
+                x1={anchorDe(origenConexion, articulos).x}
+                y1={anchorDe(origenConexion, articulos).y}
+                x2={punteroActual.x}
+                y2={punteroActual.y}
+                stroke={VERDE}
+                strokeWidth={2}
+                strokeDasharray="6 4"
+              />
+            )}
+          </svg>
+
           {articulos.map((ar, i) => (
             <TarjetaLibre
               key={`${ar.codigo}::${ar.articulo}`}
@@ -1104,12 +1294,73 @@ function VistaPizarra({
               onCambiarEstado={(estado) => onCambiarEstado({ codigo: ar.codigo, articulo: ar.articulo }, estado)}
               onGuardarNota={(nota) => onGuardarNota({ codigo: ar.codigo, articulo: ar.articulo }, nota)}
               onMoverPosicion={(pos) => onMoverPosicion({ codigo: ar.codigo, articulo: ar.articulo }, pos)}
+              conectando={!!origenConexion}
+              onIniciarConexion={() => iniciarConexion({ codigo: ar.codigo, articulo: ar.articulo })}
+              onCompletarConexion={(clientX, clientY) => completarConexion({ codigo: ar.codigo, articulo: ar.articulo }, clientX, clientY)}
               modoOscuro={modoOscuro}
             />
           ))}
         </div>
       </div>
+
+      {menuTipo && (
+        <MenuTipoRelacion
+          x={menuTipo.x}
+          y={menuTipo.y}
+          onElegir={(tipo) => {
+            onCrearConexion(menuTipo.desde, menuTipo.hasta, tipo)
+            setMenuTipo(null)
+          }}
+          onCerrar={() => setMenuTipo(null)}
+          modoOscuro={modoOscuro}
+        />
+      )}
     </div>
+  )
+}
+
+function MenuTipoRelacion({
+  x,
+  y,
+  onElegir,
+  onCerrar,
+  modoOscuro,
+}: {
+  x: number
+  y: number
+  onElegir: (tipo: TipoRelacion) => void
+  onCerrar: () => void
+  modoOscuro: boolean
+}) {
+  const left = Math.min(x, (typeof window !== 'undefined' ? window.innerWidth : 1200) - 220)
+  const top = Math.min(y, (typeof window !== 'undefined' ? window.innerHeight : 800) - 380)
+
+  return (
+    <>
+      <div className="fixed inset-0 z-40" onClick={onCerrar} />
+      <div
+        className={`fixed z-50 rounded-lg border shadow-xl overflow-hidden py-1 ${
+          modoOscuro ? 'bg-zinc-900 border-zinc-700' : 'bg-white border-zinc-200'
+        }`}
+        style={{ left: Math.max(8, left), top: Math.max(8, top), width: 200 }}
+      >
+        <div className={`px-3 py-1.5 text-[10px] uppercase tracking-wide font-semibold ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
+          Tipo de relación
+        </div>
+        {TIPOS_RELACION.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => onElegir(t.id)}
+            className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 transition-colors ${
+              modoOscuro ? 'hover:bg-zinc-800 text-zinc-200' : 'hover:bg-zinc-50 text-zinc-700'
+            }`}
+          >
+            <i className={`ti ${t.icono} text-sm flex-shrink-0`} style={{ color: VERDE }} />
+            {NOMBRE_RELACION[t.id]}
+          </button>
+        ))}
+      </div>
+    </>
   )
 }
 
@@ -1120,6 +1371,9 @@ function TarjetaLibre({
   onCambiarEstado,
   onGuardarNota,
   onMoverPosicion,
+  conectando,
+  onIniciarConexion,
+  onCompletarConexion,
   modoOscuro,
 }: {
   item: ArticuloResuelto
@@ -1128,6 +1382,9 @@ function TarjetaLibre({
   onCambiarEstado: (estado: EstadoRepaso) => void
   onGuardarNota: (nota: string) => void
   onMoverPosicion: (pos: { x: number; y: number }) => void
+  conectando: boolean
+  onIniciarConexion: () => void
+  onCompletarConexion: (clientX: number, clientY: number) => void
   modoOscuro: boolean
 }) {
   const pos = item.posicion ?? posicionPorDefecto(indice)
@@ -1138,14 +1395,36 @@ function TarjetaLibre({
       // cada arrastre, así el transform interno de drag de framer-motion no
       // se acumula sobre el nuevo left/top (que es la fuente de verdad real).
       key={`${pos.x}-${pos.y}`}
-      drag
+      drag={!conectando}
       dragMomentum={false}
       onDragEnd={(_e, info) => {
         onMoverPosicion({ x: Math.round(pos.x + info.offset.x), y: Math.round(pos.y + info.offset.y) })
       }}
       whileDrag={{ zIndex: 20, boxShadow: '0 12px 28px rgba(0,0,0,0.28)' }}
-      style={{ position: 'absolute', left: pos.x, top: pos.y, width: 340, cursor: 'grab' }}
+      style={{ position: 'absolute', left: pos.x, top: pos.y, width: 340, cursor: conectando ? 'crosshair' : 'grab' }}
+      onPointerUp={(e) => {
+        if (conectando) {
+          e.stopPropagation()
+          onCompletarConexion(e.clientX, e.clientY)
+        }
+      }}
     >
+      {/* Punto de conexión: arrastra desde acá hacia otra ficha. stopPropagation
+          en pointerdown para no activar el arrastre de toda la tarjeta. */}
+      <button
+        onPointerDown={(e) => {
+          e.stopPropagation()
+          onIniciarConexion()
+        }}
+        title="Arrastra hasta otra ficha para conectarlas"
+        className={`absolute z-10 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+          modoOscuro ? 'bg-zinc-800 border-zinc-500 hover:border-white' : 'bg-white border-zinc-400 hover:border-zinc-900'
+        }`}
+        style={{ right: -10, top: 48, cursor: 'crosshair' }}
+      >
+        <span className={`w-1.5 h-1.5 rounded-full ${modoOscuro ? 'bg-zinc-400' : 'bg-zinc-500'}`} />
+      </button>
+
       <TarjetaArticulo
         item={item}
         posicion={0}
