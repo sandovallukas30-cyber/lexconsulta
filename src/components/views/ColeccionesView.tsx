@@ -857,6 +857,7 @@ function TarjetaArticulo({
   modoRepaso,
   modoOscuro,
   ocultarReordenar,
+  colapsarPorDefecto,
 }: {
   item: ArticuloResuelto
   posicion: number
@@ -870,17 +871,37 @@ function TarjetaArticulo({
   /** En pizarra libre "mover antes/después" no tiene sentido (no hay una
    * secuencia lineal) y quedaba siempre deshabilitado — se oculta del todo. */
   ocultarReordenar?: boolean
+  /** En pizarra, las fichas empiezan colapsadas aunque "modo repaso" esté
+   * apagado: con todas expandidas no queda espacio en blanco para ver las
+   * líneas de conexión (se ven tapadas por las tarjetas de al lado). Solo
+   * afecta el estado inicial al montar — un clic del usuario sigue
+   * expandiendo/colapsando esa ficha con normalidad, y el toggle de modo
+   * repaso se sigue comportando igual que en las otras vistas. */
+  colapsarPorDefecto?: boolean
 }) {
-  const [expandido, setExpandido] = useState(!modoRepaso)
+  // El estado inicial ya nace colapsado en pizarra (colapsarPorDefecto) sin
+  // pasar por un ciclo expandido->colapsado: si primero se muestra expandida
+  // y un efecto la colapsa recién después de montar, Framer Motion dispara
+  // una animación de salida (exit) para el cuerpo — y esa animación depende
+  // de que el navegador realmente pinte el frame para completarse. Partir
+  // directo en `false` evita ese viaje de ida y vuelta por completo.
+  const [expandido, setExpandido] = useState(!modoRepaso && !colapsarPorDefecto)
   const [notaTmp, setNotaTmp] = useState(item.nota)
   const notaRef = useRef<HTMLTextAreaElement>(null)
+  const montadaRef = useRef(false)
   const { texto: colorTexto, barra: colorBarra } = colorParaCodigo(item.codigo, modoOscuro)
   const estadoInfo = ESTADO_INFO[item.estado]
 
   // Al entrar/salir de modo repaso, todas las fichas se re-colapsan o
   // re-expanden en bloque. Después de eso, cada clic individual (para
   // "voltear" una ficha y revisar si acertaste) funciona con normalidad.
+  // Se salta el primer disparo (el que corre al montar) para no pisar el
+  // estado inicial ya calculado arriba.
   useEffect(() => {
+    if (!montadaRef.current) {
+      montadaRef.current = true
+      return
+    }
     setExpandido(!modoRepaso)
   }, [modoRepaso])
 
@@ -1050,10 +1071,17 @@ type RefArticulo = { codigo: CodigoTipo; articulo: string }
 
 /** Posición inicial en grilla simple para fichas que aún no se han arrastrado
  * nunca (sin `posicion` guardada). Una vez que el usuario arrastra una, su
- * posición pasa a ser la guardada y deja de depender del índice. */
+ * posición pasa a ser la guardada y deja de depender del índice.
+ *
+ * El espaciado (420×170) deja un margen real entre tarjetas de 340px de
+ * ancho: antes era 360×320, casi sin aire (20px), y con las fichas ahora
+ * colapsadas por defecto en pizarra (ver `colapsarPorDefecto` en
+ * TarjetaArticulo) el alto real es mucho menor a 320 de todas formas — el
+ * espacio libre es justo lo que hacía falta para poder seguir una línea de
+ * conexión con la vista en vez de que quede tapada entre tarjetas pegadas. */
 function posicionPorDefecto(indice: number): { x: number; y: number } {
   const columnas = 4
-  return { x: (indice % columnas) * 360 + 24, y: Math.floor(indice / columnas) * 320 + 24 }
+  return { x: (indice % columnas) * 420 + 24, y: Math.floor(indice / columnas) * 170 + 24 }
 }
 
 function mismoArticulo(a: RefArticulo, b: RefArticulo): boolean {
@@ -1168,8 +1196,11 @@ function calcularLayoutPorCapas(
 
   // Posición X ya asignada, fila por fila de arriba hacia abajo, para que el
   // barycenter de una fila pueda mirar dónde quedaron sus padres.
-  const ESPACIO_X = 380
-  const ESPACIO_Y = 260
+  // Mismo espaciado que posicionPorDefecto (420×170): con las fichas
+  // colapsadas por defecto en pizarra, esto deja aire real para seguir las
+  // líneas de conexión en vez de que queden tapadas entre tarjetas pegadas.
+  const ESPACIO_X = 420
+  const ESPACIO_Y = 170
   const MARGEN = 40
   const xAsignada = new Map<string, number>()
   const resultado: { ref: RefArticulo; posicion: { x: number; y: number } }[] = []
@@ -1936,6 +1967,7 @@ function TarjetaLibre({
         modoRepaso={modoRepaso}
         modoOscuro={modoOscuro}
         ocultarReordenar
+        colapsarPorDefecto
       />
     </motion.div>
   )
