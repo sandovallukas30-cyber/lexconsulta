@@ -1276,9 +1276,15 @@ function VistaPizarra({
   modoRepaso: boolean
   modoOscuro: boolean
 }) {
+  // El mínimo del lienzo no solo tiene que ALCANZAR para la grilla de 4
+  // columnas (420×170, igual que posicionPorDefecto/calcularLayoutPorCapas
+  // más abajo — antes quedó con los números viejos de 360×320 y las
+  // tarjetas de la última columna/fila terminaban cortadas), sino dejar
+  // margen real de sobra para poder arrastrar las fichas más allá de la
+  // grilla inicial sin tener que tocar "Expandir pizarra" de entrada.
   const filas = Math.ceil(articulos.length / 4)
-  const anchoBase = Math.max(1600, 4 * 360 + 48)
-  const altoBase = Math.max(1000, filas * 320 + 48)
+  const anchoBase = Math.max(2200, 4 * 420 + 400)
+  const altoBase = Math.max(1400, filas * 170 + 500)
 
   const NIVEL_MAX = 4
   const INCREMENTO_ANCHO = 500
