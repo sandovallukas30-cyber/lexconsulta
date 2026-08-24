@@ -18,10 +18,15 @@ const ALLOWED_MODELS = new Set([
 // ============ Rate limiting ============
 
 const VENTANA_MS = 24 * 60 * 60 * 1000 // 24 horas (1 día)
-const LIMITE_SIN_REGISTRO = 3 // 3 consultas/día para usuarios sin registrar
-const LIMITE_CON_REGISTRO = 10 // 10 consultas/día para usuarios registrados
-const LIMITE_POR_IP_MAXIMA = 50 // protección contra abuso por IP (fallback)
-const LIMITE_GLOBAL = 500 // requests totales por día (techo de gasto)
+// Límites por usuario/IP temporalmente muy altos: por ahora solo el dueño del
+// proyecto usa la app, así que no tiene sentido que se autolimite a 3-10/día.
+// Quedan como valores altos (no removidos) para volver fácil a los originales
+// (3 / 10 / 50 / 500, en comentario al lado de cada uno) el día que la app
+// tenga tráfico real de otras personas.
+const LIMITE_SIN_REGISTRO = 1000 // antes: 3 consultas/día para usuarios sin registrar
+const LIMITE_CON_REGISTRO = 1000 // antes: 10 consultas/día para usuarios registrados
+const LIMITE_POR_IP_MAXIMA = 1200 // antes: 50 — protección contra abuso por IP (fallback)
+const LIMITE_GLOBAL = 2000 // antes: 500 — requests totales por día (techo de gasto, red de seguridad si el link se filtra)
 const MAX_CHARS_INPUT = 60_000 // tamaño máximo del prompt (sistema + mensajes)
 
 // Map<clave, [timestamp, ...]>. Cada timestamp = 1 request reciente.

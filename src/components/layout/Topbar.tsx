@@ -16,6 +16,13 @@ const titulos: Record<string, string> = {
   practica: 'Práctica · Pasapalabra',
 }
 
+// Los límites del servidor (api/anthropic.ts) están temporalmente muy altos
+// mientras solo el dueño del proyecto usa la app: este contador ya no tiene
+// nada útil que mostrar (saldría algo como "997 consultas"), así que se
+// oculta en vez de eso. Volver a `true` junto con revertir los límites del
+// servidor restaura el aviso original.
+const MOSTRAR_CONTADOR_CONSULTAS = false
+
 export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
   const perfil = useStore((s) => s.perfil)
   const vistaActiva = useStore((s) => s.vistaActiva)
@@ -72,7 +79,7 @@ export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
           <i className={`ti ${modoOscuro ? 'ti-sun' : 'ti-moon'} text-lg`} />
         </button>
 
-        {onAbrirRegistro && (
+        {MOSTRAR_CONTADOR_CONSULTAS && onAbrirRegistro && (
           <button
             onClick={onAbrirRegistro}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
