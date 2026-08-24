@@ -110,12 +110,18 @@ function SeccionPlantillas({
   const crearColeccion = useStore((s) => s.crearColeccion)
   const agregarArticulo = useStore((s) => s.agregarArticuloAColeccion)
   const setColeccionActiva = useStore((s) => s.setColeccionActiva)
+  // EXPERIMENTAL: solo lo usan las plantillas "demo" que traen conexiones y
+  // grupos ya armados, no las plantillas clásicas de solo-artículos.
+  const crearConexion = useStore((s) => s.crearConexionColeccion)
+  const crearGrupo = useStore((s) => s.crearGrupoColeccion)
 
   const usarPlantilla = (plantillaId: string) => {
     const plantilla = COLECCIONES_PLANTILLA.find((p) => p.id === plantillaId)
     if (!plantilla) return
     const id = crearColeccion(plantilla.titulo)
     for (const art of plantilla.articulos) agregarArticulo(id, art)
+    for (const cx of plantilla.conexiones ?? []) crearConexion(id, cx.desde, cx.hasta, cx.tipo)
+    for (const g of plantilla.grupos ?? []) crearGrupo(id, g.titulo, g.articulos)
     setColeccionActiva(id)
   }
 
@@ -661,6 +667,7 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
           onCrearGrupo={(titulo, refs) => crearGrupo(coleccion.id, titulo, refs)}
           onEliminarGrupo={(grupoId) => eliminarGrupo(coleccion.id, grupoId)}
           onOrganizarPorConexiones={(posiciones) => organizarPorConexiones(coleccion.id, posiciones)}
+          modoRepaso={modoRepaso}
           modoOscuro={modoOscuro}
         />
       ) : coleccion.articulos.length > 0 && modoVista === 'arbol' ? (
@@ -1112,7 +1119,15 @@ const FUNCIONES_JURIDICAS: { id: FuncionJuridica; label: string; color: string }
 /** Layout determinístico por capas (sin IA): cada artículo queda en la fila
  * que corresponde a la ruta más larga de conexiones que llega hasta él
  * (relajación tipo Bellman-Ford, tolera ciclos porque se acota el número de
- * iteraciones). Usa solo las conexiones que el propio usuario creó. */
+ * iteraciones). Usa solo las conexiones que el propio usuario creó.
+ *
+ * Dentro de cada fila, el orden horizontal ya NO es el orden de inserción
+ * original (eso dejaba artículos conectados dispersos, sin relación visual
+ * con sus vecinos): se ordenan por "barycenter" — el promedio de la posición
+ * X de sus conexiones entrantes ya ubicadas en filas anteriores — para que
+ * un artículo quede alineado cerca de aquello que lo conecta. Es la misma
+ * heurística clásica de dibujo de grafos por capas (Sugiyama), en una sola
+ * pasada hacia adelante para mantenerlo simple y determinístico. */
 function calcularLayoutPorCapas(
   articulos: ArticuloResuelto[],
   conexiones: ConexionColeccion[]
@@ -1136,6 +1151,14 @@ function calcularLayoutPorCapas(
     if (!cambio) break
   }
 
+  // Quién conecta hacia cada artículo (sus "padres"), para el barycenter.
+  const padresDe = new Map<string, string[]>()
+  for (const cx of conexiones) {
+    const kh = key(cx.hasta)
+    if (!padresDe.has(kh)) padresDe.set(kh, [])
+    padresDe.get(kh)!.push(key(cx.desde))
+  }
+
   const porCapa = new Map<number, ArticuloResuelto[]>()
   for (const a of articulos) {
     const c = capa.get(key(a))!
@@ -1143,13 +1166,47 @@ function calcularLayoutPorCapas(
     porCapa.get(c)!.push(a)
   }
 
+  // Posición X ya asignada, fila por fila de arriba hacia abajo, para que el
+  // barycenter de una fila pueda mirar dónde quedaron sus padres.
+  const ESPACIO_X = 380
+  const ESPACIO_Y = 260
+  const MARGEN = 40
+  const xAsignada = new Map<string, number>()
   const resultado: { ref: RefArticulo; posicion: { x: number; y: number } }[] = []
+
   for (const c of [...porCapa.keys()].sort((a, b) => a - b)) {
-    porCapa.get(c)!.forEach((item, i) => {
-      resultado.push({
-        ref: { codigo: item.codigo, articulo: item.articulo },
-        posicion: { x: i * 380 + 40, y: c * 260 + 40 },
-      })
+    const items = porCapa.get(c)!
+
+    // "Deseada": promedio de X de los padres ya ubicados (filas de arriba).
+    // Si no tiene padres ubicados (raíz, o quedó aislado), no hay una
+    // posición que lo "atraiga": se ordena al final, en su orden original.
+    const conDeseada: { item: ArticuloResuelto; deseada: number }[] = []
+    const sinDeseada: ArticuloResuelto[] = []
+    items.forEach((item, i) => {
+      const padres = (padresDe.get(key(item)) ?? []).filter((k) => xAsignada.has(k))
+      if (padres.length === 0) {
+        sinDeseada.push(item)
+      } else {
+        const promedio = padres.reduce((suma, k) => suma + xAsignada.get(k)!, 0) / padres.length
+        conDeseada.push({ item, deseada: promedio + i * 0.001 }) // +i: desempate estable
+      }
+    })
+    conDeseada.sort((a, b) => a.deseada - b.deseada)
+    const ordenados = [...conDeseada.map((x) => x.item), ...sinDeseada]
+    const deseadaPorClave = new Map(conDeseada.map((x) => [key(x.item), x.deseada]))
+
+    // Barrido de izquierda a derecha: cada ítem intenta caer justo en su X
+    // deseada (para quedar alineado bajo su padre), pero nunca más cerca del
+    // anterior que el espaciado mínimo — así lo conectado queda junto de
+    // verdad (no solo "en el mismo orden"), sin superponerse entre sí.
+    let xPrevio: number | null = null
+    ordenados.forEach((item) => {
+      const deseada = deseadaPorClave.get(key(item))
+      const minimo = xPrevio === null ? MARGEN : xPrevio + ESPACIO_X
+      const x = deseada !== undefined ? Math.max(deseada, minimo) : minimo
+      xAsignada.set(key(item), x)
+      xPrevio = x
+      resultado.push({ ref: { codigo: item.codigo, articulo: item.articulo }, posicion: { x, y: c * ESPACIO_Y + MARGEN } })
     })
   }
   return resultado
@@ -1169,6 +1226,7 @@ function VistaPizarra({
   onCrearGrupo,
   onEliminarGrupo,
   onOrganizarPorConexiones,
+  modoRepaso,
   modoOscuro,
 }: {
   articulos: ArticuloResuelto[]
@@ -1184,6 +1242,7 @@ function VistaPizarra({
   onCrearGrupo: (titulo: string, articulos: RefArticulo[]) => void
   onEliminarGrupo: (grupoId: string) => void
   onOrganizarPorConexiones: (posiciones: { ref: RefArticulo; posicion: { x: number; y: number } }[]) => void
+  modoRepaso: boolean
   modoOscuro: boolean
 }) {
   const filas = Math.ceil(articulos.length / 4)
@@ -1461,26 +1520,44 @@ function VistaPizarra({
               arrastres/pan; cada línea reactiva su propio pointer-events. */}
           <svg className="absolute inset-0" style={{ width: anchoCanvas, height: altoCanvas, pointerEvents: 'none' }}>
             <defs>
-              <marker id="flecha-conexion" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-                <path d="M 0 0 L 10 5 L 0 10 z" fill={modoOscuro ? '#71717a' : '#a1a1aa'} />
-              </marker>
+              {/* Un marker de flecha por familia de relación, para que la
+                  punta de flecha combine con el color de su línea. */}
+              {FAMILIAS_RELACION.map((f) => (
+                <marker
+                  key={f.color}
+                  id={`flecha-${f.color.slice(1)}`}
+                  viewBox="0 0 10 10"
+                  refX="8"
+                  refY="5"
+                  markerWidth="7"
+                  markerHeight="7"
+                  orient="auto-start-reverse"
+                >
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill={f.color} />
+                </marker>
+              ))}
             </defs>
             {conexiones.map((cx) => {
               const desde = anchorDe(cx.desde, articulos)
               const hasta = anchorDe(cx.hasta, articulos)
               const seleccionada = conexionSeleccionada === cx.id
+              const familia = familiaDeRelacion(cx.tipo)
               const midX = (desde.x + hasta.x) / 2
               const midY = (desde.y + hasta.y) / 2
               return (
                 <g key={cx.id}>
+                  {/* Línea más gruesa y coloreada por familia (antes gris
+                      plano) para que se note a simple vista, sin tener que
+                      seleccionarla. */}
                   <line
                     x1={desde.x}
                     y1={desde.y}
                     x2={hasta.x}
                     y2={hasta.y}
-                    stroke={seleccionada ? VERDE : modoOscuro ? '#71717a' : '#a1a1aa'}
-                    strokeWidth={seleccionada ? 2.5 : 1.5}
-                    markerEnd="url(#flecha-conexion)"
+                    stroke={familia.color}
+                    strokeWidth={seleccionada ? 3.5 : 2.5}
+                    opacity={seleccionada ? 1 : 0.8}
+                    markerEnd={`url(#flecha-${familia.color.slice(1)})`}
                   />
                   {/* hitbox invisible más ancha, para hacer clic fácil */}
                   <line
@@ -1489,33 +1566,43 @@ function VistaPizarra({
                     x2={hasta.x}
                     y2={hasta.y}
                     stroke="transparent"
-                    strokeWidth={14}
+                    strokeWidth={16}
                     style={{ pointerEvents: 'stroke', cursor: 'pointer' }}
                     onClick={() => setConexionSeleccionada(seleccionada ? null : cx.id)}
                   />
-                  {seleccionada && (
-                    <foreignObject x={midX - 75} y={midY - 13} width={150} height={26} style={{ pointerEvents: 'auto' }}>
-                      <div
-                        className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium shadow-md border ${
-                          modoOscuro ? 'bg-zinc-800 text-zinc-200 border-zinc-700' : 'bg-white text-zinc-700 border-zinc-200'
-                        }`}
-                      >
-                        <span className="truncate flex-1">{NOMBRE_RELACION[cx.tipo]}</span>
+                  {/* Etiqueta del tipo de relación: ahora SIEMPRE visible
+                      (antes solo aparecía al seleccionar la línea), para que
+                      la categoría se lea sin clic. El botón de borrar sigue
+                      apareciendo solo si está seleccionada, para no arriesgar
+                      un borrado accidental con solo pasar cerca. */}
+                  <foreignObject x={midX - 80} y={midY - 13} width={160} height={26} style={{ pointerEvents: 'auto' }}>
+                    <div
+                      onClick={() => setConexionSeleccionada(seleccionada ? null : cx.id)}
+                      className={`flex items-center justify-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium border cursor-pointer ${
+                        seleccionada ? 'shadow-md' : 'shadow-sm'
+                      }`}
+                      style={{
+                        color: familia.color,
+                        background: modoOscuro ? `${familia.color}26` : `${familia.color}1A`,
+                        borderColor: seleccionada ? familia.color : `${familia.color}40`,
+                      }}
+                    >
+                      <span className="truncate">{NOMBRE_RELACION[cx.tipo]}</span>
+                      {seleccionada && (
                         <button
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation()
                             onEliminarConexion(cx.id)
                             setConexionSeleccionada(null)
                           }}
                           title="Eliminar conexión"
-                          className={`flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center ${
-                            modoOscuro ? 'hover:bg-zinc-700 text-zinc-400' : 'hover:bg-zinc-100 text-zinc-500'
-                          }`}
+                          className="flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center hover:bg-black/10"
                         >
                           <i className="ti ti-x text-[10px]" />
                         </button>
-                      </div>
-                    </foreignObject>
-                  )}
+                      )}
+                    </div>
+                  </foreignObject>
                 </g>
               )
             })}
@@ -1548,6 +1635,7 @@ function VistaPizarra({
               seleccionado={seleccionados.has(keyRef({ codigo: ar.codigo, articulo: ar.articulo }))}
               onAlternarSeleccion={() => alternarSeleccion({ codigo: ar.codigo, articulo: ar.articulo })}
               onAlturaCambio={(h) => reportarAltura(keyRef({ codigo: ar.codigo, articulo: ar.articulo }), h)}
+              modoRepaso={modoRepaso}
               modoOscuro={modoOscuro}
             />
           ))}
@@ -1732,6 +1820,7 @@ function TarjetaLibre({
   seleccionado,
   onAlternarSeleccion,
   onAlturaCambio,
+  modoRepaso,
   modoOscuro,
 }: {
   item: ArticuloResuelto
@@ -1747,6 +1836,7 @@ function TarjetaLibre({
   seleccionado: boolean
   onAlternarSeleccion: () => void
   onAlturaCambio?: (alturaPx: number) => void
+  modoRepaso: boolean
   modoOscuro: boolean
 }) {
   const pos = item.posicion ?? posicionPorDefecto(indice)
@@ -1843,7 +1933,7 @@ function TarjetaLibre({
         onMover={() => {}}
         onCambiarEstado={onCambiarEstado}
         onGuardarNota={onGuardarNota}
-        modoRepaso={false}
+        modoRepaso={modoRepaso}
         modoOscuro={modoOscuro}
         ocultarReordenar
       />
@@ -1931,7 +2021,22 @@ function SelectorFuncion({
 // ============================================================
 // EXPERIMENTAL: VISTA ÁRBOL (rama experimento-visualizacion, no existe en main)
 // ============================================================
-
+//
+// LÍMITE CONOCIDO, anotado a propósito en vez de arreglado (ver conversación
+// del 2026-08-24): un artículo puede aparecer legítimamente bajo más de un
+// padre (ver `visitados` en NodoArbol más abajo), y cada aparición vuelve a
+// expandir su subárbol COMPLETO desde cero. Con un grafo con "diamantes"
+// (varios artículos que convergen en el mismo artículo aguas abajo — muy
+// común en la práctica: un concepto que varias normas citan para el mismo
+// cálculo o requisito), esto explota combinatoriamente. Medido con la
+// plantilla demo "Terminación del contrato de trabajo" (16 artículos reales,
+// 22 conexiones, sin ciclos): 87 tarjetas renderizadas y ~8.400px de alto —
+// un mismo artículo (Art. 178) repetido 18 veces. Pizarra y mampostería no
+// tienen este problema (cada artículo se dibuja una sola vez ahí). Posible
+// arreglo futuro: cortar la expansión después de la primera aparición
+// completa de un artículo y dejar un enlace "↑ ver arriba" en las
+// repeticiones siguientes, en vez de re-expandir todo el subárbol.
+//
 /** Artículos sin ninguna conexión entrante son las raíces del árbol. Si el
  * grafo no tiene raíces (ej. todo forma un ciclo), se usan todos los
  * artículos como raíz para no dejar la vista vacía. */
