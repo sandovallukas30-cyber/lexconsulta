@@ -1155,10 +1155,18 @@ const FUNCIONES_JURIDICAS: { id: FuncionJuridica; label: string; color: string }
  * X de sus conexiones entrantes ya ubicadas en filas anteriores — para que
  * un artículo quede alineado cerca de aquello que lo conecta. Es la misma
  * heurística clásica de dibujo de grafos por capas (Sugiyama), en una sola
- * pasada hacia adelante para mantenerlo simple y determinístico. */
+ * pasada hacia adelante para mantenerlo simple y determinístico.
+ *
+ * El alto de cada fila se calcula con el alto REAL medido de sus fichas
+ * (mismo `alturas` del recuadro de grupo y de "Ver todo"), no un valor fijo:
+ * antes, con un espacio de lienzo más chico, una fila fija alcanzaba justo
+ * para fichas colapsadas pero se pisaba si alguna quedaba expandida al
+ * organizar. Ahora que hay lienzo de sobra y zoom para ver todo, la fila se
+ * estira lo que haga falta según el contenido real, sin ese riesgo. */
 function calcularLayoutPorCapas(
   articulos: ArticuloResuelto[],
-  conexiones: ConexionColeccion[]
+  conexiones: ConexionColeccion[],
+  alturas: Map<string, number>
 ): { ref: RefArticulo; posicion: { x: number; y: number } }[] {
   const key = (r: RefArticulo) => `${r.codigo}::${r.articulo}`
   const capa = new Map<string, number>()
@@ -1196,17 +1204,19 @@ function calcularLayoutPorCapas(
 
   // Posición X ya asignada, fila por fila de arriba hacia abajo, para que el
   // barycenter de una fila pueda mirar dónde quedaron sus padres.
-  // Mismo espaciado que posicionPorDefecto (420×170): con las fichas
-  // colapsadas por defecto en pizarra, esto deja aire real para seguir las
-  // líneas de conexión en vez de que queden tapadas entre tarjetas pegadas.
-  const ESPACIO_X = 420
-  const ESPACIO_Y = 170
+  const ESPACIO_X = 460
+  const GAP_Y = 90 // aire vertical extra entre filas, sobre el alto real de cada una
+  const ALTO_ESTIMADO_INICIAL = 160 // respaldo solo para fichas sin medición todavía
   const MARGEN = 40
   const xAsignada = new Map<string, number>()
   const resultado: { ref: RefArticulo; posicion: { x: number; y: number } }[] = []
+  let yFila = MARGEN
 
   for (const c of [...porCapa.keys()].sort((a, b) => a - b)) {
     const items = porCapa.get(c)!
+    const yEstaFila = yFila
+    const altoFila = Math.max(...items.map((it) => alturas.get(key(it)) ?? ALTO_ESTIMADO_INICIAL))
+    yFila += altoFila + GAP_Y
 
     // "Deseada": promedio de X de los padres ya ubicados (filas de arriba).
     // Si no tiene padres ubicados (raíz, o quedó aislado), no hay una
@@ -1237,7 +1247,7 @@ function calcularLayoutPorCapas(
       const x = deseada !== undefined ? Math.max(deseada, minimo) : minimo
       xAsignada.set(key(item), x)
       xPrevio = x
-      resultado.push({ ref: { codigo: item.codigo, articulo: item.articulo }, posicion: { x, y: c * ESPACIO_Y + MARGEN } })
+      resultado.push({ ref: { codigo: item.codigo, articulo: item.articulo }, posicion: { x, y: yEstaFila } })
     })
   }
   return resultado
@@ -1329,31 +1339,39 @@ function VistaPizarra({
   const zoomOut = () => setZoom((z) => Math.max(ZOOM_MIN, Math.round((z - 0.15) * 100) / 100))
   const zoomIn = () => setZoom((z) => Math.min(ZOOM_MAX, Math.round((z + 0.15) * 100) / 100))
 
-  /** Calcula el zoom exacto para que TODAS las fichas entren en la parte
-   * visible del lienzo (no en el lienzo entero, que puede ser enorme), y
-   * deja centrado el scroll ahí. Usa el alto real medido por ficha
-   * (`alturas`) cuando ya está disponible, igual que el recuadro de grupo. */
-  const ajustarTodo = () => {
+  /** Calcula el zoom exacto para que un conjunto de cajas (posición + alto
+   * real de cada ficha) entre en la parte visible del lienzo (no en el
+   * lienzo entero, que puede ser enorme), y deja centrado el scroll ahí.
+   * Separado de `ajustarTodo` para poder reutilizarlo también justo después
+   * de "Organizar según conexiones", con las posiciones recién calculadas
+   * (que todavía no llegaron al estado ni al siguiente render). */
+  const ajustarZoomA = (cajas: { x1: number; y1: number; x2: number; y2: number }[]) => {
     const el = scrollRef.current
-    if (!el || articulos.length === 0) return
-    const MARGEN = 80
+    if (!el || cajas.length === 0) return
+    const MARGEN_AJUSTE = 80
+    const minX = Math.min(...cajas.map((c) => c.x1))
+    const minY = Math.min(...cajas.map((c) => c.y1))
+    const maxX = Math.max(...cajas.map((c) => c.x2))
+    const maxY = Math.max(...cajas.map((c) => c.y2))
+    const anchoContenido = maxX - minX + MARGEN_AJUSTE * 2
+    const altoContenido = maxY - minY + MARGEN_AJUSTE * 2
+    const nuevoZoom = Math.max(
+      ZOOM_MIN,
+      Math.min(ZOOM_MAX, el.clientWidth / anchoContenido, el.clientHeight / altoContenido)
+    )
+    centrarPendienteRef.current = { x: (minX - MARGEN_AJUSTE) * nuevoZoom, y: (minY - MARGEN_AJUSTE) * nuevoZoom }
+    setZoom(Math.round(nuevoZoom * 100) / 100)
+  }
+
+  /** Calcula el zoom exacto para que TODAS las fichas (con su posición y
+   * alto real actuales) entren en la parte visible del lienzo. */
+  const ajustarTodo = () => {
     const cajas = articulos.map((a, i) => {
       const p = a.posicion ?? posicionPorDefecto(i)
       const h = alturas.get(`${a.codigo}::${a.articulo}`) ?? 160
       return { x1: p.x, y1: p.y, x2: p.x + 340, y2: p.y + h }
     })
-    const minX = Math.min(...cajas.map((c) => c.x1))
-    const minY = Math.min(...cajas.map((c) => c.y1))
-    const maxX = Math.max(...cajas.map((c) => c.x2))
-    const maxY = Math.max(...cajas.map((c) => c.y2))
-    const anchoContenido = maxX - minX + MARGEN * 2
-    const altoContenido = maxY - minY + MARGEN * 2
-    const nuevoZoom = Math.max(
-      ZOOM_MIN,
-      Math.min(ZOOM_MAX, el.clientWidth / anchoContenido, el.clientHeight / altoContenido)
-    )
-    centrarPendienteRef.current = { x: (minX - MARGEN) * nuevoZoom, y: (minY - MARGEN) * nuevoZoom }
-    setZoom(Math.round(nuevoZoom * 100) / 100)
+    ajustarZoomA(cajas)
   }
 
   // Estado de la conexión que se está dibujando (arrastrando desde el punto
@@ -1487,9 +1505,22 @@ function VistaPizarra({
         </div>
       ) : (
         <button
-          onClick={() => onOrganizarPorConexiones(calcularLayoutPorCapas(articulos, conexiones))}
+          onClick={() => {
+            const nuevasPosiciones = calcularLayoutPorCapas(articulos, conexiones, alturas)
+            onOrganizarPorConexiones(nuevasPosiciones)
+            // Ajusta el zoom con las posiciones recién calculadas, no con las
+            // viejas del estado actual (todavía no llegó el próximo render):
+            // así "Organizar" deja de una vez todo a la vista, sin tener que
+            // tocar "Ver todo" aparte.
+            ajustarZoomA(
+              nuevasPosiciones.map((p) => {
+                const h = alturas.get(`${p.ref.codigo}::${p.ref.articulo}`) ?? 160
+                return { x1: p.posicion.x, y1: p.posicion.y, x2: p.posicion.x + 340, y2: p.posicion.y + h }
+              })
+            )
+          }}
           disabled={conexiones.length === 0}
-          title="Reordena las fichas según las conexiones creadas. Sin IA: solo usa lo que tú ya conectaste."
+          title="Reordena las fichas según las conexiones creadas y ajusta el zoom para verlas todas. Sin IA: solo usa lo que tú ya conectaste."
           className={`absolute top-3 left-3 z-30 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm disabled:opacity-40 disabled:cursor-not-allowed transition-colors ${
             modoOscuro ? 'bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-zinc-800' : 'bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50'
           }`}
