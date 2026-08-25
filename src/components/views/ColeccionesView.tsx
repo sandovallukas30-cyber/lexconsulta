@@ -1276,22 +1276,37 @@ function VistaPizarra({
   modoRepaso: boolean
   modoOscuro: boolean
 }) {
-  // Lienzo grande de entrada a propósito (no solo "lo justo para la
-  // grilla"): un margen chico igual se sentía apretado. 4200×3200 deja
-  // varias pantallas completas de espacio libre en cada dirección para
-  // mover fichas y para que el scroll tenga recorrido real, sin tener que
-  // tocar "Expandir pizarra" salvo para colecciones enormes.
+  // Lienzo grande de entrada (no solo "lo justo para la grilla") y además
+  // capaz de seguir creciendo solo: un tamaño fijo, por grande que sea,
+  // siempre tiene un borde contra el que vas a chocar tarde o temprano. En
+  // vez de un botón manual de expandir (que no resolvía el problema de
+  // fondo), el scroll hacia la derecha o hacia abajo hace crecer el lienzo
+  // en vivo apenas te acercás al borde — ver onScrollLienzo más abajo.
+  // Nota: por ahora solo crece hacia la derecha/abajo, no hacia la
+  // izquierda/arriba (eso requeriría correr también las posiciones ya
+  // guardadas de las fichas para que no "salten" al crecer del otro lado).
   const filas = Math.ceil(articulos.length / 4)
   const anchoBase = Math.max(4200, 4 * 420 + 800)
   const altoBase = Math.max(3200, filas * 170 + 800)
+  const MAX_EXTRA = 20000
+  const UMBRAL_CRECIMIENTO = 500
+  const INCREMENTO_CRECIMIENTO = 1500
+  const [extraDerecha, setExtraDerecha] = useState(0)
+  const [extraAbajo, setExtraAbajo] = useState(0)
 
-  const NIVEL_MAX = 4
-  const INCREMENTO_ANCHO = 500
-  const INCREMENTO_ALTO = 400
-  const [nivelExpansion, setNivelExpansion] = useState(0)
+  const anchoCanvas = anchoBase + extraDerecha
+  const altoCanvas = altoBase + extraAbajo
 
-  const anchoCanvas = anchoBase + nivelExpansion * INCREMENTO_ANCHO
-  const altoCanvas = altoBase + nivelExpansion * INCREMENTO_ALTO
+  const onScrollLienzo = () => {
+    const el = scrollRef.current
+    if (!el) return
+    if (el.scrollLeft + el.clientWidth > anchoCanvas - UMBRAL_CRECIMIENTO) {
+      setExtraDerecha((prev) => Math.min(MAX_EXTRA, prev + INCREMENTO_CRECIMIENTO))
+    }
+    if (el.scrollTop + el.clientHeight > altoCanvas - UMBRAL_CRECIMIENTO) {
+      setExtraAbajo((prev) => Math.min(MAX_EXTRA, prev + INCREMENTO_CRECIMIENTO))
+    }
+  }
 
   // Estado de la conexión que se está dibujando (arrastrando desde el punto
   // de una ficha hacia otra), del menú de tipo de relación, y de la
@@ -1366,46 +1381,6 @@ function VistaPizarra({
 
   return (
     <div className="flex-1 relative">
-      {/* Controles de expandir/retraer: posición fija en la esquina, no se
-          mueven con el scroll del lienzo (viven fuera del div con overflow). */}
-      <div
-        className={`absolute top-3 right-3 z-30 flex items-center gap-2 px-2 py-1.5 rounded-lg border shadow-sm ${
-          modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
-        }`}
-      >
-        <button
-          onClick={() => setNivelExpansion((n) => Math.max(0, n - 1))}
-          disabled={nivelExpansion === 0}
-          title="Retraer pizarra"
-          className={`w-7 h-7 rounded-md flex items-center justify-center disabled:opacity-25 disabled:cursor-not-allowed transition-colors ${
-            modoOscuro ? 'hover:bg-zinc-800 text-zinc-300' : 'hover:bg-zinc-100 text-zinc-600'
-          }`}
-        >
-          <i className="ti ti-minus text-sm" />
-        </button>
-        <div className="flex items-center gap-0.5" title={`Espacio del lienzo: nivel ${nivelExpansion} de ${NIVEL_MAX}`}>
-          {Array.from({ length: NIVEL_MAX }).map((_, i) => (
-            <span
-              key={i}
-              className="w-1.5 h-1.5 rounded-full"
-              style={{
-                background: i < nivelExpansion ? VERDE : modoOscuro ? '#3f3f46' : '#d4d4d8',
-              }}
-            />
-          ))}
-        </div>
-        <button
-          onClick={() => setNivelExpansion((n) => Math.min(NIVEL_MAX, n + 1))}
-          disabled={nivelExpansion === NIVEL_MAX}
-          title="Expandir pizarra"
-          className={`w-7 h-7 rounded-md flex items-center justify-center disabled:opacity-25 disabled:cursor-not-allowed transition-colors ${
-            modoOscuro ? 'hover:bg-zinc-800 text-zinc-300' : 'hover:bg-zinc-100 text-zinc-600'
-          }`}
-        >
-          <i className="ti ti-plus text-sm" />
-        </button>
-      </div>
-
       {/* Aviso de conexión en curso, u organizar automático cuando no se está
           conectando: mismo lugar (esquina superior izquierda), mutuamente
           excluyentes. */}
@@ -1461,6 +1436,7 @@ function VistaPizarra({
       <div
         ref={scrollRef}
         className={`h-full overflow-auto ${modoOscuro ? 'bg-zinc-950' : 'bg-zinc-100'}`}
+        onScroll={onScrollLienzo}
         onPointerUp={() => {
           cancelarConexion()
           setPanActivo(false)
