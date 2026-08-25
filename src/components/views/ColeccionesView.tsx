@@ -1073,15 +1073,17 @@ type RefArticulo = { codigo: CodigoTipo; articulo: string }
  * nunca (sin `posicion` guardada). Una vez que el usuario arrastra una, su
  * posición pasa a ser la guardada y deja de depender del índice.
  *
- * El espaciado (420×170) deja un margen real entre tarjetas de 340px de
- * ancho: antes era 360×320, casi sin aire (20px), y con las fichas ahora
- * colapsadas por defecto en pizarra (ver `colapsarPorDefecto` en
- * TarjetaArticulo) el alto real es mucho menor a 320 de todas formas — el
- * espacio libre es justo lo que hacía falta para poder seguir una línea de
- * conexión con la vista en vez de que quede tapada entre tarjetas pegadas. */
+ * El espaciado (390×140) deja un margen real entre tarjetas de 340px de
+ * ancho — ni pegadas (como antes de los primeros ajustes, donde tapaban
+ * las líneas de conexión) ni tan separadas que estudiarlas una al lado de
+ * otra se sienta disperso: el propósito de la pizarra es poder leerlas,
+ * no solo verlas caber. Con las fichas colapsadas por defecto (ver
+ * `colapsarPorDefecto` en TarjetaArticulo) 140px de alto ya sobra para no
+ * pisarse, y el zoom + "Ver todo" quedan como red de seguridad para
+ * colecciones grandes en vez de tener que dejar aire de sobra siempre. */
 function posicionPorDefecto(indice: number): { x: number; y: number } {
   const columnas = 4
-  return { x: (indice % columnas) * 420 + 24, y: Math.floor(indice / columnas) * 170 + 24 }
+  return { x: (indice % columnas) * 390 + 24, y: Math.floor(indice / columnas) * 140 + 24 }
 }
 
 function mismoArticulo(a: RefArticulo, b: RefArticulo): boolean {
@@ -1203,9 +1205,13 @@ function calcularLayoutPorCapas(
   }
 
   // Posición X ya asignada, fila por fila de arriba hacia abajo, para que el
-  // barycenter de una fila pueda mirar dónde quedaron sus padres.
-  const ESPACIO_X = 460
-  const GAP_Y = 90 // aire vertical extra entre filas, sobre el alto real de cada una
+  // barycenter de una fila pueda mirar dónde quedaron sus padres. Espaciado
+  // moderado a propósito (no el máximo que quepa): la pizarra es para
+  // estudiar las fichas, no solo para verlas caber — 50px de aire alcanza
+  // para que una línea de conexión y su etiqueta se lean bien sin dispersar
+  // todo. El zoom + "Ver todo" cubren el caso de colecciones grandes.
+  const ESPACIO_X = 390
+  const GAP_Y = 70 // aire vertical extra entre filas, sobre el alto real de cada una
   const ALTO_ESTIMADO_INICIAL = 160 // respaldo solo para fichas sin medición todavía
   const MARGEN = 40
   const xAsignada = new Map<string, number>()
@@ -1326,6 +1332,14 @@ function VistaPizarra({
   // coordenadas del arrastre de fichas.
   const ZOOM_MIN = 0.15
   const ZOOM_MAX = 1.5
+  // Piso distinto (más alto) para el zoom AUTOMÁTICO ("Ver todo" y
+  // "Organizar"): que quepan todas las fichas no vale de nada si el texto
+  // queda ilegible. Si una colección es tan grande que ni al 50% entra
+  // completa, se prioriza que lo visible se pueda leer — el resto queda a
+  // un scroll de distancia, no hace falta encogerlo hasta ser ilegible.
+  // El zoom MANUAL (botón −) sí puede bajar hasta ZOOM_MIN si el usuario
+  // lo pide a propósito, paso a paso, viendo lo que hace en cada clic.
+  const ZOOM_MIN_AJUSTE = 0.5
   const [zoom, setZoom] = useState(1)
   const centrarPendienteRef = useRef<{ x: number; y: number } | null>(null)
 
@@ -1356,7 +1370,7 @@ function VistaPizarra({
     const anchoContenido = maxX - minX + MARGEN_AJUSTE * 2
     const altoContenido = maxY - minY + MARGEN_AJUSTE * 2
     const nuevoZoom = Math.max(
-      ZOOM_MIN,
+      ZOOM_MIN_AJUSTE,
       Math.min(ZOOM_MAX, el.clientWidth / anchoContenido, el.clientHeight / altoContenido)
     )
     centrarPendienteRef.current = { x: (minX - MARGEN_AJUSTE) * nuevoZoom, y: (minY - MARGEN_AJUSTE) * nuevoZoom }
