@@ -1308,6 +1308,54 @@ function VistaPizarra({
     }
   }
 
+  // Zoom: "más lienzo" no alcanza cuando lo que hace falta es justo lo
+  // contrario — ver TODAS las fichas de una, aunque se vean más chicas. Se
+  // usa la propiedad CSS `zoom` (no `transform: scale`) porque `zoom`
+  // recalcula el layout real del lienzo — el navegador reubica el scroll y
+  // los eventos de puntero solo, sin tener que corregir a mano las
+  // coordenadas del arrastre de fichas.
+  const ZOOM_MIN = 0.15
+  const ZOOM_MAX = 1.5
+  const [zoom, setZoom] = useState(1)
+  const centrarPendienteRef = useRef<{ x: number; y: number } | null>(null)
+
+  useEffect(() => {
+    if (!centrarPendienteRef.current || !scrollRef.current) return
+    scrollRef.current.scrollLeft = centrarPendienteRef.current.x
+    scrollRef.current.scrollTop = centrarPendienteRef.current.y
+    centrarPendienteRef.current = null
+  }, [zoom])
+
+  const zoomOut = () => setZoom((z) => Math.max(ZOOM_MIN, Math.round((z - 0.15) * 100) / 100))
+  const zoomIn = () => setZoom((z) => Math.min(ZOOM_MAX, Math.round((z + 0.15) * 100) / 100))
+
+  /** Calcula el zoom exacto para que TODAS las fichas entren en la parte
+   * visible del lienzo (no en el lienzo entero, que puede ser enorme), y
+   * deja centrado el scroll ahí. Usa el alto real medido por ficha
+   * (`alturas`) cuando ya está disponible, igual que el recuadro de grupo. */
+  const ajustarTodo = () => {
+    const el = scrollRef.current
+    if (!el || articulos.length === 0) return
+    const MARGEN = 80
+    const cajas = articulos.map((a, i) => {
+      const p = a.posicion ?? posicionPorDefecto(i)
+      const h = alturas.get(`${a.codigo}::${a.articulo}`) ?? 160
+      return { x1: p.x, y1: p.y, x2: p.x + 340, y2: p.y + h }
+    })
+    const minX = Math.min(...cajas.map((c) => c.x1))
+    const minY = Math.min(...cajas.map((c) => c.y1))
+    const maxX = Math.max(...cajas.map((c) => c.x2))
+    const maxY = Math.max(...cajas.map((c) => c.y2))
+    const anchoContenido = maxX - minX + MARGEN * 2
+    const altoContenido = maxY - minY + MARGEN * 2
+    const nuevoZoom = Math.max(
+      ZOOM_MIN,
+      Math.min(ZOOM_MAX, el.clientWidth / anchoContenido, el.clientHeight / altoContenido)
+    )
+    centrarPendienteRef.current = { x: (minX - MARGEN) * nuevoZoom, y: (minY - MARGEN) * nuevoZoom }
+    setZoom(Math.round(nuevoZoom * 100) / 100)
+  }
+
   // Estado de la conexión que se está dibujando (arrastrando desde el punto
   // de una ficha hacia otra), del menú de tipo de relación, y de la
   // conexión seleccionada (solo ella muestra su etiqueta).
@@ -1381,6 +1429,51 @@ function VistaPizarra({
 
   return (
     <div className="flex-1 relative">
+      {/* Control de zoom: posición fija en la esquina, no se mueve con el
+          scroll del lienzo (vive fuera del div con overflow). "Ver todo" es
+          lo que de verdad resuelve "quiero ver todas las fichas a la vez":
+          calcula el zoom exacto para que entren todas y centra el scroll ahí. */}
+      <div
+        className={`absolute top-3 right-3 z-30 flex items-center gap-1 px-2 py-1.5 rounded-lg border shadow-sm ${
+          modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
+        }`}
+      >
+        <button
+          onClick={zoomOut}
+          disabled={zoom <= ZOOM_MIN}
+          title="Alejar"
+          className={`w-7 h-7 rounded-md flex items-center justify-center disabled:opacity-25 disabled:cursor-not-allowed transition-colors ${
+            modoOscuro ? 'hover:bg-zinc-800 text-zinc-300' : 'hover:bg-zinc-100 text-zinc-600'
+          }`}
+        >
+          <i className="ti ti-zoom-out text-sm" />
+        </button>
+        <span className={`text-xs tabular-nums w-9 text-center flex-shrink-0 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
+          {Math.round(zoom * 100)}%
+        </span>
+        <button
+          onClick={zoomIn}
+          disabled={zoom >= ZOOM_MAX}
+          title="Acercar"
+          className={`w-7 h-7 rounded-md flex items-center justify-center disabled:opacity-25 disabled:cursor-not-allowed transition-colors ${
+            modoOscuro ? 'hover:bg-zinc-800 text-zinc-300' : 'hover:bg-zinc-100 text-zinc-600'
+          }`}
+        >
+          <i className="ti ti-zoom-in text-sm" />
+        </button>
+        <div className={`w-px h-5 mx-0.5 flex-shrink-0 ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-200'}`} />
+        <button
+          onClick={ajustarTodo}
+          title="Ver todas las fichas a la vez"
+          className={`flex items-center gap-1 px-2 h-7 rounded-md text-xs font-medium flex-shrink-0 transition-colors ${
+            modoOscuro ? 'hover:bg-zinc-800 text-zinc-300' : 'hover:bg-zinc-100 text-zinc-600'
+          }`}
+        >
+          <i className="ti ti-maximize text-sm" />
+          Ver todo
+        </button>
+      </div>
+
       {/* Aviso de conexión en curso, u organizar automático cuando no se está
           conectando: mismo lugar (esquina superior izquierda), mutuamente
           excluyentes. */}
@@ -1449,6 +1542,7 @@ function VistaPizarra({
           style={{
             width: anchoCanvas,
             height: altoCanvas,
+            zoom,
             backgroundImage: `radial-gradient(circle, ${modoOscuro ? '#3f3f46' : '#d4d4d8'} 1.5px, transparent 1.5px)`,
             backgroundSize: '28px 28px',
             cursor: origenConexion ? 'crosshair' : panActivo ? 'grabbing' : 'grab',
