@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { useCodigo } from '../../hooks/useCodigo'
 import { SelectorCodigo } from '../ui/SelectorCodigo'
+import { EsquemaCodigo } from '../ui/EsquemaCodigo'
 import { modernizar, necesitaModernizacion } from '../../services/moderniza'
 import { obtenerMetadata, formatearFechaIndexacion, nombreCortoMetadata } from '../../data/codigosMetadata'
 import type { Articulo, CodigoTipo } from '../../types'
@@ -35,6 +36,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
   const transformarTexto = (t: string) => (aplicarModernizacion ? modernizar(t) : t)
   const [seleccionadoId, setSeleccionadoId] = useState<string | null>(null)
   const [indiceAbierto, setIndiceAbierto] = useState(false)
+  const [esquemaAbierto, setEsquemaAbierto] = useState(false)
   const [busquedaAbierta, setBusquedaAbierta] = useState(false)
   const [busqueda, setBusqueda] = useState('')
 
@@ -286,6 +288,18 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
           setIndiceAbierto(false)
         }}
         modoOscuro={modoOscuro}
+        onAbrirEsquema={() => {
+          setIndiceAbierto(false)
+          setEsquemaAbierto(true)
+        }}
+      />
+
+      <EsquemaCodigo
+        abierto={esquemaAbierto}
+        onCerrar={() => setEsquemaAbierto(false)}
+        codigo={codigo}
+        modoOscuro={modoOscuro}
+        onSeleccionarArticulo={(a) => setSeleccionadoId(a)}
       />
 
       <ModalBusqueda
@@ -394,6 +408,7 @@ function ModalIndice({
   actualId,
   onSelect,
   modoOscuro,
+  onAbrirEsquema,
 }: {
   abierto: boolean
   onCerrar: () => void
@@ -401,6 +416,7 @@ function ModalIndice({
   actualId?: string
   onSelect: (a: string) => void
   modoOscuro: boolean
+  onAbrirEsquema: () => void
 }) {
   const arbol = useMemo(() => construirArbol(arts), [arts])
 
@@ -441,6 +457,18 @@ function ModalIndice({
                 }`}
               >
                 <i className="ti ti-x text-lg" />
+              </button>
+            </div>
+
+            <div className={`px-3 pt-3 border-b pb-3 ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
+              <button
+                onClick={onAbrirEsquema}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90"
+                style={{ background: VERDE }}
+              >
+                <i className="ti ti-sitemap text-base" />
+                <span className="flex-1 text-left">Ver esquema de estudio</span>
+                <i className="ti ti-chevron-right text-sm opacity-70" />
               </button>
             </div>
 
