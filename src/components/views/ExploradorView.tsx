@@ -32,6 +32,10 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
   const modoOscuro = useStore((s) => s.modoOscuro)
   const modernizarLenguaje = useStore((s) => s.modernizarLenguaje)
   const toggleModernizar = useStore((s) => s.toggleModernizar)
+  const crearColeccion = useStore((s) => s.crearColeccion)
+  const agregarArticuloAColeccion = useStore((s) => s.agregarArticuloAColeccion)
+  const setColeccionActiva = useStore((s) => s.setColeccionActiva)
+  const setVistaActiva = useStore((s) => s.setVistaActiva)
   const aplicarModernizacion = modernizarLenguaje && necesitaModernizacion(tipoActivo)
   const transformarTexto = (t: string) => (aplicarModernizacion ? modernizar(t) : t)
   const [seleccionadoId, setSeleccionadoId] = useState<string | null>(null)
@@ -300,6 +304,15 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
         codigo={codigo}
         modoOscuro={modoOscuro}
         onSeleccionarArticulo={(a) => setSeleccionadoId(a)}
+        onCrearColeccion={(tituloSugerido, articulosSeccion) => {
+          if (!codigo) return
+          const id = crearColeccion(tituloSugerido)
+          for (const art of articulosSeccion) {
+            agregarArticuloAColeccion(id, { codigo: codigo.tipo, articulo: art.a })
+          }
+          setColeccionActiva(id)
+          setVistaActiva('colecciones')
+        }}
       />
 
       <ModalBusqueda

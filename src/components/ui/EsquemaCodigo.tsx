@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import type { CodigoData } from '../../types'
+import type { Articulo, CodigoData } from '../../types'
 import {
   construirEsquema,
   primerNivelParaDiagrama,
@@ -23,6 +23,13 @@ interface Props {
   codigo: CodigoData | null
   modoOscuro: boolean
   onSeleccionarArticulo: (a: string) => void
+  /** Crea una Colección nueva con TODOS los artículos de una sección del
+   * esquema (un Libro, Título, Capítulo o Párrafo completo) de un solo clic,
+   * en vez de agregarlos uno por uno a mano desde Colecciones. Recibe el
+   * título sugerido (código + nombre de la sección) y la lista de artículos
+   * de esa sección; quien la implementa decide qué hacer después (acá,
+   * ExploradorView navega a la vista Colecciones con la nueva ya activa). */
+  onCrearColeccion: (tituloSugerido: string, articulos: Articulo[]) => void
 }
 
 /**
@@ -37,7 +44,7 @@ interface Props {
  * datos reales (Trabajo, Sanitario, Tributario, Minería, Orgánico de
  * Tribunales) aunque el Índice del Explorador no lo muestre todavía.
  */
-export function EsquemaCodigo({ abierto, onCerrar, codigo, modoOscuro, onSeleccionarArticulo }: Props) {
+export function EsquemaCodigo({ abierto, onCerrar, codigo, modoOscuro, onSeleccionarArticulo, onCrearColeccion }: Props) {
   const [pestana, setPestana] = useState<Pestana>('lista')
   const [claveEnfocada, setClaveEnfocada] = useState<string | null>(null)
 
@@ -132,6 +139,10 @@ export function EsquemaCodigo({ abierto, onCerrar, codigo, modoOscuro, onSelecci
                   onSeleccionarArticulo(a)
                   onCerrar()
                 }}
+                onCrearColeccion={(nombreSeccion, articulos) => {
+                  onCrearColeccion(`${codigo.codigo} — ${nombreSeccion}`, articulos)
+                  onCerrar()
+                }}
               />
             ) : (
               <DiagramaEsquema
@@ -184,11 +195,13 @@ function ListaEsquema({
   modoOscuro,
   claveEnfocada,
   onSeleccionarArticulo,
+  onCrearColeccion,
 }: {
   arbol: NodoEsquema[]
   modoOscuro: boolean
   claveEnfocada: string | null
   onSeleccionarArticulo: (a: string) => void
+  onCrearColeccion: (nombreSeccion: string, articulos: Articulo[]) => void
 }) {
   if (arbol.length === 0) {
     return (
@@ -230,6 +243,7 @@ function ListaEsquema({
               enfocado={nodo.clave !== null && nodo.clave === claveEnfocada}
               claveEnfocada={claveEnfocada}
               onSeleccionarArticulo={onSeleccionarArticulo}
+              onCrearColeccion={onCrearColeccion}
             />
           ))}
         </div>
@@ -255,6 +269,7 @@ function NodoArbolEsquema({
   enfocado,
   claveEnfocada,
   onSeleccionarArticulo,
+  onCrearColeccion,
 }: {
   nodo: NodoEsquema
   profundidad: number
@@ -267,6 +282,7 @@ function NodoArbolEsquema({
   enfocado: boolean
   claveEnfocada: string | null
   onSeleccionarArticulo: (a: string) => void
+  onCrearColeccion: (nombreSeccion: string, articulos: Articulo[]) => void
 }) {
   const [abierto, setAbierto] = useState(abiertoInicial)
   const ref = useRef<HTMLDivElement>(null)
@@ -298,32 +314,42 @@ function NodoArbolEsquema({
   const estilo = ESTILOS_POR_CAMPO[nodo.campo]
 
   const filaEncabezado = nombre && (
-    <button
-      onClick={() => setAbierto(!abierto)}
-      className={`w-full text-left flex items-start gap-2 py-2 px-2 rounded-lg transition-colors ${
+    <div
+      className={`group/nodo w-full flex items-start gap-2 py-2 px-2 rounded-lg transition-colors ${
         modoOscuro ? 'hover:bg-zinc-800/60' : 'hover:bg-zinc-100'
       }`}
     >
-      <i
-        className={`ti ti-chevron-right text-xs transition-transform flex-shrink-0 mt-1 ${abierto ? 'rotate-90' : ''}`}
-        style={{ color: modoOscuro ? '#71717a' : '#a1a1aa' }}
-      />
-      {esRaiz && (
-        <span
-          className="text-[10px] font-sans font-bold px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5 whitespace-nowrap"
-          style={{
-            background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 16%, transparent)' : 'color-mix(in srgb, var(--accent-base) 7%, transparent)',
-            color: VERDE,
-          }}
-        >
-          {nodo.clave === null ? nombre.toUpperCase() : ETIQUETAS_NIVEL[nodo.campo]}
-        </span>
-      )}
-      <span className={`font-serif ${estilo.tam} ${estilo.peso} ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{nombre}</span>
-      <span className={`ml-auto text-xs font-sans whitespace-nowrap pl-3 pt-0.5 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
+      <button onClick={() => setAbierto(!abierto)} className="flex-1 min-w-0 text-left flex items-start gap-2">
+        <i
+          className={`ti ti-chevron-right text-xs transition-transform flex-shrink-0 mt-1 ${abierto ? 'rotate-90' : ''}`}
+          style={{ color: modoOscuro ? '#71717a' : '#a1a1aa' }}
+        />
+        {esRaiz && (
+          <span
+            className="text-[10px] font-sans font-bold px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5 whitespace-nowrap"
+            style={{
+              background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 16%, transparent)' : 'color-mix(in srgb, var(--accent-base) 7%, transparent)',
+              color: VERDE,
+            }}
+          >
+            {nodo.clave === null ? nombre.toUpperCase() : ETIQUETAS_NIVEL[nodo.campo]}
+          </span>
+        )}
+        <span className={`font-serif ${estilo.tam} ${estilo.peso} ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{nombre}</span>
+      </button>
+      <span className={`text-xs font-sans whitespace-nowrap pl-3 pt-1.5 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
         {rangoArticulos(nodo)}
       </span>
-    </button>
+      <button
+        onClick={() => onCrearColeccion(nombre, nodo.articulos)}
+        title={`Crear una colección de estudio con los ${nodo.articulos.length} artículos de "${nombre}"`}
+        className={`flex-shrink-0 w-6 h-6 rounded-md flex items-center justify-center opacity-0 group-hover/nodo:opacity-100 transition-opacity ${
+          modoOscuro ? 'text-zinc-400 hover:bg-zinc-700 hover:text-white' : 'text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700'
+        }`}
+      >
+        <i className="ti ti-folder-plus text-sm" />
+      </button>
+    </div>
   )
 
   return (
@@ -353,6 +379,7 @@ function NodoArbolEsquema({
                     enfocado={hijo.clave !== null && hijo.clave === claveEnfocada}
                     claveEnfocada={claveEnfocada}
                     onSeleccionarArticulo={onSeleccionarArticulo}
+                    onCrearColeccion={onCrearColeccion}
                   />
                 ))}
 
