@@ -132,6 +132,20 @@ export function contarTitulos(nodo: NodoEsquema): number {
 }
 
 /**
+ * Hijos directos de un nodo YA CONSTRUIDO, calculados bajo demanda (para el
+ * Diagrama, que solo pide un nivel a la vez y expande el que el usuario haya
+ * tocado, en vez de construir el árbol completo de una). Mira el campo propio
+ * del nodo para saber cuál es "el siguiente" (Libro→Título→Capítulo→Párrafo),
+ * no la profundidad, por la misma razón que NodoEsquema guarda `campo`: un
+ * código puede saltarse niveles según la rama.
+ */
+export function hijosDe(nodo: NodoEsquema): NodoEsquema[] {
+  const idx = NIVELES.indexOf(nodo.campo)
+  const siguientes = idx === -1 ? [] : NIVELES.slice(idx + 1)
+  return construirNivel(nodo.articulos, siguientes).map(colapsarPasoUnico)
+}
+
+/**
  * Detecta un título que el parser del PDF dejó reducido a un numeral romano
  * suelto (p. ej. "VIII", "XVII"), sin el texto descriptivo real — artefacto
  * conocido de la extracción (ver codigoCivil.json y leyAccidentesTrabajo.json).
