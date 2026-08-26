@@ -11,6 +11,7 @@ import { ColeccionesView } from './components/views/ColeccionesView'
 import { HistorialView } from './components/views/HistorialView'
 import { AdminView } from './components/views/AdminView'
 import { PracticaView } from './components/views/PracticaView'
+import EstructuraCodigoView from './components/views/EstructuraCodigoView'
 import { useState, useEffect } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { useStore } from './store/useStore'
@@ -30,6 +31,7 @@ const vistas: Record<VistaId, React.ComponentType> = {
   historial: HistorialView,
   admin: AdminView,
   practica: PracticaView,
+  estructura: EstructuraCodigoView,
 }
 
 function App() {
