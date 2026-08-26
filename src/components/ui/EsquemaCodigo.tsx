@@ -533,8 +533,8 @@ function DiagramaEsquema({
 /**
  * Una caja del diagrama que se abre sobre sí misma: al tocarla, calcula sus
  * propios hijos bajo demanda (hijosDe) y los dibuja debajo, con sus propias
- * líneas medidas en tiempo real -- el mismo mecanismo que usa el nivel raíz,
- * aplicado de forma recursiva. Así "Libro I" se expande a sus Títulos sin
+ * un recuadro difuminado (sin líneas -- las líneas quedan solo para el nivel
+ * raíz, que muestra los Libros). Así "Libro I" se expande a sus Títulos sin
  * salir del Diagrama, un Título se expande a sus Capítulos/Párrafos si los
  * tiene, y así hasta llegar a los artículos sueltos.
  */
@@ -556,55 +556,15 @@ function NodoDiagrama({
   onSeleccionarArticulo: (a: string) => void
 }) {
   const [abierto, setAbierto] = useState(false)
-  const wrapRef = useRef<HTMLDivElement>(null)
-  const propiaRef = useRef<HTMLButtonElement>(null)
-  const hijosRefs = useRef<Map<number, HTMLButtonElement>>(new Map())
-  const [lineas, setLineas] = useState<Linea[]>([])
-  const [tamano, setTamano] = useState({ w: 0, h: 0 })
-
   const hijos = useMemo(() => (abierto ? hijosDe(nodo) : []), [abierto, nodo])
-
-  const recalcular = useCallback(() => {
-    const wrap = wrapRef.current
-    const box = propiaRef.current
-    if (!wrap || !box) return
-    const rw = wrap.getBoundingClientRect()
-    const rb = box.getBoundingClientRect()
-    const x1 = rb.left + rb.width / 2 - rw.left
-    const y1 = rb.bottom - rw.top
-    const nuevas: Linea[] = []
-    hijosRefs.current.forEach((el) => {
-      const r = el.getBoundingClientRect()
-      nuevas.push({ x1, y1, x2: r.left + r.width / 2 - rw.left, y2: r.top - rw.top })
-    })
-    setLineas(nuevas)
-    setTamano({ w: rw.width, h: rw.height })
-  }, [])
-
-  useLayoutEffect(() => {
-    recalcular()
-  }, [recalcular, hijos])
-
-  useEffect(() => {
-    const wrap = wrapRef.current
-    if (!wrap) return
-    const obs = new ResizeObserver(() => recalcular())
-    obs.observe(wrap)
-    return () => obs.disconnect()
-  }, [recalcular])
-
-  const colorLinea = modoOscuro ? '#3f3f46' : '#d4d4d8'
   // Hoja real: ya no hay un campo más chico que subdividir (hijosDe devolvió
   // vacío) -- lo que queda para mostrar son los artículos uno a uno.
   const esHojaDeArticulos = abierto && hijos.length === 0
 
   return (
-    <div ref={wrapRef} className="relative flex flex-col items-center">
+    <div className="relative flex flex-col items-center">
       <button
-        ref={(el) => {
-          propiaRef.current = el
-          boxRef?.(el)
-        }}
+        ref={boxRef}
         onClick={() => setAbierto((v) => !v)}
         className={`relative z-10 text-left rounded-xl border px-5 py-3.5 w-60 md:w-64 transition-colors ${
           modoOscuro ? 'bg-zinc-800/60 border-zinc-700 hover:border-[var(--accent-base)]' : 'bg-white border-zinc-200 hover:border-[var(--accent-base)] shadow-sm'
@@ -634,25 +594,19 @@ function NodoDiagrama({
       </button>
 
       {abierto && (
-        <div className="relative pt-10">
-          <svg className="absolute inset-0 pointer-events-none" width={tamano.w} height={tamano.h}>
-            {lineas.map((l, i) => (
-              <line key={i} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke={colorLinea} strokeWidth={1.5} />
-            ))}
-          </svg>
-
+        <div
+          className={`mt-4 rounded-2xl border backdrop-blur-sm px-5 py-5 ${
+            modoOscuro ? 'bg-zinc-800/40 border-zinc-700/60' : 'bg-zinc-100/70 border-zinc-200'
+          }`}
+        >
           {esHojaDeArticulos ? (
-            <div className="relative z-10 flex flex-wrap justify-center gap-2 max-w-md">
-              {nodo.articulos.map((a, i) => (
+            <div className="flex flex-wrap justify-center gap-2 max-w-md">
+              {nodo.articulos.map((a) => (
                 <button
                   key={a.a}
-                  ref={(el) => {
-                    if (el) hijosRefs.current.set(i, el)
-                    else hijosRefs.current.delete(i)
-                  }}
                   onClick={() => onSeleccionarArticulo(a.a)}
                   className={`px-2.5 py-1 rounded-md text-xs font-mono transition-colors ${
-                    modoOscuro ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                    modoOscuro ? 'bg-zinc-900/60 text-zinc-300 hover:bg-zinc-700' : 'bg-white text-zinc-600 hover:bg-zinc-200'
                   }`}
                 >
                   {a.a}
@@ -660,7 +614,7 @@ function NodoDiagrama({
               ))}
             </div>
           ) : (
-            <div className="relative z-10 flex flex-wrap justify-center gap-x-5 gap-y-8">
+            <div className="flex flex-wrap justify-center gap-x-5 gap-y-8">
               {hijos.map((hijo, i) => {
                 const sinTexto = esClaveSinTexto(hijo.clave)
                 const nombreHijo = sinTexto ? `${hijo.clave} — sin título registrado` : hijo.clave ?? 'General'
@@ -671,10 +625,6 @@ function NodoDiagrama({
                     etiqueta={ETIQUETAS_NIVEL[hijo.campo]}
                     nombre={nombreHijo}
                     modoOscuro={modoOscuro}
-                    boxRef={(el) => {
-                      if (el) hijosRefs.current.set(i, el)
-                      else hijosRefs.current.delete(i)
-                    }}
                     onSeleccionarArticulo={onSeleccionarArticulo}
                   />
                 )
