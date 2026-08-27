@@ -343,8 +343,8 @@ function NodoArbolEsquema({
       <button
         onClick={() => onCrearColeccion(nombre, nodo.articulos)}
         title={`Crear una colección de estudio con los ${nodo.articulos.length} artículos de "${nombre}"`}
-        className={`flex-shrink-0 w-6 h-6 rounded-md flex items-center justify-center opacity-0 group-hover/nodo:opacity-100 transition-opacity ${
-          modoOscuro ? 'text-zinc-400 hover:bg-zinc-700 hover:text-white' : 'text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700'
+        className={`flex-shrink-0 w-6 h-6 rounded-md flex items-center justify-center transition-colors ${
+          modoOscuro ? 'text-zinc-500 hover:bg-zinc-700 hover:text-white' : 'text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700'
         }`}
       >
         <i className="ti ti-folder-plus text-sm" />

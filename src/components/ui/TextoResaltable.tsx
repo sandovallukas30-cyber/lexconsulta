@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, Fragment, type ReactNode, type CSSProperties } from 'react'
+import { useCallback, useEffect, useRef, useState, Fragment, type ReactNode, type CSSProperties } from 'react'
 
 /** Color fijo tipo resaltador de verdad — no depende de modoOscuro (un
  * marcador amarillo se ve igual sobre cualquier fondo, es justamente la idea
@@ -45,6 +45,25 @@ export function ContenedorResaltable({
     const rectContenedor = ref.current.getBoundingClientRect()
     setBoton({ x: rect.left + rect.width / 2 - rectContenedor.left, y: rect.top - rectContenedor.top, frase })
   }, [])
+
+  // onMouseUp no dispara con selección táctil (iPad/celular): seleccionar
+  // texto con el dedo no es un "mouseup" para el navegador. selectionchange
+  // sí dispara con mouse, touch y teclado por igual -- es la forma correcta
+  // de detectar "el usuario terminó de seleccionar algo", pero dispara MUY
+  // seguido mientras se arrastra la selección (o los tiradores de iOS), así
+  // que se debounca un poco para no recalcular en cada micro-cambio.
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout>
+    const handler = () => {
+      clearTimeout(timeout)
+      timeout = setTimeout(revisarSeleccion, 150)
+    }
+    document.addEventListener('selectionchange', handler)
+    return () => {
+      document.removeEventListener('selectionchange', handler)
+      clearTimeout(timeout)
+    }
+  }, [revisarSeleccion])
 
   return (
     <div ref={ref} className="relative" onMouseUp={revisarSeleccion}>
