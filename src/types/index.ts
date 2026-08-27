@@ -43,6 +43,7 @@ export type VistaId =
   | 'historial'
   | 'admin'
   | 'practica'
+  | 'plazos'
 
 export type AreaPractica =
   | 'general'

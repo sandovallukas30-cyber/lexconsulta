@@ -20,6 +20,7 @@ const items: ItemMenu[] = [
   { id: 'explorador', icono: 'ti-book-2', label: 'Explorador' },
   { id: 'colecciones', icono: 'ti-stack-2', label: 'Colecciones' },
   { id: 'practica', icono: 'ti-puzzle', label: 'Práctica' },
+  { id: 'plazos', icono: 'ti-calendar-time', label: 'Plazos' },
   { id: 'historial', icono: 'ti-history', label: 'Historial' },
 ]
 

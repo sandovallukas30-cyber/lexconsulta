@@ -15,6 +15,7 @@ const moduloLabel: Record<VistaId, string> = {
   historial: 'Historial',
   admin: 'Admin',
   practica: 'Práctica',
+  plazos: 'Plazos',
 }
 
 const moduloIcono: Record<VistaId, string> = {
@@ -27,6 +28,7 @@ const moduloIcono: Record<VistaId, string> = {
   historial: 'ti-history',
   admin: 'ti-settings-2',
   practica: 'ti-puzzle',
+  plazos: 'ti-calendar-time',
 }
 
 export function HistorialView() {

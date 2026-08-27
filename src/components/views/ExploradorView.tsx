@@ -5,9 +5,10 @@ import { useCodigo } from '../../hooks/useCodigo'
 import { SelectorCodigo } from '../ui/SelectorCodigo'
 import { EsquemaCodigo } from '../ui/EsquemaCodigo'
 import { ContenedorResaltable, ParrafoResaltado } from '../ui/TextoResaltable'
+import { useLecturaVoz } from '../../hooks/useLecturaVoz'
 import { modernizar, necesitaModernizacion } from '../../services/moderniza'
 import { obtenerMetadata, formatearFechaIndexacion, nombreCortoMetadata } from '../../data/codigosMetadata'
-import type { Articulo, CodigoTipo } from '../../types'
+import type { Articulo, CodigoData, CodigoTipo } from '../../types'
 
 const VERDE = 'var(--accent-base)'
 
@@ -42,6 +43,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
   const [seleccionadoId, setSeleccionadoId] = useState<string | null>(null)
   const [indiceAbierto, setIndiceAbierto] = useState(false)
   const [esquemaAbierto, setEsquemaAbierto] = useState(false)
+  const [modoLecturaAbierto, setModoLecturaAbierto] = useState(false)
   const [busquedaAbierta, setBusquedaAbierta] = useState(false)
   const [busqueda, setBusqueda] = useState('')
 
@@ -159,6 +161,19 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
         >
           <i className="ti ti-list-tree text-base" />
           Índice
+        </button>
+
+        <button
+          onClick={() => setModoLecturaAbierto(true)}
+          title="Modo lectura: pantalla completa, letra ajustable y lectura en voz alta"
+          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
+            modoOscuro
+              ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+              : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+          }`}
+        >
+          <i className="ti ti-book text-base" />
+          <span className="hidden md:inline">Modo lectura</span>
         </button>
 
         {necesitaModernizacion(tipoActivo) && (
@@ -332,6 +347,19 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
           setBusquedaAbierta(false)
           setBusqueda('')
         }}
+        modoOscuro={modoOscuro}
+      />
+
+      <ModoLecturaOverlay
+        abierto={modoLecturaAbierto}
+        onCerrar={() => setModoLecturaAbierto(false)}
+        codigo={codigo}
+        tipoActivo={tipoActivo}
+        seleccionado={seleccionado}
+        anterior={anterior}
+        siguiente={siguiente}
+        onNavegar={(a) => setSeleccionadoId(a)}
+        transformarTexto={transformarTexto}
         modoOscuro={modoOscuro}
       />
     </div>
@@ -1073,6 +1101,203 @@ function PantallaCargandoCodigo({ modoOscuro }: { modoOscuro: boolean }) {
   )
 }
 
+const TAMANOS_FUENTE = [17, 19, 21, 24, 27]
+
+/**
+ * Pantalla completa sin sidebar/topbar para leer un artículo largo sin
+ * distracción: letra ajustable (A-/A+) y lectura en voz alta con la Web
+ * Speech API del navegador (nativa, no es IA ni llama a ningún servicio).
+ * Reutiliza ArticuloTexto -- mismo resaltado, mismas notas -- solo cambia el
+ * contenedor y el tamaño de letra.
+ */
+function ModoLecturaOverlay({
+  abierto,
+  onCerrar,
+  codigo,
+  tipoActivo,
+  seleccionado,
+  anterior,
+  siguiente,
+  onNavegar,
+  transformarTexto,
+  modoOscuro,
+}: {
+  abierto: boolean
+  onCerrar: () => void
+  codigo: CodigoData | null
+  tipoActivo: CodigoTipo
+  seleccionado: Articulo | null
+  anterior: Articulo | null
+  siguiente: Articulo | null
+  onNavegar: (a: string) => void
+  transformarTexto: (t: string) => string
+  modoOscuro: boolean
+}) {
+  const [indiceTamano, setIndiceTamano] = useState(0)
+  const textoPlano = seleccionado ? transformarTexto(seleccionado.t) : ''
+  const voz = useLecturaVoz(textoPlano)
+
+  useEffect(() => {
+    if (!abierto) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCerrar()
+      if (e.key === 'ArrowLeft' && anterior) onNavegar(anterior.a)
+      if (e.key === 'ArrowRight' && siguiente) onNavegar(siguiente.a)
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [abierto, anterior, siguiente, onNavegar, onCerrar])
+
+  // Al cambiar de artículo o cerrar, cortar cualquier lectura en curso -- no
+  // debe seguir sonando de fondo sobre el artículo siguiente.
+  useEffect(() => {
+    if (!abierto) voz.detener()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [abierto, seleccionado?.a])
+
+  return (
+    <AnimatePresence>
+      {abierto && codigo && seleccionado && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18 }}
+          className={`fixed inset-0 z-[80] flex flex-col ${modoOscuro ? 'bg-zinc-900' : 'bg-white'}`}
+        >
+          <div className={`flex items-center gap-3 px-5 py-3 border-b flex-shrink-0 ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
+            <button
+              onClick={onCerrar}
+              aria-label="Cerrar modo lectura"
+              className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
+                modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'
+              }`}
+            >
+              <i className="ti ti-x text-lg" />
+            </button>
+
+            <div className="flex-1 min-w-0">
+              <p className={`text-sm font-semibold truncate ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+                {codigo.codigo} · <span style={{ color: VERDE }}>{seleccionado.a}</span>
+              </p>
+            </div>
+
+            {/* Tamaño de letra */}
+            <div className={`flex items-center gap-0.5 rounded-lg p-1 flex-shrink-0 ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-100'}`}>
+              <button
+                onClick={() => setIndiceTamano((i) => Math.max(0, i - 1))}
+                disabled={indiceTamano === 0}
+                aria-label="Letra más chica"
+                className={`w-8 h-8 rounded-md flex items-center justify-center text-xs font-bold transition-colors disabled:opacity-30 ${
+                  modoOscuro ? 'text-zinc-300 hover:bg-zinc-700' : 'text-zinc-600 hover:bg-zinc-200'
+                }`}
+              >
+                A-
+              </button>
+              <button
+                onClick={() => setIndiceTamano((i) => Math.min(TAMANOS_FUENTE.length - 1, i + 1))}
+                disabled={indiceTamano === TAMANOS_FUENTE.length - 1}
+                aria-label="Letra más grande"
+                className={`w-8 h-8 rounded-md flex items-center justify-center text-sm font-bold transition-colors disabled:opacity-30 ${
+                  modoOscuro ? 'text-zinc-300 hover:bg-zinc-700' : 'text-zinc-600 hover:bg-zinc-200'
+                }`}
+              >
+                A+
+              </button>
+            </div>
+
+            {/* Voz */}
+            {voz.soportado && (
+              <div className={`flex items-center gap-0.5 rounded-lg p-1 flex-shrink-0 ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-100'}`}>
+                {voz.estado === 'inactivo' && (
+                  <button
+                    onClick={voz.reproducir}
+                    title="Escuchar el artículo"
+                    className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${
+                      modoOscuro ? 'text-zinc-300 hover:bg-zinc-700' : 'text-zinc-600 hover:bg-zinc-200'
+                    }`}
+                  >
+                    <i className="ti ti-volume text-base" />
+                  </button>
+                )}
+                {voz.estado === 'reproduciendo' && (
+                  <button
+                    onClick={voz.pausar}
+                    title="Pausar"
+                    className="w-8 h-8 rounded-md flex items-center justify-center"
+                    style={{ color: VERDE }}
+                  >
+                    <i className="ti ti-player-pause-filled text-base" />
+                  </button>
+                )}
+                {voz.estado === 'pausado' && (
+                  <button
+                    onClick={voz.reanudar}
+                    title="Reanudar"
+                    className="w-8 h-8 rounded-md flex items-center justify-center"
+                    style={{ color: VERDE }}
+                  >
+                    <i className="ti ti-player-play-filled text-base" />
+                  </button>
+                )}
+                {voz.estado !== 'inactivo' && (
+                  <button
+                    onClick={voz.detener}
+                    title="Detener"
+                    className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${
+                      modoOscuro ? 'text-zinc-300 hover:bg-zinc-700' : 'text-zinc-600 hover:bg-zinc-200'
+                    }`}
+                  >
+                    <i className="ti ti-player-stop-filled text-base" />
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="flex-1 overflow-y-auto">
+            <div className="max-w-2xl mx-auto px-6 py-10">
+              <h1 className={`text-3xl font-serif font-bold mb-6 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+                <span style={{ color: VERDE }}>{seleccionado.a}</span>
+              </h1>
+              <ArticuloTexto
+                texto={transformarTexto(seleccionado.t)}
+                modoOscuro={modoOscuro}
+                codigo={tipoActivo}
+                articulo={seleccionado.a}
+                tamanoFuente={TAMANOS_FUENTE[indiceTamano]}
+              />
+            </div>
+          </div>
+
+          <div className={`flex items-center justify-between px-5 py-3 border-t flex-shrink-0 ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
+            <button
+              disabled={!anterior}
+              onClick={() => anterior && onNavegar(anterior.a)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors disabled:opacity-30 ${
+                modoOscuro ? 'text-zinc-300 hover:bg-zinc-800' : 'text-zinc-700 hover:bg-zinc-100'
+              }`}
+            >
+              <i className="ti ti-chevron-left text-base" />
+              Anterior
+            </button>
+            <button
+              disabled={!siguiente}
+              onClick={() => siguiente && onNavegar(siguiente.a)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors disabled:opacity-30 ${
+                modoOscuro ? 'text-zinc-300 hover:bg-zinc-800' : 'text-zinc-700 hover:bg-zinc-100'
+              }`}
+            >
+              Siguiente
+              <i className="ti ti-chevron-right text-base" />
+            </button>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+}
+
 function primerasPalabras(texto: string, n: number): string {
   const palabras = texto.split(/\s+/).slice(0, n)
   return palabras.join(' ') + (texto.split(/\s+/).length > n ? '…' : '')
@@ -1104,11 +1329,15 @@ function ArticuloTexto({
   modoOscuro,
   codigo,
   articulo,
+  tamanoFuente = 17,
 }: {
   texto: string
   modoOscuro: boolean
   codigo: CodigoTipo
   articulo: string
+  /** px del cuerpo del artículo. Por defecto 17 (el tamaño de siempre en el
+   *  Explorador); Modo Lectura lo sube para leer más cómodo. */
+  tamanoFuente?: number
 }) {
   const { principal, notas } = useMemo(() => separarNotas(texto), [texto])
   const parrafos = useMemo(
@@ -1133,8 +1362,8 @@ function ArticuloTexto({
               texto={p}
               subrayados={frasesResaltadas}
               onQuitar={(frase) => quitarSubrayado(codigo, articulo, frase)}
-              className="text-[17px] leading-[1.8] mb-4 last:mb-0"
-              style={i === 0 ? undefined : { textIndent: '1.5rem' }}
+              className="leading-[1.8] mb-4 last:mb-0"
+              style={{ fontSize: tamanoFuente, ...(i === 0 ? {} : { textIndent: '1.5rem' }) }}
             />
           ))}
         </div>
