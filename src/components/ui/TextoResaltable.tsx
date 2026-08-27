@@ -43,7 +43,10 @@ export function ContenedorResaltable({
     }
     const rect = sel.getRangeAt(0).getBoundingClientRect()
     const rectContenedor = ref.current.getBoundingClientRect()
-    setBoton({ x: rect.left + rect.width / 2 - rectContenedor.left, y: rect.top - rectContenedor.top, frase })
+    // Debajo de la selección, no arriba: el menú nativo de iOS/Safari
+    // (Copiar/Consultar/Traducir...) se posiciona arriba de la selección, así
+    // que si el botón propio también va arriba, quedan uno encima del otro.
+    setBoton({ x: rect.left + rect.width / 2 - rectContenedor.left, y: rect.bottom - rectContenedor.top, frase })
   }, [])
 
   // onMouseUp no dispara con selección táctil (iPad/celular): seleccionar
@@ -87,7 +90,7 @@ export function ContenedorResaltable({
           style={{
             left: boton.x,
             top: boton.y,
-            transform: 'translate(-50%, calc(-100% - 8px))',
+            transform: 'translate(-50%, 10px)',
             background: COLOR_RESALTADO,
             color: COLOR_TEXTO_RESALTADO,
           }}
