@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState, Fragment, type ReactNode, type CSSProperties } from 'react'
 
 /** Color fijo tipo resaltador de verdad — no depende de modoOscuro (un
- * marcador amarillo se ve igual sobre cualquier fondo, es justamente la idea
- * de un resaltador físico). */
-const COLOR_RESALTADO = '#fde047'
+ * marcador se ve igual sobre cualquier fondo, es justamente la idea de un
+ * resaltador físico). */
+const COLOR_RESALTADO = '#fbcfe8'
 const COLOR_TEXTO_RESALTADO = '#1c1917'
 
 /**
@@ -70,7 +70,15 @@ export function ContenedorResaltable({
       {children}
       {boton && (
         <button
-          onClick={() => {
+          // onPointerDown (no onClick): en iOS, tocar cualquier elemento
+          // mientras hay una selección activa primero la CIERRA (el navegador
+          // descarta el gesto para ocultar los tiradores de selección) y el
+          // click nunca llega a disparar -- por eso se veía el botón pero no
+          // hacía nada. pointerdown ocurre ANTES de ese cierre; preventDefault
+          // evita que el navegador lo dispare, así la selección sigue intacta
+          // cuando corremos onAgregar.
+          onPointerDown={(e) => {
+            e.preventDefault()
             onAgregar(boton.frase)
             window.getSelection()?.removeAllRanges()
             setBoton(null)
