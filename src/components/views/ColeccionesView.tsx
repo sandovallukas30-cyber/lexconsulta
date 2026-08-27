@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { useCodigo } from '../../hooks/useCodigo'
@@ -454,6 +455,76 @@ const ESTADO_INFO: Record<EstadoRepaso, { icono: string; label: string; colorLig
   dominado: { icono: 'ti-circle-check-filled', label: 'Dominado', colorLight: 'text-emerald-600', colorDark: 'text-emerald-400' },
 }
 
+/** Vista imprimible de una Colección completa (botón "Exportar a PDF" ->
+ * window.print() -> el usuario elige "Guardar como PDF" en el diálogo del
+ * navegador). Se monta vía createPortal directo en document.body y solo se
+ * hace visible bajo @media print (ver .imprimir-coleccion en index.css) —
+ * así no compite en el DOM normal con la vista interactiva de la colección.
+ *
+ * Lista continua (no una ficha por página): código + texto oficial de cada
+ * artículo, la nota propia si existe, y el estado de estudio. Al final, las
+ * conexiones como texto simple ("Art. 159 → Art. 162 · Excepción") — dibujar
+ * el diagrama visual de la pizarra en PDF es mucho más trabajo, y esta lista
+ * ya deja el dato utilizable para repasar offline. */
+function VistaImprimibleColeccion({
+  coleccion,
+  articulos,
+  conexiones,
+}: {
+  coleccion: Coleccion
+  articulos: ArticuloResuelto[]
+  conexiones: ConexionColeccion[]
+}) {
+  const hoy = new Date().toLocaleDateString('es-CL', { year: 'numeric', month: 'long', day: 'numeric' })
+  return createPortal(
+    <div className="imprimir-coleccion">
+      <style>{`
+        @page { margin: 2cm; }
+        .imprimir-coleccion { color: #111; background: #fff; font-family: Georgia, 'Times New Roman', serif; padding: 24px; }
+        .imprimir-coleccion h1 { font-size: 20px; margin: 0 0 4px; font-family: inherit; }
+        .imprimir-coleccion .ic-meta { font-size: 11px; color: #666; margin-bottom: 28px; }
+        .imprimir-coleccion .ic-articulo { break-inside: avoid; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid #ddd; }
+        .imprimir-coleccion .ic-codigo { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #666; }
+        .imprimir-coleccion .ic-numero { font-size: 15px; font-weight: bold; margin: 2px 0 6px; }
+        .imprimir-coleccion .ic-texto { font-size: 12px; line-height: 1.55; white-space: pre-wrap; }
+        .imprimir-coleccion .ic-nota { font-size: 11px; margin-top: 8px; padding: 8px 10px; background: #f5f5f5; border-left: 3px solid #999; }
+        .imprimir-coleccion .ic-estado { font-size: 10px; font-weight: bold; text-transform: uppercase; margin-top: 6px; display: inline-block; letter-spacing: 0.03em; }
+        .imprimir-coleccion .ic-conexiones { margin-top: 28px; break-inside: avoid; }
+        .imprimir-coleccion .ic-conexiones h2 { font-size: 14px; margin-bottom: 8px; font-family: inherit; }
+        .imprimir-coleccion .ic-conexiones li { font-size: 11px; margin-bottom: 3px; }
+      `}</style>
+      <h1>{coleccion.titulo}</h1>
+      <p className="ic-meta">
+        {articulos.length} artículo{articulos.length === 1 ? '' : 's'} · impreso el {hoy} · Prima Lex
+      </p>
+
+      {articulos.map((a) => (
+        <div className="ic-articulo" key={`${a.codigo}::${a.articulo}`}>
+          <div className="ic-codigo">{a.nombreCodigo}</div>
+          <div className="ic-numero">{a.articulo}</div>
+          <div className="ic-texto">{a.art?.t ?? '(texto no disponible — código no cargado al momento de imprimir)'}</div>
+          {a.nota && <div className="ic-nota">Nota: {a.nota}</div>}
+          <div className="ic-estado">{ESTADO_INFO[a.estado].label}</div>
+        </div>
+      ))}
+
+      {conexiones.length > 0 && (
+        <div className="ic-conexiones">
+          <h2>Conexiones</h2>
+          <ul>
+            {conexiones.map((c) => (
+              <li key={c.id}>
+                {c.desde.articulo} → {c.hasta.articulo} · {NOMBRE_RELACION[c.tipo]}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>,
+    document.body
+  )
+}
+
 function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
   const modoOscuro = useStore((s) => s.modoOscuro)
   const setColeccionActiva = useStore((s) => s.setColeccionActiva)
@@ -621,6 +692,18 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
           <span className="hidden sm:inline">Agregar artículo</span>
         </button>
 
+        {coleccion.articulos.length > 0 && (
+          <button
+            onClick={() => window.print()}
+            title="Exportar a PDF: abre el diálogo de impresión, elegí 'Guardar como PDF'"
+            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
+              modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'
+            }`}
+          >
+            <i className="ti ti-printer text-base" />
+          </button>
+        )}
+
         <button
           onClick={() => {
             if (confirm(`¿Eliminar la colección "${coleccion.titulo}"?`)) {
@@ -635,6 +718,8 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
           <i className="ti ti-trash text-base" />
         </button>
       </div>
+
+      <VistaImprimibleColeccion coleccion={coleccion} articulos={articulosResueltos} conexiones={coleccion.conexiones ?? []} />
 
       {areasPresentes.length > 1 && (
         <div

@@ -22,6 +22,17 @@
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; width: 100%; overflow: hidden; }
 
+/* Exportar Colección a PDF (Ctrl+P / "Guardar como PDF" del navegador).
+   La vista imprimible se monta fuera de #root vía createPortal — evita tener
+   que marcar cada capa de la app (Sidebar, Topbar, modales...) como "no
+   imprimir" una por una; alcanza con ocultar #root entero al imprimir y
+   mostrar solo el portal. En pantalla el portal no se ve nunca. */
+.imprimir-coleccion { display: none; }
+@media print {
+  #root { display: none; }
+  .imprimir-coleccion { display: block; }
+}
+
 /* Scrollbar custom — claro */
 *::-webkit-scrollbar { width: 10px; height: 10px; }
 *::-webkit-scrollbar-track { background: transparent; }
