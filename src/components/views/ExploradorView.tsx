@@ -4,6 +4,7 @@ import { useStore } from '../../store/useStore'
 import { useCodigo } from '../../hooks/useCodigo'
 import { SelectorCodigo } from '../ui/SelectorCodigo'
 import { EsquemaCodigo } from '../ui/EsquemaCodigo'
+import { ContenedorResaltable, ParrafoResaltado } from '../ui/TextoResaltable'
 import { modernizar, necesitaModernizacion } from '../../services/moderniza'
 import { obtenerMetadata, formatearFechaIndexacion, nombreCortoMetadata } from '../../data/codigosMetadata'
 import type { Articulo, CodigoTipo } from '../../types'
@@ -241,7 +242,12 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
                   {indiceActual + 1} de {arts.length}
                 </span>
               </div>
-              <ArticuloTexto texto={transformarTexto(seleccionado.t)} modoOscuro={modoOscuro} />
+              <ArticuloTexto
+                texto={transformarTexto(seleccionado.t)}
+                modoOscuro={modoOscuro}
+                codigo={tipoActivo}
+                articulo={seleccionado.a}
+              />
             </motion.article>
           </AnimatePresence>
         )}
@@ -1093,28 +1099,46 @@ function separarNotas(texto: string): { principal: string; notas: { etiqueta: st
   return { principal, notas }
 }
 
-function ArticuloTexto({ texto, modoOscuro }: { texto: string; modoOscuro: boolean }) {
+function ArticuloTexto({
+  texto,
+  modoOscuro,
+  codigo,
+  articulo,
+}: {
+  texto: string
+  modoOscuro: boolean
+  codigo: CodigoTipo
+  articulo: string
+}) {
   const { principal, notas } = useMemo(() => separarNotas(texto), [texto])
   const parrafos = useMemo(
     () => principal.split(/\n{2,}/).map((p) => p.trim()).filter((p) => p.length > 0),
     [principal]
   )
+  const subrayadosStore = useStore((s) => s.subrayados)
+  const agregarSubrayado = useStore((s) => s.agregarSubrayado)
+  const quitarSubrayado = useStore((s) => s.quitarSubrayado)
+  const claveSubrayado = `${codigo}::${articulo}`
+  const frasesResaltadas = subrayadosStore[claveSubrayado] ?? []
   return (
     <>
-      <div
-        className={modoOscuro ? 'text-zinc-200' : 'text-zinc-800'}
-        style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
-      >
-        {parrafos.map((p, i) => (
-          <p
-            key={i}
-            className="text-[17px] leading-[1.8] mb-4 last:mb-0"
-            style={i === 0 ? undefined : { textIndent: '1.5rem' }}
-          >
-            {p}
-          </p>
-        ))}
-      </div>
+      <ContenedorResaltable onAgregar={(frase) => agregarSubrayado(codigo, articulo, frase)}>
+        <div
+          className={modoOscuro ? 'text-zinc-200' : 'text-zinc-800'}
+          style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
+        >
+          {parrafos.map((p, i) => (
+            <ParrafoResaltado
+              key={i}
+              texto={p}
+              subrayados={frasesResaltadas}
+              onQuitar={(frase) => quitarSubrayado(codigo, articulo, frase)}
+              className="text-[17px] leading-[1.8] mb-4 last:mb-0"
+              style={i === 0 ? undefined : { textIndent: '1.5rem' }}
+            />
+          ))}
+        </div>
+      </ContenedorResaltable>
       {notas.length > 0 && (
         <div className="mt-6 space-y-2.5">
           {notas.map((n, i) => (

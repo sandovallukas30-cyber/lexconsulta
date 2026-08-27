@@ -5,6 +5,7 @@ import { useStore } from '../../store/useStore'
 import { useCodigo } from '../../hooks/useCodigo'
 import { precargar, obtenerCodigo } from '../../services/codigos'
 import { COLECCIONES_PLANTILLA } from '../../data/coleccionesPlantilla'
+import { ContenedorResaltable, ParrafoResaltado } from '../ui/TextoResaltable'
 import type {
   Articulo,
   ArticuloColeccion,
@@ -972,6 +973,10 @@ function TarjetaArticulo({
   // directo en `false` evita ese viaje de ida y vuelta por completo.
   const [expandido, setExpandido] = useState(!modoRepaso && !colapsarPorDefecto)
   const [notaTmp, setNotaTmp] = useState(item.nota)
+  const subrayadosStore = useStore((s) => s.subrayados)
+  const agregarSubrayado = useStore((s) => s.agregarSubrayado)
+  const quitarSubrayado = useStore((s) => s.quitarSubrayado)
+  const frasesResaltadas = subrayadosStore[`${item.codigo}::${item.articulo}`] ?? []
   const notaRef = useRef<HTMLTextAreaElement>(null)
   const montadaRef = useRef(false)
   const { texto: colorTexto, barra: colorBarra } = colorParaCodigo(item.codigo, modoOscuro)
@@ -1104,11 +1109,18 @@ function TarjetaArticulo({
                     No se encontró este artículo en el código cargado.
                   </p>
                 ) : (
-                  dividirIncisos(item.art.t).map((p, i) => (
-                    <p key={i} className="mb-2 last:mb-0 whitespace-pre-line" style={i === 0 ? undefined : { textIndent: '1rem' }}>
-                      {p}
-                    </p>
-                  ))
+                  <ContenedorResaltable onAgregar={(frase) => agregarSubrayado(item.codigo, item.articulo, frase)}>
+                    {dividirIncisos(item.art.t).map((p, i) => (
+                      <ParrafoResaltado
+                        key={i}
+                        texto={p}
+                        subrayados={frasesResaltadas}
+                        onQuitar={(frase) => quitarSubrayado(item.codigo, item.articulo, frase)}
+                        className="mb-2 last:mb-0 whitespace-pre-line"
+                        style={i === 0 ? undefined : { textIndent: '1rem' }}
+                      />
+                    ))}
+                  </ContenedorResaltable>
                 )}
               </div>
 

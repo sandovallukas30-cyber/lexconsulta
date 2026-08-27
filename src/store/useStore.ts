@@ -47,6 +47,13 @@ interface AppState {
   canvasActivoId: string | null
   colecciones: Coleccion[]
   coleccionActivaId: string | null
+  /** Subrayados de texto dentro de un artículo (Explorador y fichas de
+   * Colecciones comparten el mismo dato: es el mismo artículo). Clave
+   * `${codigo}::${articulo}`, valor = lista de frases exactas resaltadas.
+   * Frases (no posiciones de caracteres) a propósito: el texto oficial no
+   * cambia, así que buscar la frase literal en el párrafo alcanza y evita
+   * tener que recalcular offsets si el render divide el texto en incisos. */
+  subrayados: Record<string, string[]>
   modoOscuro: boolean
   sidebarColapsado: boolean
   modernizarLenguaje: boolean
@@ -85,6 +92,8 @@ interface AppState {
   agregarArticuloAColeccion: (id: string, articulo: ArticuloColeccion) => void
   quitarArticuloDeColeccion: (id: string, articulo: ArticuloColeccion) => void
   moverArticuloColeccion: (id: string, indice: number, direccion: -1 | 1) => void
+  agregarSubrayado: (codigo: CodigoActivo['tipo'], articulo: string, frase: string) => void
+  quitarSubrayado: (codigo: CodigoActivo['tipo'], articulo: string, frase: string) => void
   marcarEstadoArticulo: (id: string, ref: { codigo: CodigoActivo['tipo']; articulo: string }, estado: EstadoRepaso) => void
   guardarNotaArticulo: (id: string, ref: { codigo: CodigoActivo['tipo']; articulo: string }, nota: string) => void
   /** EXPERIMENTAL (rama experimento-visualizacion): no existe en main. */
@@ -181,6 +190,7 @@ export const useStore = create<AppState>()(
       canvases: [],
       canvasActivoId: null,
       colecciones: [],
+      subrayados: {},
       coleccionActivaId: null,
       modoOscuro: false,
       sidebarColapsado: false,
@@ -350,6 +360,24 @@ export const useStore = create<AppState>()(
             return { ...c, articulos, fechaModificacion: Date.now() }
           }),
         })),
+      agregarSubrayado: (codigo, articulo, frase) =>
+        set((s) => {
+          const clave = `${codigo}::${articulo}`
+          const actuales = s.subrayados[clave] ?? []
+          if (actuales.includes(frase)) return s
+          return { subrayados: { ...s.subrayados, [clave]: [...actuales, frase] } }
+        }),
+      quitarSubrayado: (codigo, articulo, frase) =>
+        set((s) => {
+          const clave = `${codigo}::${articulo}`
+          const actuales = s.subrayados[clave]
+          if (!actuales) return s
+          const restantes = actuales.filter((f) => f !== frase)
+          const subrayados = { ...s.subrayados }
+          if (restantes.length === 0) delete subrayados[clave]
+          else subrayados[clave] = restantes
+          return { subrayados }
+        }),
       marcarEstadoArticulo: (id, ref, estado) =>
         set((s) => ({
           colecciones: s.colecciones.map((c) =>
@@ -652,6 +680,7 @@ export const useStore = create<AppState>()(
         favoritos: s.favoritos,
         canvases: s.canvases,
         colecciones: s.colecciones,
+        subrayados: s.subrayados,
         modoOscuro: s.modoOscuro,
         sidebarColapsado: s.sidebarColapsado,
         modernizarLenguaje: s.modernizarLenguaje,
