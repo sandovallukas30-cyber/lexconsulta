@@ -61,6 +61,13 @@ interface AppState {
   consultaActivaId: string | null
   codigoExploradorActivo: CodigoActivo['tipo'] | null
   codigoMapaActivo: CodigoActivo['tipo'] | null
+  /** Artículo específico a seleccionar la próxima vez que Explorador monte
+   * o reciba esto (lo consume y lo vuelve a null de inmediato). Necesario
+   * para navegar a una referencia detectada en el texto ("ver artículo
+   * 1698") desde CUALQUIER vista, no solo desde dentro del propio
+   * Explorador — Colecciones no tiene forma de tocar el estado interno
+   * (seleccionadoId es local a ExploradorInterno). */
+  articuloExploradorPendiente: string | null
 
   setPerfil: (perfil: PerfilUsuario) => void
   setVistaActiva: (vista: VistaId) => void
@@ -108,6 +115,11 @@ interface AppState {
   toggleSidebar: () => void
   toggleModernizar: () => void
   setCodigoExplorador: (tipo: CodigoActivo['tipo'] | null) => void
+  /** Cambia a la vista Explorador, con el código y artículo indicados ya
+   * seleccionados — el "ir a" detrás de una referencia detectada en el
+   * texto de otro artículo. */
+  abrirArticuloEnExplorador: (codigo: CodigoActivo['tipo'], articulo: string) => void
+  limpiarArticuloExploradorPendiente: () => void
   setCodigoMapa: (tipo: CodigoActivo['tipo'] | null) => void
   abrirModalPerfil: () => void
   cerrarModalPerfil: () => void
@@ -205,6 +217,7 @@ export const useStore = create<AppState>()(
       temaColor: 'esmeralda' as TemaColorId,
       consultaActivaId: null,
       codigoExploradorActivo: null,
+      articuloExploradorPendiente: null,
       codigoMapaActivo: null,
       omnibarAbierto: false,
       rightSidebarAbierto: false,
@@ -484,6 +497,9 @@ export const useStore = create<AppState>()(
       toggleSidebar: () => set((s) => ({ sidebarColapsado: !s.sidebarColapsado })),
       toggleModernizar: () => set((s) => ({ modernizarLenguaje: !s.modernizarLenguaje })),
       setCodigoExplorador: (tipo) => set({ codigoExploradorActivo: tipo }),
+      abrirArticuloEnExplorador: (codigo, articulo) =>
+        set({ vistaActiva: 'explorador', codigoExploradorActivo: codigo, articuloExploradorPendiente: articulo }),
+      limpiarArticuloExploradorPendiente: () => set({ articuloExploradorPendiente: null }),
       setCodigoMapa: (tipo) => set({ codigoMapaActivo: tipo }),
       abrirModalPerfil: () => set({ modalPerfilAbierto: true }),
       cerrarModalPerfil: () => set({ modalPerfilAbierto: false }),

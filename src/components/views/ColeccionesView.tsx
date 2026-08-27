@@ -6,6 +6,8 @@ import { useCodigo } from '../../hooks/useCodigo'
 import { precargar, obtenerCodigo } from '../../services/codigos'
 import { COLECCIONES_PLANTILLA } from '../../data/coleccionesPlantilla'
 import { ContenedorResaltable, ParrafoResaltado } from '../ui/TextoResaltable'
+import { useReferenciasFiltradas } from '../../hooks/useReferencias'
+import { detectarReferencias } from '../../services/referencias'
 import type {
   Articulo,
   ArticuloColeccion,
@@ -976,7 +978,10 @@ function TarjetaArticulo({
   const subrayadosStore = useStore((s) => s.subrayados)
   const agregarSubrayado = useStore((s) => s.agregarSubrayado)
   const quitarSubrayado = useStore((s) => s.quitarSubrayado)
+  const abrirArticuloEnExplorador = useStore((s) => s.abrirArticuloEnExplorador)
   const frasesResaltadas = subrayadosStore[`${item.codigo}::${item.articulo}`] ?? []
+  const parrafosArticulo = useMemo(() => (item.art ? dividirIncisos(item.art.t) : []), [item.art])
+  const referenciasPorParrafo = useReferenciasFiltradas(parrafosArticulo, item.codigo, item.articulo)
   const notaRef = useRef<HTMLTextAreaElement>(null)
   const montadaRef = useRef(false)
   const { texto: colorTexto, barra: colorBarra } = colorParaCodigo(item.codigo, modoOscuro)
@@ -1110,12 +1115,14 @@ function TarjetaArticulo({
                   </p>
                 ) : (
                   <ContenedorResaltable onAgregar={(frase) => agregarSubrayado(item.codigo, item.articulo, frase)}>
-                    {dividirIncisos(item.art.t).map((p, i) => (
+                    {parrafosArticulo.map((p, i) => (
                       <ParrafoResaltado
                         key={i}
                         texto={p}
                         subrayados={frasesResaltadas}
                         onQuitar={(frase) => quitarSubrayado(item.codigo, item.articulo, frase)}
+                        referencias={referenciasPorParrafo[i]}
+                        onIrAReferencia={(ref) => abrirArticuloEnExplorador(ref.codigo, ref.articulo)}
                         className="mb-2 last:mb-0 whitespace-pre-line"
                         style={i === 0 ? undefined : { textIndent: '1rem' }}
                       />
@@ -1497,6 +1504,43 @@ function VistaPizarra({
   const [seleccionados, setSeleccionados] = useState<Set<string>>(new Set())
   const [modalGrupoAbierto, setModalGrupoAbierto] = useState(false)
 
+  // Sugerencias de conexión: si el texto de un artículo de ESTA colección
+  // menciona a otro artículo que TAMBIÉN está en la colección, y todavía no
+  // hay una conexión entre ambos, se ofrece como sugerencia (nunca se crea
+  // sola — el usuario decide si la acepta). Sin IA: puro cruce entre lo que
+  // detectarReferencias encuentra en el texto y lo que ya está en el
+  // tablero. Descartada = solo por esta sesión (estado local, no
+  // persistido); no vuelve a insistir sobre la misma sugerencia si se
+  // cierra, pero tampoco queda "recordada" para siempre.
+  const [descartadas, setDescartadas] = useState<Set<string>>(new Set())
+  const [panelSugerenciasAbierto, setPanelSugerenciasAbierto] = useState(false)
+  const claveArt = (r: RefArticulo) => `${r.codigo}::${r.articulo}`
+  const sugerencias = useMemo(() => {
+    const enColeccion = new Set(articulos.map((a) => claveArt(a)))
+    const yaConectados = new Set<string>()
+    for (const c of conexiones) {
+      yaConectados.add(`${claveArt(c.desde)}→${claveArt(c.hasta)}`)
+      yaConectados.add(`${claveArt(c.hasta)}→${claveArt(c.desde)}`)
+    }
+    const vistos = new Set<string>()
+    const resultado: { desde: RefArticulo; hasta: RefArticulo; clave: string }[] = []
+    for (const a of articulos) {
+      if (!a.art) continue
+      for (const coincidencia of detectarReferencias(a.art.t, a.codigo, a.articulo)) {
+        const destino = coincidencia.referencia
+        const claveDestino = claveArt(destino)
+        if (!enColeccion.has(claveDestino)) continue // el artículo referido no está en esta colección
+        const claveDireccion = `${claveArt(a)}→${claveDestino}`
+        if (yaConectados.has(claveDireccion)) continue
+        const clavePar = [claveArt(a), claveDestino].sort().join('|') // A→B y B→A cuentan como la misma sugerencia
+        if (vistos.has(clavePar) || descartadas.has(clavePar)) continue
+        vistos.add(clavePar)
+        resultado.push({ desde: { codigo: a.codigo, articulo: a.articulo }, hasta: destino, clave: clavePar })
+      }
+    }
+    return resultado
+  }, [articulos, conexiones, descartadas])
+
   // Alto real (medido con ResizeObserver) de cada ficha, para que el
   // recuadro de un grupo se ajuste a su contenido real y no a una altura
   // fija estimada que quedaba corta o con espacio de más según el largo
@@ -1639,6 +1683,62 @@ function VistaPizarra({
           <i className="ti ti-sitemap text-sm" />
           Organizar según conexiones
         </button>
+      )}
+
+      {/* Sugerencias de conexión detectadas en el texto ("el artículo 1698
+          dispone...", si el 1698 también está en esta colección). Debajo del
+          botón de organizar, mismo lado — no compiten por espacio con el
+          aviso de conexión en curso, que ocupa el mismo lugar arriba. */}
+      {!origenConexion && sugerencias.length > 0 && (
+        <div className="absolute top-14 left-3 z-30">
+          <button
+            onClick={() => setPanelSugerenciasAbierto((v) => !v)}
+            title="Artículos de esta colección que se mencionan entre sí en su propio texto, todavía sin conectar"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm transition-colors ${
+              modoOscuro ? 'bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-zinc-800' : 'bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50'
+            }`}
+          >
+            <i className="ti ti-bulb text-sm" style={{ color: VERDE }} />
+            {sugerencias.length} sugerencia{sugerencias.length === 1 ? '' : 's'} de conexión
+            <i className={`ti ti-chevron-down text-xs transition-transform ${panelSugerenciasAbierto ? 'rotate-180' : ''}`} />
+          </button>
+
+          {panelSugerenciasAbierto && (
+            <div
+              className={`mt-1.5 w-80 max-h-72 overflow-y-auto rounded-lg border shadow-lg ${
+                modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
+              }`}
+            >
+              {sugerencias.map((s) => (
+                <div
+                  key={s.clave}
+                  className={`flex items-center gap-2 px-3 py-2 border-b last:border-b-0 ${modoOscuro ? 'border-zinc-800' : 'border-zinc-100'}`}
+                >
+                  <span className={`flex-1 min-w-0 text-xs truncate ${modoOscuro ? 'text-zinc-300' : 'text-zinc-600'}`}>
+                    {s.desde.articulo} <i className="ti ti-arrow-right text-[10px] mx-0.5 opacity-50" /> {s.hasta.articulo}
+                  </span>
+                  <button
+                    onClick={() => onCrearConexion(s.desde, s.hasta, 'remite_a')}
+                    title="Crear esta conexión (tipo: remite a)"
+                    className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 text-white transition-opacity hover:opacity-90"
+                    style={{ background: VERDE }}
+                  >
+                    <i className="ti ti-check text-sm" />
+                  </button>
+                  <button
+                    onClick={() => setDescartadas((prev) => new Set(prev).add(s.clave))}
+                    title="Descartar esta sugerencia (por ahora — puede volver a aparecer en otra visita)"
+                    className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 transition-colors ${
+                      modoOscuro ? 'text-zinc-500 hover:bg-zinc-800' : 'text-zinc-400 hover:bg-zinc-100'
+                    }`}
+                  >
+                    <i className="ti ti-x text-sm" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {/* Barra de selección múltiple: aparece con 2+ fichas seleccionadas

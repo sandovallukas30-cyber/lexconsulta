@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef, type ReactNode } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { useCodigo } from '../../hooks/useCodigo'
+import { useReferenciasFiltradas } from '../../hooks/useReferencias'
 import { SelectorCodigo } from '../ui/SelectorCodigo'
 import { EsquemaCodigo } from '../ui/EsquemaCodigo'
 import { ContenedorResaltable, ParrafoResaltado } from '../ui/TextoResaltable'
@@ -37,6 +38,8 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
   const agregarArticuloAColeccion = useStore((s) => s.agregarArticuloAColeccion)
   const setColeccionActiva = useStore((s) => s.setColeccionActiva)
   const setVistaActiva = useStore((s) => s.setVistaActiva)
+  const articuloPendiente = useStore((s) => s.articuloExploradorPendiente)
+  const limpiarArticuloPendiente = useStore((s) => s.limpiarArticuloExploradorPendiente)
   const aplicarModernizacion = modernizarLenguaje && necesitaModernizacion(tipoActivo)
   const transformarTexto = (t: string) => (aplicarModernizacion ? modernizar(t) : t)
   const [seleccionadoId, setSeleccionadoId] = useState<string | null>(null)
@@ -50,6 +53,19 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
     setSeleccionadoId(null)
     setBusqueda('')
   }, [tipoActivo])
+
+  // Seguir un enlace de referencia ("ver artículo 1698"), incluso entre
+  // códigos: abrirArticuloEnExplorador cambia codigoExploradorActivo Y
+  // articuloExploradorPendiente EN EL MISMO set(), así que este efecto y el
+  // de arriba (que resetea a null en cada cambio de código) corren en el
+  // mismo commit — como React ejecuta los efectos de un componente en el
+  // orden en que están declarados, este (declarado después) es el que gana
+  // y deja seleccionado el artículo real, no el reset a null.
+  useEffect(() => {
+    if (!articuloPendiente) return
+    setSeleccionadoId(articuloPendiente)
+    limpiarArticuloPendiente()
+  }, [articuloPendiente, limpiarArticuloPendiente])
 
   const { codigo, cargando: cargandoCodigo } = useCodigo(tipoActivo)
 
@@ -76,10 +92,17 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
   }, [arts, indiceActual])
 
   useEffect(() => {
-    if (!seleccionadoId && arts.length > 0) {
+    // No pisar una navegación por referencia en curso: si hay un
+    // articuloPendiente todavía sin consumir, ESE es el que corresponde
+    // mostrar, no arts[0]. Antes este efecto ganaba la carrera (leía
+    // seleccionadoId de su propio closure del render que lo programó, no el
+    // valor que el efecto de "consumir pendiente" acababa de fijar en el
+    // mismo lote) y una referencia a otro código siempre terminaba
+    // mostrando el primer artículo del código destino en vez del referido.
+    if (!seleccionadoId && !articuloPendiente && arts.length > 0) {
       setSeleccionadoId(arts[0].a)
     }
-  }, [arts, seleccionadoId])
+  }, [arts, seleccionadoId, articuloPendiente])
 
   // Atajos: Cmd/Ctrl+K para buscar, flechas para navegar
   useEffect(() => {
@@ -1118,8 +1141,10 @@ function ArticuloTexto({
   const subrayadosStore = useStore((s) => s.subrayados)
   const agregarSubrayado = useStore((s) => s.agregarSubrayado)
   const quitarSubrayado = useStore((s) => s.quitarSubrayado)
+  const abrirArticuloEnExplorador = useStore((s) => s.abrirArticuloEnExplorador)
   const claveSubrayado = `${codigo}::${articulo}`
   const frasesResaltadas = subrayadosStore[claveSubrayado] ?? []
+  const referenciasPorParrafo = useReferenciasFiltradas(parrafos, codigo, articulo)
   return (
     <>
       <ContenedorResaltable onAgregar={(frase) => agregarSubrayado(codigo, articulo, frase)}>
@@ -1130,6 +1155,8 @@ function ArticuloTexto({
           {parrafos.map((p, i) => (
             <ParrafoResaltado
               key={i}
+              referencias={referenciasPorParrafo[i]}
+              onIrAReferencia={(ref) => abrirArticuloEnExplorador(ref.codigo, ref.articulo)}
               texto={p}
               subrayados={frasesResaltadas}
               onQuitar={(frase) => quitarSubrayado(codigo, articulo, frase)}

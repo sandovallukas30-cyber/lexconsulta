@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState, Fragment, type ReactNode, type CSSProperties } from 'react'
+import type { CoincidenciaReferencia, ReferenciaArticulo } from '../../services/referencias'
 
 /** Color fijo tipo resaltador de verdad — no depende de modoOscuro (un
  * marcador amarillo se ve igual sobre cualquier fondo, es justamente la idea
@@ -82,20 +83,34 @@ export function ContenedorResaltable({
  * la misma frase aparece más de una vez en el artículo, se resalta en todas
  * las apariciones — aceptable para una primera versión.
  */
+type Segmento =
+  | { tipo: 'texto'; texto: string }
+  | { tipo: 'resaltado'; texto: string }
+  | { tipo: 'referencia'; texto: string; referencia: ReferenciaArticulo }
+
 export function ParrafoResaltado({
   texto,
   subrayados,
   onQuitar,
+  referencias,
+  onIrAReferencia,
   className,
   style,
 }: {
   texto: string
   subrayados: string[]
   onQuitar: (frase: string) => void
+  /** Referencias a otros artículos YA FILTRADAS a las que de verdad existen
+   * en los datos cargados (ver detectarReferencias en services/referencias)
+   * — este componente no vuelve a verificar existencia, solo renderiza lo
+   * que le pasan. Opcional: si no se pasa, el párrafo se comporta como
+   * antes de que existiera esta función (solo resaltado). */
+  referencias?: CoincidenciaReferencia[]
+  onIrAReferencia?: (ref: ReferenciaArticulo) => void
   className?: string
   style?: CSSProperties
 }) {
-  if (subrayados.length === 0) {
+  if (subrayados.length === 0 && (!referencias || referencias.length === 0)) {
     return (
       <p className={className} style={style}>
         {texto}
@@ -103,20 +118,35 @@ export function ParrafoResaltado({
     )
   }
 
-  type Segmento = { texto: string; resaltado: boolean }
-  let segmentos: Segmento[] = [{ texto, resaltado: false }]
+  // 1. Cortar primero por las referencias (offsets sobre el texto ORIGINAL,
+  // ordenadas y sin solaparse por diseño de detectarReferencias) — quedan
+  // como piezas ya resueltas, no se les vuelve a tocar.
+  let segmentos: Segmento[] = []
+  {
+    let cursor = 0
+    for (const c of referencias ?? []) {
+      if (c.inicio < cursor) continue // defensivo: ignora un solape inesperado
+      if (c.inicio > cursor) segmentos.push({ tipo: 'texto', texto: texto.slice(cursor, c.inicio) })
+      segmentos.push({ tipo: 'referencia', texto: texto.slice(c.inicio, c.fin), referencia: c.referencia })
+      cursor = c.fin
+    }
+    if (cursor < texto.length) segmentos.push({ tipo: 'texto', texto: texto.slice(cursor) })
+  }
+
+  // 2. Sobre cada pieza de texto plano (las de 'referencia' quedan intactas),
+  // aplicar el resaltado por frase exacta — mismo algoritmo de antes.
   for (const frase of subrayados) {
     if (!frase) continue
     const siguientes: Segmento[] = []
     for (const seg of segmentos) {
-      if (seg.resaltado) {
+      if (seg.tipo !== 'texto') {
         siguientes.push(seg)
         continue
       }
       const partes = seg.texto.split(frase)
       partes.forEach((parte, i) => {
-        if (parte) siguientes.push({ texto: parte, resaltado: false })
-        if (i < partes.length - 1) siguientes.push({ texto: frase, resaltado: true })
+        if (parte) siguientes.push({ tipo: 'texto', texto: parte })
+        if (i < partes.length - 1) siguientes.push({ tipo: 'resaltado', texto: frase })
       })
     }
     segmentos = siguientes
@@ -124,20 +154,37 @@ export function ParrafoResaltado({
 
   return (
     <p className={className} style={style}>
-      {segmentos.map((seg, i) =>
-        seg.resaltado ? (
-          <mark
-            key={i}
-            onClick={() => onQuitar(seg.texto)}
-            title="Quitar resaltado"
-            style={{ background: COLOR_RESALTADO, color: COLOR_TEXTO_RESALTADO, cursor: 'pointer', borderRadius: 2 }}
-          >
-            {seg.texto}
-          </mark>
-        ) : (
-          <Fragment key={i}>{seg.texto}</Fragment>
-        )
-      )}
+      {segmentos.map((seg, i) => {
+        if (seg.tipo === 'resaltado') {
+          return (
+            <mark
+              key={i}
+              onClick={() => onQuitar(seg.texto)}
+              title="Quitar resaltado"
+              style={{ background: COLOR_RESALTADO, color: COLOR_TEXTO_RESALTADO, cursor: 'pointer', borderRadius: 2 }}
+            >
+              {seg.texto}
+            </mark>
+          )
+        }
+        if (seg.tipo === 'referencia') {
+          return (
+            <button
+              key={i}
+              onClick={(e) => {
+                e.stopPropagation()
+                onIrAReferencia?.(seg.referencia)
+              }}
+              title={`Ir a ${seg.referencia.articulo}`}
+              className="underline decoration-dotted underline-offset-2 hover:decoration-solid"
+              style={{ color: 'var(--accent-base)', cursor: 'pointer' }}
+            >
+              {seg.texto}
+            </button>
+          )
+        }
+        return <Fragment key={i}>{seg.texto}</Fragment>
+      })}
     </p>
   )
 }
