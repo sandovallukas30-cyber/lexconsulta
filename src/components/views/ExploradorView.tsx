@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef, type ReactNode } from 'react'
+import { useState, useMemo, useEffect, useRef, type ReactNode, type TouchEvent } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { useCodigo } from '../../hooks/useCodigo'
@@ -8,7 +8,7 @@ import { ContenedorResaltable, ParrafoResaltado } from '../ui/TextoResaltable'
 import { useLecturaVoz } from '../../hooks/useLecturaVoz'
 import { modernizar, necesitaModernizacion } from '../../services/moderniza'
 import { obtenerMetadata, formatearFechaIndexacion, nombreCortoMetadata } from '../../data/codigosMetadata'
-import type { Articulo, CodigoData, CodigoTipo } from '../../types'
+import type { Articulo, CodigoData, CodigoTipo, TemaLectura } from '../../types'
 
 const VERDE = 'var(--accent-base)'
 
@@ -360,7 +360,8 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
         siguiente={siguiente}
         onNavegar={(a) => setSeleccionadoId(a)}
         transformarTexto={transformarTexto}
-        modoOscuro={modoOscuro}
+        posicionActual={indiceActual + 1}
+        totalArticulos={arts.length}
       />
     </div>
   )
@@ -1103,11 +1104,71 @@ function PantallaCargandoCodigo({ modoOscuro }: { modoOscuro: boolean }) {
 
 const TAMANOS_FUENTE = [17, 19, 21, 24, 27]
 
+/** Ritmo de lectura asumido para estimar "~N min" -- más lento que el
+ *  promedio de prosa general porque el texto es denso y técnico. */
+const PALABRAS_POR_MINUTO = 180
+
+const TEMAS_LECTURA: Record<
+  TemaLectura,
+  {
+    bg: string
+    border: string
+    text: string
+    textSoft: string
+    chipBg: string
+    hoverSuave: string
+    chipHover: string
+    icono: string
+    siguienteTema: TemaLectura
+    tituloBoton: string
+  }
+> = {
+  claro: {
+    bg: 'bg-white',
+    border: 'border-zinc-200',
+    text: 'text-zinc-900',
+    textSoft: 'text-zinc-500',
+    chipBg: 'bg-zinc-100',
+    hoverSuave: 'hover:bg-zinc-100',
+    chipHover: 'hover:bg-zinc-200',
+    icono: 'ti-sun',
+    siguienteTema: 'oscuro',
+    tituloBoton: 'Cambiar a tema oscuro',
+  },
+  oscuro: {
+    bg: 'bg-zinc-900',
+    border: 'border-zinc-800',
+    text: 'text-white',
+    textSoft: 'text-zinc-400',
+    chipBg: 'bg-zinc-800',
+    hoverSuave: 'hover:bg-zinc-800',
+    chipHover: 'hover:bg-zinc-700',
+    icono: 'ti-moon',
+    siguienteTema: 'papel',
+    tituloBoton: 'Cambiar a tema papel',
+  },
+  papel: {
+    bg: 'bg-[#f4ecd8]',
+    border: 'border-[#e2d0a4]',
+    text: 'text-[#3a2c1a]',
+    textSoft: 'text-[#8a7550]',
+    chipBg: 'bg-[#ecdfc0]',
+    hoverSuave: 'hover:bg-[#ecdfc0]',
+    chipHover: 'hover:bg-[#e2d3a8]',
+    icono: 'ti-coffee',
+    siguienteTema: 'claro',
+    tituloBoton: 'Cambiar a tema claro',
+  },
+}
+
 /**
  * Pantalla completa sin sidebar/topbar para leer un artículo largo sin
- * distracción: letra ajustable (A-/A+) y lectura en voz alta con la Web
- * Speech API del navegador (nativa, no es IA ni llama a ningún servicio).
- * Reutiliza ArticuloTexto -- mismo resaltado, mismas notas -- solo cambia el
+ * distracción: letra ajustable (A-/A+), tema propio claro/oscuro/papel,
+ * migas de Libro/Título/Capítulo, posición dentro del código, tiempo
+ * estimado de lectura, deslizar para cambiar de artículo, la pantalla no se
+ * apaga sola mientras se lee, y lectura en voz alta con la Web Speech API
+ * del navegador (nativa, no es IA ni llama a ningún servicio). Reutiliza
+ * ArticuloTexto -- mismo resaltado, mismas notas -- solo cambia el
  * contenedor y el tamaño de letra.
  */
 function ModoLecturaOverlay({
@@ -1120,7 +1181,8 @@ function ModoLecturaOverlay({
   siguiente,
   onNavegar,
   transformarTexto,
-  modoOscuro,
+  posicionActual,
+  totalArticulos,
 }: {
   abierto: boolean
   onCerrar: () => void
@@ -1131,11 +1193,41 @@ function ModoLecturaOverlay({
   siguiente: Articulo | null
   onNavegar: (a: string) => void
   transformarTexto: (t: string) => string
-  modoOscuro: boolean
+  /** Posición (1-based) del artículo seleccionado dentro de `arts`. */
+  posicionActual: number
+  totalArticulos: number
 }) {
   const [indiceTamano, setIndiceTamano] = useState(0)
+  const temaLectura = useStore((s) => s.modoLecturaTema)
+  const setTemaLectura = useStore((s) => s.setModoLecturaTema)
+  const tema = TEMAS_LECTURA[temaLectura]
   const textoPlano = seleccionado ? transformarTexto(seleccionado.t) : ''
   const voz = useLecturaVoz(textoPlano)
+  const touchInicio = useRef<{ x: number; y: number } | null>(null)
+
+  // Migas de Libro/Título/Capítulo/Párrafo -- reutiliza el mismo formato
+  // abreviado (parte antes del " — ") que ya usa la lista de resultados de
+  // búsqueda, para no repetir el nombre completo del título en una pantalla
+  // pensada para leer sin distracción.
+  const migas = seleccionado
+    ? [
+        seleccionado.libro && `Libro ${seleccionado.libro.split(' — ')[0]}`,
+        seleccionado.titulo && `Título ${seleccionado.titulo.split(' — ')[0]}`,
+        seleccionado.capitulo && `Cap. ${seleccionado.capitulo.split(' — ')[0]}`,
+        seleccionado.parrafo && `Párrafo ${seleccionado.parrafo.split(' — ')[0]}`,
+      ]
+        .filter(Boolean)
+        .join(' · ')
+    : ''
+
+  const palabras = textoPlano.trim() ? textoPlano.trim().split(/\s+/).length : 0
+  const minutosLectura = palabras > 0 ? Math.max(1, Math.round(palabras / PALABRAS_POR_MINUTO)) : 0
+
+  const metaPartes = [
+    migas || null,
+    totalArticulos > 0 ? `${posicionActual.toLocaleString('es-CL')} de ${totalArticulos.toLocaleString('es-CL')}` : null,
+    minutosLectura > 0 ? `~${minutosLectura} min` : null,
+  ].filter((p): p is string => Boolean(p))
 
   useEffect(() => {
     if (!abierto) return
@@ -1155,6 +1247,57 @@ function ModoLecturaOverlay({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [abierto, seleccionado?.a])
 
+  // Mientras se lee, evitar que la pantalla se apague sola (típico dejando
+  // la tablet apoyada en la mesa). El sistema libera el lock solo al
+  // cambiar de pestaña/app; si se sigue en modo lectura al volver, se pide
+  // de nuevo.
+  useEffect(() => {
+    if (!abierto || typeof navigator === 'undefined' || !('wakeLock' in navigator)) return
+    let sentinel: WakeLockSentinel | null = null
+    let vigente = true
+    const pedir = async () => {
+      try {
+        const s = await navigator.wakeLock.request('screen')
+        if (vigente) sentinel = s
+        else s.release().catch(() => {})
+      } catch {
+        // Sin permiso, o documento no visible en ese instante -- no es
+        // crítico, simplemente no se evita que la pantalla se apague.
+      }
+    }
+    pedir()
+    const alVolverVisible = () => {
+      if (document.visibilityState === 'visible' && !sentinel) pedir()
+    }
+    document.addEventListener('visibilitychange', alVolverVisible)
+    return () => {
+      vigente = false
+      document.removeEventListener('visibilitychange', alVolverVisible)
+      sentinel?.release().catch(() => {})
+    }
+  }, [abierto])
+
+  // Deslizar izquierda/derecha para cambiar de artículo. No se llama
+  // preventDefault -- el scroll vertical normal sigue intacto -- y se
+  // descarta como navegación un arrastre que en realidad dejó una selección
+  // de texto activa.
+  function alTocar(e: TouchEvent) {
+    const t = e.touches[0]
+    touchInicio.current = { x: t.clientX, y: t.clientY }
+  }
+  function alSoltarToque(e: TouchEvent) {
+    const inicio = touchInicio.current
+    touchInicio.current = null
+    if (!inicio) return
+    const t = e.changedTouches[0]
+    const dx = t.clientX - inicio.x
+    const dy = t.clientY - inicio.y
+    if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.5) return
+    if ((window.getSelection()?.toString().length ?? 0) > 0) return
+    if (dx < 0 && siguiente) onNavegar(siguiente.a)
+    else if (dx > 0 && anterior) onNavegar(anterior.a)
+  }
+
   return (
     <AnimatePresence>
       {abierto && codigo && seleccionado && (
@@ -1163,34 +1306,43 @@ function ModoLecturaOverlay({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.18 }}
-          className={`fixed inset-0 z-[80] flex flex-col ${modoOscuro ? 'bg-zinc-900' : 'bg-white'}`}
+          className={`fixed inset-0 z-[80] flex flex-col ${tema.bg}`}
         >
-          <div className={`flex items-center gap-3 px-5 py-3 border-b flex-shrink-0 ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
+          <div className={`flex items-center gap-3 px-5 py-3 border-b flex-shrink-0 ${tema.border}`}>
             <button
               onClick={onCerrar}
               aria-label="Cerrar modo lectura"
-              className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
-                modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'
-              }`}
+              className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${tema.textSoft} ${tema.hoverSuave}`}
             >
               <i className="ti ti-x text-lg" />
             </button>
 
             <div className="flex-1 min-w-0">
-              <p className={`text-sm font-semibold truncate ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+              <p className={`text-sm font-semibold truncate ${tema.text}`}>
                 {codigo.codigo} · <span style={{ color: VERDE }}>{seleccionado.a}</span>
               </p>
+              {metaPartes.length > 0 && (
+                <p className={`text-[11px] truncate ${tema.textSoft}`}>{metaPartes.join(' · ')}</p>
+              )}
             </div>
 
+            {/* Tema de lectura */}
+            <button
+              onClick={() => setTemaLectura(tema.siguienteTema)}
+              title={tema.tituloBoton}
+              aria-label={tema.tituloBoton}
+              className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${tema.textSoft} ${tema.hoverSuave}`}
+            >
+              <i className={`ti ${tema.icono} text-lg`} />
+            </button>
+
             {/* Tamaño de letra */}
-            <div className={`flex items-center gap-0.5 rounded-lg p-1 flex-shrink-0 ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-100'}`}>
+            <div className={`flex items-center gap-0.5 rounded-lg p-1 flex-shrink-0 ${tema.chipBg}`}>
               <button
                 onClick={() => setIndiceTamano((i) => Math.max(0, i - 1))}
                 disabled={indiceTamano === 0}
                 aria-label="Letra más chica"
-                className={`w-8 h-8 rounded-md flex items-center justify-center text-xs font-bold transition-colors disabled:opacity-30 ${
-                  modoOscuro ? 'text-zinc-300 hover:bg-zinc-700' : 'text-zinc-600 hover:bg-zinc-200'
-                }`}
+                className={`w-8 h-8 rounded-md flex items-center justify-center text-xs font-bold transition-colors disabled:opacity-30 ${tema.text} ${tema.chipHover}`}
               >
                 A-
               </button>
@@ -1198,9 +1350,7 @@ function ModoLecturaOverlay({
                 onClick={() => setIndiceTamano((i) => Math.min(TAMANOS_FUENTE.length - 1, i + 1))}
                 disabled={indiceTamano === TAMANOS_FUENTE.length - 1}
                 aria-label="Letra más grande"
-                className={`w-8 h-8 rounded-md flex items-center justify-center text-sm font-bold transition-colors disabled:opacity-30 ${
-                  modoOscuro ? 'text-zinc-300 hover:bg-zinc-700' : 'text-zinc-600 hover:bg-zinc-200'
-                }`}
+                className={`w-8 h-8 rounded-md flex items-center justify-center text-sm font-bold transition-colors disabled:opacity-30 ${tema.text} ${tema.chipHover}`}
               >
                 A+
               </button>
@@ -1208,14 +1358,12 @@ function ModoLecturaOverlay({
 
             {/* Voz */}
             {voz.soportado && (
-              <div className={`flex items-center gap-0.5 rounded-lg p-1 flex-shrink-0 ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-100'}`}>
+              <div className={`flex items-center gap-0.5 rounded-lg p-1 flex-shrink-0 ${tema.chipBg}`}>
                 {voz.estado === 'inactivo' && (
                   <button
                     onClick={voz.reproducir}
                     title="Escuchar el artículo"
-                    className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${
-                      modoOscuro ? 'text-zinc-300 hover:bg-zinc-700' : 'text-zinc-600 hover:bg-zinc-200'
-                    }`}
+                    className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${tema.text} ${tema.chipHover}`}
                   >
                     <i className="ti ti-volume text-base" />
                   </button>
@@ -1244,9 +1392,7 @@ function ModoLecturaOverlay({
                   <button
                     onClick={voz.detener}
                     title="Detener"
-                    className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${
-                      modoOscuro ? 'text-zinc-300 hover:bg-zinc-700' : 'text-zinc-600 hover:bg-zinc-200'
-                    }`}
+                    className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${tema.text} ${tema.chipHover}`}
                   >
                     <i className="ti ti-player-stop-filled text-base" />
                   </button>
@@ -1255,14 +1401,14 @@ function ModoLecturaOverlay({
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto" onTouchStart={alTocar} onTouchEnd={alSoltarToque}>
             <div className="max-w-2xl mx-auto px-6 py-10">
-              <h1 className={`text-3xl font-serif font-bold mb-6 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+              <h1 className={`text-3xl font-serif font-bold mb-6 ${tema.text}`}>
                 <span style={{ color: VERDE }}>{seleccionado.a}</span>
               </h1>
               <ArticuloTexto
                 texto={transformarTexto(seleccionado.t)}
-                modoOscuro={modoOscuro}
+                modoOscuro={temaLectura === 'oscuro'}
                 codigo={tipoActivo}
                 articulo={seleccionado.a}
                 tamanoFuente={TAMANOS_FUENTE[indiceTamano]}
@@ -1270,13 +1416,11 @@ function ModoLecturaOverlay({
             </div>
           </div>
 
-          <div className={`flex items-center justify-between px-5 py-3 border-t flex-shrink-0 ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
+          <div className={`flex items-center justify-between px-5 py-3 border-t flex-shrink-0 ${tema.border}`}>
             <button
               disabled={!anterior}
               onClick={() => anterior && onNavegar(anterior.a)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors disabled:opacity-30 ${
-                modoOscuro ? 'text-zinc-300 hover:bg-zinc-800' : 'text-zinc-700 hover:bg-zinc-100'
-              }`}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors disabled:opacity-30 ${tema.text} ${tema.hoverSuave}`}
             >
               <i className="ti ti-chevron-left text-base" />
               Anterior
@@ -1284,9 +1428,7 @@ function ModoLecturaOverlay({
             <button
               disabled={!siguiente}
               onClick={() => siguiente && onNavegar(siguiente.a)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors disabled:opacity-30 ${
-                modoOscuro ? 'text-zinc-300 hover:bg-zinc-800' : 'text-zinc-700 hover:bg-zinc-100'
-              }`}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors disabled:opacity-30 ${tema.text} ${tema.hoverSuave}`}
             >
               Siguiente
               <i className="ti ti-chevron-right text-base" />

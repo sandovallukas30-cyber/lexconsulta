@@ -45,6 +45,11 @@ export type VistaId =
   | 'practica'
   | 'plazos'
 
+/** Tema propio del modo lectura del Explorador -- independiente del claro/
+ * oscuro general de la app. "papel" es un tercer tema cálido pensado solo
+ * para leer, tipo e-reader. */
+export type TemaLectura = 'claro' | 'oscuro' | 'papel'
+
 export type AreaPractica =
   | 'general'
   | 'civil'
