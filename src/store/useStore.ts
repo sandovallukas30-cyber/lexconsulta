@@ -34,6 +34,7 @@ import type {
   TipoRelacion,
   RefArticuloColeccion,
   FuncionJuridica,
+  MapaMental,
 } from '../types'
 
 interface AppState {
@@ -45,6 +46,9 @@ interface AppState {
   favoritos: Favorito[]
   canvases: Canvas[]
   canvasActivoId: string | null
+  mapasMentales: MapaMental[]
+  /** No persistido — mismo patrón que canvasActivoId/coleccionActivaId. */
+  mapaMentalActivoId: string | null
   colecciones: Coleccion[]
   coleccionActivaId: string | null
   /** Subrayados de texto dentro de un artículo (Explorador y fichas de
@@ -92,6 +96,11 @@ interface AppState {
   actualizarCanvas: (id: string, cambios: Partial<Canvas>) => void
   eliminarCanvas: (id: string) => void
   setCanvasActivo: (id: string | null) => void
+  crearMapaMental: (titulo: string) => string
+  renombrarMapaMental: (id: string, titulo: string) => void
+  actualizarMapaMental: (id: string, cambios: Partial<MapaMental>) => void
+  eliminarMapaMental: (id: string) => void
+  setMapaMentalActivo: (id: string | null) => void
   crearColeccion: (titulo: string) => string
   renombrarColeccion: (id: string, titulo: string) => void
   eliminarColeccion: (id: string) => void
@@ -201,6 +210,8 @@ export const useStore = create<AppState>()(
       favoritos: [],
       canvases: [],
       canvasActivoId: null,
+      mapasMentales: [],
+      mapaMentalActivoId: null,
       colecciones: [],
       subrayados: {},
       coleccionActivaId: null,
@@ -313,6 +324,35 @@ export const useStore = create<AppState>()(
           canvasActivoId: s.canvasActivoId === id ? null : s.canvasActivoId,
         })),
       setCanvasActivo: (id) => set({ canvasActivoId: id }),
+      crearMapaMental: (titulo) => {
+        const id = crypto.randomUUID()
+        const ahora = Date.now()
+        set((s) => ({
+          mapasMentales: [
+            { id, titulo, nodos: [], conexiones: [], fechaCreacion: ahora, fechaModificacion: ahora },
+            ...s.mapasMentales,
+          ],
+        }))
+        return id
+      },
+      renombrarMapaMental: (id, titulo) =>
+        set((s) => ({
+          mapasMentales: s.mapasMentales.map((m) =>
+            m.id === id ? { ...m, titulo, fechaModificacion: Date.now() } : m
+          ),
+        })),
+      actualizarMapaMental: (id, cambios) =>
+        set((s) => ({
+          mapasMentales: s.mapasMentales.map((m) =>
+            m.id === id ? { ...m, ...cambios, fechaModificacion: Date.now() } : m
+          ),
+        })),
+      eliminarMapaMental: (id) =>
+        set((s) => ({
+          mapasMentales: s.mapasMentales.filter((m) => m.id !== id),
+          mapaMentalActivoId: s.mapaMentalActivoId === id ? null : s.mapaMentalActivoId,
+        })),
+      setMapaMentalActivo: (id) => set({ mapaMentalActivoId: id }),
       crearColeccion: (titulo) => {
         const id = crypto.randomUUID()
         const ahora = Date.now()
@@ -695,6 +735,7 @@ export const useStore = create<AppState>()(
         historial: s.historial,
         favoritos: s.favoritos,
         canvases: s.canvases,
+        mapasMentales: s.mapasMentales,
         colecciones: s.colecciones,
         subrayados: s.subrayados,
         modoOscuro: s.modoOscuro,

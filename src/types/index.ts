@@ -40,6 +40,7 @@ export type VistaId =
   | 'mapa'
   | 'explorador'
   | 'colecciones'
+  | 'mapasmentales'
   | 'historial'
   | 'admin'
   | 'practica'
@@ -186,6 +187,47 @@ export interface Canvas {
   conexiones: ConexionCanvas[]
   fechaCreacion: Date
   fechaModificacion: Date
+}
+
+// ============ MAPAS MENTALES (diagramas libres por tema) ============
+
+/** A diferencia de Canvas (tipo de nodo SEMÁNTICO: definición/caso/concepto),
+ * acá el tipo es la FORMA VISUAL en sí — es lo que un mapa mental de estudio
+ * necesita: distinguir de un vistazo "esto es una categoría" (rectángulo/
+ * nube) de "esto es una subcategoría" (óvalo) o "esto es una bifurcación"
+ * (rombo), como en un apunte de mano real. */
+export type FormaNodoMental = 'rectangulo' | 'ovalo' | 'nube' | 'rombo'
+
+/** Nivel tipográfico del texto del nodo — el mismo mapa necesita títulos de
+ * categoría en grande y texto de detalle más chico, sin que eso dependa de
+ * la forma (una nube puede llevar un subtítulo, un rectángulo un texto). */
+export type TamanoTextoMental = 'titulo' | 'subtitulo' | 'texto'
+
+export interface NodoMapaMental {
+  id: string
+  posicion: { x: number; y: number }
+  texto: string
+  forma: FormaNodoMental
+  tamanoTexto: TamanoTextoMental
+  color?: string
+  ancho?: number
+  alto?: number
+}
+
+export interface ConexionMapaMental {
+  id: string
+  desde: string
+  hasta: string
+  etiqueta?: string
+}
+
+export interface MapaMental {
+  id: string
+  titulo: string
+  nodos: NodoMapaMental[]
+  conexiones: ConexionMapaMental[]
+  fechaCreacion: number
+  fechaModificacion: number
 }
 
 // ============ COLECCIONES (fichas de estudio por tema) ============
