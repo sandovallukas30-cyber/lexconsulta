@@ -22,15 +22,23 @@
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; width: 100%; overflow: hidden; }
 
-/* Exportar Colección a PDF (Ctrl+P / "Guardar como PDF" del navegador).
-   La vista imprimible se monta fuera de #root vía createPortal — evita tener
-   que marcar cada capa de la app (Sidebar, Topbar, modales...) como "no
-   imprimir" una por una; alcanza con ocultar #root entero al imprimir y
-   mostrar solo el portal. En pantalla el portal no se ve nunca. */
+/* Exportar a PDF (Ctrl+P / "Guardar como PDF" del navegador), dos casos:
+   - Colecciones (.imprimir-coleccion): vista de texto aparte, montada fuera
+     de #root vía createPortal.
+   - Mapas mentales (.imprimir-mapa-mental): imprime el propio lienzo de
+     React Flow tal cual está en pantalla (vive DENTRO de #root, a
+     diferencia del portal de arriba).
+   Misma técnica genérica para ambos ("ocultar todo, mostrar solo esto") en
+   vez de "ocultar #root entero": esa regla más simple le serviría a
+   Colecciones pero apagaría también el lienzo de Mapas mentales, que sí
+   vive dentro de #root. En pantalla ninguno de los dos se nota. */
 .imprimir-coleccion { display: none; }
 @media print {
-  #root { display: none; }
-  .imprimir-coleccion { display: block; }
+  body * { visibility: hidden; }
+  .imprimir-coleccion, .imprimir-coleccion *,
+  .imprimir-mapa-mental, .imprimir-mapa-mental * { visibility: visible; }
+  .imprimir-coleccion { display: block; position: fixed; inset: 0; }
+  .imprimir-mapa-mental { position: fixed; inset: 0; width: 100%; height: 100%; }
 }
 
 /* Scrollbar custom — claro */

@@ -10,6 +10,7 @@ import {
   Position,
   MiniMap,
   NodeToolbar,
+  NodeResizer,
   EdgeLabelRenderer,
   BaseEdge,
   getBezierPath,
@@ -19,10 +20,12 @@ import {
   type Connection,
   type NodeProps,
   type EdgeProps,
+  type ReactFlowInstance,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useStore } from '../../store/useStore'
 import type { MapaMental, NodoMapaMental, ConexionMapaMental, FormaNodoMental, TamanoTextoMental } from '../../types'
+import { MAPAS_MENTALES_PLANTILLA } from '../../data/mapasMentalesPlantilla'
 
 const VERDE = 'var(--accent-base)'
 const COLORES_NODO = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#71717a']
@@ -65,6 +68,7 @@ interface NodoCallbacks {
   actualizar: (id: string, cambios: Partial<NodoData>) => void
   eliminar: (id: string) => void
   duplicar: (id: string) => void
+  duplicarRama: (id: string) => void
   actualizarEtiqueta: (id: string, etiqueta: string) => void
 }
 
@@ -90,10 +94,42 @@ export function MapasMentalesView() {
   const mapas = useStore((s) => s.mapasMentales)
   const mapaActivoId = useStore((s) => s.mapaMentalActivoId)
   const crearMapaMental = useStore((s) => s.crearMapaMental)
+  const actualizarMapaMental = useStore((s) => s.actualizarMapaMental)
   const eliminarMapaMental = useStore((s) => s.eliminarMapaMental)
   const setMapaMentalActivo = useStore((s) => s.setMapaMentalActivo)
 
   const mapaActivo = useMemo(() => mapas.find((m) => m.id === mapaActivoId) ?? null, [mapas, mapaActivoId])
+
+  const usarPlantilla = (plantillaId: string) => {
+    const plantilla = MAPAS_MENTALES_PLANTILLA.find((p) => p.id === plantillaId)
+    if (!plantilla) return
+    // Los ids de la plantilla son legibles ("raiz", "gub-1"...) pero no
+    // únicos entre distintos mapas guardados — se resuelven a UUIDs reales
+    // recién acá, al crear la copia propia (mismo criterio que
+    // usarPlantilla en Colecciones: copia independiente, no un vínculo).
+    const idsReales = new Map(plantilla.nodos.map((n) => [n.id, crypto.randomUUID()]))
+    const posiciones = calcularLayoutMapaMental(
+      plantilla.nodos.map((n) => n.id),
+      plantilla.conexiones
+    )
+    const nodos: NodoMapaMental[] = plantilla.nodos.map((n) => ({
+      id: idsReales.get(n.id)!,
+      posicion: posiciones.get(n.id) ?? { x: 40, y: 40 },
+      texto: n.texto,
+      forma: n.forma,
+      tamanoTexto: n.tamanoTexto,
+      ancho: n.forma === 'nube' ? 220 : 170,
+    }))
+    const conexiones: ConexionMapaMental[] = plantilla.conexiones.map((c) => ({
+      id: crypto.randomUUID(),
+      desde: idsReales.get(c.desde)!,
+      hasta: idsReales.get(c.hasta)!,
+      etiqueta: c.etiqueta,
+    }))
+    const id = crearMapaMental(plantilla.titulo)
+    actualizarMapaMental(id, { nodos, conexiones })
+    setMapaMentalActivo(id)
+  }
 
   if (!mapaActivo) {
     return (
@@ -105,6 +141,7 @@ export function MapasMentalesView() {
           const id = crearMapaMental('Nuevo mapa mental')
           setMapaMentalActivo(id)
         }}
+        onUsarPlantilla={usarPlantilla}
         onEliminar={eliminarMapaMental}
       />
     )
@@ -127,12 +164,14 @@ function ListaMapas({
   modoOscuro,
   onAbrir,
   onCrear,
+  onUsarPlantilla,
   onEliminar,
 }: {
   mapas: MapaMental[]
   modoOscuro: boolean
   onAbrir: (id: string) => void
   onCrear: () => void
+  onUsarPlantilla: (id: string) => void
   onEliminar: (id: string) => void
 }) {
   return (
@@ -205,6 +244,32 @@ function ListaMapas({
             ))}
           </div>
         )}
+
+        <div className="mt-10">
+          <h2 className={`text-sm font-semibold mb-3 ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>
+            Plantillas para empezar
+          </h2>
+          <div className="space-y-2">
+            {MAPAS_MENTALES_PLANTILLA.map((p) => (
+              <button
+                key={p.id}
+                onClick={() => onUsarPlantilla(p.id)}
+                className={`w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors ${
+                  modoOscuro ? 'bg-zinc-800/40 border-zinc-800 hover:bg-zinc-800' : 'bg-white border-zinc-200 hover:bg-zinc-50'
+                }`}
+              >
+                <i className="ti ti-template text-lg flex-shrink-0" style={{ color: VERDE }} />
+                <div className="flex-1 min-w-0">
+                  <h3 className={`text-sm font-medium truncate ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+                    {p.titulo}
+                  </h3>
+                  <p className={`text-xs truncate ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>{p.descripcion}</p>
+                </div>
+                <i className={`ti ti-chevron-right text-sm flex-shrink-0 ${modoOscuro ? 'text-zinc-600' : 'text-zinc-300'}`} />
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -224,6 +289,85 @@ const TAMANOS: { id: TamanoTextoMental; label: string; muestra: string }[] = [
   { id: 'subtitulo', label: 'Subtítulo', muestra: 't' },
   { id: 'texto', label: 'Texto', muestra: '·' },
 ]
+
+/**
+ * Mismo algoritmo de layout por capas (barycenter, sin IA) que
+ * calcularLayoutPorCapas en ColeccionesView.tsx — cada nodo va a la fila que
+ * corresponde a la ruta más larga de conexiones que llega hasta él, y dentro
+ * de cada fila se ordena por el promedio de X de sus padres, para que un
+ * hijo quede alineado bajo lo que lo conecta en vez de disperso en orden de
+ * creación. Trabaja sobre ids + conexiones (no sobre NodoFlow completo) para
+ * poder reutilizarla también al posicionar una plantilla recién creada, que
+ * todavía no tiene nodos "de verdad" en el lienzo.
+ */
+function calcularLayoutMapaMental(
+  ids: string[],
+  conexiones: { desde: string; hasta: string }[]
+): Map<string, { x: number; y: number }> {
+  const capa = new Map<string, number>()
+  for (const id of ids) capa.set(id, 0)
+
+  for (let iter = 0; iter < ids.length + 1; iter++) {
+    let cambio = false
+    for (const cx of conexiones) {
+      if (!capa.has(cx.desde) || !capa.has(cx.hasta)) continue
+      const nueva = capa.get(cx.desde)! + 1
+      if (nueva > capa.get(cx.hasta)!) {
+        capa.set(cx.hasta, nueva)
+        cambio = true
+      }
+    }
+    if (!cambio) break
+  }
+
+  const padresDe = new Map<string, string[]>()
+  for (const cx of conexiones) {
+    if (!padresDe.has(cx.hasta)) padresDe.set(cx.hasta, [])
+    padresDe.get(cx.hasta)!.push(cx.desde)
+  }
+
+  const porCapa = new Map<number, string[]>()
+  for (const id of ids) {
+    const c = capa.get(id)!
+    if (!porCapa.has(c)) porCapa.set(c, [])
+    porCapa.get(c)!.push(id)
+  }
+
+  const ESPACIO_X = 220
+  const ESPACIO_Y = 150
+  const MARGEN = 40
+  const xAsignada = new Map<string, number>()
+  const resultado = new Map<string, { x: number; y: number }>()
+
+  for (const c of [...porCapa.keys()].sort((a, b) => a - b)) {
+    const items = porCapa.get(c)!
+    const conDeseada: { id: string; deseada: number }[] = []
+    const sinDeseada: string[] = []
+    items.forEach((id, i) => {
+      const padres = (padresDe.get(id) ?? []).filter((k) => xAsignada.has(k))
+      if (padres.length === 0) {
+        sinDeseada.push(id)
+      } else {
+        const promedio = padres.reduce((suma, k) => suma + xAsignada.get(k)!, 0) / padres.length
+        conDeseada.push({ id, deseada: promedio + i * 0.001 })
+      }
+    })
+    conDeseada.sort((a, b) => a.deseada - b.deseada)
+    const ordenados = [...conDeseada.map((x) => x.id), ...sinDeseada]
+    const deseadaPorId = new Map(conDeseada.map((x) => [x.id, x.deseada]))
+
+    let xPrevio: number | null = null
+    ordenados.forEach((id) => {
+      const deseada = deseadaPorId.get(id)
+      const minimo = xPrevio === null ? MARGEN : xPrevio + ESPACIO_X
+      const x = deseada !== undefined ? Math.max(deseada, minimo) : minimo
+      xAsignada.set(id, x)
+      xPrevio = x
+      resultado.set(id, { x, y: c * ESPACIO_Y + MARGEN })
+    })
+  }
+  return resultado
+}
 
 function MapaMentalDetalle({
   mapa,
@@ -271,6 +415,8 @@ function MapaMentalDetalle({
 
   const [nodes, setNodes, onNodesChange] = useNodesState<NodoFlow>(nodosIniciales)
   const [edges, setEdges, onEdgesChange] = useEdgesState<EdgeWithData>(edgesIniciales)
+  const rfRef = useRef<ReactFlowInstance<NodoFlow, EdgeWithData> | null>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
 
   // Guardar en el store cada vez que cambian nodos/conexiones — mismo patrón
   // que Canvas: estado "vivo" en React Flow, persistencia en un efecto aparte.
@@ -295,6 +441,71 @@ function MapaMentalDetalle({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodes, edges])
 
+  // ============= HISTORIAL (deshacer/rehacer) =============
+  // Mismo patrón que CanvasView.tsx: snapshots manuales en un ref (no el
+  // estado de React, para no disparar re-renders ni entrar al ciclo de
+  // guardado de arriba), tope de 50 para no crecer sin límite.
+  const nodesRef = useRef<NodoFlow[]>(nodes)
+  const edgesRef = useRef<EdgeWithData[]>(edges)
+  nodesRef.current = nodes
+  edgesRef.current = edges
+  // Arranca con UN snapshot del estado de apertura, no vacío — mismo patrón
+  // que CanvasView.tsx (historyIdx=0 al cargar, no -1).
+  const history = useRef<{ nodes: NodoFlow[]; edges: EdgeWithData[] }[]>([
+    { nodes: nodosIniciales.map((n) => ({ ...n, data: { ...n.data } })), edges: edgesIniciales.map((e) => ({ ...e })) },
+  ])
+  const historyIdx = useRef(0)
+
+  // `pushHistory()` (llamado ANTES de cada acción discreta, como en Canvas)
+  // solo LEVANTA UNA BANDERA — no captura nada todavía. La captura real
+  // ocurre en el efecto de abajo, DESPUÉS de que React ya aplicó el cambio,
+  // así el snapshot guardado es el resultado real de la acción, no una
+  // copia del estado anterior. Sin esto, "Rehacer" restauraba el mismo
+  // estado que "Deshacer" ya había restaurado (el snapshot posterior era
+  // idéntico al anterior, nunca el resultado real del cambio) porque
+  // pushHistory() capturaba el estado ANTES de aplicarse el cambio.
+  const necesitaSnapshotRef = useRef(false)
+  const restaurandoRef = useRef(false)
+  const pushHistory = useCallback(() => {
+    necesitaSnapshotRef.current = true
+  }, [])
+
+  useEffect(() => {
+    if (restaurandoRef.current) {
+      restaurandoRef.current = false
+      return
+    }
+    if (!necesitaSnapshotRef.current) return // cambio "silencioso" (ej. tipear texto letra por letra): no es un punto de historial
+    necesitaSnapshotRef.current = false
+    const snap = {
+      nodes: nodes.map((n) => ({ ...n, data: { ...n.data } })),
+      edges: edges.map((e) => ({ ...e })),
+    }
+    history.current = history.current.slice(0, historyIdx.current + 1)
+    history.current.push(snap)
+    if (history.current.length > 50) history.current.shift()
+    else historyIdx.current++
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes, edges])
+
+  const undo = useCallback(() => {
+    if (historyIdx.current <= 0) return
+    historyIdx.current--
+    restaurandoRef.current = true
+    const snap = history.current[historyIdx.current]
+    setNodes(snap.nodes)
+    setEdges(snap.edges)
+  }, [setNodes, setEdges])
+
+  const redo = useCallback(() => {
+    if (historyIdx.current >= history.current.length - 1) return
+    historyIdx.current++
+    restaurandoRef.current = true
+    const snap = history.current[historyIdx.current]
+    setNodes(snap.nodes)
+    setEdges(snap.edges)
+  }, [setNodes, setEdges])
+
   const handleActualizar = useCallback(
     (id: string, cambios: Partial<NodoData>) => {
       setNodes((nds) => nds.map((n) => (n.id === id ? { ...n, data: { ...n.data, ...cambios } } : n)))
@@ -303,13 +514,15 @@ function MapaMentalDetalle({
   )
   const handleEliminarNodo = useCallback(
     (id: string) => {
+      pushHistory()
       setNodes((nds) => nds.filter((n) => n.id !== id))
       setEdges((eds) => eds.filter((e) => e.source !== id && e.target !== id))
     },
-    [setNodes, setEdges]
+    [setNodes, setEdges, pushHistory]
   )
   const handleDuplicar = useCallback(
     (id: string) => {
+      pushHistory()
       setNodes((nds) => {
         const original = nds.find((n) => n.id === id)
         if (!original) return nds
@@ -323,7 +536,53 @@ function MapaMentalDetalle({
         return [...nds, copia]
       })
     },
-    [setNodes]
+    [setNodes, pushHistory]
+  )
+  // "Duplicar rama": copia el nodo y TODOS los que dependen de él siguiendo
+  // conexiones donde él es el origen (sus "hijos", recursivo) — junto con las
+  // conexiones internas entre ellos. Es lo que de verdad sirve para el caso
+  // real que motivó esto: una sub-estructura completa (ej. "Elementos" con
+  // sus "Objetivos"+"Subjetivos" colgando) que se repite para otra rama
+  // paralela, en vez de duplicar un nodo suelto sin lo que cuelga de él.
+  const handleDuplicarRama = useCallback(
+    (id: string) => {
+      const nds = nodesRef.current
+      const eds = edgesRef.current
+      const idsRama = new Set<string>([id])
+      let frontera = [id]
+      while (frontera.length > 0) {
+        const siguiente: string[] = []
+        for (const origen of frontera) {
+          for (const e of eds) {
+            if (e.source === origen && !idsRama.has(e.target)) {
+              idsRama.add(e.target)
+              siguiente.push(e.target)
+            }
+          }
+        }
+        frontera = siguiente
+      }
+      const idsNuevos = new Map<string, string>()
+      idsRama.forEach((oid) => idsNuevos.set(oid, crypto.randomUUID()))
+      const OFFSET = 60
+      const nodosCopia: NodoFlow[] = nds
+        .filter((n) => idsRama.has(n.id))
+        .map((n) => ({
+          ...n,
+          id: idsNuevos.get(n.id)!,
+          position: { x: n.position.x + OFFSET, y: n.position.y + OFFSET },
+          data: { ...n.data },
+          selected: false,
+        }))
+      const edgesCopia: EdgeWithData[] = eds
+        .filter((e) => idsRama.has(e.source) && idsRama.has(e.target))
+        .map((e) => ({ ...e, id: crypto.randomUUID(), source: idsNuevos.get(e.source)!, target: idsNuevos.get(e.target)! }))
+      if (nodosCopia.length === 0) return
+      pushHistory()
+      setNodes((prev) => [...prev, ...nodosCopia])
+      setEdges((prev) => [...prev, ...edgesCopia])
+    },
+    [setNodes, setEdges, pushHistory]
   )
   const handleActualizarEtiqueta = useCallback(
     (id: string, etiqueta: string) => {
@@ -333,20 +592,129 @@ function MapaMentalDetalle({
   )
 
   const onConnect = useCallback(
-    (conn: Connection) => setEdges((eds) => addEdge({ ...conn, type: 'editable', markerEnd: MARKER_FLECHA }, eds)),
-    [setEdges]
+    (conn: Connection) => {
+      pushHistory()
+      setEdges((eds) => addEdge({ ...conn, type: 'editable', markerEnd: MARKER_FLECHA }, eds))
+    },
+    [setEdges, pushHistory]
   )
+  // Caso distinto de los demás: acá el cambio de posición YA ocurrió (via
+  // onNodesChange durante el arrastre) para cuando este handler se dispara,
+  // así que pushHistory()+bandera llegaría tarde — puede que nodes/edges no
+  // vuelvan a cambiar después de esto, y el efecto de arriba nunca reciba la
+  // señal para capturar. Se captura DIRECTO acá, ya con el resultado final.
+  const onNodeDragStop = useCallback(() => {
+    const snap = {
+      nodes: nodesRef.current.map((n) => ({ ...n, data: { ...n.data } })),
+      edges: edgesRef.current.map((e) => ({ ...e })),
+    }
+    history.current = history.current.slice(0, historyIdx.current + 1)
+    history.current.push(snap)
+    if (history.current.length > 50) history.current.shift()
+    else historyIdx.current++
+  }, [])
 
+  // Nodo nuevo en el CENTRO de lo que se está mirando ahora mismo, no en una
+  // zona fija cerca del origen — si ya te moviste/hiciste zoom a otra parte
+  // del mapa, antes el nodo aparecía fuera de la vista y había que salir a
+  // buscarlo. `screenToFlowPosition` traduce coordenadas de pantalla a
+  // coordenadas del "mundo" del lienzo, sea cual sea el pan/zoom actual.
   const agregarNodo = (forma: FormaNodoMental) => {
+    pushHistory()
+    const rect = wrapperRef.current?.getBoundingClientRect()
+    const centroPantalla = rect ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 } : { x: 400, y: 300 }
+    const centro = rfRef.current?.screenToFlowPosition(centroPantalla) ?? { x: 200, y: 200 }
+    const jitter = () => (Math.random() - 0.5) * 60
     const nuevo: NodoFlow = {
       id: crypto.randomUUID(),
       type: 'mental',
-      position: { x: Math.random() * 300 + 120, y: Math.random() * 200 + 100 },
+      position: { x: centro.x + jitter(), y: centro.y + jitter() },
       data: { texto: 'Nuevo', forma, tamanoTexto: 'texto' },
       style: { width: forma === 'nube' ? 200 : 160 },
     }
     setNodes((nds) => [...nds, nuevo])
   }
+
+  // ============= ORGANIZAR AUTOMÁTICO =============
+  const organizarAutomatico = useCallback(() => {
+    if (nodesRef.current.length === 0) return
+    pushHistory()
+    const posiciones = calcularLayoutMapaMental(
+      nodesRef.current.map((n) => n.id),
+      edgesRef.current.map((e) => ({ desde: e.source, hasta: e.target }))
+    )
+    setNodes((nds) => nds.map((n) => (posiciones.has(n.id) ? { ...n, position: posiciones.get(n.id)! } : n)))
+    setTimeout(() => rfRef.current?.fitView({ padding: 0.3, duration: 300 }), 50)
+  }, [setNodes, pushHistory])
+
+  // ============= BUSCAR =============
+  const [busquedaAbierta, setBusquedaAbierta] = useState(false)
+  const [busqueda, setBusqueda] = useState('')
+  const coincidencias = useMemo(() => {
+    const q = busqueda.trim().toLowerCase()
+    if (!q) return []
+    return nodes.filter((n) => n.data.texto.toLowerCase().includes(q))
+  }, [busqueda, nodes])
+  const [indiceCoincidencia, setIndiceCoincidencia] = useState(0)
+
+  const irACoincidencia = useCallback(
+    (nodo: NodoFlow) => {
+      const ancho = typeof nodo.style?.width === 'number' ? nodo.style.width : 160
+      const alto = typeof nodo.style?.height === 'number' ? nodo.style.height : 60
+      rfRef.current?.setCenter(nodo.position.x + ancho / 2, nodo.position.y + alto / 2, { zoom: 1.1, duration: 400 })
+      setNodes((nds) => nds.map((n) => ({ ...n, selected: n.id === nodo.id })))
+    },
+    [setNodes]
+  )
+
+  useEffect(() => {
+    setIndiceCoincidencia(0)
+    if (coincidencias.length > 0) irACoincidencia(coincidencias[0])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [busqueda])
+
+  // ============= ATAJOS DE TECLADO =============
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const enCampoDeTexto = ['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+        e.preventDefault()
+        undo()
+      } else if (
+        ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') ||
+        ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'z')
+      ) {
+        e.preventDefault()
+        redo()
+      } else if ((e.key === 'Delete' || e.key === 'Backspace') && !enCampoDeTexto) {
+        const seleccionados = nodesRef.current.filter((n) => n.selected)
+        if (seleccionados.length === 0) return
+        e.preventDefault()
+        pushHistory()
+        const idsBorrar = new Set(seleccionados.map((n) => n.id))
+        setNodes((nds) => nds.filter((n) => !idsBorrar.has(n.id)))
+        setEdges((eds) => eds.filter((ed) => !idsBorrar.has(ed.source) && !idsBorrar.has(ed.target)))
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd' && !enCampoDeTexto) {
+        const seleccionado = nodesRef.current.find((n) => n.selected)
+        if (seleccionado) {
+          e.preventDefault()
+          handleDuplicar(seleccionado.id)
+        }
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [undo, redo, pushHistory, setNodes, setEdges, handleDuplicar])
+
+  // ============= EXPORTAR / IMPRIMIR =============
+  // Ajusta la vista para que entre todo el mapa justo antes de que se abra
+  // el diálogo de impresión — sin esto, imprime solo lo que estaba visible
+  // en pantalla en ese momento (recortado por el pan/zoom actual).
+  useEffect(() => {
+    const antesDeImprimir = () => rfRef.current?.fitView({ padding: 0.1, duration: 0 })
+    window.addEventListener('beforeprint', antesDeImprimir)
+    return () => window.removeEventListener('beforeprint', antesDeImprimir)
+  }, [])
 
   const ctxValue = useMemo<MentalCtx>(
     () => ({
@@ -355,10 +723,11 @@ function MapaMentalDetalle({
         actualizar: handleActualizar,
         eliminar: handleEliminarNodo,
         duplicar: handleDuplicar,
+        duplicarRama: handleDuplicarRama,
         actualizarEtiqueta: handleActualizarEtiqueta,
       },
     }),
-    [modoOscuro, handleActualizar, handleEliminarNodo, handleDuplicar, handleActualizarEtiqueta]
+    [modoOscuro, handleActualizar, handleEliminarNodo, handleDuplicar, handleDuplicarRama, handleActualizarEtiqueta]
   )
 
   const guardarTitulo = () => {
@@ -435,6 +804,97 @@ function MapaMentalDetalle({
           ))}
         </div>
 
+        {busquedaAbierta && (
+          <div
+            className={`flex items-center gap-1.5 px-2.5 h-8 rounded-lg flex-shrink-0 ${
+              modoOscuro ? 'bg-zinc-800' : 'bg-zinc-100'
+            }`}
+          >
+            <i className={`ti ti-search text-sm ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`} />
+            <input
+              autoFocus
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  setBusqueda('')
+                  setBusquedaAbierta(false)
+                } else if (e.key === 'Enter' && coincidencias.length > 0) {
+                  const siguiente = (indiceCoincidencia + 1) % coincidencias.length
+                  setIndiceCoincidencia(siguiente)
+                  irACoincidencia(coincidencias[siguiente])
+                }
+              }}
+              placeholder="Buscar en el mapa..."
+              className={`bg-transparent outline-none text-sm w-36 ${modoOscuro ? 'text-white placeholder:text-zinc-600' : 'text-zinc-900 placeholder:text-zinc-400'}`}
+            />
+            {busqueda && (
+              <span className={`text-xs whitespace-nowrap flex-shrink-0 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                {coincidencias.length === 0 ? 'sin resultados' : `${indiceCoincidencia + 1} de ${coincidencias.length}`}
+              </span>
+            )}
+          </div>
+        )}
+        <button
+          onClick={() => {
+            setBusquedaAbierta((v) => !v)
+            if (busquedaAbierta) setBusqueda('')
+          }}
+          title="Buscar en el mapa"
+          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
+            busquedaAbierta
+              ? 'text-white'
+              : modoOscuro
+              ? 'text-zinc-400 hover:bg-zinc-800'
+              : 'text-zinc-500 hover:bg-zinc-100'
+          }`}
+          style={busquedaAbierta ? { background: VERDE } : undefined}
+        >
+          <i className="ti ti-search text-base" />
+        </button>
+
+        <button
+          onClick={organizarAutomatico}
+          disabled={edges.length === 0}
+          title="Organizar automáticamente según las conexiones (sin IA: solo usa lo que ya conectaste)"
+          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 disabled:opacity-30 disabled:cursor-not-allowed ${
+            modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'
+          }`}
+        >
+          <i className="ti ti-sitemap text-base" />
+        </button>
+
+        <div className={`flex items-center gap-0.5 p-0.5 rounded-lg flex-shrink-0 ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-100'}`}>
+          <button
+            onClick={undo}
+            title="Deshacer (Ctrl+Z)"
+            className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors ${
+              modoOscuro ? 'text-zinc-300 hover:bg-zinc-700' : 'text-zinc-600 hover:bg-white hover:shadow-sm'
+            }`}
+          >
+            <i className="ti ti-arrow-back-up text-base" />
+          </button>
+          <button
+            onClick={redo}
+            title="Rehacer (Ctrl+Y)"
+            className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors ${
+              modoOscuro ? 'text-zinc-300 hover:bg-zinc-700' : 'text-zinc-600 hover:bg-white hover:shadow-sm'
+            }`}
+          >
+            <i className="ti ti-arrow-forward-up text-base" />
+          </button>
+        </div>
+
+        <button
+          onClick={() => window.print()}
+          title="Exportar a PDF: abre el diálogo de impresión, elegí 'Guardar como PDF'"
+          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
+            modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'
+          }`}
+        >
+          <i className="ti ti-printer text-base" />
+        </button>
+
         <button
           onClick={() => {
             if (confirm(`¿Eliminar el mapa "${mapa.titulo}"?`)) {
@@ -450,20 +910,25 @@ function MapaMentalDetalle({
         </button>
       </div>
 
-      <div className="flex-1 relative">
+      <div ref={wrapperRef} className="flex-1 relative imprimir-mapa-mental">
         <MentalContext.Provider value={ctxValue}>
           <ReactFlow
+            onInit={(instance) => {
+              rfRef.current = instance
+            }}
             nodes={nodes}
             edges={edges}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            onNodeDragStop={onNodeDragStop}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             fitView
             fitViewOptions={{ padding: 0.3 }}
             snapToGrid
             snapGrid={[15, 15]}
+            multiSelectionKeyCode="Shift"
             proOptions={{ hideAttribution: true }}
           >
             <Background color={modoOscuro ? '#27272a' : '#e4e4e7'} gap={20} />
@@ -487,9 +952,12 @@ function MapaMentalDetalle({
 
         {nodes.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <p className={`text-sm ${modoOscuro ? 'text-zinc-600' : 'text-zinc-400'}`}>
-              Usá los botones de forma arriba para agregar el primer nodo
-            </p>
+            <div className="text-center">
+              <i className={`ti ti-hierarchy-2 text-4xl block mb-2 ${modoOscuro ? 'text-zinc-700' : 'text-zinc-300'}`} />
+              <p className={`text-sm ${modoOscuro ? 'text-zinc-600' : 'text-zinc-400'}`}>
+                Usá los botones de forma arriba para agregar el primer nodo
+              </p>
+            </div>
           </div>
         )}
       </div>
@@ -602,6 +1070,15 @@ function NodoMental(props: NodeProps<NodoFlow>) {
 
   return (
     <>
+      <NodeResizer
+        isVisible={selected}
+        minWidth={data.forma === 'rombo' ? 130 : 90}
+        minHeight={data.forma === 'rombo' ? 130 : 44}
+        color={color}
+        handleStyle={{ width: 10, height: 10, borderRadius: 3, border: '2px solid white', boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }}
+        lineStyle={{ borderWidth: 2, borderStyle: 'dashed', opacity: 0.5 }}
+      />
+
       <NodeToolbar isVisible={selected} position={Position.Top} offset={10}>
         <div
           className={`flex items-center gap-0.5 px-1 py-1 rounded-lg shadow-lg ${
@@ -697,6 +1174,12 @@ function NodoMental(props: NodeProps<NodoFlow>) {
 
           <div className={`w-px h-5 mx-0.5 ${modoOscuro ? 'bg-zinc-700' : 'bg-zinc-200'}`} />
           <ToolbarBtn icono="ti-copy" label="Duplicar" onClick={() => callbacks.duplicar(id)} modoOscuro={modoOscuro} />
+          <ToolbarBtn
+            icono="ti-copy-plus"
+            label="Duplicar rama (este nodo y todo lo que cuelga de él)"
+            onClick={() => callbacks.duplicarRama(id)}
+            modoOscuro={modoOscuro}
+          />
           <ToolbarBtn
             icono="ti-trash"
             label="Eliminar"
