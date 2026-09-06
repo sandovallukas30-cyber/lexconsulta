@@ -113,7 +113,7 @@ export const MAPAS_MENTALES_PLANTILLA: MapaMentalPlantilla[] = [
         forma: 'rectangulo',
         tamanoTexto: 'texto',
       },
-      { id: 'clases', texto: 'Clases de omisión', forma: 'rectangulo', tamanoTexto: 'subtitulo', color: '#1d4ed8' },
+      { id: 'clases', texto: 'CLASES DE OMISIÓN', forma: 'rectangulo', tamanoTexto: 'subtitulo', color: '#1d4ed8' },
 
       // ---- Omisión pura o propia (subrayada, sin figura — igual que en el apunte) ----
       { id: 'pura', texto: 'Omisión pura o propia', forma: 'ninguna', tamanoTexto: 'subtitulo' },
@@ -124,7 +124,7 @@ export const MAPAS_MENTALES_PLANTILLA: MapaMentalPlantilla[] = [
         tamanoTexto: 'texto',
         nota: 'ej: art. 195 CP',
       },
-      { id: 'pura-elem', texto: 'Elementos', forma: 'ninguna', tamanoTexto: 'subtitulo' },
+      { id: 'pura-elem', texto: 'ELEMENTOS', forma: 'ninguna', tamanoTexto: 'subtitulo' },
       { id: 'pura-obj', texto: 'Objetivos', forma: 'ovalo', tamanoTexto: 'texto' },
       { id: 'pura-obj-1', texto: 'Situación típica', forma: 'rectangulo', tamanoTexto: 'texto' },
       { id: 'pura-obj-2', texto: 'Omisión de la acción debida', forma: 'rectangulo', tamanoTexto: 'texto' },
@@ -172,7 +172,7 @@ export const MAPAS_MENTALES_PLANTILLA: MapaMentalPlantilla[] = [
         tamanoTexto: 'texto',
       },
 
-      { id: 'comision-elem', texto: 'Elementos', forma: 'ninguna', tamanoTexto: 'subtitulo' },
+      { id: 'comision-elem', texto: 'ELEMENTOS', forma: 'ninguna', tamanoTexto: 'subtitulo' },
       // "(4)" tal cual lo anotó al lado el apunte — igual dibuja 6 flechas
       // saliendo de "Objetivos", no 4 (se lo señalo a el usuario aparte).
       { id: 'comision-obj', texto: 'Objetivos', forma: 'ovalo', tamanoTexto: 'texto', nota: '(4)' },

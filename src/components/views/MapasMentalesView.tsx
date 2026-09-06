@@ -14,7 +14,7 @@ import {
   NodeResizer,
   EdgeLabelRenderer,
   BaseEdge,
-  getStraightPath,
+  getBezierPath,
   MarkerType,
   ConnectionMode,
   type Node,
@@ -1520,7 +1520,7 @@ const nodeTypes = { mental: NodoMental }
 // ============= CUSTOM EDGE (mismo patrón que Canvas) =============
 
 function EdgeEditable(props: EdgeProps<EdgeWithData>) {
-  const { id, sourceX, sourceY, targetX, targetY, label, markerEnd } = props
+  const { id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, label, markerEnd } = props
   const { modoOscuro, callbacks } = useMentalCtx()
   const [editando, setEditando] = useState(false)
   const [valor, setValor] = useState(typeof label === 'string' ? label : '')
@@ -1533,12 +1533,15 @@ function EdgeEditable(props: EdgeProps<EdgeWithData>) {
     if (editando) inputRef.current?.focus()
   }, [editando])
 
-  // Línea recta, no curva Bezier: con conexión posible desde los 4 costados
-  // (ver HANDLES_POR_LADO), una Bezier calculada para "sale hacia abajo,
-  // entra hacia arriba" se veía torcida en cuanto el otro nodo quedaba al
-  // costado en vez de debajo. Una recta va siempre directo entre los dos
-  // puntos reales, sea cual sea el lado por el que salga o entre.
-  const [edgePath, labelX, labelY] = getStraightPath({ sourceX, sourceY, targetX, targetY })
+  // Bezier, no recta: el problema original ("la línea sale torcida") no era
+  // la curva en sí, era que ANTES solo existían handles arriba/abajo, así
+  // que una conexión a un nodo al costado se calculaba igual "sale para
+  // abajo, entra por arriba" sin importar dónde estuviera el otro nodo. Con
+  // los 4 lados (HANDLES_POR_LADO) la curva ahora arranca y llega por el
+  // lado real que se usó, así que sale derecha cuando corresponde y se curva
+  // suave cuando no — más parecida a una línea de apunte de mano que una
+  // recta calculada, que es además el estilo que se ve en la maqueta.
+  const [edgePath, labelX, labelY] = getBezierPath({ sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition })
   const stroke = modoOscuro ? '#52525b' : '#a1a1aa'
 
   const guardar = () => {
