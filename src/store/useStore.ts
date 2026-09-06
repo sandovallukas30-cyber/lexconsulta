@@ -327,9 +327,15 @@ export const useStore = create<AppState>()(
       crearMapaMental: (titulo) => {
         const id = crypto.randomUUID()
         const ahora = Date.now()
+        // La fecha va PEGADA al título (no solo en fechaCreacion) porque la
+        // lista de mapas se identifica por título a simple vista — "Nuevo
+        // mapa mental" repetido, o la misma plantilla usada varias veces,
+        // se volvía indistinguible sin abrir cada uno.
+        const fecha = new Date(ahora).toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' })
+        const tituloConFecha = `${titulo} — ${fecha}`
         set((s) => ({
           mapasMentales: [
-            { id, titulo, nodos: [], conexiones: [], fechaCreacion: ahora, fechaModificacion: ahora },
+            { id, titulo: tituloConFecha, nodos: [], conexiones: [], fechaCreacion: ahora, fechaModificacion: ahora },
             ...s.mapasMentales,
           ],
         }))
