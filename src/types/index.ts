@@ -223,6 +223,15 @@ export interface ConexionMapaMental {
   id: string
   desde: string
   hasta: string
+  /** De qué lado del nodo ORIGEN sale la línea ('top' | 'right' | 'bottom' |
+   * 'left') — sin esto, todas las conexiones salían desde abajo/entraban
+   * por arriba sin importar dónde quedara el otro nodo, lo que además hacía
+   * que la curva se viera torcida cuando el destino quedaba al costado.
+   * Opcional: una conexión vieja sin este campo cae al comportamiento
+   * anterior (ver defaults en MapasMentalesView.tsx). */
+  desdeHandle?: string
+  /** Mismo criterio que desdeHandle, pero para el lado del nodo DESTINO. */
+  hastaHandle?: string
   etiqueta?: string
 }
 

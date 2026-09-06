@@ -1,10 +1,11 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   ReactFlow,
   Background,
   Controls,
   useNodesState,
   useEdgesState,
+  useReactFlow,
   addEdge,
   Handle,
   Position,
@@ -13,8 +14,9 @@ import {
   NodeResizer,
   EdgeLabelRenderer,
   BaseEdge,
-  getBezierPath,
+  getStraightPath,
   MarkerType,
+  ConnectionMode,
   type Node,
   type Edge,
   type Connection,
@@ -311,6 +313,19 @@ const MIN_TAMANO: Record<FormaNodoMental, { w: number; h: number }> = {
   ninguna: { w: 50, h: 24 },
 }
 
+/** Un handle por lado, no solo arriba/abajo — antes solo se podía conectar
+ * verticalmente, y una conexión hacia un nodo ubicado al costado salía
+ * "hacia abajo" igual, dando una curva torcida en vez de una línea directa.
+ * Los 4 son `type="source"`: con `connectionMode="loose"` (ver <ReactFlow>)
+ * cualquier handle sirve tanto para EMPEZAR como para RECIBIR una conexión,
+ * así que no hace falta duplicar cada lado en source+target. */
+const HANDLES_POR_LADO: { id: string; posicion: Position }[] = [
+  { id: 'top', posicion: Position.Top },
+  { id: 'right', posicion: Position.Right },
+  { id: 'bottom', posicion: Position.Bottom },
+  { id: 'left', posicion: Position.Left },
+]
+
 const TAMANOS: { id: TamanoTextoMental; label: string; muestra: string }[] = [
   { id: 'titulo', label: 'Título', muestra: 'T' },
   { id: 'subtitulo', label: 'Subtítulo', muestra: 't' },
@@ -454,6 +469,12 @@ function MapaMentalDetalle({
         id: c.id,
         source: c.desde,
         target: c.hasta,
+        // 'bottom'/'top' acá reproducen el comportamiento ANTERIOR (única
+        // salida abajo, única entrada arriba) para conexiones guardadas
+        // antes de que existieran los 4 costados — así no se rompe ninguna
+        // conexión ya hecha al agregar los handles nuevos.
+        sourceHandle: c.desdeHandle ?? 'bottom',
+        targetHandle: c.hastaHandle ?? 'top',
         type: 'editable',
         label: c.etiqueta,
         markerEnd: MARKER_FLECHA,
@@ -485,6 +506,8 @@ function MapaMentalDetalle({
       id: e.id,
       desde: e.source,
       hasta: e.target,
+      desdeHandle: e.sourceHandle ?? undefined,
+      hastaHandle: e.targetHandle ?? undefined,
       etiqueta: typeof e.label === 'string' ? e.label : undefined,
     }))
     actualizarMapaMental(mapa.id, { nodos: nodosPersist, conexiones: conexionesPersist })
@@ -979,6 +1002,12 @@ function MapaMentalDetalle({
             snapToGrid
             snapGrid={[15, 15]}
             multiSelectionKeyCode="Shift"
+            // "loose": permite arrastrar una conexión desde CUALQUIER lado
+            // del nodo y soltarla en cualquier otro lado (sin esto, React
+            // Flow exige que la conexión salga específicamente de un handle
+            // "source" y entre a uno "target" — acá los 4 lados son "source"
+            // para poder conectar por el costado, no solo arriba/abajo).
+            connectionMode={ConnectionMode.Loose}
             proOptions={{ hideAttribution: true }}
           >
             <Background color={modoOscuro ? '#27272a' : '#e4e4e7'} gap={20} />
@@ -1040,7 +1069,13 @@ function CuerpoNodo({
   // que en vez de eso usa un halo (drop-shadow difuso) del mismo color; sin
   // seleccionar, la misma sombra sutil que las demás formas.
   const sombraCaja = seleccionado ? `0 0 0 2px ${color}` : modoOscuro ? '0 1px 3px rgba(0,0,0,0.4)' : '0 1px 3px rgba(0,0,0,0.1)'
-  const sombraNube = seleccionado
+  // drop-shadow (filtro) en vez de box-shadow: ambas formas de abajo (nube
+  // por el SVG, rombo por el clip-path) no tienen un borde rectangular recto
+  // — box-shadow dibujaría el aro alrededor del CUADRO invisible que las
+  // contiene, no de la silueta real, y clip-path directamente recorta
+  // cualquier box-shadow que se salga de su propio polígono. drop-shadow sí
+  // seguí la silueta visible, sea cual sea.
+  const halo = seleccionado
     ? `drop-shadow(0 0 4px ${color})`
     : modoOscuro
     ? 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))'
@@ -1053,7 +1088,7 @@ function CuerpoNodo({
           className="absolute inset-0 w-full h-full"
           viewBox="0 0 200 120"
           preserveAspectRatio="none"
-          style={{ filter: sombraNube }}
+          style={{ filter: halo }}
         >
           <path
             d="M45 90 C20 90 10 70 22 55 C10 40 30 20 50 28 C58 10 90 8 100 25 C120 10 150 20 148 42 C175 40 182 68 160 80 C165 100 135 108 118 96 C105 112 65 112 55 96 C35 102 25 92 45 90 Z"
@@ -1086,12 +1121,21 @@ function CuerpoNodo({
   }
 
   if (forma === 'rombo') {
+    // clip-path en vez de rotar un cuadrado 45°: rotar hace que las puntas
+    // se salgan del cuadro apenas el nodo deja de ser cuadrado (se veía
+    // estirado/roto al redimensionarlo) — clip-path corta un rombo LIMPIO
+    // según el ancho y alto REALES del nodo, sea cual sea la proporción. El
+    // "borde" se logra apilando dos capas recortadas con el mismo polígono
+    // (la de adentro, más chica, tapa casi toda la de afuera y deja ver solo
+    // un anillo) en vez de la propiedad `border`, que clip-path recortaría
+    // de forma pareja perdiendo justo las puntas.
+    const puntas = 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)'
     return (
-      <div className="relative w-full h-full flex items-center justify-center px-3 py-3">
-        <div
-          className="absolute inset-0"
-          style={{ background: fondo, border: `2px solid ${color}`, borderRadius: 6, transform: 'rotate(45deg)', boxShadow: sombraCaja }}
-        />
+      <div className="relative w-full h-full flex items-center justify-center px-4 py-4">
+        <div className="absolute inset-0" style={{ filter: halo }}>
+          <div className="absolute inset-0" style={{ background: color, clipPath: puntas }} />
+          <div className="absolute inset-[2px]" style={{ background: fondo, clipPath: puntas }} />
+        </div>
         <div className="relative z-10 text-center px-3 py-1 max-w-[65%]">{children}</div>
       </div>
     )
@@ -1141,6 +1185,7 @@ function renderTextoEnriquecido(texto: string): React.ReactNode[] {
 function NodoMental(props: NodeProps<NodoFlow>) {
   const { id, data, selected } = props
   const { modoOscuro, callbacks } = useMentalCtx()
+  const { updateNode } = useReactFlow<NodoFlow, EdgeWithData>()
   const [editando, setEditando] = useState(false)
   const [mostrandoTamanos, setMostrandoTamanos] = useState(false)
   const [mostrandoFormas, setMostrandoFormas] = useState(false)
@@ -1157,6 +1202,31 @@ function NodoMental(props: NodeProps<NodoFlow>) {
       ref.current?.select()
     }
   }, [editando])
+
+  // Auto-crecer el nodo con el texto: antes el textarea tenía 2 filas fijas
+  // sin importar cuánto se escribiera, así que un texto largo simplemente no
+  // se veía (había que agrandar el nodo A MANO con NodeResizer, y ni así el
+  // textarea de adentro seguía ese tamaño). Ahora el textarea mide su propio
+  // contenido (scrollHeight) en cada tecleo y, si no entra en la altura
+  // actual del nodo, agranda EL NODO — nunca lo achica solo, así no compite
+  // con un ajuste manual del usuario. Tope de 400px: pasado eso, el textarea
+  // sigue creciendo el nodo hasta el tope y el resto se desplaza con scroll
+  // interno (overflow-y-auto en el textarea), en vez de crecer sin límite.
+  useLayoutEffect(() => {
+    if (!editando) return
+    const ta = ref.current
+    if (!ta) return
+    const ALTO_MAX = 400
+    const PADDING_VERTICAL = 28
+    ta.style.height = 'auto'
+    const contenido = Math.min(ta.scrollHeight, ALTO_MAX - PADDING_VERTICAL)
+    ta.style.height = `${contenido}px`
+    const deseada = Math.min(ALTO_MAX, Math.max(MIN_TAMANO[data.forma].h, contenido + PADDING_VERTICAL))
+    updateNode(id, (n) => {
+      const actual = typeof n.style?.height === 'number' ? n.style.height : 0
+      return deseada > actual ? { style: { ...n.style, height: deseada } } : {}
+    })
+  }, [data.texto, data.forma, editando, id, updateNode])
 
   useEffect(() => {
     setNotaTmp(data.nota ?? '')
@@ -1194,6 +1264,13 @@ function NodoMental(props: NodeProps<NodoFlow>) {
         isVisible={selected}
         minWidth={MIN_TAMANO[data.forma].w}
         minHeight={MIN_TAMANO[data.forma].h}
+        // Nube y rombo dependen de la proporción ancho:alto para verse bien
+        // (la nube es un SVG que se estira sin mantener proporción; el rombo
+        // deja de leerse como rombo si queda mucho más ancho que alto, o
+        // viceversa) — al arrastrar una esquina, ambas dimensiones cambian
+        // juntas. Rectángulo/óvalo/sin-figura siguen libres: son los que más
+        // se benefician de poder achatarse o alargarse para que entre texto.
+        keepAspectRatio={data.forma === 'nube' || data.forma === 'rombo'}
         color={color}
         handleStyle={{ width: 10, height: 10, borderRadius: 3, border: '2px solid white', boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }}
         lineStyle={{ borderWidth: 2, borderStyle: 'dashed', opacity: 0.5 }}
@@ -1349,7 +1426,15 @@ function NodoMental(props: NodeProps<NodoFlow>) {
       </NodeToolbar>
 
       <div className="relative" style={{ width: '100%', height: '100%', minHeight: 60 }} onDoubleClick={() => setEditando(true)}>
-        <Handle type="target" position={Position.Top} style={{ background: color, width: 8, height: 8, zIndex: 20 }} />
+        {HANDLES_POR_LADO.map((h) => (
+          <Handle
+            key={h.id}
+            id={h.id}
+            type="source"
+            position={h.posicion}
+            style={{ background: color, width: 8, height: 8, zIndex: 20 }}
+          />
+        ))}
         <CuerpoNodo forma={data.forma} color={color} modoOscuro={modoOscuro} seleccionado={!!selected}>
           {editando ? (
             <textarea
@@ -1365,8 +1450,7 @@ function NodoMental(props: NodeProps<NodoFlow>) {
                 if (e.key === 'Escape') setEditando(false)
               }}
               onClick={(e) => e.stopPropagation()}
-              rows={2}
-              className={`nodrag w-full bg-transparent outline-none resize-none text-center ${TAMANO_CLASE[data.tamanoTexto]} ${
+              className={`nodrag w-full min-h-[28px] bg-transparent outline-none resize-none overflow-y-auto text-center ${TAMANO_CLASE[data.tamanoTexto]} ${
                 modoOscuro ? 'text-white' : 'text-zinc-900'
               }`}
             />
@@ -1380,7 +1464,6 @@ function NodoMental(props: NodeProps<NodoFlow>) {
             </span>
           )}
         </CuerpoNodo>
-        <Handle type="source" position={Position.Bottom} style={{ background: color, width: 8, height: 8, zIndex: 20 }} />
 
         {/* Nota al margen: SIEMPRE visible (no hace falta pasar el mouse ni
             hacer clic para leerla, igual que la cita chica al lado de un
@@ -1437,7 +1520,7 @@ const nodeTypes = { mental: NodoMental }
 // ============= CUSTOM EDGE (mismo patrón que Canvas) =============
 
 function EdgeEditable(props: EdgeProps<EdgeWithData>) {
-  const { id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, label, markerEnd } = props
+  const { id, sourceX, sourceY, targetX, targetY, label, markerEnd } = props
   const { modoOscuro, callbacks } = useMentalCtx()
   const [editando, setEditando] = useState(false)
   const [valor, setValor] = useState(typeof label === 'string' ? label : '')
@@ -1450,7 +1533,12 @@ function EdgeEditable(props: EdgeProps<EdgeWithData>) {
     if (editando) inputRef.current?.focus()
   }, [editando])
 
-  const [edgePath, labelX, labelY] = getBezierPath({ sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition })
+  // Línea recta, no curva Bezier: con conexión posible desde los 4 costados
+  // (ver HANDLES_POR_LADO), una Bezier calculada para "sale hacia abajo,
+  // entra hacia arriba" se veía torcida en cuanto el otro nodo quedaba al
+  // costado en vez de debajo. Una recta va siempre directo entre los dos
+  // puntos reales, sea cual sea el lado por el que salga o entre.
+  const [edgePath, labelX, labelY] = getStraightPath({ sourceX, sourceY, targetX, targetY })
   const stroke = modoOscuro ? '#52525b' : '#a1a1aa'
 
   const guardar = () => {
