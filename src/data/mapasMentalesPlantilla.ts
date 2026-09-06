@@ -84,43 +84,144 @@ export const MAPAS_MENTALES_PLANTILLA: MapaMentalPlantilla[] = [
     ],
   },
   {
+    // Réplica DIRECTA de un apunte de mano fotografiado (ver conversación) —
+    // a diferencia de la plantilla de arriba, acá el objetivo no es dar un
+    // punto de partida genérico sino calcar la estructura EXACTA de ese
+    // apunte en particular: mismas etiquetas (incluida la raíz repitiendo el
+    // nombre de una de sus propias ramas, tal como está escrito a mano),
+    // mismo árbol de conexiones, mismos colores/subrayados/notas al margen
+    // donde el original usaba color o una cita chica. Dos cosas del original
+    // no se pueden replicar con nodos+figuras: el trazo curvo hecho a pulso
+    // (acá las conexiones son rectas/calculadas) y el tono exacto de tinta
+    // (acá los colores son la paleta semántica fija de la app, no un color
+    // libre calcado pixel a pixel).
     id: 'plantilla-omision-penal',
     titulo: 'La omisión en Derecho Penal',
-    descripcion: 'Réplica de estructura: pura/propia vs. comisión por omisión, cada una con sus elementos objetivos y subjetivos.',
+    descripcion: 'Réplica exacta de un apunte de mano: pura/propia vs. comisión por omisión, con la misma jerarquía, colores y notas del original.',
     nodos: [
-      { id: 'raiz', texto: 'Omisión\n(no hacer lo debido)', forma: 'nube', tamanoTexto: 'titulo' },
+      { id: 'raiz', texto: 'Comisión por omisión', forma: 'nube', tamanoTexto: 'titulo' },
+      {
+        id: 'raiz-def',
+        texto:
+          'No realizar algo que debemos hacer y que normativamente se espera de nosotros, pudiendo cumplirlo materialmente. Solo omitimos cuando no hacemos algo a lo que estamos obligados.',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+      },
+      {
+        id: 'raiz-combinacion',
+        texto: 'Puede haber combinación de delito omisivo y comisivo. Hay acción: omitir es no hacer una acción debida *(infringe una norma imperativa)*.',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+      },
       { id: 'clases', texto: 'Clases de omisión', forma: 'rectangulo', tamanoTexto: 'subtitulo', color: '#1d4ed8' },
 
-      { id: 'pura', texto: 'Omisión pura o propia', forma: 'ovalo', tamanoTexto: 'subtitulo', color: '#1d4ed8' },
-      { id: 'pura-def', texto: 'Omisión del deber de socorro — infringe directamente la norma imperativa', forma: 'rectangulo', tamanoTexto: 'texto', nota: 'Ej: art. 494 N°14 CP' },
+      // ---- Omisión pura o propia (subrayada, sin figura — igual que en el apunte) ----
+      { id: 'pura', texto: 'Omisión pura o propia', forma: 'ninguna', tamanoTexto: 'subtitulo' },
+      {
+        id: 'pura-def',
+        texto: 'Omisión del deber de socorro (de la norma imperativa) — deben estar tipificadas expresamente',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+        nota: 'ej: art. 195 CP',
+      },
       { id: 'pura-elem', texto: 'Elementos', forma: 'ninguna', tamanoTexto: 'subtitulo' },
       { id: 'pura-obj', texto: 'Objetivos', forma: 'ovalo', tamanoTexto: 'texto' },
       { id: 'pura-obj-1', texto: 'Situación típica', forma: 'rectangulo', tamanoTexto: 'texto' },
       { id: 'pura-obj-2', texto: 'Omisión de la acción debida', forma: 'rectangulo', tamanoTexto: 'texto' },
-      { id: 'pura-obj-3', texto: 'Capacidad de realizar la acción (sin riesgo propio ni de terceros)', forma: 'rectangulo', tamanoTexto: 'texto' },
+      {
+        id: 'pura-obj-3',
+        texto: "Capacidad de realizar la acción debida — \"poder hacerlo\" sin riesgo personal ni para un tercero (lesión ⇒ persona concreta)",
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+      },
+      // Nota al margen VERDE en el original (con una palabra tachada e ilegible que no se replica): matiz doctrinal real —
+      // a diferencia de la comisión por omisión, acá no hace falta que el resultado se produzca.
+      { id: 'pura-obj-nota', texto: 'No hace falta que se produzca el resultado', forma: 'rectangulo', tamanoTexto: 'texto', color: '#15803d' },
       { id: 'pura-subj', texto: 'Subjetivos', forma: 'ovalo', tamanoTexto: 'texto' },
-      { id: 'pura-subj-1', texto: 'Dolo: saber y querer no ayudar *(no admite modalidad imprudente)*', forma: 'rectangulo', tamanoTexto: 'texto', color: '#b91c1c' },
+      {
+        id: 'pura-subj-1',
+        texto: 'Dolo: conocimiento y voluntad de no ayudar a una persona en peligro y desamparada *(no admite modalidad imprudente)*',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+        color: '#b91c1c',
+      },
       { id: 'pura-subj-2', texto: 'Condiciones especiales de autoría', forma: 'rectangulo', tamanoTexto: 'texto' },
 
-      { id: 'comision', texto: 'Comisión por omisión', forma: 'ovalo', tamanoTexto: 'subtitulo', color: '#1d4ed8' },
-      { id: 'comision-def', texto: 'No evitar un resultado lesivo que el sujeto debía impedir', forma: 'rectangulo', tamanoTexto: 'texto' },
-      { id: 'garante', texto: 'Posición de garante', forma: 'rombo', tamanoTexto: 'texto', color: '#b45309', nota: 'Ej: madre que no alimenta a su hijo' },
-      { id: 'equiparacion', texto: 'Equiparación con la acción: deber legal o contractual de actuar, o haber creado el riesgo previamente', forma: 'rectangulo', tamanoTexto: 'texto' },
+      // ---- Comisión por omisión (subrayada, sin figura) — el apunte repite
+      // literalmente el mismo nombre de la raíz para esta rama; se replica
+      // tal cual, ver aviso en la descripción de arriba. ----
+      { id: 'comision', texto: 'Comisión por omisión', forma: 'ninguna', tamanoTexto: 'subtitulo' },
+      { id: 'comision-def', texto: 'No evitación por el sujeto de un resultado lesivo determinado', forma: 'rectangulo', tamanoTexto: 'texto' },
+      {
+        id: 'comision-infringe',
+        texto:
+          'Infringe una norma imperativa (obliga a hacer algo), y esa infracción supone también la infracción de una norma prohibitiva *(como si hubiera producido el resultado ⇒ se responde por el resultado)*',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+      },
+      { id: 'comision-pueden-ser', texto: 'Pueden ser', forma: 'ninguna', tamanoTexto: 'texto' },
+      { id: 'comision-delitos-1', texto: 'Delitos recogidos por el legislador', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'comision-delitos-2', texto: 'Delitos de resultado (sin un delito omisivo creado específicamente)', forma: 'rectangulo', tamanoTexto: 'texto' },
+
+      { id: 'comision-equiparacion', texto: 'Equiparación omisión y acción (art. 11 CP)', forma: 'rectangulo', tamanoTexto: 'texto', color: '#1d4ed8' },
+      { id: 'comision-equip-1', texto: 'Obligación legal o contractual de actuar', forma: 'rectangulo', tamanoTexto: 'texto' },
+      {
+        id: 'comision-equip-2',
+        texto: 'El omitente ha creado una ocasión de riesgo para el bien jurídico protegido mediante una acción u omisión anterior',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+      },
+
       { id: 'comision-elem', texto: 'Elementos', forma: 'ninguna', tamanoTexto: 'subtitulo' },
-      { id: 'comision-obj', texto: 'Objetivos', forma: 'ovalo', tamanoTexto: 'texto' },
-      { id: 'comision-obj-1', texto: 'Posición de garante + producción del resultado', forma: 'rectangulo', tamanoTexto: 'texto' },
-      { id: 'comision-obj-2', texto: 'Equivalencia material con la comisión activa', forma: 'rectangulo', tamanoTexto: 'texto' },
-      { id: 'comision-obj-3', texto: 'Imputación objetiva: crear o aumentar un peligro evitable', forma: 'rectangulo', tamanoTexto: 'texto' },
+      // "(4)" tal cual lo anotó al lado el apunte — igual dibuja 6 flechas
+      // saliendo de "Objetivos", no 4 (se lo señalo a el usuario aparte).
+      { id: 'comision-obj', texto: 'Objetivos', forma: 'ovalo', tamanoTexto: 'texto', nota: '(4)' },
+      {
+        id: 'garante',
+        texto: 'Posición de garante ⇒ deber especial de actuar para evitar el resultado',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+        color: '#b45309',
+      },
+      {
+        id: 'comision-obj-2',
+        texto: 'Omisión de la acción debida ⇒ surge de la posición de garante + la producción del resultado',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+      },
+      {
+        id: 'comision-obj-3',
+        texto:
+          'Capacidad de realizar la acción debida + equivalencia material con la comisión activa — el garante infringió su deber de evitar el resultado, equivalente a causarlo activamente. *Si falla la equivalencia material → omisión de socorro.*',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+      },
+      { id: 'comision-obj-4', texto: 'No hay relación de causalidad en los delitos omisivos', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'comision-obj-5', texto: 'Posibilidad de evitar el resultado', forma: 'rectangulo', tamanoTexto: 'texto' },
+      {
+        id: 'comision-obj-6',
+        texto:
+          'Imputación objetiva: el sujeto, con su omisión, crea o aumenta un peligro que no existía —o existía pero estaba controlado—, pudiendo haber evitado el resultado',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+      },
       { id: 'comision-subj', texto: 'Subjetivos', forma: 'ovalo', tamanoTexto: 'texto' },
-      { id: 'comision-subj-1', texto: 'Dolo: conciencia de la posición de garante + voluntad de incumplir', forma: 'rectangulo', tamanoTexto: 'texto' },
-      { id: 'comision-subj-2', texto: 'Imprudencia, *solo si está tipificada expresamente*', forma: 'rectangulo', tamanoTexto: 'texto', color: '#b91c1c' },
-      { id: 'comision-subj-3', texto: 'Iter criminis y autoría/participación', forma: 'rectangulo', tamanoTexto: 'texto' },
+      {
+        id: 'comision-subj-1',
+        texto: 'Dolo ⇒ si es consciente de su posición de garante (incumpliendo el deber de actuar) + voluntad',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+      },
+      { id: 'comision-subj-2', texto: 'Imprudencia ⇒ *solo si se ha tipificado expresamente*', forma: 'rectangulo', tamanoTexto: 'texto', color: '#b91c1c' },
+      { id: 'comision-subj-3', texto: 'Iter criminis ⇒ tentativa acabada e inacabada', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'comision-subj-4', texto: 'Autoría ⇒ autor / partícipe', forma: 'rectangulo', tamanoTexto: 'texto' },
     ],
     conexiones: [
+      { desde: 'raiz', hasta: 'raiz-def' },
+      { desde: 'raiz-def', hasta: 'raiz-combinacion' },
       { desde: 'raiz', hasta: 'clases' },
-      { desde: 'clases', hasta: 'pura' },
-      { desde: 'clases', hasta: 'comision' },
 
+      { desde: 'clases', hasta: 'pura' },
       { desde: 'pura', hasta: 'pura-def' },
       { desde: 'pura', hasta: 'pura-elem' },
       { desde: 'pura-elem', hasta: 'pura-obj' },
@@ -128,21 +229,32 @@ export const MAPAS_MENTALES_PLANTILLA: MapaMentalPlantilla[] = [
       { desde: 'pura-obj', hasta: 'pura-obj-1' },
       { desde: 'pura-obj', hasta: 'pura-obj-2' },
       { desde: 'pura-obj', hasta: 'pura-obj-3' },
+      { desde: 'pura-obj-3', hasta: 'pura-obj-nota' },
       { desde: 'pura-subj', hasta: 'pura-subj-1' },
       { desde: 'pura-subj', hasta: 'pura-subj-2' },
 
+      { desde: 'clases', hasta: 'comision' },
       { desde: 'comision', hasta: 'comision-def' },
-      { desde: 'comision', hasta: 'garante' },
-      { desde: 'garante', hasta: 'equiparacion' },
+      { desde: 'comision-def', hasta: 'comision-infringe' },
+      { desde: 'comision-infringe', hasta: 'comision-pueden-ser' },
+      { desde: 'comision-pueden-ser', hasta: 'comision-delitos-1' },
+      { desde: 'comision-pueden-ser', hasta: 'comision-delitos-2' },
+      { desde: 'comision', hasta: 'comision-equiparacion' },
+      { desde: 'comision-equiparacion', hasta: 'comision-equip-1' },
+      { desde: 'comision-equiparacion', hasta: 'comision-equip-2' },
       { desde: 'comision', hasta: 'comision-elem' },
       { desde: 'comision-elem', hasta: 'comision-obj' },
       { desde: 'comision-elem', hasta: 'comision-subj' },
-      { desde: 'comision-obj', hasta: 'comision-obj-1' },
+      { desde: 'comision-obj', hasta: 'garante' },
       { desde: 'comision-obj', hasta: 'comision-obj-2' },
       { desde: 'comision-obj', hasta: 'comision-obj-3' },
+      { desde: 'comision-obj', hasta: 'comision-obj-4' },
+      { desde: 'comision-obj', hasta: 'comision-obj-5' },
+      { desde: 'comision-obj', hasta: 'comision-obj-6' },
       { desde: 'comision-subj', hasta: 'comision-subj-1' },
       { desde: 'comision-subj', hasta: 'comision-subj-2' },
       { desde: 'comision-subj', hasta: 'comision-subj-3' },
+      { desde: 'comision-subj', hasta: 'comision-subj-4' },
     ],
   },
 ]
