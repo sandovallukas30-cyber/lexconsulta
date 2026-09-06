@@ -28,7 +28,19 @@ import type { MapaMental, NodoMapaMental, ConexionMapaMental, FormaNodoMental, T
 import { MAPAS_MENTALES_PLANTILLA } from '../../data/mapasMentalesPlantilla'
 
 const VERDE = 'var(--accent-base)'
-const COLORES_NODO = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#71717a']
+/** Paleta CON significado fijo, no un selector de color libre: la idea es
+ * que el color en sí diga algo al repasar el mapa de un vistazo, igual que
+ * en un apunte de mano donde el rojo siempre marca "excepción" y no
+ * cualquier cosa. `color: null` = "Neutro" (sin marcar, usa el acento de la
+ * app) — es la opción para sacarle un color puesto por error. */
+const PALETA_SEMANTICA: { color: string | null; nombre: string; significado: string }[] = [
+  { color: null, nombre: 'Neutro', significado: 'Sin marcar (color por defecto)' },
+  { color: '#1d4ed8', nombre: 'Azul', significado: 'Concepto o clasificación' },
+  { color: '#15803d', nombre: 'Verde', significado: 'Regla general / lo permitido' },
+  { color: '#b91c1c', nombre: 'Rojo', significado: 'Excepción, prohibición o riesgo' },
+  { color: '#b45309', nombre: 'Ámbar', significado: 'Atención — punto clave' },
+  { color: '#7e22ce', nombre: 'Morado', significado: 'Ejemplo o caso práctico' },
+]
 // Punta de flecha en las conexiones — sin esto eran solo líneas sin sentido
 // de dirección, perdiendo justo el vocabulario visual (→, ↓) que el propio
 // apunte de referencia usaba para mostrar jerarquía. Color neutro fijo (no
@@ -62,6 +74,7 @@ type NodoData = {
   forma: FormaNodoMental
   tamanoTexto: TamanoTextoMental
   color?: string
+  nota?: string
 }
 
 interface NodoCallbacks {
@@ -118,6 +131,8 @@ export function MapasMentalesView() {
       texto: n.texto,
       forma: n.forma,
       tamanoTexto: n.tamanoTexto,
+      color: n.color,
+      nota: n.nota,
       ancho: n.forma === 'nube' ? 220 : 170,
     }))
     const conexiones: ConexionMapaMental[] = plantilla.conexiones.map((c) => ({
@@ -282,7 +297,19 @@ const FORMAS: { id: FormaNodoMental; icono: string; label: string }[] = [
   { id: 'ovalo', icono: 'ti-circle', label: 'Óvalo — subcategoría' },
   { id: 'nube', icono: 'ti-cloud', label: 'Nube — tema raíz' },
   { id: 'rombo', icono: 'ti-diamond', label: 'Rombo — bifurcación / decisión' },
+  { id: 'ninguna', icono: 'ti-underline', label: 'Sin figura — texto subrayado' },
 ]
+
+/** Tamaño mínimo de redimensionado por forma — el rombo necesita ancho y
+ * alto parecidos (para no aplanarlo hasta que deje de leerse como rombo) y
+ * el texto sin figura no necesita una caja mínima grande, es solo texto. */
+const MIN_TAMANO: Record<FormaNodoMental, { w: number; h: number }> = {
+  rectangulo: { w: 90, h: 44 },
+  ovalo: { w: 90, h: 44 },
+  nube: { w: 90, h: 44 },
+  rombo: { w: 130, h: 130 },
+  ninguna: { w: 50, h: 24 },
+}
 
 const TAMANOS: { id: TamanoTextoMental; label: string; muestra: string }[] = [
   { id: 'titulo', label: 'Título', muestra: 'T' },
@@ -300,6 +327,16 @@ const TAMANOS: { id: TamanoTextoMental; label: string; muestra: string }[] = [
  * poder reutilizarla también al posicionar una plantilla recién creada, que
  * todavía no tiene nodos "de verdad" en el lienzo.
  */
+/** Hash determinístico simple (no criptográfico) para derivar un "jitter"
+ * estable a partir del id del nodo: mismo id, mismo desplazamiento siempre
+ * — así "Organizar" da resultados reproducibles (no salta cada vez que se
+ * lo aprieta) pero igual rompe la grilla perfecta de fila/columna. */
+function semillaDesdeId(id: string): number {
+  let h = 0
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0
+  return h
+}
+
 function calcularLayoutMapaMental(
   ids: string[],
   conexiones: { desde: string; hasta: string }[]
@@ -336,6 +373,11 @@ function calcularLayoutMapaMental(
   const ESPACIO_X = 220
   const ESPACIO_Y = 150
   const MARGEN = 40
+  // Desplazamiento chico (mucho menor que ESPACIO_X/Y, no puede generar
+  // superposición) para que el resultado se sienta más parecido a un mapa
+  // mental hecho a mano y menos a un organigrama perfectamente cuadriculado.
+  const JITTER_X = 22
+  const JITTER_Y = 16
   const xAsignada = new Map<string, number>()
   const resultado = new Map<string, { x: number; y: number }>()
 
@@ -361,9 +403,16 @@ function calcularLayoutMapaMental(
       const deseada = deseadaPorId.get(id)
       const minimo = xPrevio === null ? MARGEN : xPrevio + ESPACIO_X
       const x = deseada !== undefined ? Math.max(deseada, minimo) : minimo
+      // El espaciado ENTRE nodos (xAsignada/xPrevio, arriba) usa la grilla
+      // limpia para no arriesgar superposiciones; el jitter se suma recién
+      // acá, sobre la posición FINAL que se guarda — así nunca compone entre
+      // nodos vecinos ni puede achicar el espacio ya calculado entre ellos.
       xAsignada.set(id, x)
       xPrevio = x
-      resultado.set(id, { x, y: c * ESPACIO_Y + MARGEN })
+      const semilla = semillaDesdeId(id)
+      const jitterX = ((semilla % 1000) / 1000 - 0.5) * 2 * JITTER_X
+      const jitterY = (((semilla >>> 3) % 1000) / 1000 - 0.5) * 2 * JITTER_Y
+      resultado.set(id, { x: x + jitterX, y: c * ESPACIO_Y + MARGEN + jitterY })
     })
   }
   return resultado
@@ -391,7 +440,7 @@ function MapaMentalDetalle({
         id: n.id,
         type: 'mental',
         position: n.posicion,
-        data: { texto: n.texto, forma: n.forma, tamanoTexto: n.tamanoTexto, color: n.color },
+        data: { texto: n.texto, forma: n.forma, tamanoTexto: n.tamanoTexto, color: n.color, nota: n.nota },
         style: { width: n.ancho ?? 180, height: n.alto },
       })),
     // Solo al montar: el mapa se remonta entero al volver a la lista (key={mapa.id}), así que no hace
@@ -428,6 +477,7 @@ function MapaMentalDetalle({
       forma: n.data.forma,
       tamanoTexto: n.data.tamanoTexto,
       color: n.data.color,
+      nota: n.data.nota,
       ancho: typeof n.style?.width === 'number' ? n.style.width : 180,
       alto: typeof n.style?.height === 'number' ? n.style.height : undefined,
     }))
@@ -630,7 +680,7 @@ function MapaMentalDetalle({
       type: 'mental',
       position: { x: centro.x + jitter(), y: centro.y + jitter() },
       data: { texto: 'Nuevo', forma, tamanoTexto: 'texto' },
-      style: { width: forma === 'nube' ? 200 : 160 },
+      style: { width: forma === 'nube' ? 200 : forma === 'ninguna' ? 140 : 160 },
     }
     setNodes((nds) => [...nds, nuevo])
   }
@@ -1017,6 +1067,24 @@ function CuerpoNodo({
     )
   }
 
+  if (forma === 'ninguna') {
+    // Texto "pelado": sin caja ni fondo, solo subrayado — el nivel que en un
+    // apunte de mano no se enmarca (ej. un subtítulo de sección). El aro de
+    // selección de las otras formas no aplicaría acá (dibujaría una caja
+    // fantasma alrededor de texto suelto); alcanza con el recuadro punteado
+    // que ya pone NodeResizer al seleccionar cualquier nodo.
+    return (
+      <div className="relative w-full h-full flex items-center justify-center px-1 py-1">
+        <div
+          className="relative z-10 text-center"
+          style={{ textDecorationLine: 'underline', textDecorationColor: color, textDecorationThickness: 2, textUnderlineOffset: 4 }}
+        >
+          {children}
+        </div>
+      </div>
+    )
+  }
+
   if (forma === 'rombo') {
     return (
       <div className="relative w-full h-full flex items-center justify-center px-3 py-3">
@@ -1050,6 +1118,26 @@ const TAMANO_CLASE: Record<TamanoTextoMental, string> = {
   texto: 'text-xs font-normal',
 }
 
+/** Formato enriquecido MUY liviano dentro de un mismo nodo: `*negrita*` y
+ * `_subrayado_`, sin anidar (ej. no `*_ambos_*`) ni cruzar líneas — no es un
+ * editor WYSIWYG, es una convención de marcado que el usuario aplica con los
+ * botones de la barra al editar (que envuelven la selección de texto), o
+ * escribiéndola directo. Cubre el caso real (resaltar UNA palabra dentro de
+ * una frase más larga) sin el costo de un editor de texto enriquecido de
+ * verdad. */
+function renderTextoEnriquecido(texto: string): React.ReactNode[] {
+  const partes = texto.split(/(\*[^*\n]+\*|_[^_\n]+_)/g)
+  return partes.map((parte, i) => {
+    if (parte.length > 2 && parte.startsWith('*') && parte.endsWith('*')) {
+      return <strong key={i}>{parte.slice(1, -1)}</strong>
+    }
+    if (parte.length > 2 && parte.startsWith('_') && parte.endsWith('_')) {
+      return <u key={i}>{parte.slice(1, -1)}</u>
+    }
+    return parte
+  })
+}
+
 function NodoMental(props: NodeProps<NodoFlow>) {
   const { id, data, selected } = props
   const { modoOscuro, callbacks } = useMentalCtx()
@@ -1057,6 +1145,8 @@ function NodoMental(props: NodeProps<NodoFlow>) {
   const [mostrandoTamanos, setMostrandoTamanos] = useState(false)
   const [mostrandoFormas, setMostrandoFormas] = useState(false)
   const [mostrandoColores, setMostrandoColores] = useState(false)
+  const [editandoNota, setEditandoNota] = useState(false)
+  const [notaTmp, setNotaTmp] = useState(data.nota ?? '')
   const ref = useRef<HTMLTextAreaElement>(null)
 
   const color = data.color ?? VERDE
@@ -1068,23 +1158,72 @@ function NodoMental(props: NodeProps<NodoFlow>) {
     }
   }, [editando])
 
+  useEffect(() => {
+    setNotaTmp(data.nota ?? '')
+  }, [data.nota])
+
+  const guardarNota = () => {
+    callbacks.actualizar(id, { nota: notaTmp.trim() || undefined })
+    setEditandoNota(false)
+  }
+
+  // Botones "Negrita"/"Subrayado" de la barra: envuelven la SELECCIÓN actual
+  // del textarea con el marcador (o, si no hay nada seleccionado, insertan el
+  // par de marcadores en el cursor y dejan el cursor entre medio, como
+  // cualquier editor). `onMouseDown` con preventDefault en el botón (más
+  // abajo) es lo que evita que el textarea pierda el foco (blur) ANTES de
+  // que este click llegue a ejecutarse.
+  const envolverSeleccion = (marcador: string) => {
+    const ta = ref.current
+    if (!ta) return
+    const inicio = ta.selectionStart ?? 0
+    const fin = ta.selectionEnd ?? 0
+    const actual = data.texto
+    const nuevo = actual.slice(0, inicio) + marcador + actual.slice(inicio, fin) + marcador + actual.slice(fin)
+    callbacks.actualizar(id, { texto: nuevo })
+    requestAnimationFrame(() => {
+      ta.focus()
+      if (inicio === fin) ta.setSelectionRange(inicio + marcador.length, inicio + marcador.length)
+      else ta.setSelectionRange(inicio + marcador.length, fin + marcador.length)
+    })
+  }
+
   return (
     <>
       <NodeResizer
         isVisible={selected}
-        minWidth={data.forma === 'rombo' ? 130 : 90}
-        minHeight={data.forma === 'rombo' ? 130 : 44}
+        minWidth={MIN_TAMANO[data.forma].w}
+        minHeight={MIN_TAMANO[data.forma].h}
         color={color}
         handleStyle={{ width: 10, height: 10, borderRadius: 3, border: '2px solid white', boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }}
         lineStyle={{ borderWidth: 2, borderStyle: 'dashed', opacity: 0.5 }}
       />
 
-      <NodeToolbar isVisible={selected} position={Position.Top} offset={10}>
+      <NodeToolbar isVisible={selected || editando} position={Position.Top} offset={10}>
         <div
           className={`flex items-center gap-0.5 px-1 py-1 rounded-lg shadow-lg ${
             modoOscuro ? 'bg-zinc-800 border border-zinc-700' : 'bg-white border border-zinc-200'
           }`}
         >
+          {editando && (
+            <>
+              <ToolbarBtn
+                icono="ti-bold"
+                label="Negrita — seleccioná texto y hacé clic (sin selección, inserta las marcas en el cursor)"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => envolverSeleccion('*')}
+                modoOscuro={modoOscuro}
+              />
+              <ToolbarBtn
+                icono="ti-underline"
+                label="Subrayado — seleccioná texto y hacé clic"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => envolverSeleccion('_')}
+                modoOscuro={modoOscuro}
+              />
+              <div className={`w-px h-5 mx-0.5 ${modoOscuro ? 'bg-zinc-700' : 'bg-zinc-200'}`} />
+            </>
+          )}
           <div className="relative">
             <ToolbarBtn icono="ti-typography" label="Tamaño de texto" onClick={() => setMostrandoTamanos((v) => !v)} modoOscuro={modoOscuro} />
             {mostrandoTamanos && (
@@ -1150,27 +1289,44 @@ function NodoMental(props: NodeProps<NodoFlow>) {
           </div>
 
           <div className="relative">
-            <ToolbarBtn icono="ti-palette" label="Color" onClick={() => setMostrandoColores((v) => !v)} modoOscuro={modoOscuro} />
+            <ToolbarBtn
+              icono="ti-palette"
+              label="Color con significado — pasá el mouse sobre cada uno"
+              onClick={() => setMostrandoColores((v) => !v)}
+              modoOscuro={modoOscuro}
+            />
             {mostrandoColores && (
               <div
                 className={`absolute top-full left-1/2 -translate-x-1/2 mt-1 flex gap-1 p-1.5 rounded-lg shadow-lg ${
                   modoOscuro ? 'bg-zinc-800 border border-zinc-700' : 'bg-white border border-zinc-200'
                 }`}
               >
-                {COLORES_NODO.map((c) => (
+                {PALETA_SEMANTICA.map((p) => (
                   <button
-                    key={c}
+                    key={p.nombre}
                     onClick={() => {
-                      callbacks.actualizar(id, { color: c })
+                      callbacks.actualizar(id, { color: p.color ?? undefined })
                       setMostrandoColores(false)
                     }}
-                    style={{ background: c }}
-                    className="w-5 h-5 rounded-full border-2 border-white shadow-sm hover:scale-110 transition-transform"
-                  />
+                    title={`${p.nombre} — ${p.significado}`}
+                    style={{ background: p.color ?? (modoOscuro ? '#3f3f46' : '#e4e4e7') }}
+                    className="relative w-5 h-5 rounded-full border-2 border-white shadow-sm hover:scale-110 transition-transform flex items-center justify-center"
+                  >
+                    {p.color === null && (
+                      <i className={`ti ti-x text-[9px] ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`} />
+                    )}
+                  </button>
                 ))}
               </div>
             )}
           </div>
+
+          <ToolbarBtn
+            icono="ti-note"
+            label="Nota al margen — una cita o ejemplo corto pegado a este nodo, sin crear otro nodo"
+            onClick={() => setEditandoNota(true)}
+            modoOscuro={modoOscuro}
+          />
 
           <div className={`w-px h-5 mx-0.5 ${modoOscuro ? 'bg-zinc-700' : 'bg-zinc-200'}`} />
           <ToolbarBtn icono="ti-copy" label="Duplicar" onClick={() => callbacks.duplicar(id)} modoOscuro={modoOscuro} />
@@ -1220,11 +1376,57 @@ function NodoMental(props: NodeProps<NodoFlow>) {
                 modoOscuro ? 'text-zinc-100' : 'text-zinc-900'
               }`}
             >
-              {data.texto || 'Doble clic para escribir'}
+              {data.texto ? renderTextoEnriquecido(data.texto) : 'Doble clic para escribir'}
             </span>
           )}
         </CuerpoNodo>
         <Handle type="source" position={Position.Bottom} style={{ background: color, width: 8, height: 8, zIndex: 20 }} />
+
+        {/* Nota al margen: SIEMPRE visible (no hace falta pasar el mouse ni
+            hacer clic para leerla, igual que la cita chica al lado de un
+            concepto en un apunte de mano) — clic para editarla. Vive fuera
+            de CuerpoNodo a propósito: no es parte de la figura, es una
+            anotación pegada afuera, que es justo el punto (no requiere otro
+            nodo + conexión para algo tan chico). */}
+        {data.nota && !editandoNota && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              setEditandoNota(true)
+            }}
+            title="Nota al margen — clic para editar"
+            className="nodrag nopan absolute z-20 text-right text-[10px] leading-tight italic hover:underline cursor-text"
+            style={{ top: '100%', right: -4, marginTop: 3, width: 150, color: '#dc2626' }}
+          >
+            {data.nota}
+          </button>
+        )}
+        {editandoNota && (
+          <div
+            className={`nodrag nopan absolute z-30 p-2 rounded-lg shadow-lg border text-left ${
+              modoOscuro ? 'bg-zinc-800 border-zinc-700' : 'bg-white border-zinc-200'
+            }`}
+            style={{ top: '100%', right: -4, marginTop: 3, width: 170 }}
+          >
+            <textarea
+              autoFocus
+              value={notaTmp}
+              onChange={(e) => setNotaTmp(e.target.value)}
+              onBlur={guardarNota}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  setNotaTmp(data.nota ?? '')
+                  setEditandoNota(false)
+                }
+              }}
+              rows={2}
+              placeholder="Nota al margen: cita, artículo o ejemplo corto..."
+              className={`w-full text-[11px] bg-transparent outline-none resize-none ${
+                modoOscuro ? 'text-white placeholder:text-zinc-500' : 'text-zinc-800 placeholder:text-zinc-400'
+              }`}
+            />
+          </div>
+        )}
       </div>
     </>
   )
@@ -1313,16 +1515,19 @@ function ToolbarBtn({
   onClick,
   modoOscuro,
   destructivo,
+  onMouseDown,
 }: {
   icono: string
   label: string
   onClick: () => void
   modoOscuro: boolean
   destructivo?: boolean
+  onMouseDown?: (e: React.MouseEvent) => void
 }) {
   return (
     <button
       onClick={onClick}
+      onMouseDown={onMouseDown}
       title={label}
       className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors ${
         destructivo

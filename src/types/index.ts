@@ -196,7 +196,7 @@ export interface Canvas {
  * necesita: distinguir de un vistazo "esto es una categoría" (rectángulo/
  * nube) de "esto es una subcategoría" (óvalo) o "esto es una bifurcación"
  * (rombo), como en un apunte de mano real. */
-export type FormaNodoMental = 'rectangulo' | 'ovalo' | 'nube' | 'rombo'
+export type FormaNodoMental = 'rectangulo' | 'ovalo' | 'nube' | 'rombo' | 'ninguna'
 
 /** Nivel tipográfico del texto del nodo — el mismo mapa necesita títulos de
  * categoría en grande y texto de detalle más chico, sin que eso dependa de
@@ -212,6 +212,11 @@ export interface NodoMapaMental {
   color?: string
   ancho?: number
   alto?: number
+  /** Nota al margen: una cita, ejemplo o referencia corta pegada a ESTE nodo
+   * sin que haga falta crear otro nodo + conexión para algo tan chico (ej.
+   * "(ej: art. 494 N°14 CP)" al lado de un concepto, como en un apunte de
+   * mano real). Se muestra siempre visible, chica, junto al nodo. */
+  nota?: string
 }
 
 export interface ConexionMapaMental {
