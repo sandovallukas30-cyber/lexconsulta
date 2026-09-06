@@ -192,7 +192,7 @@ function ListaMapas({
   onEliminar: (id: string) => void
 }) {
   return (
-    <div className={`h-full overflow-y-auto ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
+    <div className={`fuente-mapa-mental h-full overflow-y-auto ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
       <div className="max-w-3xl mx-auto px-6 py-10">
         <div className="flex items-center gap-3 mb-2">
           <div
@@ -811,7 +811,7 @@ function MapaMentalDetalle({
   }
 
   return (
-    <div className={`h-full flex flex-col ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
+    <div className={`fuente-mapa-mental h-full flex flex-col ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
       <div
         className={`flex items-center gap-3 px-6 py-3 border-b flex-shrink-0 ${
           modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
@@ -1063,12 +1063,24 @@ function CuerpoNodo({
   seleccionado: boolean
   children: React.ReactNode
 }) {
-  const fondo = modoOscuro ? '#27272a' : '#ffffff'
+  // Relleno con un TINTE del propio color del nodo, no blanco/gris liso —
+  // buscando ejemplos reales de mapas mentales de derecho (ver charla), el
+  // patrón que se repite es burbujas de color sólido, no contornos vacíos;
+  // acá va templado (14%/22%, no el color puro) para que el texto siga
+  // legible y no termine viéndose como clip-art. Un nodo "neutro" (sin
+  // color propio) usa el mismo criterio que ya usa el resto de la app para
+  // teñir fondos con el acento (ver sidebar en index.css).
+  const fondo = modoOscuro ? `color-mix(in srgb, ${color} 22%, #18181b)` : `color-mix(in srgb, ${color} 14%, #ffffff)`
   // El aro de selección de las otras 3 formas es un boxShadow de 2px sólido
   // alrededor de un borde recto — una nube no tiene un contorno recto, así
   // que en vez de eso usa un halo (drop-shadow difuso) del mismo color; sin
-  // seleccionar, la misma sombra sutil que las demás formas.
-  const sombraCaja = seleccionado ? `0 0 0 2px ${color}` : modoOscuro ? '0 1px 3px rgba(0,0,0,0.4)' : '0 1px 3px rgba(0,0,0,0.1)'
+  // seleccionar, una sombra un poco más marcada que antes (0 1px 3px se
+  // sentía plano) para que el nodo se lea como una tarjeta "levantada".
+  const sombraCaja = seleccionado
+    ? `0 0 0 2px ${color}`
+    : modoOscuro
+    ? '0 2px 6px rgba(0,0,0,0.35)'
+    : '0 2px 6px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)'
   // drop-shadow (filtro) en vez de box-shadow: ambas formas de abajo (nube
   // por el SVG, rombo por el clip-path) no tienen un borde rectangular recto
   // — box-shadow dibujaría el aro alrededor del CUADRO invisible que las
@@ -1078,8 +1090,8 @@ function CuerpoNodo({
   const halo = seleccionado
     ? `drop-shadow(0 0 4px ${color})`
     : modoOscuro
-    ? 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))'
-    : 'drop-shadow(0 1px 2px rgba(0,0,0,0.15))'
+    ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.35))'
+    : 'drop-shadow(0 2px 4px rgba(0,0,0,0.12))'
 
   if (forma === 'nube') {
     return (
@@ -1147,7 +1159,7 @@ function CuerpoNodo({
       style={{
         background: fondo,
         border: `2px solid ${color}`,
-        borderRadius: forma === 'ovalo' ? '50%' : 10,
+        borderRadius: forma === 'ovalo' ? '50%' : 12,
         boxShadow: sombraCaja,
       }}
     >

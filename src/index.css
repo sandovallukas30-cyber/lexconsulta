@@ -1,4 +1,7 @@
 @import url('https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css');
+/* Solo para Mapas mentales (.fuente-mapa-mental) — el resto de la app sigue
+   con la fuente del sistema, esto no es un cambio de tipografía global. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 /* === Paleta de acento (tema esmeralda por defecto) ===
@@ -21,6 +24,14 @@
 
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; width: 100%; overflow: hidden; }
+
+/* Mapas mentales: Inter en vez de la fuente del sistema — misma tipografía
+   que la maqueta de referencia que armó el usuario, más limpia/legible en
+   los nodos que el sans-serif por defecto. Con clase propia (no en :root)
+   para no cambiar la tipografía del resto de la app. */
+.fuente-mapa-mental, .fuente-mapa-mental input, .fuente-mapa-mental textarea {
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
 
 /* Exportar a PDF (Ctrl+P / "Guardar como PDF" del navegador), dos casos:
    - Colecciones (.imprimir-coleccion): vista de texto aparte, montada fuera
