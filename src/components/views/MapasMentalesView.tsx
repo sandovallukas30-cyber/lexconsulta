@@ -8,10 +8,12 @@ import {
   addEdge,
   Handle,
   Position,
+  MiniMap,
   NodeToolbar,
   EdgeLabelRenderer,
   BaseEdge,
   getBezierPath,
+  MarkerType,
   type Node,
   type Edge,
   type Connection,
@@ -24,6 +26,12 @@ import type { MapaMental, NodoMapaMental, ConexionMapaMental, FormaNodoMental, T
 
 const VERDE = 'var(--accent-base)'
 const COLORES_NODO = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#71717a']
+// Punta de flecha en las conexiones — sin esto eran solo líneas sin sentido
+// de dirección, perdiendo justo el vocabulario visual (→, ↓) que el propio
+// apunte de referencia usaba para mostrar jerarquía. Color neutro fijo (no
+// depende de modoOscuro): el marcador se fija una vez al crear el edge, no
+// se recalcula en cada render como el trazo de la línea sí hace.
+const MARKER_FLECHA = { type: MarkerType.ArrowClosed, color: '#71717a', width: 18, height: 18 }
 
 /**
  * Mapas mentales: diagrama libre de estudio (formas + jerarquía tipográfica +
@@ -255,6 +263,7 @@ function MapaMentalDetalle({
         target: c.hasta,
         type: 'editable',
         label: c.etiqueta,
+        markerEnd: MARKER_FLECHA,
       })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
@@ -324,7 +333,7 @@ function MapaMentalDetalle({
   )
 
   const onConnect = useCallback(
-    (conn: Connection) => setEdges((eds) => addEdge({ ...conn, type: 'editable' }, eds)),
+    (conn: Connection) => setEdges((eds) => addEdge({ ...conn, type: 'editable', markerEnd: MARKER_FLECHA }, eds)),
     [setEdges]
   )
 
@@ -465,6 +474,14 @@ function MapaMentalDetalle({
                 border: `1px solid ${modoOscuro ? '#27272a' : '#e4e4e7'}`,
               }}
             />
+            <MiniMap
+              nodeColor={(n) => (n.data as NodoData).color ?? VERDE}
+              maskColor={modoOscuro ? 'rgba(24,24,27,0.7)' : 'rgba(255,255,255,0.7)'}
+              style={{
+                background: modoOscuro ? '#18181b' : '#ffffff',
+                border: `1px solid ${modoOscuro ? '#27272a' : '#e4e4e7'}`,
+              }}
+            />
           </ReactFlow>
         </MentalContext.Provider>
 
@@ -500,7 +517,16 @@ function CuerpoNodo({
   children: React.ReactNode
 }) {
   const fondo = modoOscuro ? '#27272a' : '#ffffff'
-  const sombra = seleccionado ? `0 0 0 2px ${color}` : modoOscuro ? '0 1px 3px rgba(0,0,0,0.4)' : '0 1px 3px rgba(0,0,0,0.1)'
+  // El aro de selección de las otras 3 formas es un boxShadow de 2px sólido
+  // alrededor de un borde recto — una nube no tiene un contorno recto, así
+  // que en vez de eso usa un halo (drop-shadow difuso) del mismo color; sin
+  // seleccionar, la misma sombra sutil que las demás formas.
+  const sombraCaja = seleccionado ? `0 0 0 2px ${color}` : modoOscuro ? '0 1px 3px rgba(0,0,0,0.4)' : '0 1px 3px rgba(0,0,0,0.1)'
+  const sombraNube = seleccionado
+    ? `drop-shadow(0 0 4px ${color})`
+    : modoOscuro
+    ? 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))'
+    : 'drop-shadow(0 1px 2px rgba(0,0,0,0.15))'
 
   if (forma === 'nube') {
     return (
@@ -509,7 +535,7 @@ function CuerpoNodo({
           className="absolute inset-0 w-full h-full"
           viewBox="0 0 200 120"
           preserveAspectRatio="none"
-          style={{ filter: `drop-shadow(${sombra.replace('0 0 0 2px', '0 0 0px').startsWith('0 1px') ? sombra : ''})` }}
+          style={{ filter: sombraNube }}
         >
           <path
             d="M45 90 C20 90 10 70 22 55 C10 40 30 20 50 28 C58 10 90 8 100 25 C120 10 150 20 148 42 C175 40 182 68 160 80 C165 100 135 108 118 96 C105 112 65 112 55 96 C35 102 25 92 45 90 Z"
@@ -528,7 +554,7 @@ function CuerpoNodo({
       <div className="relative w-full h-full flex items-center justify-center px-3 py-3">
         <div
           className="absolute inset-0"
-          style={{ background: fondo, border: `2px solid ${color}`, borderRadius: 6, transform: 'rotate(45deg)', boxShadow: sombra }}
+          style={{ background: fondo, border: `2px solid ${color}`, borderRadius: 6, transform: 'rotate(45deg)', boxShadow: sombraCaja }}
         />
         <div className="relative z-10 text-center px-3 py-1 max-w-[65%]">{children}</div>
       </div>
@@ -542,7 +568,7 @@ function CuerpoNodo({
         background: fondo,
         border: `2px solid ${color}`,
         borderRadius: forma === 'ovalo' ? '50%' : 10,
-        boxShadow: sombra,
+        boxShadow: sombraCaja,
       }}
     >
       {children}
@@ -674,7 +700,9 @@ function NodoMental(props: NodeProps<NodoFlow>) {
           <ToolbarBtn
             icono="ti-trash"
             label="Eliminar"
-            onClick={() => callbacks.eliminar(id)}
+            onClick={() => {
+              if (confirm('¿Eliminar este nodo?')) callbacks.eliminar(id)
+            }}
             modoOscuro={modoOscuro}
             destructivo
           />
@@ -724,7 +752,7 @@ const nodeTypes = { mental: NodoMental }
 // ============= CUSTOM EDGE (mismo patrón que Canvas) =============
 
 function EdgeEditable(props: EdgeProps<EdgeWithData>) {
-  const { id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, label } = props
+  const { id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, label, markerEnd } = props
   const { modoOscuro, callbacks } = useMentalCtx()
   const [editando, setEditando] = useState(false)
   const [valor, setValor] = useState(typeof label === 'string' ? label : '')
@@ -747,7 +775,7 @@ function EdgeEditable(props: EdgeProps<EdgeWithData>) {
 
   return (
     <>
-      <BaseEdge id={id} path={edgePath} style={{ stroke, strokeWidth: 2 }} />
+      <BaseEdge id={id} path={edgePath} markerEnd={markerEnd} style={{ stroke, strokeWidth: 2 }} />
       <EdgeLabelRenderer>
         <div
           style={{ position: 'absolute', transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`, pointerEvents: 'all' }}
