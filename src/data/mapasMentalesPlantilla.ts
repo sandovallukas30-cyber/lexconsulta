@@ -257,4 +257,174 @@ export const MAPAS_MENTALES_PLANTILLA: MapaMentalPlantilla[] = [
       { desde: 'comision-subj', hasta: 'comision-subj-4' },
     ],
   },
+
+  // Mismo contenido doctrinal que la plantilla de arriba, organizado
+  // distinto a propósito: acá la pregunta que DISTINGUE ambas figuras es
+  // la raíz (un rombo, la forma que la propia app describe como
+  // "bifurcación / decisión" — recién con esta plantilla se usa para eso
+  // de verdad), y las dos categorías cuelgan como respuesta sí/no en vez de
+  // ser dos ramas más de una clasificación. Sirve para repasar lo mismo
+  // por "qué las diferencia" en vez de por "cómo se clasifican".
+  {
+    id: 'plantilla-omision-comparacion',
+    titulo: 'Omisión: pura vs. comisión (comparación)',
+    descripcion: 'Mismo contenido que "La omisión en Derecho Penal", organizado como comparación lado a lado a partir de la pregunta que distingue ambas figuras.',
+    nodos: [
+      {
+        id: 'raiz',
+        texto: '¿Existe posición de garante (deber especial de actuar), más allá del deber general de socorro?',
+        forma: 'rombo',
+        tamanoTexto: 'titulo',
+      },
+
+      { id: 'rama-no', texto: 'NO → Omisión pura o propia', forma: 'ninguna', tamanoTexto: 'subtitulo' },
+      {
+        id: 'pura-def',
+        texto: 'Omitir lo que la norma imperativa exige, pudiendo cumplirlo materialmente sin riesgo',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+        nota: 'ej: art. 195 CP',
+      },
+      { id: 'pura-obj', texto: 'Elementos objetivos', forma: 'ovalo', tamanoTexto: 'texto' },
+      { id: 'pura-obj-1', texto: 'Situación típica que exige actuar', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'pura-obj-2', texto: 'No realización de la acción debida', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'pura-obj-3', texto: 'Capacidad de actuar sin riesgo propio ni de terceros', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'pura-subj', texto: 'Elementos subjetivos', forma: 'ovalo', tamanoTexto: 'texto' },
+      { id: 'pura-subj-1', texto: 'Dolo *(no admite forma imprudente)*', forma: 'rectangulo', tamanoTexto: 'texto', color: '#b91c1c' },
+      { id: 'pura-subj-2', texto: 'Condiciones especiales de autoría, si la norma las exige', forma: 'rectangulo', tamanoTexto: 'texto' },
+
+      { id: 'rama-si', texto: 'SÍ → Comisión por omisión', forma: 'ninguna', tamanoTexto: 'subtitulo' },
+      {
+        id: 'comision-def',
+        texto: 'No evitar un resultado que el garante tenía el deber especial de impedir',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+      },
+      { id: 'comision-obj', texto: 'Elementos objetivos', forma: 'ovalo', tamanoTexto: 'texto' },
+      {
+        id: 'comision-obj-1',
+        texto: 'Posición de garante — deber legal, contractual o de injerencia (riesgo creado antes)',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+        color: '#b45309',
+      },
+      {
+        id: 'comision-obj-2',
+        texto: 'Equivalencia material — omitir equivale a causar el resultado activamente',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+      },
+      { id: 'comision-obj-3', texto: 'Imputación objetiva del resultado a la omisión', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'comision-subj', texto: 'Elementos subjetivos', forma: 'ovalo', tamanoTexto: 'texto' },
+      {
+        id: 'comision-subj-1',
+        texto: 'Dolo — consciencia de la posición de garante + voluntad de no actuar',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+      },
+      {
+        id: 'comision-subj-2',
+        texto: 'Imprudencia *(solo si está tipificada expresamente)*',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+        color: '#b91c1c',
+      },
+    ],
+    conexiones: [
+      { desde: 'raiz', hasta: 'rama-no' },
+      { desde: 'raiz', hasta: 'rama-si' },
+
+      { desde: 'rama-no', hasta: 'pura-def' },
+      { desde: 'rama-no', hasta: 'pura-obj' },
+      { desde: 'rama-no', hasta: 'pura-subj' },
+      { desde: 'pura-obj', hasta: 'pura-obj-1' },
+      { desde: 'pura-obj', hasta: 'pura-obj-2' },
+      { desde: 'pura-obj', hasta: 'pura-obj-3' },
+      { desde: 'pura-subj', hasta: 'pura-subj-1' },
+      { desde: 'pura-subj', hasta: 'pura-subj-2' },
+
+      { desde: 'rama-si', hasta: 'comision-def' },
+      { desde: 'rama-si', hasta: 'comision-obj' },
+      { desde: 'rama-si', hasta: 'comision-subj' },
+      { desde: 'comision-obj', hasta: 'comision-obj-1' },
+      { desde: 'comision-obj', hasta: 'comision-obj-2' },
+      { desde: 'comision-obj', hasta: 'comision-obj-3' },
+      { desde: 'comision-subj', hasta: 'comision-subj-1' },
+      { desde: 'comision-subj', hasta: 'comision-subj-2' },
+    ],
+  },
+
+  // Tercera estructura sobre el mismo contenido: un checklist secuencial
+  // (cómo se resolvería un caso real, paso a paso) en vez de una
+  // clasificación o una comparación — acá SÍ hay dos caminos que
+  // CONVERGEN en un mismo nodo final ("conclusion" tiene 2 padres), algo
+  // que ninguna de las otras dos plantillas usa: no todo mapa mental tiene
+  // que ser un árbol puro.
+  {
+    id: 'plantilla-omision-checklist',
+    titulo: 'Omisión: checklist de análisis de caso',
+    descripcion: 'Mismo contenido, organizado como una guía paso a paso para resolver un caso — las dos categorías son ramas de una decisión, no una clasificación.',
+    nodos: [
+      { id: 'raiz', texto: 'Checklist: ¿hay responsabilidad por omisión?', forma: 'nube', tamanoTexto: 'titulo' },
+      {
+        id: 'paso1',
+        texto: 'Paso 1 — ¿El sujeto no hizo algo que debía hacer, pudiendo hacerlo materialmente?',
+        forma: 'rectangulo',
+        tamanoTexto: 'subtitulo',
+      },
+      { id: 'paso1-no', texto: 'NO → no hay omisión relevante, no se sigue analizando', forma: 'rectangulo', tamanoTexto: 'texto', color: '#b91c1c' },
+      { id: 'paso1-si', texto: 'SÍ →', forma: 'ninguna', tamanoTexto: 'texto' },
+      {
+        id: 'paso2',
+        texto: '¿Existe una posición de garante (deber especial), más allá del deber general de socorro?',
+        forma: 'rombo',
+        tamanoTexto: 'texto',
+      },
+      { id: 'paso2-no', texto: 'NO → Omisión pura o propia', forma: 'ninguna', tamanoTexto: 'subtitulo' },
+      {
+        id: 'paso2-no-1',
+        texto: 'Verificar que exista un tipo penal que sancione la omisión expresamente',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+        nota: 'ej: art. 195 CP',
+      },
+      { id: 'paso2-no-2', texto: 'Verificar dolo *(sin modalidad imprudente)*', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'paso2-si', texto: 'SÍ → Comisión por omisión', forma: 'ninguna', tamanoTexto: 'subtitulo' },
+      {
+        id: 'paso2-si-1',
+        texto: 'Identificar la fuente de la posición de garante (ley, contrato o injerencia)',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+        color: '#b45309',
+      },
+      { id: 'paso2-si-2', texto: 'Verificar equivalencia material con la comisión activa', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'paso2-si-3', texto: 'Verificar imputación objetiva del resultado', forma: 'rectangulo', tamanoTexto: 'texto' },
+      {
+        id: 'paso2-si-4',
+        texto: 'Verificar dolo o imprudencia *(la imprudencia, solo si está tipificada expresamente)*',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+      },
+      { id: 'conclusion', texto: 'Conclusión: calificar la conducta y fundamentar con el artículo aplicable', forma: 'nube', tamanoTexto: 'subtitulo' },
+    ],
+    conexiones: [
+      { desde: 'raiz', hasta: 'paso1' },
+      { desde: 'paso1', hasta: 'paso1-no' },
+      { desde: 'paso1', hasta: 'paso1-si' },
+      { desde: 'paso1-si', hasta: 'paso2' },
+      { desde: 'paso2', hasta: 'paso2-no' },
+      { desde: 'paso2', hasta: 'paso2-si' },
+      { desde: 'paso2-no', hasta: 'paso2-no-1' },
+      { desde: 'paso2-no', hasta: 'paso2-no-2' },
+      { desde: 'paso2-si', hasta: 'paso2-si-1' },
+      { desde: 'paso2-si', hasta: 'paso2-si-2' },
+      { desde: 'paso2-si', hasta: 'paso2-si-3' },
+      { desde: 'paso2-si', hasta: 'paso2-si-4' },
+      // Convergen acá: sea cual sea la rama, el análisis termina en la
+      // misma conclusión — por eso "conclusion" es el único nodo de las 3
+      // plantillas con más de un padre.
+      { desde: 'paso2-no-2', hasta: 'conclusion' },
+      { desde: 'paso2-si-4', hasta: 'conclusion' },
+    ],
+  },
 ]
