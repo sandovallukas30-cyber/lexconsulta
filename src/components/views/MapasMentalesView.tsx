@@ -370,39 +370,29 @@ function semillaDesdeId(id: string): number {
   return h
 }
 
+/**
+ * Árbol prolijo ("tidy tree", el mismo principio que usan d3-hierarchy o
+ * Reingold-Tilford), NO el layout anterior por capas/barycenter que tenía
+ * esta función. El anterior calculaba cada FILA de profundidad por
+ * separado — así, una rama muy profunda (muchos niveles) terminaba con una
+ * fila hondísima muy ANCHA (todos sus nietos/bisnietos en la misma fila),
+ * sin ninguna relación con el ancho de una rama vecina más corta que
+ * compartía esa misma altura de fila por casualidad. El resultado real (ver
+ * capturas de "La omisión en Derecho Penal") era un mapa desparramado sin
+ * ton ni son, no un árbol prolijo.
+ *
+ * Acá cada nodo se posiciona por recorrido: una HOJA (sin hijos) se lleva
+ * la siguiente columna disponible, de izquierda a derecha, en el orden en
+ * que el recorrido la encuentra; un nodo CON hijos se centra en el
+ * promedio de sus hijos, una vez que esos ya tienen posición (post-order).
+ * Consecuencia clave: la rama de una subárbol jamás pisa el tramo de
+ * columnas de otra, sea cual sea su profundidad — cada una ocupa
+ * exactamente el ancho que necesitan sus propias hojas, ni más ni menos.
+ */
 function calcularLayoutMapaMental(
   ids: string[],
   conexiones: { desde: string; hasta: string }[]
 ): Map<string, { x: number; y: number }> {
-  const capa = new Map<string, number>()
-  for (const id of ids) capa.set(id, 0)
-
-  for (let iter = 0; iter < ids.length + 1; iter++) {
-    let cambio = false
-    for (const cx of conexiones) {
-      if (!capa.has(cx.desde) || !capa.has(cx.hasta)) continue
-      const nueva = capa.get(cx.desde)! + 1
-      if (nueva > capa.get(cx.hasta)!) {
-        capa.set(cx.hasta, nueva)
-        cambio = true
-      }
-    }
-    if (!cambio) break
-  }
-
-  const padresDe = new Map<string, string[]>()
-  for (const cx of conexiones) {
-    if (!padresDe.has(cx.hasta)) padresDe.set(cx.hasta, [])
-    padresDe.get(cx.hasta)!.push(cx.desde)
-  }
-
-  const porCapa = new Map<number, string[]>()
-  for (const id of ids) {
-    const c = capa.get(id)!
-    if (!porCapa.has(c)) porCapa.set(c, [])
-    porCapa.get(c)!.push(id)
-  }
-
   const ESPACIO_X = 220
   const ESPACIO_Y = 150
   const MARGEN = 40
@@ -411,43 +401,66 @@ function calcularLayoutMapaMental(
   // mental hecho a mano y menos a un organigrama perfectamente cuadriculado.
   const JITTER_X = 22
   const JITTER_Y = 16
-  const xAsignada = new Map<string, number>()
-  const resultado = new Map<string, { x: number; y: number }>()
 
-  for (const c of [...porCapa.keys()].sort((a, b) => a - b)) {
-    const items = porCapa.get(c)!
-    const conDeseada: { id: string; deseada: number }[] = []
-    const sinDeseada: string[] = []
-    items.forEach((id, i) => {
-      const padres = (padresDe.get(id) ?? []).filter((k) => xAsignada.has(k))
-      if (padres.length === 0) {
-        sinDeseada.push(id)
-      } else {
-        const promedio = padres.reduce((suma, k) => suma + xAsignada.get(k)!, 0) / padres.length
-        conDeseada.push({ id, deseada: promedio + i * 0.001 })
-      }
-    })
-    conDeseada.sort((a, b) => a.deseada - b.deseada)
-    const ordenados = [...conDeseada.map((x) => x.id), ...sinDeseada]
-    const deseadaPorId = new Map(conDeseada.map((x) => [x.id, x.deseada]))
-
-    let xPrevio: number | null = null
-    ordenados.forEach((id) => {
-      const deseada = deseadaPorId.get(id)
-      const minimo = xPrevio === null ? MARGEN : xPrevio + ESPACIO_X
-      const x = deseada !== undefined ? Math.max(deseada, minimo) : minimo
-      // El espaciado ENTRE nodos (xAsignada/xPrevio, arriba) usa la grilla
-      // limpia para no arriesgar superposiciones; el jitter se suma recién
-      // acá, sobre la posición FINAL que se guarda — así nunca compone entre
-      // nodos vecinos ni puede achicar el espacio ya calculado entre ellos.
-      xAsignada.set(id, x)
-      xPrevio = x
-      const semilla = semillaDesdeId(id)
-      const jitterX = ((semilla % 1000) / 1000 - 0.5) * 2 * JITTER_X
-      const jitterY = (((semilla >>> 3) % 1000) / 1000 - 0.5) * 2 * JITTER_Y
-      resultado.set(id, { x: x + jitterX, y: c * ESPACIO_Y + MARGEN + jitterY })
-    })
+  // Padre PRIMARIO de cada nodo: el primero que lo conectó (en el orden en
+  // que se declaran las conexiones). Un nodo con más de un padre — dos
+  // ramas que convergen en una misma conclusión, como en la plantilla del
+  // checklist — solo cuenta como "hijo" del primero para ARMAR el árbol;
+  // la segunda conexión igual se dibuja normal, simplemente no participa
+  // del cálculo de posiciones (si contara dos veces, ese nodo se
+  // reservaría dos columnas de hoja en vez de una, y quedaría descentrado).
+  const padrePrimario = new Map<string, string>()
+  const idsValidos = new Set(ids)
+  for (const cx of conexiones) {
+    if (!idsValidos.has(cx.desde) || !idsValidos.has(cx.hasta)) continue
+    if (!padrePrimario.has(cx.hasta)) padrePrimario.set(cx.hasta, cx.desde)
   }
+  const hijosDe = new Map<string, string[]>()
+  for (const [hijo, padre] of padrePrimario) {
+    if (!hijosDe.has(padre)) hijosDe.set(padre, [])
+    hijosDe.get(padre)!.push(hijo)
+  }
+
+  const resultado = new Map<string, { x: number; y: number }>()
+  let siguienteHoja = 0
+
+  function visitar(id: string, profundidad: number, enCurso: Set<string>): number {
+    // Corta un ciclo (A conecta a B que conecta de vuelta a A) en vez de
+    // recursión infinita — no debería darse en un mapa mental normal, pero
+    // más vale no colgar la pestaña si pasa.
+    if (enCurso.has(id)) return resultado.get(id)?.x ?? 0
+    enCurso.add(id)
+    const hijos = hijosDe.get(id) ?? []
+    let x: number
+    if (hijos.length === 0) {
+      x = MARGEN + siguienteHoja * ESPACIO_X
+      siguienteHoja++
+    } else {
+      const xsHijos = hijos.map((h) => visitar(h, profundidad + 1, enCurso))
+      x = xsHijos.reduce((suma, v) => suma + v, 0) / xsHijos.length
+    }
+    const semilla = semillaDesdeId(id)
+    const jitterX = ((semilla % 1000) / 1000 - 0.5) * 2 * JITTER_X
+    const jitterY = (((semilla >>> 3) % 1000) / 1000 - 0.5) * 2 * JITTER_Y
+    // x SIN jitter es lo que se guarda para que lo use el promedio del
+    // padre — si el jitter de un hijo se filtrara hacia arriba, se iría
+    // acumulando de generación en generación en vez de quedar como un
+    // desvío chico y local de cada nodo.
+    resultado.set(id, { x: x + jitterX, y: profundidad * ESPACIO_Y + MARGEN + jitterY })
+    return x
+  }
+
+  const raices = ids.filter((id) => !padrePrimario.has(id))
+  for (const raiz of raices) visitar(raiz, 0, new Set())
+
+  // Nodos que ninguna raíz alcanzó (no debería pasar en un mapa normal,
+  // pero por las dudas: van en una fila aparte, para que nunca falte una
+  // posición y el nodo termine invisible en el origen del lienzo).
+  const faltantes = ids.filter((id) => !resultado.has(id))
+  faltantes.forEach((id, i) => {
+    resultado.set(id, { x: MARGEN + (siguienteHoja + i) * ESPACIO_X, y: -ESPACIO_Y })
+  })
+
   return resultado
 }
 
