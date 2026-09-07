@@ -1059,4 +1059,162 @@ export const MAPAS_MENTALES_PLANTILLA: MapaMentalPlantilla[] = [
       { desde: 'ideas', hasta: 'idea3' },
     ],
   },
+
+  // Sexta y última plantilla de las clases del usuario — combina "12.
+  // Presidente de la Republica: panorama de sus funciones y atribuciones"
+  // (la vista general de las 4 categorías) con "13. Atribuciones de
+  // Gobierno" (el desarrollo completo de la categoría I). Reemplaza en
+  // profundidad a "plantilla-atribuciones-presidente" (la primera
+  // plantilla de ejemplo de esta función, que usaba una clasificación más
+  // simple e inventada por esta app, no la del curso real del usuario) —
+  // se deja esa igual, por si sirve como ejemplo genérico, pero esta es la
+  // que corresponde a SU curso.
+  {
+    id: 'plantilla-atribuciones-presidente-completo',
+    titulo: 'Atribuciones del Presidente — Completo',
+    descripcion: 'Las 4 categorías reales del curso (gubernativas, administrativas, nomogenéticas, control), con el desarrollo completo de las gubernativas.',
+    nodos: [
+      { id: 'raiz', texto: 'Atribuciones del Presidente', forma: 'ovalo', tamanoTexto: 'titulo' },
+
+      { id: 'trifuncion', texto: 'Triple función (art. 24 inc. 1)', forma: 'rectangulo', tamanoTexto: 'subtitulo' },
+      { id: 'tf-1', texto: 'Jefe de Gobierno — función política', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'tf-2', texto: 'Jefe de la Administración — función ejecutiva y burocrática', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'tf-3', texto: 'Jefe de Estado — función simbólica y representativa', forma: 'rectangulo', tamanoTexto: 'texto' },
+
+      { id: 'autoridad', texto: 'Amplia autoridad interna y externa (art. 24 inc. 2); la lista del art. 32 no es exhaustiva', forma: 'rectangulo', tamanoTexto: 'texto' },
+
+      { id: 'categorias', texto: 'Cuatro tipos de atribuciones', forma: 'ninguna', tamanoTexto: 'subtitulo' },
+
+      { id: 'gubernativas', texto: 'I. Gubernativas', forma: 'rectangulo', tamanoTexto: 'subtitulo', color: '#1d4ed8' },
+      { id: 'g1', texto: '1. Proteger el orden constitucional', forma: 'rectangulo', tamanoTexto: 'subtitulo' },
+      { id: 'g1-a', texto: 'Declarar estados de excepción (art. 32 N°5): asamblea, sitio, catástrofe, emergencia', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'g1-b', texto: 'Declarar la guerra — previa autorización legal y oír al COSENA (art. 32 N°19)', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'g1-c', texto: 'Asumir la jefatura de las FF.AA. en caso de guerra (art. 32 N°18)', forma: 'rectangulo', tamanoTexto: 'texto' },
+      {
+        id: 'g1-d',
+        texto: 'Enfrentar emergencias económicas: gasto no autorizado hasta el 2% del presupuesto (art. 32 N°20)',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+        color: '#b45309',
+      },
+      { id: 'g2', texto: '2. Conducir la política exterior', forma: 'rectangulo', tamanoTexto: 'subtitulo' },
+      { id: 'g2-a', texto: 'Relaciones internacionales y designaciones diplomáticas (art. 32 N°8 y 15)', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'g2-tratados', texto: 'Facultades sobre tratados internacionales', forma: 'ninguna', tamanoTexto: 'texto' },
+      { id: 'g2-t1', texto: 'Concluir, firmar y ratificar — con aprobación de ambas Cámaras (art. 32 N°15 / art. 54 N°1)', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'g2-t2', texto: 'Formular reservas y declaraciones interpretativas', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'g2-t3', texto: 'Denunciar el tratado o retirarse — facultad exclusiva del Presidente', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'g2-b', texto: 'Defensa exterior: declarar la guerra y asumir la jefatura de las FF.AA.', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'g3', texto: '3. Nombrar autoridades', forma: 'rectangulo', tamanoTexto: 'subtitulo' },
+      { id: 'g3-a', texto: 'De exclusiva confianza: ministros, subsecretarios, delegados, embajadores (art. 32 N°7, 8 y 10)', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'g3-b', texto: 'Militares: Comandantes en Jefe y Director de Carabineros (art. 32 N°16)', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'g3-c', texto: 'Otras: Contralor, Consejeros del Banco Central, autoridades judiciales, Fiscal Nacional (art. 32 N°12)', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'g4', texto: '4. Conducir la política fiscal (art. 32 N°20)', forma: 'rectangulo', tamanoTexto: 'subtitulo' },
+      { id: 'g4-a', texto: 'Iniciativa exclusiva de la Ley de Presupuestos, siempre por mensaje presidencial (art. 67)', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'g4-b', texto: 'El Congreso solo puede *reducir* gastos — no los de una ley permanente', forma: 'rectangulo', tamanoTexto: 'texto', color: '#b45309' },
+      { id: 'g5', texto: '5. Otorgar gracias', forma: 'rectangulo', tamanoTexto: 'subtitulo' },
+      { id: 'g5-a', texto: 'Pensiones de gracia (art. 32 N°11) — requieren una ley que las regule', forma: 'rectangulo', tamanoTexto: 'texto' },
+      {
+        id: 'g5-b',
+        texto: 'Indultos particulares (art. 32 N°14) — *no proceden* en delitos terroristas ni en acusación constitucional',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+        color: '#b91c1c',
+      },
+      { id: 'g6', texto: '6. Requerir la función consultiva', forma: 'rectangulo', tamanoTexto: 'subtitulo' },
+      { id: 'g6-a', texto: 'Citar a sesión a cualquiera de las Cámaras (art. 32 N°2)', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'g6-b', texto: 'Convocar al Consejo de Seguridad Nacional (art. 107)', forma: 'rectangulo', tamanoTexto: 'texto' },
+
+      { id: 'administrativas', texto: 'II. Administrativas', forma: 'rectangulo', tamanoTexto: 'subtitulo', color: '#1d4ed8' },
+      { id: 'a1', texto: 'Nombrar funcionarios públicos', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'a2', texto: 'Dictar decretos con fuerza de ley refundidos', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'a3', texto: 'Recaudar las rentas públicas y ejecutar el presupuesto', forma: 'rectangulo', tamanoTexto: 'texto' },
+
+      { id: 'nomogeneticas', texto: 'III. Nomogenéticas (creación de normas)', forma: 'rectangulo', tamanoTexto: 'subtitulo', color: '#1d4ed8' },
+      { id: 'n1', texto: 'Formación de la ley (iniciativa, veto, promulgación)', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'n2', texto: 'Decretos con Fuerza de Ley', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'n3', texto: 'Potestad reglamentaria', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'n4', texto: 'Iniciativa, veto y plebiscito en la reforma constitucional (art. 128)', forma: 'rectangulo', tamanoTexto: 'texto' },
+
+      { id: 'control', texto: 'IV. Control', forma: 'rectangulo', tamanoTexto: 'subtitulo', color: '#1d4ed8' },
+      { id: 'c1', texto: 'Controlar la conducta de los jueces (art. 32 N°13) — requerir a la Corte Suprema', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'c2', texto: 'Controlar la conducta del Fiscal Nacional (art. 89) — requerir su remoción a la Corte Suprema', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'c3', texto: 'Activar el control de constitucionalidad (art. 93)', forma: 'rectangulo', tamanoTexto: 'subtitulo' },
+      { id: 'c3-a', texto: 'Autos acordados (N°2)', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'c3-b', texto: 'Proyectos de ley, reforma constitucional o tratados (N°3)', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'c3-c', texto: 'DFL rechazados por la Contraloría (N°4)', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'c3-d', texto: 'Inhabilidades e incompatibilidades de parlamentarios (N°14)', forma: 'rectangulo', tamanoTexto: 'texto' },
+
+      { id: 'ideas', texto: 'Ideas principales', forma: 'ovalo', tamanoTexto: 'subtitulo' },
+      { id: 'idea1', texto: 'El Presidente tiene funciones, obligaciones y atribuciones especiales', forma: 'rectangulo', tamanoTexto: 'texto', color: '#15803d' },
+      { id: 'idea2', texto: 'Se separan en gubernativas, administrativas, nomogenéticas y de control', forma: 'rectangulo', tamanoTexto: 'texto', color: '#15803d' },
+      {
+        id: 'idea3',
+        texto: 'El control es la regla general sobre la administración, y la excepción respecto de los demás órganos',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+        color: '#15803d',
+      },
+    ],
+    conexiones: [
+      { desde: 'raiz', hasta: 'trifuncion' },
+      { desde: 'trifuncion', hasta: 'tf-1' },
+      { desde: 'trifuncion', hasta: 'tf-2' },
+      { desde: 'trifuncion', hasta: 'tf-3' },
+
+      { desde: 'raiz', hasta: 'autoridad' },
+      { desde: 'raiz', hasta: 'categorias' },
+
+      { desde: 'categorias', hasta: 'gubernativas' },
+      { desde: 'gubernativas', hasta: 'g1' },
+      { desde: 'g1', hasta: 'g1-a' },
+      { desde: 'g1', hasta: 'g1-b' },
+      { desde: 'g1', hasta: 'g1-c' },
+      { desde: 'g1', hasta: 'g1-d' },
+      { desde: 'gubernativas', hasta: 'g2' },
+      { desde: 'g2', hasta: 'g2-a' },
+      { desde: 'g2', hasta: 'g2-tratados' },
+      { desde: 'g2-tratados', hasta: 'g2-t1' },
+      { desde: 'g2-tratados', hasta: 'g2-t2' },
+      { desde: 'g2-tratados', hasta: 'g2-t3' },
+      { desde: 'g2', hasta: 'g2-b' },
+      { desde: 'gubernativas', hasta: 'g3' },
+      { desde: 'g3', hasta: 'g3-a' },
+      { desde: 'g3', hasta: 'g3-b' },
+      { desde: 'g3', hasta: 'g3-c' },
+      { desde: 'gubernativas', hasta: 'g4' },
+      { desde: 'g4', hasta: 'g4-a' },
+      { desde: 'g4', hasta: 'g4-b' },
+      { desde: 'gubernativas', hasta: 'g5' },
+      { desde: 'g5', hasta: 'g5-a' },
+      { desde: 'g5', hasta: 'g5-b' },
+      { desde: 'gubernativas', hasta: 'g6' },
+      { desde: 'g6', hasta: 'g6-a' },
+      { desde: 'g6', hasta: 'g6-b' },
+
+      { desde: 'categorias', hasta: 'administrativas' },
+      { desde: 'administrativas', hasta: 'a1' },
+      { desde: 'administrativas', hasta: 'a2' },
+      { desde: 'administrativas', hasta: 'a3' },
+
+      { desde: 'categorias', hasta: 'nomogeneticas' },
+      { desde: 'nomogeneticas', hasta: 'n1' },
+      { desde: 'nomogeneticas', hasta: 'n2' },
+      { desde: 'nomogeneticas', hasta: 'n3' },
+      { desde: 'nomogeneticas', hasta: 'n4' },
+
+      { desde: 'categorias', hasta: 'control' },
+      { desde: 'control', hasta: 'c1' },
+      { desde: 'control', hasta: 'c2' },
+      { desde: 'control', hasta: 'c3' },
+      { desde: 'c3', hasta: 'c3-a' },
+      { desde: 'c3', hasta: 'c3-b' },
+      { desde: 'c3', hasta: 'c3-c' },
+      { desde: 'c3', hasta: 'c3-d' },
+
+      { desde: 'raiz', hasta: 'ideas' },
+      { desde: 'ideas', hasta: 'idea1' },
+      { desde: 'ideas', hasta: 'idea2' },
+      { desde: 'ideas', hasta: 'idea3' },
+    ],
+  },
 ]
