@@ -952,4 +952,111 @@ export const MAPAS_MENTALES_PLANTILLA: MapaMentalPlantilla[] = [
       { desde: 'ideas', hasta: 'idea3' },
     ],
   },
+
+  // Quinta plantilla de las clases del usuario — combina "09. Presidente
+  // de la República: elección" y "10. ...cesación (subrogación, vacancia y
+  // reemplazo)": todo lo que da continuidad al cargo presidencial, desde
+  // por qué existe un Ejecutivo unipersonal hasta cómo termina el mandato.
+  {
+    id: 'plantilla-presidente-eleccion-cesacion',
+    titulo: 'Presidente: Elección, Subrogación y Cesación',
+    descripcion: 'Por qué un Ejecutivo unipersonal, cómo se elige, y las 3 vías de continuidad del cargo: subrogación, vacancia y cesación.',
+    nodos: [
+      { id: 'raiz', texto: 'Presidente: Elección, Subrogación y Cesación', forma: 'ovalo', tamanoTexto: 'titulo' },
+
+      { id: 'justificacion', texto: '¿Por qué un Ejecutivo unipersonal? (Hamilton, El Federalista LXX, 1788)', forma: 'rectangulo', tamanoTexto: 'subtitulo' },
+      { id: 'just-1', texto: 'Energía en la defensa exterior y en la administración interior', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'just-2', texto: 'Unidad de acción — un ejecutivo único, no multiplicidad de opiniones', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'just-3', texto: 'Mayor capacidad de decisión y rapidez de reacción', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'just-4', texto: 'Mayor responsabilidad frente a la opinión pública', forma: 'rectangulo', tamanoTexto: 'texto' },
+
+      { id: 'eleccion', texto: 'Elección', forma: 'ninguna', tamanoTexto: 'subtitulo' },
+      { id: 'requisitos', texto: 'Requisitos de elegibilidad (art. 25): chileno, 35 años, ciudadano con derecho a sufragio', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'votacion', texto: 'Votación (art. 26): directa, simultánea con parlamentarios; mayoría absoluta o segunda vuelta', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'investidura', texto: 'Investidura (art. 27): escrutinio del TCE, comunicación al Senado, juramento ante el Congreso Pleno', forma: 'rectangulo', tamanoTexto: 'texto' },
+      {
+        id: 'duracion',
+        texto: 'Duración (arts. 25/30): 4 años sin reelección inmediata — sí se puede volver a postular después (ej. Piñera, Bachelet)',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+        color: '#b45309',
+      },
+
+      { id: 'subrogacion', texto: 'Subrogación (art. 29) — impedimento *temporal*', forma: 'rectangulo', tamanoTexto: 'subtitulo', color: '#1d4ed8' },
+      { id: 'sub-causales', texto: 'Enfermedad, ausencia del territorio, u otro grave motivo', forma: 'rectangulo', tamanoTexto: 'texto' },
+      {
+        id: 'sub-orden',
+        texto: 'Orden de precedencia: ministro titular → Presidente del Senado → de la Cámara → de la Corte Suprema',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+      },
+
+      { id: 'cesacion', texto: 'Causales de cesación', forma: 'ninguna', tamanoTexto: 'subtitulo' },
+      { id: 'ces-1', texto: 'Cumplimiento del período', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'ces-2', texto: 'Destitución por acusación constitucional (art. 53 N°1)', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'ces-3', texto: 'Inhabilidad declarada por el Senado (art. 53 N°7)', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'ces-4', texto: 'Dimisión, calificada por el Senado (art. 53 N°7)', forma: 'rectangulo', tamanoTexto: 'texto' },
+      {
+        id: 'ces-5',
+        texto: 'Responsabilidad por contravenir el régimen democrático (art. 19 N°15) — declaración del TC + mayoría calificada del Senado',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+        color: '#b91c1c',
+      },
+
+      { id: 'vacancia', texto: 'Vacancia y reemplazo — impedimento *definitivo*', forma: 'rectangulo', tamanoTexto: 'subtitulo', color: '#1d4ed8' },
+      { id: 'vac-1', texto: 'Si faltan menos de 2 años para el término: elige el Congreso Pleno, asume en 30 días', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'vac-2', texto: 'Si faltan 2 años o más: el Vicepresidente convoca a elecciones 60 días después', forma: 'rectangulo', tamanoTexto: 'texto' },
+
+      { id: 'sub-vs-sup', texto: 'Subrogante (temporal, automático) vs. Suplente (definitivo, discrecional)', forma: 'rectangulo', tamanoTexto: 'texto', color: '#b45309' },
+
+      {
+        id: 'exPresidente',
+        texto: 'Estatuto del Ex-Presidente (art. 30): fuero judicial y dieta — no aplica si asumió en vacancia o fue condenado en juicio político',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+      },
+
+      { id: 'ideas', texto: 'Ideas principales', forma: 'ovalo', tamanoTexto: 'subtitulo' },
+      { id: 'idea1', texto: 'Subrogación, vacancia y reemplazo dan continuidad a la función presidencial', forma: 'rectangulo', tamanoTexto: 'texto', color: '#15803d' },
+      { id: 'idea2', texto: 'El principio de continuidad de la función pública exige que siempre haya un titular', forma: 'rectangulo', tamanoTexto: 'texto', color: '#15803d' },
+      { id: 'idea3', texto: 'Los expresidentes cuentan con un estatuto especial', forma: 'rectangulo', tamanoTexto: 'texto', color: '#15803d' },
+    ],
+    conexiones: [
+      { desde: 'raiz', hasta: 'justificacion' },
+      { desde: 'justificacion', hasta: 'just-1' },
+      { desde: 'justificacion', hasta: 'just-2' },
+      { desde: 'justificacion', hasta: 'just-3' },
+      { desde: 'justificacion', hasta: 'just-4' },
+
+      { desde: 'raiz', hasta: 'eleccion' },
+      { desde: 'eleccion', hasta: 'requisitos' },
+      { desde: 'eleccion', hasta: 'votacion' },
+      { desde: 'eleccion', hasta: 'investidura' },
+      { desde: 'eleccion', hasta: 'duracion' },
+
+      { desde: 'raiz', hasta: 'subrogacion' },
+      { desde: 'subrogacion', hasta: 'sub-causales' },
+      { desde: 'subrogacion', hasta: 'sub-orden' },
+
+      { desde: 'raiz', hasta: 'cesacion' },
+      { desde: 'cesacion', hasta: 'ces-1' },
+      { desde: 'cesacion', hasta: 'ces-2' },
+      { desde: 'cesacion', hasta: 'ces-3' },
+      { desde: 'cesacion', hasta: 'ces-4' },
+      { desde: 'cesacion', hasta: 'ces-5' },
+
+      { desde: 'raiz', hasta: 'vacancia' },
+      { desde: 'vacancia', hasta: 'vac-1' },
+      { desde: 'vacancia', hasta: 'vac-2' },
+
+      { desde: 'raiz', hasta: 'sub-vs-sup' },
+      { desde: 'raiz', hasta: 'exPresidente' },
+
+      { desde: 'raiz', hasta: 'ideas' },
+      { desde: 'ideas', hasta: 'idea1' },
+      { desde: 'ideas', hasta: 'idea2' },
+      { desde: 'ideas', hasta: 'idea3' },
+    ],
+  },
 ]
