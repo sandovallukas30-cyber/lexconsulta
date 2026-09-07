@@ -5,7 +5,7 @@
 // ajusta con su propio apunte de clase.
 //
 // Las plantillas NO traen posición fija: se posicionan solas con el mismo
-// auto-organizador por capas que el botón "Organizar" (ver
+// auto-organizador de árbol prolijo que el botón "Organizar" (ver
 // calcularLayoutMapaMental en MapasMentalesView.tsx), apenas se crean.
 
 import type { FormaNodoMental, TamanoTextoMental } from '../types'
@@ -423,6 +423,123 @@ export const MAPAS_MENTALES_PLANTILLA: MapaMentalPlantilla[] = [
       // plantillas con más de un padre.
       { desde: 'paso2-no-2', hasta: 'conclusion' },
       { desde: 'paso2-si-4', hasta: 'conclusion' },
+    ],
+  },
+
+  // Basada en el apunte de clase del usuario (Derecho Constitucional
+  // Orgánico) — resume la teoría del órgano: sus elementos, para qué
+  // sirve, y las clasificaciones de Jellinek + otras clasificaciones
+  // adicionales que agrupa la propia clase.
+  {
+    id: 'plantilla-teoria-organo',
+    titulo: 'Teoría del Órgano',
+    descripcion: 'Elementos, utilidad, límites y clasificaciones (Jellinek y otras) del órgano estatal.',
+    nodos: [
+      { id: 'raiz', texto: 'Teoría del Órgano', forma: 'ovalo', tamanoTexto: 'titulo' },
+      {
+        id: 'metafora',
+        texto: 'La metáfora orgánica — respuesta al problema de la representación/mandato',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+        nota: 'Crítica normativista: Kelsen',
+      },
+
+      { id: 'elementos', texto: 'Elementos', forma: 'ninguna', tamanoTexto: 'subtitulo' },
+      { id: 'competencia', texto: 'Competencia (objetivo)', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'titular', texto: 'Titular (subjetivo)', forma: 'rectangulo', tamanoTexto: 'texto' },
+
+      { id: 'utilidad', texto: 'Utilidad: ¿cuándo una conducta cuenta como actividad estatal?', forma: 'ninguna', tamanoTexto: 'subtitulo' },
+      { id: 'dualidad', texto: 'Dualidad ciudadanía / órgano', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'continuidad', texto: 'Continuidad de la función estatal', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'personalidad', texto: 'Órganos y personalidad jurídica (Estado-Fisco)', forma: 'rectangulo', tamanoTexto: 'texto' },
+
+      { id: 'limites', texto: 'Límites', forma: 'ninguna', tamanoTexto: 'subtitulo' },
+      { id: 'legitimidad', texto: 'Legitimidad — democracia', forma: 'rectangulo', tamanoTexto: 'texto', color: '#1d4ed8' },
+      { id: 'equilibrio', texto: 'Equilibrio de poder — Estado de Derecho', forma: 'rectangulo', tamanoTexto: 'texto', color: '#1d4ed8' },
+
+      { id: 'clasificacion', texto: 'Clasificación (Jellinek)', forma: 'rectangulo', tamanoTexto: 'subtitulo', color: '#1d4ed8' },
+      {
+        id: 'inmediatos',
+        texto: 'Inmediatos (PdR) / mediatos (DPR) — según si la Constitución los establece independientes de otros órganos',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+      },
+      {
+        id: 'primarios',
+        texto: 'Primarios (pueblo) / secundarios (PdR, CN) — según si expresan su voluntad por sí mismos',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+      },
+      {
+        id: 'simples',
+        texto: 'Simples (PdR) / potenciados (PdR en Consejo) — según si se asumen por titularidad en otro órgano',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+      },
+      {
+        id: 'independientes',
+        texto: 'Independientes (PdR) / dependientes (Consejo) — según expresan la voluntad estatal',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+      },
+      { id: 'normales', texto: 'Normales (PdR) / extraordinarios (Consejo) — según cuándo se activan', forma: 'rectangulo', tamanoTexto: 'texto' },
+
+      { id: 'otras-clasif', texto: 'Otras clasificaciones', forma: 'ninguna', tamanoTexto: 'subtitulo' },
+      { id: 'const-legal', texto: 'Constitucionales / legales — según su norma de creación', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'uni-colegiado', texto: 'Unipersonales / colegiados — según el número de titulares', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'activo-consultivo', texto: 'Activos, consultivos y de control — según su función', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'territorial', texto: 'Nacionales, regionales, provinciales y comunales — según su ámbito territorial', forma: 'rectangulo', tamanoTexto: 'texto' },
+
+      { id: 'ideas', texto: 'Ideas principales', forma: 'ovalo', tamanoTexto: 'subtitulo' },
+      {
+        id: 'idea1',
+        texto: 'Más complejo que las teorías de representación política y competencia normativa',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+        color: '#15803d',
+      },
+      {
+        id: 'idea2',
+        texto: 'Explica la continuidad de la función estatal y la imputación de consecuencias a la agencia estatal',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+        color: '#15803d',
+      },
+      { id: 'idea3', texto: 'Existen múltiples clasificaciones de los órganos estatales', forma: 'rectangulo', tamanoTexto: 'texto', color: '#15803d' },
+    ],
+    conexiones: [
+      { desde: 'raiz', hasta: 'metafora' },
+
+      { desde: 'raiz', hasta: 'elementos' },
+      { desde: 'elementos', hasta: 'competencia' },
+      { desde: 'elementos', hasta: 'titular' },
+
+      { desde: 'raiz', hasta: 'utilidad' },
+      { desde: 'utilidad', hasta: 'dualidad' },
+      { desde: 'utilidad', hasta: 'continuidad' },
+      { desde: 'utilidad', hasta: 'personalidad' },
+
+      { desde: 'raiz', hasta: 'limites' },
+      { desde: 'limites', hasta: 'legitimidad' },
+      { desde: 'limites', hasta: 'equilibrio' },
+
+      { desde: 'raiz', hasta: 'clasificacion' },
+      { desde: 'clasificacion', hasta: 'inmediatos' },
+      { desde: 'clasificacion', hasta: 'primarios' },
+      { desde: 'clasificacion', hasta: 'simples' },
+      { desde: 'clasificacion', hasta: 'independientes' },
+      { desde: 'clasificacion', hasta: 'normales' },
+
+      { desde: 'raiz', hasta: 'otras-clasif' },
+      { desde: 'otras-clasif', hasta: 'const-legal' },
+      { desde: 'otras-clasif', hasta: 'uni-colegiado' },
+      { desde: 'otras-clasif', hasta: 'activo-consultivo' },
+      { desde: 'otras-clasif', hasta: 'territorial' },
+
+      { desde: 'raiz', hasta: 'ideas' },
+      { desde: 'ideas', hasta: 'idea1' },
+      { desde: 'ideas', hasta: 'idea2' },
+      { desde: 'ideas', hasta: 'idea3' },
     ],
   },
 ]
