@@ -193,10 +193,13 @@ export interface Canvas {
 
 /** A diferencia de Canvas (tipo de nodo SEMÁNTICO: definición/caso/concepto),
  * acá el tipo es la FORMA VISUAL en sí — es lo que un mapa mental de estudio
- * necesita: distinguir de un vistazo "esto es una categoría" (rectángulo/
- * nube) de "esto es una subcategoría" (óvalo) o "esto es una bifurcación"
- * (rombo), como en un apunte de mano real. */
-export type FormaNodoMental = 'rectangulo' | 'ovalo' | 'nube' | 'rombo' | 'ninguna'
+ * necesita: distinguir de un vistazo "esto es una categoría" (rectángulo) de
+ * "esto es una subcategoría" (óvalo) o "esto no necesita caja" (sin figura).
+ * 'nube' y 'rombo' existieron y se sacaron (no convencían visualmente) — un
+ * nodo guardado con alguno de esos dos valores se migra solo a 'ovalo' la
+ * primera vez que se abre su mapa (ver nodosIniciales en
+ * MapasMentalesView.tsx), así que el tipo ya no necesita incluirlos. */
+export type FormaNodoMental = 'rectangulo' | 'ovalo' | 'ninguna'
 
 /** Nivel tipográfico del texto del nodo — el mismo mapa necesita títulos de
  * categoría en grande y texto de detalle más chico, sin que eso dependa de

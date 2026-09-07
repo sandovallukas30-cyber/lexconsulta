@@ -44,7 +44,7 @@ export const MAPAS_MENTALES_PLANTILLA: MapaMentalPlantilla[] = [
     titulo: 'Atribuciones del Presidente (Art. 32 CPR)',
     descripcion: 'Clasificación doctrinal clásica: gubernativas, legislativas, judiciales, militares y de relaciones exteriores.',
     nodos: [
-      { id: 'raiz', texto: 'Atribuciones del Presidente\n(Art. 32 CPR)', forma: 'nube', tamanoTexto: 'titulo' },
+      { id: 'raiz', texto: 'Atribuciones del Presidente\n(Art. 32 CPR)', forma: 'ovalo', tamanoTexto: 'titulo' },
 
       { id: 'gubernativas', texto: 'Gubernativas y administrativas', forma: 'rectangulo', tamanoTexto: 'subtitulo', color: '#1d4ed8' },
       { id: 'gub-1', texto: 'Nombrar y remover *ministros de Estado*', forma: 'ovalo', tamanoTexto: 'texto' },
@@ -99,7 +99,7 @@ export const MAPAS_MENTALES_PLANTILLA: MapaMentalPlantilla[] = [
     titulo: 'La omisión en Derecho Penal',
     descripcion: 'Réplica exacta de un apunte de mano: pura/propia vs. comisión por omisión, con la misma jerarquía, colores y notas del original.',
     nodos: [
-      { id: 'raiz', texto: 'Comisión por omisión', forma: 'nube', tamanoTexto: 'titulo' },
+      { id: 'raiz', texto: 'Comisión por omisión', forma: 'ovalo', tamanoTexto: 'titulo' },
       {
         id: 'raiz-def',
         texto:
@@ -260,9 +260,7 @@ export const MAPAS_MENTALES_PLANTILLA: MapaMentalPlantilla[] = [
 
   // Mismo contenido doctrinal que la plantilla de arriba, organizado
   // distinto a propósito: acá la pregunta que DISTINGUE ambas figuras es
-  // la raíz (un rombo, la forma que la propia app describe como
-  // "bifurcación / decisión" — recién con esta plantilla se usa para eso
-  // de verdad), y las dos categorías cuelgan como respuesta sí/no en vez de
+  // la raíz, y las dos categorías cuelgan como respuesta sí/no en vez de
   // ser dos ramas más de una clasificación. Sirve para repasar lo mismo
   // por "qué las diferencia" en vez de por "cómo se clasifican".
   {
@@ -273,7 +271,7 @@ export const MAPAS_MENTALES_PLANTILLA: MapaMentalPlantilla[] = [
       {
         id: 'raiz',
         texto: '¿Existe posición de garante (deber especial de actuar), más allá del deber general de socorro?',
-        forma: 'rombo',
+        forma: 'rectangulo',
         tamanoTexto: 'titulo',
       },
 
@@ -365,7 +363,7 @@ export const MAPAS_MENTALES_PLANTILLA: MapaMentalPlantilla[] = [
     titulo: 'Omisión: checklist de análisis de caso',
     descripcion: 'Mismo contenido, organizado como una guía paso a paso para resolver un caso — las dos categorías son ramas de una decisión, no una clasificación.',
     nodos: [
-      { id: 'raiz', texto: 'Checklist: ¿hay responsabilidad por omisión?', forma: 'nube', tamanoTexto: 'titulo' },
+      { id: 'raiz', texto: 'Checklist: ¿hay responsabilidad por omisión?', forma: 'ovalo', tamanoTexto: 'titulo' },
       {
         id: 'paso1',
         texto: 'Paso 1 — ¿El sujeto no hizo algo que debía hacer, pudiendo hacerlo materialmente?',
@@ -377,7 +375,7 @@ export const MAPAS_MENTALES_PLANTILLA: MapaMentalPlantilla[] = [
       {
         id: 'paso2',
         texto: '¿Existe una posición de garante (deber especial), más allá del deber general de socorro?',
-        forma: 'rombo',
+        forma: 'rectangulo',
         tamanoTexto: 'texto',
       },
       { id: 'paso2-no', texto: 'NO → Omisión pura o propia', forma: 'ninguna', tamanoTexto: 'subtitulo' },
@@ -405,7 +403,7 @@ export const MAPAS_MENTALES_PLANTILLA: MapaMentalPlantilla[] = [
         forma: 'rectangulo',
         tamanoTexto: 'texto',
       },
-      { id: 'conclusion', texto: 'Conclusión: calificar la conducta y fundamentar con el artículo aplicable', forma: 'nube', tamanoTexto: 'subtitulo' },
+      { id: 'conclusion', texto: 'Conclusión: calificar la conducta y fundamentar con el artículo aplicable', forma: 'ovalo', tamanoTexto: 'subtitulo' },
     ],
     conexiones: [
       { desde: 'raiz', hasta: 'paso1' },

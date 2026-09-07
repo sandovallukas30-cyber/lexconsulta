@@ -135,7 +135,10 @@ export function MapasMentalesView() {
       tamanoTexto: n.tamanoTexto,
       color: n.color,
       nota: n.nota,
-      ancho: n.forma === 'nube' ? 220 : 170,
+      // Más ancho para los nodos "título" (normalmente la raíz): antes este
+      // extra dependía de la forma (nube), ahora de la jerarquía tipográfica,
+      // que es lo que en realidad predecía "esto va a llevar más texto".
+      ancho: n.tamanoTexto === 'titulo' ? 220 : 170,
     }))
     const conexiones: ConexionMapaMental[] = plantilla.conexiones.map((c) => ({
       id: crypto.randomUUID(),
@@ -296,21 +299,28 @@ function ListaMapas({
 
 const FORMAS: { id: FormaNodoMental; icono: string; label: string }[] = [
   { id: 'rectangulo', icono: 'ti-square', label: 'Rectángulo — categoría principal' },
-  { id: 'ovalo', icono: 'ti-circle', label: 'Óvalo — subcategoría' },
-  { id: 'nube', icono: 'ti-cloud', label: 'Nube — tema raíz' },
-  { id: 'rombo', icono: 'ti-diamond', label: 'Rombo — bifurcación / decisión' },
+  { id: 'ovalo', icono: 'ti-circle', label: 'Óvalo — subcategoría o tema raíz' },
   { id: 'ninguna', icono: 'ti-underline', label: 'Sin figura — texto subrayado' },
 ]
 
-/** Tamaño mínimo de redimensionado por forma — el rombo necesita ancho y
- * alto parecidos (para no aplanarlo hasta que deje de leerse como rombo) y
- * el texto sin figura no necesita una caja mínima grande, es solo texto. */
+/** Tamaño mínimo de redimensionado por forma — el texto sin figura no
+ * necesita una caja mínima grande, es solo texto. */
 const MIN_TAMANO: Record<FormaNodoMental, { w: number; h: number }> = {
   rectangulo: { w: 90, h: 44 },
   ovalo: { w: 90, h: 44 },
-  nube: { w: 90, h: 44 },
-  rombo: { w: 130, h: 130 },
   ninguna: { w: 50, h: 24 },
+}
+
+/** 'nube' y 'rombo' ya no son valores válidos del tipo (se sacaron, no
+ * convencían), pero un mapa guardado ANTES de este cambio puede tener
+ * nodos con esos strings en localStorage — el tipo no se valida en tiempo
+ * de ejecución. Se migran solos a 'ovalo' la primera vez que se abre el
+ * mapa (nodosIniciales, más abajo); el efecto de guardado ya persiste la
+ * forma migrada, así que esto corre una sola vez por nodo. `as string`
+ * a propósito: son valores que FormaNodoMental ya no admite. */
+function migrarForma(forma: FormaNodoMental): FormaNodoMental {
+  const f = forma as string
+  return f === 'nube' || f === 'rombo' ? 'ovalo' : forma
 }
 
 /** Un handle por lado, no solo arriba/abajo — antes solo se podía conectar
@@ -455,7 +465,7 @@ function MapaMentalDetalle({
         id: n.id,
         type: 'mental',
         position: n.posicion,
-        data: { texto: n.texto, forma: n.forma, tamanoTexto: n.tamanoTexto, color: n.color, nota: n.nota },
+        data: { texto: n.texto, forma: migrarForma(n.forma), tamanoTexto: n.tamanoTexto, color: n.color, nota: n.nota },
         style: { width: n.ancho ?? 180, height: n.alto },
       })),
     // Solo al montar: el mapa se remonta entero al volver a la lista (key={mapa.id}), así que no hace
@@ -703,7 +713,7 @@ function MapaMentalDetalle({
       type: 'mental',
       position: { x: centro.x + jitter(), y: centro.y + jitter() },
       data: { texto: 'Nuevo', forma, tamanoTexto: 'texto' },
-      style: { width: forma === 'nube' ? 200 : forma === 'ninguna' ? 140 : 160 },
+      style: { width: forma === 'ninguna' ? 140 : 160 },
     }
     setNodes((nds) => [...nds, nuevo])
   }
@@ -1047,9 +1057,9 @@ function MapaMentalDetalle({
 // ============= NODO COMPONENT =============
 
 /** Estilos de caja por forma. Rectángulo y óvalo son casos directos de
- * border-radius; nube usa un SVG de fondo (un rectángulo "puro" no se lee
- * como nube con solo CSS); rombo rota un fondo detrás del texto SIN rotar
- * el texto en sí, para que siga siendo legible horizontal. */
+ * border-radius; "ninguna" no tiene caja, solo el texto subrayado (ver más
+ * abajo). Hubo también nube y rombo — se sacaron por no convencer
+ * visualmente, ver FormaNodoMental en types/index.ts. */
 function CuerpoNodo({
   forma,
   color,
@@ -1071,9 +1081,7 @@ function CuerpoNodo({
   // color propio) usa el mismo criterio que ya usa el resto de la app para
   // teñir fondos con el acento (ver sidebar en index.css).
   const fondo = modoOscuro ? `color-mix(in srgb, ${color} 22%, #18181b)` : `color-mix(in srgb, ${color} 14%, #ffffff)`
-  // El aro de selección de las otras 3 formas es un boxShadow de 2px sólido
-  // alrededor de un borde recto — una nube no tiene un contorno recto, así
-  // que en vez de eso usa un halo (drop-shadow difuso) del mismo color; sin
+  // Aro de selección: boxShadow de 2px sólido alrededor del borde recto; sin
   // seleccionar, una sombra un poco más marcada que antes (0 1px 3px se
   // sentía plano) para que el nodo se lea como una tarjeta "levantada".
   const sombraCaja = seleccionado
@@ -1081,39 +1089,6 @@ function CuerpoNodo({
     : modoOscuro
     ? '0 2px 6px rgba(0,0,0,0.35)'
     : '0 2px 6px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)'
-  // drop-shadow (filtro) en vez de box-shadow: ambas formas de abajo (nube
-  // por el SVG, rombo por el clip-path) no tienen un borde rectangular recto
-  // — box-shadow dibujaría el aro alrededor del CUADRO invisible que las
-  // contiene, no de la silueta real, y clip-path directamente recorta
-  // cualquier box-shadow que se salga de su propio polígono. drop-shadow sí
-  // seguí la silueta visible, sea cual sea.
-  const halo = seleccionado
-    ? `drop-shadow(0 0 4px ${color})`
-    : modoOscuro
-    ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.35))'
-    : 'drop-shadow(0 2px 4px rgba(0,0,0,0.12))'
-
-  if (forma === 'nube') {
-    return (
-      <div className="relative w-full h-full flex items-center justify-center px-2 py-2">
-        <svg
-          className="absolute inset-0 w-full h-full"
-          viewBox="0 0 200 120"
-          preserveAspectRatio="none"
-          style={{ filter: halo }}
-        >
-          <path
-            d="M45 90 C20 90 10 70 22 55 C10 40 30 20 50 28 C58 10 90 8 100 25 C120 10 150 20 148 42 C175 40 182 68 160 80 C165 100 135 108 118 96 C105 112 65 112 55 96 C35 102 25 92 45 90 Z"
-            fill={fondo}
-            stroke={color}
-            strokeWidth={seleccionado ? 3 : 2}
-          />
-        </svg>
-        <div className="relative z-10 text-center px-4">{children}</div>
-      </div>
-    )
-  }
-
   if (forma === 'ninguna') {
     // Texto "pelado": sin caja ni fondo, solo subrayado — el nivel que en un
     // apunte de mano no se enmarca (ej. un subtítulo de sección). El aro de
@@ -1128,27 +1103,6 @@ function CuerpoNodo({
         >
           {children}
         </div>
-      </div>
-    )
-  }
-
-  if (forma === 'rombo') {
-    // clip-path en vez de rotar un cuadrado 45°: rotar hace que las puntas
-    // se salgan del cuadro apenas el nodo deja de ser cuadrado (se veía
-    // estirado/roto al redimensionarlo) — clip-path corta un rombo LIMPIO
-    // según el ancho y alto REALES del nodo, sea cual sea la proporción. El
-    // "borde" se logra apilando dos capas recortadas con el mismo polígono
-    // (la de adentro, más chica, tapa casi toda la de afuera y deja ver solo
-    // un anillo) en vez de la propiedad `border`, que clip-path recortaría
-    // de forma pareja perdiendo justo las puntas.
-    const puntas = 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)'
-    return (
-      <div className="relative w-full h-full flex items-center justify-center px-4 py-4">
-        <div className="absolute inset-0" style={{ filter: halo }}>
-          <div className="absolute inset-0" style={{ background: color, clipPath: puntas }} />
-          <div className="absolute inset-[2px]" style={{ background: fondo, clipPath: puntas }} />
-        </div>
-        <div className="relative z-10 text-center px-3 py-1 max-w-[65%]">{children}</div>
       </div>
     )
   }
@@ -1276,13 +1230,6 @@ function NodoMental(props: NodeProps<NodoFlow>) {
         isVisible={selected}
         minWidth={MIN_TAMANO[data.forma].w}
         minHeight={MIN_TAMANO[data.forma].h}
-        // Nube y rombo dependen de la proporción ancho:alto para verse bien
-        // (la nube es un SVG que se estira sin mantener proporción; el rombo
-        // deja de leerse como rombo si queda mucho más ancho que alto, o
-        // viceversa) — al arrastrar una esquina, ambas dimensiones cambian
-        // juntas. Rectángulo/óvalo/sin-figura siguen libres: son los que más
-        // se benefician de poder achatarse o alargarse para que entre texto.
-        keepAspectRatio={data.forma === 'nube' || data.forma === 'rombo'}
         color={color}
         handleStyle={{ width: 10, height: 10, borderRadius: 3, border: '2px solid white', boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }}
         lineStyle={{ borderWidth: 2, borderStyle: 'dashed', opacity: 0.5 }}
