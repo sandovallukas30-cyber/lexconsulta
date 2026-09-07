@@ -140,12 +140,20 @@ export function MapasMentalesView() {
       // que es lo que en realidad predecía "esto va a llevar más texto".
       ancho: n.tamanoTexto === 'titulo' ? 220 : 170,
     }))
-    const conexiones: ConexionMapaMental[] = plantilla.conexiones.map((c) => ({
-      id: crypto.randomUUID(),
-      desde: idsReales.get(c.desde)!,
-      hasta: idsReales.get(c.hasta)!,
-      etiqueta: c.etiqueta,
-    }))
+    const conexiones: ConexionMapaMental[] = plantilla.conexiones.map((c) => {
+      const lados = elegirLadosConexion(
+        posiciones.get(c.desde) ?? { x: 0, y: 0 },
+        posiciones.get(c.hasta) ?? { x: 0, y: 0 }
+      )
+      return {
+        id: crypto.randomUUID(),
+        desde: idsReales.get(c.desde)!,
+        hasta: idsReales.get(c.hasta)!,
+        etiqueta: c.etiqueta,
+        desdeHandle: lados.desdeHandle,
+        hastaHandle: lados.hastaHandle,
+      }
+    })
     const id = crearMapaMental(plantilla.titulo)
     actualizarMapaMental(id, { nodos, conexiones })
     setMapaMentalActivo(id)
@@ -443,6 +451,29 @@ function calcularLayoutMapaMental(
   return resultado
 }
 
+/** De qué lado sale/entra una conexión, según dónde queda el otro nodo DE
+ * VERDAD — sin esto, tanto "usar plantilla" como "Organizar automático"
+ * dejaban todo enganchado por default (sale abajo, entra arriba), sea cual
+ * sea la posición real. Con el layout por capas la mayoría de los vecinos
+ * quedan al costado (misma fila) más que abajo, así que ese default
+ * producía justo la curva "torcida"/con loops que se ve en capturas reales
+ * — el fix de handles por lado (HANDLES_POR_LADO) nunca llegaba a
+ * aprovecharse en nada creado por plantilla o por el organizador, solo en
+ * una conexión que el usuario arrastra a mano. Heurística simple: se
+ * compara qué tan lejos están en X contra en Y, y se sale/entra por el eje
+ * que predomina. */
+function elegirLadosConexion(
+  origen: { x: number; y: number },
+  destino: { x: number; y: number }
+): { desdeHandle: string; hastaHandle: string } {
+  const dx = destino.x - origen.x
+  const dy = destino.y - origen.y
+  if (Math.abs(dx) > Math.abs(dy)) {
+    return dx >= 0 ? { desdeHandle: 'right', hastaHandle: 'left' } : { desdeHandle: 'left', hastaHandle: 'right' }
+  }
+  return dy >= 0 ? { desdeHandle: 'bottom', hastaHandle: 'top' } : { desdeHandle: 'top', hastaHandle: 'bottom' }
+}
+
 function MapaMentalDetalle({
   mapa,
   modoOscuro,
@@ -727,8 +758,22 @@ function MapaMentalDetalle({
       edgesRef.current.map((e) => ({ desde: e.source, hasta: e.target }))
     )
     setNodes((nds) => nds.map((n) => (posiciones.has(n.id) ? { ...n, position: posiciones.get(n.id)! } : n)))
+    // Recalcular por qué lado sale/entra cada conexión con las posiciones
+    // NUEVAS — si no se hace esto, una conexión que antes salía derecho
+    // (nodos alineados verticalmente) puede quedar entrando por el lado
+    // equivocado después de reorganizar, con el mismo efecto "torcido" que
+    // "Organizar" se supone que arregla, no que crea.
+    setEdges((eds) =>
+      eds.map((e) => {
+        const origen = posiciones.get(e.source)
+        const destino = posiciones.get(e.target)
+        if (!origen || !destino) return e
+        const lados = elegirLadosConexion(origen, destino)
+        return { ...e, sourceHandle: lados.desdeHandle, targetHandle: lados.hastaHandle }
+      })
+    )
     setTimeout(() => rfRef.current?.fitView({ padding: 0.3, duration: 300 }), 50)
-  }, [setNodes, pushHistory])
+  }, [setNodes, setEdges, pushHistory])
 
   // ============= BUSCAR =============
   const [busquedaAbierta, setBusquedaAbierta] = useState(false)
