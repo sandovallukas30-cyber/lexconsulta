@@ -846,4 +846,110 @@ export const MAPAS_MENTALES_PLANTILLA: MapaMentalPlantilla[] = [
       { desde: 'ideas-chile', hasta: 'idea-chile-3' },
     ],
   },
+
+  // Cuarta plantilla de las clases del usuario — "08. Gobierno y
+  // Administración": la distinción entre ambas funciones (que el
+  // Presidente reúne en su persona), competencias regladas/discrecionales,
+  // actos de gobierno/actos administrativos, y cómo se ordenan los
+  // órganos administrativos chilenos.
+  {
+    id: 'plantilla-gobierno-administracion',
+    titulo: 'Gobierno y Administración',
+    descripcion: 'La distinción gobierno/administración, competencias regladas vs. discrecionales, y cómo se organizan los órganos del Estado.',
+    nodos: [
+      { id: 'raiz', texto: 'Gobierno y Administración', forma: 'ovalo', tamanoTexto: 'titulo' },
+
+      {
+        id: 'ubicacion',
+        texto: 'El Ejecutivo está en el Cap. IV — el orden con el Congreso (Cap. V) se invirtió respecto de la Constitución de 1925',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+      },
+      { id: 'capitulo', texto: 'Contenido del capítulo', forma: 'ninguna', tamanoTexto: 'texto' },
+      { id: 'cap-1', texto: '§1 Presidente de la República', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'cap-2', texto: '§2 Ministros de Estado', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'cap-3', texto: '§3 Bases Generales de la Administración del Estado', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'cap-4', texto: '§4 Estados de Excepción Constitucional', forma: 'rectangulo', tamanoTexto: 'texto' },
+
+      { id: 'distincion', texto: 'Gobierno vs. Administración (Huneeus, 1891)', forma: 'rectangulo', tamanoTexto: 'subtitulo', color: '#1d4ed8' },
+      { id: 'gob-vol', texto: 'Gobierno: dirección política, voluntad, inteligencia y deliberación', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'admin-acc', texto: 'Administración: ejecución de los servicios públicos, acción, actividad', forma: 'rectangulo', tamanoTexto: 'texto' },
+
+      { id: 'art24', texto: 'Art. 24: el Presidente reúne ambas funciones, que se entrelazan', forma: 'rectangulo', tamanoTexto: 'texto', color: '#b45309' },
+
+      {
+        id: 'comisarial',
+        texto: 'Principio comisarial: la legitimidad democrática desciende desde el Presidente electo hacia toda la administración',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+      },
+
+      { id: 'competencias', texto: 'Competencias regladas y discrecionales', forma: 'ninguna', tamanoTexto: 'subtitulo' },
+      { id: 'regladas', texto: 'Regladas: la norma agota la conducta autorizada (ej. promulgar en 10 días, art. 75)', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'discrecionales', texto: 'Discrecionales: el órgano aprecia y dispone de alternativas (ej. celebrar tratados, art. 32 N°15)', forma: 'rectangulo', tamanoTexto: 'texto' },
+
+      { id: 'actos', texto: 'Actos de gobierno y actos administrativos', forma: 'ninguna', tamanoTexto: 'subtitulo' },
+      { id: 'actos-gob', texto: 'De gobierno: nacen de la Constitución, sin ley previa, no reclamables por ilegalidad', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'actos-admin', texto: 'Administrativos: ejecutan la ley, requieren habilitación legal previa', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'actos-criterio', texto: 'Ningún criterio formal distingue unos de otros (Carré de Malberg)', forma: 'rectangulo', tamanoTexto: 'texto', color: '#b91c1c' },
+
+      { id: 'organos', texto: 'Órganos centralizados y descentralizados', forma: 'ninguna', tamanoTexto: 'subtitulo' },
+      { id: 'centralizados', texto: 'Centralizados: sin personalidad jurídica propia, dependen jerárquicamente del Presidente', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'descentralizados', texto: 'Descentralizados: personalidad jurídica propia, se vinculan por supervigilancia, no jerarquía', forma: 'rectangulo', tamanoTexto: 'texto' },
+
+      { id: 'categorias', texto: 'Categorías en el derecho chileno', forma: 'rectangulo', tamanoTexto: 'subtitulo' },
+      { id: 'cat-func', texto: 'Ministerios y servicios públicos = desconcentración funcional', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'cat-terr', texto: 'Delegaciones presidenciales = desconcentración territorial', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'cat-descent', texto: 'Gobiernos regionales y municipalidades = órganos descentralizados', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'cat-auton', texto: 'Contraloría y Banco Central = órganos autónomos de rango constitucional', forma: 'rectangulo', tamanoTexto: 'texto', color: '#b45309' },
+
+      { id: 'discutir', texto: 'Para discutir: ¿cuánta autonomía admite una administración democrática?', forma: 'rectangulo', tamanoTexto: 'texto' },
+
+      { id: 'ideas', texto: 'Ideas principales', forma: 'ovalo', tamanoTexto: 'subtitulo' },
+      { id: 'idea1', texto: 'El Presidente concentra dos funciones distintas: dirección política y gestión administrativa', forma: 'rectangulo', tamanoTexto: 'texto', color: '#15803d' },
+      { id: 'idea2', texto: 'El principio comisarial enlaza a toda la administración con la voluntad popular', forma: 'rectangulo', tamanoTexto: 'texto', color: '#15803d' },
+      { id: 'idea3', texto: 'Los actos de gobierno se fundan en la Constitución; los administrativos, en la ley', forma: 'rectangulo', tamanoTexto: 'texto', color: '#15803d' },
+    ],
+    conexiones: [
+      { desde: 'raiz', hasta: 'ubicacion' },
+      { desde: 'raiz', hasta: 'capitulo' },
+      { desde: 'capitulo', hasta: 'cap-1' },
+      { desde: 'capitulo', hasta: 'cap-2' },
+      { desde: 'capitulo', hasta: 'cap-3' },
+      { desde: 'capitulo', hasta: 'cap-4' },
+
+      { desde: 'raiz', hasta: 'distincion' },
+      { desde: 'distincion', hasta: 'gob-vol' },
+      { desde: 'distincion', hasta: 'admin-acc' },
+
+      { desde: 'raiz', hasta: 'art24' },
+      { desde: 'raiz', hasta: 'comisarial' },
+
+      { desde: 'raiz', hasta: 'competencias' },
+      { desde: 'competencias', hasta: 'regladas' },
+      { desde: 'competencias', hasta: 'discrecionales' },
+
+      { desde: 'raiz', hasta: 'actos' },
+      { desde: 'actos', hasta: 'actos-gob' },
+      { desde: 'actos', hasta: 'actos-admin' },
+      { desde: 'actos', hasta: 'actos-criterio' },
+
+      { desde: 'raiz', hasta: 'organos' },
+      { desde: 'organos', hasta: 'centralizados' },
+      { desde: 'organos', hasta: 'descentralizados' },
+
+      { desde: 'raiz', hasta: 'categorias' },
+      { desde: 'categorias', hasta: 'cat-func' },
+      { desde: 'categorias', hasta: 'cat-terr' },
+      { desde: 'categorias', hasta: 'cat-descent' },
+      { desde: 'categorias', hasta: 'cat-auton' },
+
+      { desde: 'raiz', hasta: 'discutir' },
+
+      { desde: 'raiz', hasta: 'ideas' },
+      { desde: 'ideas', hasta: 'idea1' },
+      { desde: 'ideas', hasta: 'idea2' },
+      { desde: 'ideas', hasta: 'idea3' },
+    ],
+  },
 ]
