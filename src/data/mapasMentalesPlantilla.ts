@@ -682,4 +682,168 @@ export const MAPAS_MENTALES_PLANTILLA: MapaMentalPlantilla[] = [
       { desde: 'ideas', hasta: 'idea3' },
     ],
   },
+
+  // Tercera plantilla de las clases del usuario — combina "06. Régimen de
+  // Gobierno: Teoría" (democracia/jefatura de Estado, los 3 tipos de
+  // régimen, su relación con el desarrollo humano) con "07. Régimen de
+  // Gobierno: características del Presidencialismo Chileno" (antecedentes,
+  // clases de poderes, las 6 categorías de potestades presidenciales,
+  // funcionamiento práctico y correctores).
+  {
+    id: 'plantilla-regimen-gobierno',
+    titulo: 'Régimen de Gobierno',
+    descripcion: 'Los 3 tipos de régimen (presidencial, parlamentario, semi-presidencial) y por qué el chileno es un presidencialismo "reforzado".',
+    nodos: [
+      { id: 'raiz', texto: 'Régimen de Gobierno', forma: 'ovalo', tamanoTexto: 'titulo' },
+
+      { id: 'democracia', texto: 'Democracia y jefatura de Estado', forma: 'ninguna', tamanoTexto: 'subtitulo' },
+      { id: 'matriz-dem', texto: 'República Democrática (jefatura electiva) vs. Autocrática (elecciones no libres)', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'matriz-mon', texto: 'Monarquía Constitucional (el rey reina, no gobierna) vs. Absoluta', forma: 'rectangulo', tamanoTexto: 'texto' },
+
+      { id: 'objetivos', texto: 'Objetivos de un sistema de gobierno: efectividad y estabilidad (Sartori, 1991)', forma: 'rectangulo', tamanoTexto: 'texto' },
+
+      { id: 'tipos', texto: 'Tres tipos de régimen', forma: 'ninguna', tamanoTexto: 'subtitulo' },
+      { id: 'presidencial', texto: 'Presidencial', forma: 'rectangulo', tamanoTexto: 'subtitulo', color: '#1d4ed8' },
+      { id: 'pres-1', texto: 'Ejecutivo elegido separado del Congreso — legitimidad dual', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'pres-2', texto: 'Presidente con período fijo + gabinete de confianza exclusiva', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'pres-3', texto: 'Crítica: tendencia a la parálisis, inestabilidad y crisis', forma: 'rectangulo', tamanoTexto: 'texto', color: '#b91c1c' },
+      { id: 'parlamentario', texto: 'Parlamentario', forma: 'rectangulo', tamanoTexto: 'subtitulo', color: '#1d4ed8' },
+      { id: 'parl-1', texto: 'Gobierno designado, apoyado y destituido por el Parlamento (Sartori)', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'parl-2', texto: 'Para ser estable, depende de un sistema de partidos sólido', forma: 'rectangulo', tamanoTexto: 'texto' },
+      {
+        id: 'parl-3',
+        texto: 'El remedio alemán a la inestabilidad: voto de censura *constructivo* (art. 67 Ley Fundamental de 1949)',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+        color: '#b45309',
+      },
+      { id: 'semipresidencial', texto: 'Semi-presidencial', forma: 'rectangulo', tamanoTexto: 'subtitulo', color: '#1d4ed8' },
+      { id: 'semi-1', texto: 'Autoridad dual: Presidente (jefe de Estado) + Primer Ministro (jefe de gobierno)', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'semi-2', texto: 'Premier-presidencial (Austria, Finlandia, Portugal) — solo el parlamento destituye al Primer Ministro', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'semi-3', texto: 'Premier-parlamentario (Francia, 1958) — el problema de la "cohabitación"', forma: 'rectangulo', tamanoTexto: 'texto' },
+      {
+        id: 'comparacion',
+        texto: 'Se comparan por: elección, duración, cabezas del ejecutivo, y el problema típico de cada uno',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+      },
+
+      {
+        id: 'desarrollo',
+        texto: '¿Correlación con el desarrollo? 80% de los países más desarrollados (IDH) son parlamentarios; en los menos desarrollados predomina el presidencialismo',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+      },
+
+      { id: 'ideas1', texto: 'Ideas principales', forma: 'ovalo', tamanoTexto: 'subtitulo' },
+      { id: 'idea1', texto: 'El régimen de gobierno define cómo se elige a quien encabeza el ejecutivo', forma: 'rectangulo', tamanoTexto: 'texto', color: '#15803d' },
+      { id: 'idea2', texto: 'Los criterios clave son elección, duración e integración del gobierno', forma: 'rectangulo', tamanoTexto: 'texto', color: '#15803d' },
+
+      { id: 'chile', texto: 'El presidencialismo chileno', forma: 'rectangulo', tamanoTexto: 'subtitulo', color: '#1d4ed8' },
+      { id: 'reforzado', texto: 'Presidencialismo "reforzado" o hiperpresidencialismo', forma: 'rectangulo', tamanoTexto: 'texto', color: '#b45309' },
+
+      { id: 'antecedentes', texto: 'Antecedentes históricos', forma: 'ninguna', tamanoTexto: 'texto' },
+      { id: 'ant-1', texto: '1833: período parlamentario', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'ant-2', texto: '1925: organiza el poder ya en clave presidencial', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'ant-3', texto: '1943 y 1970: reformas que delimitan y luego amplían la iniciativa exclusiva', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'ant-4', texto: '1980: recoge todo y agrega nuevos mecanismos', forma: 'rectangulo', tamanoTexto: 'texto' },
+
+      { id: 'clases-poderes', texto: 'Clases de poderes presidenciales', forma: 'ninguna', tamanoTexto: 'texto' },
+      {
+        id: 'constitucionales',
+        texto: 'Constitucionales — proactivos (iniciativa exclusiva, potestad reglamentaria) y reactivos (veto, presupuesto)',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+      },
+      { id: 'partidarios', texto: 'Partidarios — dependen del resultado electoral; en Chile, débiles y variables', forma: 'rectangulo', tamanoTexto: 'texto' },
+
+      { id: 'seis-categorias', texto: 'Seis categorías de potestades', forma: 'rectangulo', tamanoTexto: 'subtitulo' },
+      { id: 'cat-1', texto: '(1) Proceso legislativo — iniciativa exclusiva (art. 65), urgencias (art. 74), veto (art. 73)', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'cat-2', texto: '(2) Presupuesto — rige el del Presidente si el Congreso no despacha en 60 días (art. 67)', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'cat-3', texto: '(3) Jefatura del Ejecutivo — jefe de Estado y de Gobierno a la vez (arts. 24 y 32)', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'cat-4', texto: '(4) Integración de otros órganos — Tribunal Constitucional, tribunales superiores, Fiscal Nacional, Contralor', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'cat-5', texto: '(5) Estados de excepción (arts. 39 a 45)', forma: 'rectangulo', tamanoTexto: 'texto' },
+      {
+        id: 'cat-6',
+        texto: '(6) Ausencia de responsabilidad política — no existen la censura ni la disolución del Congreso',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+        color: '#b91c1c',
+      },
+
+      { id: 'funcionamiento', texto: 'En la práctica: el sistema proporcional produce Congresos sin mayoría, sin árbitro político', forma: 'rectangulo', tamanoTexto: 'texto' },
+
+      { id: 'correctores', texto: 'Correctores del modelo', forma: 'ninguna', tamanoTexto: 'texto' },
+      { id: 'corr-1', texto: 'Presidencialismo de coalición: cargos a cambio de apoyo parlamentario', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'corr-2', texto: 'El Tribunal Constitucional arbitra los conflictos de competencia', forma: 'rectangulo', tamanoTexto: 'texto' },
+
+      {
+        id: 'discutir',
+        texto: 'Para discutir: ¿reformar? — presidencial no reforzado / semi-presidencial / parlamentario',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+      },
+
+      { id: 'ideas-chile', texto: 'Ideas principales (Chile)', forma: 'ovalo', tamanoTexto: 'subtitulo' },
+      { id: 'idea-chile-1', texto: 'El régimen chileno es presidencial "reforzado"', forma: 'rectangulo', tamanoTexto: 'texto', color: '#15803d' },
+      { id: 'idea-chile-2', texto: 'Lo distintivo es la acumulación de potestades, no una en particular', forma: 'rectangulo', tamanoTexto: 'texto', color: '#15803d' },
+      { id: 'idea-chile-3', texto: 'Potestades constitucionales máximas conviven con gobiernos políticamente débiles', forma: 'rectangulo', tamanoTexto: 'texto', color: '#15803d' },
+    ],
+    conexiones: [
+      { desde: 'raiz', hasta: 'democracia' },
+      { desde: 'democracia', hasta: 'matriz-dem' },
+      { desde: 'democracia', hasta: 'matriz-mon' },
+
+      { desde: 'raiz', hasta: 'objetivos' },
+
+      { desde: 'raiz', hasta: 'tipos' },
+      { desde: 'tipos', hasta: 'presidencial' },
+      { desde: 'presidencial', hasta: 'pres-1' },
+      { desde: 'presidencial', hasta: 'pres-2' },
+      { desde: 'presidencial', hasta: 'pres-3' },
+      { desde: 'tipos', hasta: 'parlamentario' },
+      { desde: 'parlamentario', hasta: 'parl-1' },
+      { desde: 'parlamentario', hasta: 'parl-2' },
+      { desde: 'parlamentario', hasta: 'parl-3' },
+      { desde: 'tipos', hasta: 'semipresidencial' },
+      { desde: 'semipresidencial', hasta: 'semi-1' },
+      { desde: 'semipresidencial', hasta: 'semi-2' },
+      { desde: 'semipresidencial', hasta: 'semi-3' },
+      { desde: 'tipos', hasta: 'comparacion' },
+
+      { desde: 'raiz', hasta: 'desarrollo' },
+
+      { desde: 'raiz', hasta: 'ideas1' },
+      { desde: 'ideas1', hasta: 'idea1' },
+      { desde: 'ideas1', hasta: 'idea2' },
+
+      { desde: 'raiz', hasta: 'chile' },
+      { desde: 'chile', hasta: 'reforzado' },
+      { desde: 'chile', hasta: 'antecedentes' },
+      { desde: 'antecedentes', hasta: 'ant-1' },
+      { desde: 'antecedentes', hasta: 'ant-2' },
+      { desde: 'antecedentes', hasta: 'ant-3' },
+      { desde: 'antecedentes', hasta: 'ant-4' },
+      { desde: 'chile', hasta: 'clases-poderes' },
+      { desde: 'clases-poderes', hasta: 'constitucionales' },
+      { desde: 'clases-poderes', hasta: 'partidarios' },
+      { desde: 'chile', hasta: 'seis-categorias' },
+      { desde: 'seis-categorias', hasta: 'cat-1' },
+      { desde: 'seis-categorias', hasta: 'cat-2' },
+      { desde: 'seis-categorias', hasta: 'cat-3' },
+      { desde: 'seis-categorias', hasta: 'cat-4' },
+      { desde: 'seis-categorias', hasta: 'cat-5' },
+      { desde: 'seis-categorias', hasta: 'cat-6' },
+      { desde: 'chile', hasta: 'funcionamiento' },
+      { desde: 'chile', hasta: 'correctores' },
+      { desde: 'correctores', hasta: 'corr-1' },
+      { desde: 'correctores', hasta: 'corr-2' },
+      { desde: 'chile', hasta: 'discutir' },
+
+      { desde: 'raiz', hasta: 'ideas-chile' },
+      { desde: 'ideas-chile', hasta: 'idea-chile-1' },
+      { desde: 'ideas-chile', hasta: 'idea-chile-2' },
+      { desde: 'ideas-chile', hasta: 'idea-chile-3' },
+    ],
+  },
 ]
