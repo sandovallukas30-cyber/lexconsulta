@@ -1217,4 +1217,134 @@ export const MAPAS_MENTALES_PLANTILLA: MapaMentalPlantilla[] = [
       { desde: 'ideas', hasta: 'idea3' },
     ],
   },
+
+  // Mapa mental para "Introducción a la Profesión Jurídica" (E01, recurso
+  // de protección) — mismo contenido que la plantilla de Colecciones
+  // "Recurso de protección (art. 20)", pero organizado DISTINTO a
+  // propósito: acá no es por artículo (eso ya lo cubre Colecciones), es por
+  // el PROCESO real de escribir el recurso — el test del art. 20, la
+  // estructura del escrito, las 4 operaciones de escritura, plazo y
+  // tribunal, qué sigue después de presentado, y la tabla hecho→derecho —
+  // que es lo que hace falta tener a mano bajo presión de examen (escrito a
+  // mano, en clase, con la Constitución y el Auto Acordado impresos).
+  // Fuente: RP.pptx (clase preparatoria) + el resumen ya verificado en
+  // src/data/autoAcordadoProteccion.json para los numerales del Auto
+  // Acordado que se citan acá.
+  {
+    id: 'plantilla-recurso-proteccion-escritura',
+    titulo: 'Recurso de Protección — Cómo redactarlo',
+    descripcion: 'El proceso de escribir el recurso: el test del art. 20, la estructura del escrito, y qué sigue después de presentado.',
+    nodos: [
+      { id: 'raiz', texto: 'Recurso de Protección\nCómo redactarlo', forma: 'ovalo', tamanoTexto: 'titulo' },
+
+      { id: 'filtros', texto: 'El test del art. 20 (5 filtros)', forma: 'rectangulo', tamanoTexto: 'subtitulo', color: '#1d4ed8' },
+      { id: 'filtro-1', texto: '1. Acto u omisión — ¿qué hizo o dejó de hacer alguien, y quién exactamente?', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'filtro-2', texto: '2. Ilegal o arbitrario — ¿contradice el Derecho, o carece de razón?', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'filtro-3', texto: '3. Afectación — ¿privación, perturbación o amenaza?', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'filtro-4', texto: '4. Derecho protegido — ¿está entre los que ampara el art. 20?', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'filtro-5', texto: '5. Medida útil — ¿qué puede ordenar concretamente la Corte?', forma: 'rectangulo', tamanoTexto: 'texto', color: '#b45309' },
+
+      { id: 'estructura', texto: 'Estructura del escrito (7 partes)', forma: 'rectangulo', tamanoTexto: 'subtitulo', color: '#1d4ed8' },
+      { id: 'parte-1', texto: '1. Tribunal — ¿a quién se dirige?', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'parte-2', texto: '2. Comparecencia — ¿quién recurre, con qué domicilio, por quién?', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'parte-3', texto: '3. Objeto — ¿qué acción se interpone y contra quién?', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'parte-4', texto: '4. Hechos — ordenados, sin valoraciones', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'parte-5', texto: '5. Fundamentos — por qué es ilegal/arbitrario y qué derecho afecta', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'parte-6', texto: '6. Petitorio — medida concreta y ejecutable', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'parte-7', texto: '7. Otrosíes — documentos, patrocinio, orden de no innovar', forma: 'rectangulo', tamanoTexto: 'texto' },
+
+      { id: 'operaciones', texto: 'Las 4 operaciones de escritura', forma: 'ninguna', tamanoTexto: 'subtitulo' },
+      { id: 'op-narrar', texto: 'Narrar — qué ocurrió y en qué secuencia', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'op-describir', texto: 'Describir — cómo era algo relevante', forma: 'rectangulo', tamanoTexto: 'texto' },
+      {
+        id: 'op-argumentar',
+        texto: 'Argumentar — por qué esos hechos justifican una conclusión *(no es lo mismo que narrar)*',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+        color: '#b91c1c',
+      },
+      { id: 'op-pedir', texto: 'Pedir — qué quiero que haga el tribunal', forma: 'rectangulo', tamanoTexto: 'texto' },
+
+      { id: 'plazo-tribunal', texto: 'Plazo y tribunal', forma: 'rectangulo', tamanoTexto: 'subtitulo', color: '#b45309' },
+      { id: 'plazo', texto: '30 días corridos y fatales, desde el acto/omisión o desde que se supo (Auto Ac. N° 1)', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'tribunal', texto: 'Corte de Apelaciones del lugar del acto o de sus efectos, a elección del recurrente (Auto Ac. N° 1)', forma: 'rectangulo', tamanoTexto: 'texto' },
+
+      { id: 'siguiente', texto: 'Qué sigue después de presentado', forma: 'ninguna', tamanoTexto: 'subtitulo' },
+      { id: 'sig-admisibilidad', texto: 'Admisibilidad — plazo + hechos que vulneren el art. 20 (Auto Ac. N° 2)', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'sig-informe', texto: 'Informe del recurrido (sesión 2 de la evaluación) — Auto Ac. N° 3', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'sig-fallo', texto: 'Fallo — 5° día hábil, o 2° para ciertas garantías (Auto Ac. N° 10)', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'sig-apelacion', texto: 'Apelación ante la Corte Suprema — 5 días hábiles (Auto Ac. N° 6)', forma: 'rectangulo', tamanoTexto: 'texto' },
+
+      { id: 'derechos', texto: 'Derechos frecuentes: hecho → derecho', forma: 'rectangulo', tamanoTexto: 'subtitulo', color: '#15803d' },
+      { id: 'd-1', texto: 'Trato desigual sin razón → Igualdad ante la ley', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'd-2', texto: 'Riesgo serio para una persona → Vida / integridad física o psíquica', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'd-3', texto: 'Difusión injustificada de datos personales → Vida privada / honra', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'd-4', texto: 'Impedimento para usar o disponer de un bien → Propiedad', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'd-5', texto: 'Obstáculo injustificado a actividad económica lícita → Libertad económica', forma: 'rectangulo', tamanoTexto: 'texto' },
+      {
+        id: 'd-6',
+        texto: 'Afectación ambiental imputable a alguien determinado → Medio ambiente *(regla especial, art. 19 N°8)*',
+        forma: 'rectangulo',
+        tamanoTexto: 'texto',
+        color: '#b45309',
+      },
+
+      { id: 'preguntas', texto: 'Antes de escribir, 6 preguntas', forma: 'ovalo', tamanoTexto: 'subtitulo' },
+      { id: 'q-1', texto: '¿Qué ocurrió?', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'q-2', texto: '¿Quién actuó u omitió actuar?', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'q-3', texto: '¿Por qué podría ser ilegal o arbitrario?', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'q-4', texto: '¿Qué derecho protegido está afectado?', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'q-5', texto: '¿En qué consiste la privación, perturbación o amenaza?', forma: 'rectangulo', tamanoTexto: 'texto' },
+      { id: 'q-6', texto: '¿Qué medida concreta debe pedirse a la Corte?', forma: 'rectangulo', tamanoTexto: 'texto' },
+    ],
+    conexiones: [
+      { desde: 'raiz', hasta: 'filtros' },
+      { desde: 'filtros', hasta: 'filtro-1' },
+      { desde: 'filtros', hasta: 'filtro-2' },
+      { desde: 'filtros', hasta: 'filtro-3' },
+      { desde: 'filtros', hasta: 'filtro-4' },
+      { desde: 'filtros', hasta: 'filtro-5' },
+
+      { desde: 'raiz', hasta: 'estructura' },
+      { desde: 'estructura', hasta: 'parte-1' },
+      { desde: 'estructura', hasta: 'parte-2' },
+      { desde: 'estructura', hasta: 'parte-3' },
+      { desde: 'estructura', hasta: 'parte-4' },
+      { desde: 'estructura', hasta: 'parte-5' },
+      { desde: 'estructura', hasta: 'parte-6' },
+      { desde: 'estructura', hasta: 'parte-7' },
+
+      { desde: 'raiz', hasta: 'operaciones' },
+      { desde: 'operaciones', hasta: 'op-narrar' },
+      { desde: 'operaciones', hasta: 'op-describir' },
+      { desde: 'operaciones', hasta: 'op-argumentar' },
+      { desde: 'operaciones', hasta: 'op-pedir' },
+
+      { desde: 'raiz', hasta: 'plazo-tribunal' },
+      { desde: 'plazo-tribunal', hasta: 'plazo' },
+      { desde: 'plazo-tribunal', hasta: 'tribunal' },
+
+      { desde: 'raiz', hasta: 'siguiente' },
+      { desde: 'siguiente', hasta: 'sig-admisibilidad' },
+      { desde: 'siguiente', hasta: 'sig-informe' },
+      { desde: 'siguiente', hasta: 'sig-fallo' },
+      { desde: 'siguiente', hasta: 'sig-apelacion' },
+
+      { desde: 'raiz', hasta: 'derechos' },
+      { desde: 'derechos', hasta: 'd-1' },
+      { desde: 'derechos', hasta: 'd-2' },
+      { desde: 'derechos', hasta: 'd-3' },
+      { desde: 'derechos', hasta: 'd-4' },
+      { desde: 'derechos', hasta: 'd-5' },
+      { desde: 'derechos', hasta: 'd-6' },
+
+      { desde: 'raiz', hasta: 'preguntas' },
+      { desde: 'preguntas', hasta: 'q-1' },
+      { desde: 'preguntas', hasta: 'q-2' },
+      { desde: 'preguntas', hasta: 'q-3' },
+      { desde: 'preguntas', hasta: 'q-4' },
+      { desde: 'preguntas', hasta: 'q-5' },
+      { desde: 'preguntas', hasta: 'q-6' },
+    ],
+  },
 ]
