@@ -343,17 +343,27 @@ export const useStore = create<AppState>()(
         })),
       quitarArticuloDeColeccion: (id, articulo) =>
         set((s) => ({
-          colecciones: s.colecciones.map((c) =>
-            c.id === id
-              ? {
-                  ...c,
-                  articulos: c.articulos.filter(
-                    (a) => !(a.codigo === articulo.codigo && a.articulo === articulo.articulo)
-                  ),
-                  fechaModificacion: Date.now(),
-                }
-              : c
-          ),
+          colecciones: s.colecciones.map((c) => {
+            if (c.id !== id) return c
+            const esElQuitado = (ref: { codigo: CodigoActivo['tipo']; articulo: string }) =>
+              ref.codigo === articulo.codigo && ref.articulo === articulo.articulo
+            return {
+              ...c,
+              articulos: c.articulos.filter((a) => !esElQuitado(a)),
+              // Sin esto, una conexión o grupo que involucre al artículo
+              // quitado sobrevive con una referencia colgante: en la pizarra
+              // la línea queda apuntando a una posición fantasma (la que le
+              // toque por defecto a ese índice) en vez de desaparecer junto
+              // con la ficha.
+              conexiones: (c.conexiones ?? []).filter(
+                (cx) => !esElQuitado(cx.desde) && !esElQuitado(cx.hasta)
+              ),
+              grupos: (c.grupos ?? [])
+                .map((g) => ({ ...g, articulos: g.articulos.filter((a) => !esElQuitado(a)) }))
+                .filter((g) => g.articulos.length > 0),
+              fechaModificacion: Date.now(),
+            }
+          }),
         })),
       moverArticuloColeccion: (id, indice, direccion) =>
         set((s) => ({

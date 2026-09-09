@@ -978,20 +978,28 @@ function TarjetaArticulo({
   const quitarSubrayado = useStore((s) => s.quitarSubrayado)
   const frasesResaltadas = subrayadosStore[`${item.codigo}::${item.articulo}`] ?? []
   const notaRef = useRef<HTMLTextAreaElement>(null)
-  const montadaRef = useRef(false)
+  // Último valor de modoRepaso que ya procesamos, para el efecto de abajo.
+  // Arranca en el valor actual: así la primera pasada del efecto (la del
+  // montaje) ve "sin cambio" y no pisa el estado inicial ya calculado arriba.
+  const modoRepasoAnteriorRef = useRef(modoRepaso)
   const { texto: colorTexto, barra: colorBarra } = colorParaCodigo(item.codigo, modoOscuro)
   const estadoInfo = ESTADO_INFO[item.estado]
 
   // Al entrar/salir de modo repaso, todas las fichas se re-colapsan o
   // re-expanden en bloque. Después de eso, cada clic individual (para
   // "voltear" una ficha y revisar si acertaste) funciona con normalidad.
-  // Se salta el primer disparo (el que corre al montar) para no pisar el
-  // estado inicial ya calculado arriba.
+  //
+  // Compara contra el último modoRepaso YA PROCESADO (no un flag de "primera
+  // vez que corre este efecto"): a propósito, para que sea inofensivo si el
+  // efecto se re-dispara sin que modoRepaso haya cambiado de verdad -- como
+  // hace React Strict Mode en desarrollo, que vuelve a montar cada
+  // componente una vez más para detectar justo este tipo de bug. Con un
+  // simple flag "ya monté", esa segunda pasada se cuela igual (el flag
+  // sobrevive al remontaje simulado) y termina expandiendo de golpe toda
+  // ficha que debía nacer colapsada por `colapsarPorDefecto`.
   useEffect(() => {
-    if (!montadaRef.current) {
-      montadaRef.current = true
-      return
-    }
+    if (modoRepasoAnteriorRef.current === modoRepaso) return
+    modoRepasoAnteriorRef.current = modoRepaso
     setExpandido(!modoRepaso)
   }, [modoRepaso])
 
