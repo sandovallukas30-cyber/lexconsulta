@@ -372,35 +372,45 @@ function semillaDesdeId(id: string): number {
 
 /**
  * Árbol prolijo ("tidy tree", el mismo principio que usan d3-hierarchy o
- * Reingold-Tilford), NO el layout anterior por capas/barycenter que tenía
- * esta función. El anterior calculaba cada FILA de profundidad por
- * separado — así, una rama muy profunda (muchos niveles) terminaba con una
- * fila hondísima muy ANCHA (todos sus nietos/bisnietos en la misma fila),
- * sin ninguna relación con el ancho de una rama vecina más corta que
- * compartía esa misma altura de fila por casualidad. El resultado real (ver
- * capturas de "La omisión en Derecho Penal") era un mapa desparramado sin
- * ton ni son, no un árbol prolijo.
+ * Reingold-Tilford) — de IZQUIERDA A DERECHA: la raíz (el título) queda
+ * pegada al margen izquierdo, centrada verticalmente respecto de todo lo
+ * que cuelga de ella, y cada nivel de profundidad avanza hacia la derecha.
+ * Antes este mismo árbol crecía de arriba hacia abajo (título arriba, todo
+ * lo demás debajo); se invirtieron los ejes a pedido — el título queda a la
+ * izquierda al medio, y el desarrollo del tema se lee de izquierda a
+ * derecha, como un apunte de mano en vez de un organigrama vertical.
  *
  * Acá cada nodo se posiciona por recorrido: una HOJA (sin hijos) se lleva
- * la siguiente columna disponible, de izquierda a derecha, en el orden en
- * que el recorrido la encuentra; un nodo CON hijos se centra en el
- * promedio de sus hijos, una vez que esos ya tienen posición (post-order).
- * Consecuencia clave: la rama de una subárbol jamás pisa el tramo de
- * columnas de otra, sea cual sea su profundidad — cada una ocupa
- * exactamente el ancho que necesitan sus propias hojas, ni más ni menos.
+ * la siguiente FILA disponible, de arriba hacia abajo, en el orden en que
+ * el recorrido la encuentra; un nodo CON hijos se centra en el promedio de
+ * sus hijos, una vez que esos ya tienen posición (post-order). Consecuencia
+ * clave: la rama de un subárbol jamás pisa el tramo de filas de otra, sea
+ * cual sea su profundidad — cada una ocupa exactamente el alto que
+ * necesitan sus propias hojas, ni más ni menos.
  */
 function calcularLayoutMapaMental(
   ids: string[],
   conexiones: { desde: string; hasta: string }[]
 ): Map<string, { x: number; y: number }> {
-  const ESPACIO_X = 220
-  const ESPACIO_Y = 150
+  // Roles de eje invertidos respecto de la versión anterior (arriba→abajo):
+  // ESPACIO_X ahora separa NIVELES de profundidad (columnas, izquierda→
+  // derecha) y necesita ser ancho porque tiene que dejar lugar al ANCHO de
+  // un nodo (hasta 220px, el título); ESPACIO_Y ahora separa HOJAS
+  // consecutivas (filas) y puede ser más angosto porque solo tiene que
+  // dejar lugar al alto típico de un nodo de texto envuelto en 2-3 líneas.
+  const ESPACIO_X = 280
+  const ESPACIO_Y = 160
   const MARGEN = 40
   // Desplazamiento chico (mucho menor que ESPACIO_X/Y, no puede generar
   // superposición) para que el resultado se sienta más parecido a un mapa
   // mental hecho a mano y menos a un organigrama perfectamente cuadriculado.
-  const JITTER_X = 22
-  const JITTER_Y = 16
+  // JITTER_Y más chico que antes a propósito: una hoja de texto largo (2-4
+  // líneas envueltas dentro de un nodo de 170px) puede llegar a unos 100-
+  // 120px de alto, y las filas de hoja están más apretadas verticalmente que
+  // las columnas de profundidad — un jitter grande ahí sí podía juntar dos
+  // fichas vecinas de texto largo.
+  const JITTER_X = 14
+  const JITTER_Y = 10
 
   // Padre PRIMARIO de cada nodo: el primero que lo conectó (en el orden en
   // que se declaran las conexiones). Un nodo con más de un padre — dos
@@ -408,7 +418,7 @@ function calcularLayoutMapaMental(
   // checklist — solo cuenta como "hijo" del primero para ARMAR el árbol;
   // la segunda conexión igual se dibuja normal, simplemente no participa
   // del cálculo de posiciones (si contara dos veces, ese nodo se
-  // reservaría dos columnas de hoja en vez de una, y quedaría descentrado).
+  // reservaría dos filas de hoja en vez de una, y quedaría descentrado).
   const padrePrimario = new Map<string, string>()
   const idsValidos = new Set(ids)
   for (const cx of conexiones) {
@@ -428,37 +438,38 @@ function calcularLayoutMapaMental(
     // Corta un ciclo (A conecta a B que conecta de vuelta a A) en vez de
     // recursión infinita — no debería darse en un mapa mental normal, pero
     // más vale no colgar la pestaña si pasa.
-    if (enCurso.has(id)) return resultado.get(id)?.x ?? 0
+    if (enCurso.has(id)) return resultado.get(id)?.y ?? 0
     enCurso.add(id)
     const hijos = hijosDe.get(id) ?? []
-    let x: number
+    let y: number
     if (hijos.length === 0) {
-      x = MARGEN + siguienteHoja * ESPACIO_X
+      y = MARGEN + siguienteHoja * ESPACIO_Y
       siguienteHoja++
     } else {
-      const xsHijos = hijos.map((h) => visitar(h, profundidad + 1, enCurso))
-      x = xsHijos.reduce((suma, v) => suma + v, 0) / xsHijos.length
+      const ysHijos = hijos.map((h) => visitar(h, profundidad + 1, enCurso))
+      y = ysHijos.reduce((suma, v) => suma + v, 0) / ysHijos.length
     }
     const semilla = semillaDesdeId(id)
     const jitterX = ((semilla % 1000) / 1000 - 0.5) * 2 * JITTER_X
     const jitterY = (((semilla >>> 3) % 1000) / 1000 - 0.5) * 2 * JITTER_Y
-    // x SIN jitter es lo que se guarda para que lo use el promedio del
+    // y SIN jitter es lo que se guarda para que lo use el promedio del
     // padre — si el jitter de un hijo se filtrara hacia arriba, se iría
     // acumulando de generación en generación en vez de quedar como un
     // desvío chico y local de cada nodo.
-    resultado.set(id, { x: x + jitterX, y: profundidad * ESPACIO_Y + MARGEN + jitterY })
-    return x
+    resultado.set(id, { x: profundidad * ESPACIO_X + MARGEN + jitterX, y: y + jitterY })
+    return y
   }
 
   const raices = ids.filter((id) => !padrePrimario.has(id))
   for (const raiz of raices) visitar(raiz, 0, new Set())
 
   // Nodos que ninguna raíz alcanzó (no debería pasar en un mapa normal,
-  // pero por las dudas: van en una fila aparte, para que nunca falte una
-  // posición y el nodo termine invisible en el origen del lienzo).
+  // pero por las dudas: van en una columna aparte a la izquierda del todo,
+  // para que nunca falte una posición y el nodo termine invisible en el
+  // origen del lienzo.
   const faltantes = ids.filter((id) => !resultado.has(id))
   faltantes.forEach((id, i) => {
-    resultado.set(id, { x: MARGEN + (siguienteHoja + i) * ESPACIO_X, y: -ESPACIO_Y })
+    resultado.set(id, { x: -ESPACIO_X, y: MARGEN + (siguienteHoja + i) * ESPACIO_Y })
   })
 
   return resultado
@@ -485,6 +496,66 @@ function elegirLadosConexion(
     return dx >= 0 ? { desdeHandle: 'right', hastaHandle: 'left' } : { desdeHandle: 'left', hastaHandle: 'right' }
   }
   return dy >= 0 ? { desdeHandle: 'bottom', hastaHandle: 'top' } : { desdeHandle: 'top', hastaHandle: 'bottom' }
+}
+
+/**
+ * Encuadra TODO el contenido dentro del contenedor visible — a mano, sin usar
+ * el fitView() de la librería. Se comprobó (mapas de 50+ nodos, con
+ * StrictMode activo en desarrollo — dos montajes seguidos del mismo
+ * <ReactFlow>) que fitView() puede quedar con una promesa que nunca se
+ * resuelve: el viewport se queda tal cual (zoom 1, sin encuadrar) y no hay
+ * ningún error en consola que lo delate. Pasaba tanto en el fit-to-view
+ * automático al abrir un mapa grande como al imprimir uno — que es
+ * exactamente el síntoma reportado ("al imprimir no cabe todo"): no faltaba
+ * ajustar el zoom mínimo, el ajuste mismo nunca llegaba a aplicarse.
+ *
+ * En vez de depender de esa lógica interna, acá se mide el tamaño YA
+ * RENDERIZADO de cada nodo en el DOM (nodeEls, real — no una estimación por
+ * `style.width`, que no sabe cuánto creció un nodo con texto envuelto en
+ * varias líneas) y se convierte a coordenadas del lienzo con
+ * `screenToFlowPosition` (deshace el pan/zoom actual, así el resultado no
+ * depende de dónde estaba mirando el usuario antes de pedir el encuadre).
+ * Con esa caja real se calcula el zoom/posición a mano y se aplica con
+ * `setViewport` — la operación primitiva de la librería, sin la lógica
+ * adicional de fitView que es justo la que se atasca.
+ */
+function ajustarVista(
+  rf: ReactFlowInstance<NodoFlow, EdgeWithData> | null,
+  contenedor: HTMLElement | null,
+  padding: number,
+  minZoom: number,
+  maxZoom: number
+) {
+  if (!rf || !contenedor) return
+  const nodeEls = contenedor.querySelectorAll<HTMLElement>('.react-flow__node')
+  if (nodeEls.length === 0) return
+
+  let minX = Infinity
+  let minY = Infinity
+  let maxX = -Infinity
+  let maxY = -Infinity
+  nodeEls.forEach((el) => {
+    const r = el.getBoundingClientRect()
+    const supIzq = rf.screenToFlowPosition({ x: r.left, y: r.top })
+    const infDer = rf.screenToFlowPosition({ x: r.right, y: r.bottom })
+    minX = Math.min(minX, supIzq.x)
+    minY = Math.min(minY, supIzq.y)
+    maxX = Math.max(maxX, infDer.x)
+    maxY = Math.max(maxY, infDer.y)
+  })
+  const anchoContenido = Math.max(1, maxX - minX)
+  const altoContenido = Math.max(1, maxY - minY)
+
+  const rectContenedor = contenedor.getBoundingClientRect()
+  const anchoDisponible = Math.max(1, rectContenedor.width * (1 - padding * 2))
+  const altoDisponible = Math.max(1, rectContenedor.height * (1 - padding * 2))
+
+  const zoom = Math.min(maxZoom, Math.max(minZoom, Math.min(anchoDisponible / anchoContenido, altoDisponible / altoContenido)))
+  // Centrado: el punto medio del contenido (en coordenadas del lienzo) debe
+  // caer en el punto medio del contenedor (en coordenadas de pantalla).
+  const x = rectContenedor.width / 2 - ((minX + maxX) / 2) * zoom
+  const y = rectContenedor.height / 2 - ((minY + maxY) / 2) * zoom
+  rf.setViewport({ x, y, zoom }, { duration: 0 })
 }
 
 function MapaMentalDetalle({
@@ -785,7 +856,9 @@ function MapaMentalDetalle({
         return { ...e, sourceHandle: lados.desdeHandle, targetHandle: lados.hastaHandle }
       })
     )
-    setTimeout(() => rfRef.current?.fitView({ padding: 0.3, duration: 300 }), 50)
+    // 50ms para que React ya haya pintado las posiciones nuevas en el DOM
+    // antes de medirlas — ajustarVista() mide cajas REALES (ver su comentario).
+    setTimeout(() => ajustarVista(rfRef.current, wrapperRef.current, 0.3, 0.02, 1.5), 50)
   }, [setNodes, setEdges, pushHistory])
 
   // ============= BUSCAR =============
@@ -847,12 +920,27 @@ function MapaMentalDetalle({
     return () => window.removeEventListener('keydown', handler)
   }, [undo, redo, pushHistory, setNodes, setEdges, handleDuplicar])
 
+  // Encuadre inicial al abrir el mapa — ANTES esto era la prop declarativa
+  // `fitView` de <ReactFlow>, que se sacó junto con `fitViewOptions` (ver
+  // ajustarVista(): esa prop usa el mismo fitView() interno que quedaba
+  // pegado en mapas grandes). Un tick (rAF) para dar tiempo a que el DOM
+  // ya tenga los nodos pintados con su tamaño real antes de medirlos.
+  useEffect(() => {
+    const id = requestAnimationFrame(() => ajustarVista(rfRef.current, wrapperRef.current, 0.3, 0.02, 1.5))
+    return () => cancelAnimationFrame(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // ============= EXPORTAR / IMPRIMIR =============
   // Ajusta la vista para que entre todo el mapa justo antes de que se abra
   // el diálogo de impresión — sin esto, imprime solo lo que estaba visible
-  // en pantalla en ese momento (recortado por el pan/zoom actual).
+  // en pantalla en ese momento (recortado por el pan/zoom actual). Padding
+  // chico y piso de zoom muy bajo: un mapa de 50+ nodos necesita achicarse
+  // bastante más que el zoom interactivo normal para entrar entero en una
+  // sola hoja — ver ajustarVista() más arriba sobre por qué esto usa
+  // setViewport de forma manual en vez de fitView().
   useEffect(() => {
-    const antesDeImprimir = () => rfRef.current?.fitView({ padding: 0.1, duration: 0 })
+    const antesDeImprimir = () => ajustarVista(rfRef.current, wrapperRef.current, 0.05, 0.02, 1.5)
     window.addEventListener('beforeprint', antesDeImprimir)
     return () => window.removeEventListener('beforeprint', antesDeImprimir)
   }, [])
@@ -1065,8 +1153,6 @@ function MapaMentalDetalle({
             onNodeDragStop={onNodeDragStop}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
-            fitView
-            fitViewOptions={{ padding: 0.3 }}
             snapToGrid
             snapGrid={[15, 15]}
             multiSelectionKeyCode="Shift"
@@ -1076,6 +1162,12 @@ function MapaMentalDetalle({
             // "source" y entre a uno "target" — acá los 4 lados son "source"
             // para poder conectar por el costado, no solo arriba/abajo).
             connectionMode={ConnectionMode.Loose}
+            // Piso de zoom bien bajo (default de la librería es 0.5): un mapa
+            // de 50+ nodos no entra en pantalla ni de cerca con eso — "Ajustar
+            // vista" y el "fit to view" antes de imprimir se topaban con este
+            // límite y dejaban partes del mapa fuera, tanto en pantalla como
+            // en el PDF impreso.
+            minZoom={0.05}
             proOptions={{ hideAttribution: true }}
           >
             <Background color={modoOscuro ? '#27272a' : '#e4e4e7'} gap={20} />

@@ -50,6 +50,15 @@ html, body, #root { height: 100%; width: 100%; overflow: hidden; }
   .imprimir-mapa-mental, .imprimir-mapa-mental * { visibility: visible; }
   .imprimir-coleccion { display: block; position: fixed; inset: 0; }
   .imprimir-mapa-mental { position: fixed; inset: 0; width: 100%; height: 100%; }
+  /* Minimapa, controles de zoom y la cuadrícula de fondo son ayudas de
+     pantalla, no parte del mapa en sí — impresos se ven como manchas sueltas
+     sobre la hoja y le restan espacio útil al contenido real. El fit-to-view
+     de MapasMentalesView.tsx ya se encarga de que TODO el mapa entre en la
+     hoja; esto solo saca el resto de la interfaz de en medio. */
+  .imprimir-mapa-mental .react-flow__minimap,
+  .imprimir-mapa-mental .react-flow__controls,
+  .imprimir-mapa-mental .react-flow__attribution,
+  .imprimir-mapa-mental .react-flow__background { display: none !important; }
 }
 
 /* Scrollbar custom — claro */

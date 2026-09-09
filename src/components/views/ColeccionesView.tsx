@@ -473,12 +473,30 @@ function VistaImprimibleColeccion({
   coleccion,
   articulos,
   conexiones,
+  grupos,
 }: {
   coleccion: Coleccion
   articulos: ArticuloResuelto[]
   conexiones: ConexionColeccion[]
+  grupos: GrupoColeccion[]
 }) {
   const hoy = new Date().toLocaleDateString('es-CL', { year: 'numeric', month: 'long', day: 'numeric' })
+  // Qué grupo(s) integra cada artículo, para mostrarlo junto a la ficha sin
+  // reordenar la lista principal por grupo — el orden de la colección (el
+  // que el usuario armó a mano moviendo fichas) es justo lo que conviene
+  // conservar en un PDF pensado para repasar de punta a punta.
+  const grupoPorArticulo = useMemo(() => {
+    const mapa = new Map<string, string[]>()
+    for (const g of grupos) {
+      for (const ref of g.articulos) {
+        const clave = `${ref.codigo}::${ref.articulo}`
+        if (!mapa.has(clave)) mapa.set(clave, [])
+        mapa.get(clave)!.push(g.titulo)
+      }
+    }
+    return mapa
+  }, [grupos])
+
   return createPortal(
     <div className="imprimir-coleccion">
       <style>{`
@@ -488,28 +506,54 @@ function VistaImprimibleColeccion({
         .imprimir-coleccion .ic-meta { font-size: 11px; color: #666; margin-bottom: 28px; }
         .imprimir-coleccion .ic-articulo { break-inside: avoid; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid #ddd; }
         .imprimir-coleccion .ic-codigo { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #666; }
+        .imprimir-coleccion .ic-grupo { font-style: italic; text-transform: none; letter-spacing: normal; }
         .imprimir-coleccion .ic-numero { font-size: 15px; font-weight: bold; margin: 2px 0 6px; }
         .imprimir-coleccion .ic-texto { font-size: 12px; line-height: 1.55; white-space: pre-wrap; }
         .imprimir-coleccion .ic-nota { font-size: 11px; margin-top: 8px; padding: 8px 10px; background: #f5f5f5; border-left: 3px solid #999; }
-        .imprimir-coleccion .ic-estado { font-size: 10px; font-weight: bold; text-transform: uppercase; margin-top: 6px; display: inline-block; letter-spacing: 0.03em; }
-        .imprimir-coleccion .ic-conexiones { margin-top: 28px; break-inside: avoid; }
-        .imprimir-coleccion .ic-conexiones h2 { font-size: 14px; margin-bottom: 8px; font-family: inherit; }
-        .imprimir-coleccion .ic-conexiones li { font-size: 11px; margin-bottom: 3px; }
+        .imprimir-coleccion .ic-pie { margin-top: 6px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .imprimir-coleccion .ic-estado { font-size: 10px; font-weight: bold; text-transform: uppercase; display: inline-block; letter-spacing: 0.03em; }
+        .imprimir-coleccion .ic-funcion { font-size: 10px; text-transform: uppercase; letter-spacing: 0.03em; color: #666; border: 1px solid #ccc; border-radius: 3px; padding: 1px 5px; }
+        .imprimir-coleccion .ic-conexiones, .imprimir-coleccion .ic-grupos { margin-top: 28px; break-inside: avoid; }
+        .imprimir-coleccion .ic-conexiones h2, .imprimir-coleccion .ic-grupos h2 { font-size: 14px; margin-bottom: 8px; font-family: inherit; }
+        .imprimir-coleccion .ic-conexiones li, .imprimir-coleccion .ic-grupos li { font-size: 11px; margin-bottom: 3px; }
       `}</style>
       <h1>{coleccion.titulo}</h1>
       <p className="ic-meta">
         {articulos.length} artículo{articulos.length === 1 ? '' : 's'} · impreso el {hoy} · Prima Lex
       </p>
 
-      {articulos.map((a) => (
-        <div className="ic-articulo" key={`${a.codigo}::${a.articulo}`}>
-          <div className="ic-codigo">{a.nombreCodigo}</div>
-          <div className="ic-numero">{a.articulo}</div>
-          <div className="ic-texto">{a.art?.t ?? '(texto no disponible — código no cargado al momento de imprimir)'}</div>
-          {a.nota && <div className="ic-nota">Nota: {a.nota}</div>}
-          <div className="ic-estado">{ESTADO_INFO[a.estado].label}</div>
+      {articulos.map((a) => {
+        const gruposDeEste = grupoPorArticulo.get(`${a.codigo}::${a.articulo}`)
+        const funcion = a.funcion ? FUNCIONES_JURIDICAS.find((f) => f.id === a.funcion) : undefined
+        return (
+          <div className="ic-articulo" key={`${a.codigo}::${a.articulo}`}>
+            <div className="ic-codigo">
+              {a.nombreCodigo}
+              {gruposDeEste && gruposDeEste.length > 0 && <span className="ic-grupo"> · {gruposDeEste.join(', ')}</span>}
+            </div>
+            <div className="ic-numero">{a.articulo}</div>
+            <div className="ic-texto">{a.art?.t ?? '(texto no disponible — código no cargado al momento de imprimir)'}</div>
+            {a.nota && <div className="ic-nota">Nota: {a.nota}</div>}
+            <div className="ic-pie">
+              <span className="ic-estado">{ESTADO_INFO[a.estado].label}</span>
+              {funcion && <span className="ic-funcion">{funcion.label}</span>}
+            </div>
+          </div>
+        )
+      })}
+
+      {grupos.length > 0 && (
+        <div className="ic-grupos">
+          <h2>Grupos</h2>
+          <ul>
+            {grupos.map((g) => (
+              <li key={g.id}>
+                {g.titulo}: {g.articulos.map((r) => r.articulo).join(', ')}
+              </li>
+            ))}
+          </ul>
         </div>
-      ))}
+      )}
 
       {conexiones.length > 0 && (
         <div className="ic-conexiones">
@@ -722,7 +766,12 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
         </button>
       </div>
 
-      <VistaImprimibleColeccion coleccion={coleccion} articulos={articulosResueltos} conexiones={coleccion.conexiones ?? []} />
+      <VistaImprimibleColeccion
+        coleccion={coleccion}
+        articulos={articulosResueltos}
+        conexiones={coleccion.conexiones ?? []}
+        grupos={coleccion.grupos ?? []}
+      />
 
       {areasPresentes.length > 1 && (
         <div
@@ -763,7 +812,7 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
         <VistaArbol articulos={articulosResueltos} conexiones={coleccion.conexiones ?? []} modoOscuro={modoOscuro} />
       ) : (
         <div className="flex-1 overflow-y-auto">
-          <div className={modoVista === 'horizontal' ? 'py-6' : 'max-w-6xl mx-auto px-6 py-6'}>
+          <div className={modoVista === 'horizontal' ? 'py-6' : 'max-w-7xl mx-auto px-6 py-6'}>
             {coleccion.articulos.length === 0 ? (
               <div className="text-center py-16 px-6">
                 <p className={`text-sm mb-4 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
@@ -801,9 +850,14 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
               // Mampostería con columnas CSS: cada ficha "cae" al primer hueco
               // disponible en su columna, en vez de dejar espacio muerto al
               // lado de una ficha larga (como pasaba con flex-wrap por filas).
-              <div className="columns-1 sm:columns-2 xl:columns-3 gap-4">
+              // Fichas más chicas (ver TarjetaArticulo) + una 4ta columna en
+              // pantallas muy anchas: antes, con solo 2-3 columnas anchas y
+              // fichas altas, una colección de 15-20 artículos no entraba
+              // sin scrollear mucho — esto no lo elimina (no es posible con
+              // texto legal completo) pero sí muestra bastantes más de una.
+              <div className="columns-1 sm:columns-2 xl:columns-3 2xl:columns-4 gap-3">
                 {articulosResueltos.map((ar, i) => (
-                  <div key={`${ar.codigo}::${ar.articulo}`} className="break-inside-avoid mb-4">
+                  <div key={`${ar.codigo}::${ar.articulo}`} className="break-inside-avoid mb-3">
                     <TarjetaArticulo
                       item={ar}
                       posicion={i}
@@ -1026,28 +1080,28 @@ function TarjetaArticulo({
 
       <div className="flex-1 min-w-0">
         {/* Tira de control: reordenar y quitar, discreta */}
-        <div className={`flex items-center px-2 py-1 ${ocultarReordenar ? 'justify-end' : 'justify-between'} ${modoOscuro ? 'bg-zinc-800/40' : 'bg-zinc-50'}`}>
+        <div className={`flex items-center px-1.5 py-0.5 ${ocultarReordenar ? 'justify-end' : 'justify-between'} ${modoOscuro ? 'bg-zinc-800/40' : 'bg-zinc-50'}`}>
           {!ocultarReordenar && (
             <div className="flex items-center gap-0.5">
               <button
                 onClick={() => onMover(-1)}
                 disabled={posicion === 0}
                 title="Mover antes"
-                className={`w-6 h-6 flex items-center justify-center rounded disabled:opacity-20 disabled:cursor-not-allowed ${
+                className={`w-5 h-5 flex items-center justify-center rounded disabled:opacity-20 disabled:cursor-not-allowed ${
                   modoOscuro ? 'hover:bg-zinc-800 text-zinc-500' : 'hover:bg-zinc-200 text-zinc-400'
                 }`}
               >
-                <i className="ti ti-chevron-left text-sm" />
+                <i className="ti ti-chevron-left text-xs" />
               </button>
               <button
                 onClick={() => onMover(1)}
                 disabled={posicion === total - 1}
                 title="Mover después"
-                className={`w-6 h-6 flex items-center justify-center rounded disabled:opacity-20 disabled:cursor-not-allowed ${
+                className={`w-5 h-5 flex items-center justify-center rounded disabled:opacity-20 disabled:cursor-not-allowed ${
                   modoOscuro ? 'hover:bg-zinc-800 text-zinc-500' : 'hover:bg-zinc-200 text-zinc-400'
                 }`}
               >
-                <i className="ti ti-chevron-right text-sm" />
+                <i className="ti ti-chevron-right text-xs" />
               </button>
             </div>
           )}
@@ -1055,20 +1109,20 @@ function TarjetaArticulo({
             <button
               onClick={() => onCambiarEstado(ESTADO_SIGUIENTE[item.estado])}
               title={`${estadoInfo.label} · clic para cambiar`}
-              className={`w-6 h-6 flex items-center justify-center rounded transition-colors ${
+              className={`w-5 h-5 flex items-center justify-center rounded transition-colors ${
                 modoOscuro ? estadoInfo.colorDark : estadoInfo.colorLight
               } ${modoOscuro ? 'hover:bg-zinc-800' : 'hover:bg-zinc-200'}`}
             >
-              <i className={`ti ${estadoInfo.icono} text-sm`} />
+              <i className={`ti ${estadoInfo.icono} text-xs`} />
             </button>
             <button
               onClick={onQuitar}
               title="Quitar de la colección"
-              className={`w-6 h-6 flex items-center justify-center rounded transition-colors ${
+              className={`w-5 h-5 flex items-center justify-center rounded transition-colors ${
                 modoOscuro ? 'text-zinc-500 hover:bg-zinc-800 hover:text-red-400' : 'text-zinc-400 hover:bg-zinc-200 hover:text-red-500'
               }`}
             >
-              <i className="ti ti-x text-sm" />
+              <i className="ti ti-x text-xs" />
             </button>
           </div>
         </div>
@@ -1076,20 +1130,20 @@ function TarjetaArticulo({
         {/* Encabezado grande, mismo estilo que el título de artículo en Explorador */}
         <button
           onClick={() => setExpandido(!expandido)}
-          className={`w-full flex items-start justify-between gap-2 px-4 py-3 text-left ${
+          className={`w-full flex items-start justify-between gap-2 px-3.5 py-2 text-left ${
             expandido ? (modoOscuro ? 'border-b border-zinc-800' : 'border-b border-zinc-100') : ''
           }`}
         >
           <div className="min-w-0">
-            <div className={`text-[10px] uppercase tracking-wider font-semibold mb-0.5 ${colorTexto}`}>
+            <div className={`text-[10px] uppercase tracking-wider font-semibold mb-0 ${colorTexto}`}>
               {item.nombreCodigo}
             </div>
-            <div className={`font-serif text-2xl font-bold leading-none ${colorTexto}`}>
+            <div className={`font-serif text-lg font-bold leading-none ${colorTexto}`}>
               {item.articulo}
             </div>
           </div>
           <i
-            className={`ti ti-chevron-down text-lg mt-1 transition-transform flex-shrink-0 ${expandido ? 'rotate-180' : ''} ${
+            className={`ti ti-chevron-down text-base mt-0.5 transition-transform flex-shrink-0 ${expandido ? 'rotate-180' : ''} ${
               modoOscuro ? 'text-zinc-500' : 'text-zinc-400'
             }`}
           />
@@ -1105,7 +1159,7 @@ function TarjetaArticulo({
               className="overflow-hidden"
             >
               <div
-                className={`px-4 py-3 text-sm leading-relaxed ${modoOscuro ? 'text-zinc-300 bg-zinc-900/50' : 'text-zinc-700 bg-zinc-50/50'}`}
+                className={`px-3.5 py-2.5 text-[13px] leading-relaxed ${modoOscuro ? 'text-zinc-300 bg-zinc-900/50' : 'text-zinc-700 bg-zinc-50/50'}`}
                 style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
               >
                 {item.cargando ? (
@@ -1133,7 +1187,7 @@ function TarjetaArticulo({
               </div>
 
               {/* Nota propia: opcional, se guarda al salir del campo */}
-              <div className={`px-4 py-2.5 border-t ${modoOscuro ? 'border-zinc-800' : 'border-zinc-100'}`}>
+              <div className={`px-3.5 py-2 border-t ${modoOscuro ? 'border-zinc-800' : 'border-zinc-100'}`}>
                 <textarea
                   ref={notaRef}
                   value={notaTmp}
