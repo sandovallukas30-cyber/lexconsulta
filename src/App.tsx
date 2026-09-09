@@ -12,6 +12,7 @@ import { MapasMentalesView } from './components/views/MapasMentalesView'
 import { HistorialView } from './components/views/HistorialView'
 import { AdminView } from './components/views/AdminView'
 import { PracticaView } from './components/views/PracticaView'
+import { PlazosView } from './components/views/PlazosView'
 import { useState, useEffect } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { useStore } from './store/useStore'
@@ -32,6 +33,7 @@ const vistas: Record<VistaId, React.ComponentType> = {
   historial: HistorialView,
   admin: AdminView,
   practica: PracticaView,
+  plazos: PlazosView,
 }
 
 function App() {

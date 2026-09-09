@@ -35,6 +35,7 @@ import type {
   RefArticuloColeccion,
   FuncionJuridica,
   MapaMental,
+  TemaLectura,
 } from '../types'
 
 interface AppState {
@@ -59,6 +60,10 @@ interface AppState {
    * tener que recalcular offsets si el render divide el texto en incisos. */
   subrayados: Record<string, string[]>
   modoOscuro: boolean
+  /** Tema propio del modo lectura del Explorador (claro/oscuro/papel) --
+   * independiente de `modoOscuro`, para no forzar el resto de la app a
+   * cambiar solo porque se prefiere leer en papel. */
+  modoLecturaTema: TemaLectura
   sidebarColapsado: boolean
   modernizarLenguaje: boolean
   modalPerfilAbierto: boolean
@@ -121,6 +126,7 @@ interface AppState {
   eliminarGrupoColeccion: (id: string, grupoId: string) => void
   organizarPorConexiones: (id: string, posiciones: { ref: RefArticuloColeccion; posicion: { x: number; y: number } }[]) => void
   toggleModoOscuro: () => void
+  setModoLecturaTema: (tema: TemaLectura) => void
   toggleSidebar: () => void
   toggleModernizar: () => void
   setCodigoExplorador: (tipo: CodigoActivo['tipo'] | null) => void
@@ -217,6 +223,7 @@ export const useStore = create<AppState>()(
       subrayados: {},
       coleccionActivaId: null,
       modoOscuro: false,
+      modoLecturaTema: 'claro',
       sidebarColapsado: false,
       modernizarLenguaje: false,
       modalPerfilAbierto: false,
@@ -541,6 +548,7 @@ export const useStore = create<AppState>()(
           }),
         })),
       toggleModoOscuro: () => set((s) => ({ modoOscuro: !s.modoOscuro })),
+      setModoLecturaTema: (tema) => set({ modoLecturaTema: tema }),
       toggleSidebar: () => set((s) => ({ sidebarColapsado: !s.sidebarColapsado })),
       toggleModernizar: () => set((s) => ({ modernizarLenguaje: !s.modernizarLenguaje })),
       setCodigoExplorador: (tipo) => set({ codigoExploradorActivo: tipo }),
@@ -746,6 +754,7 @@ export const useStore = create<AppState>()(
         colecciones: s.colecciones,
         subrayados: s.subrayados,
         modoOscuro: s.modoOscuro,
+        modoLecturaTema: s.modoLecturaTema,
         sidebarColapsado: s.sidebarColapsado,
         modernizarLenguaje: s.modernizarLenguaje,
         partidaPasapalabra: s.partidaPasapalabra,

@@ -1,10 +1,10 @@
-import { useCallback, useRef, useState, Fragment, type ReactNode, type CSSProperties } from 'react'
+import { useCallback, useEffect, useRef, useState, Fragment, type ReactNode, type CSSProperties } from 'react'
 import type { CoincidenciaReferencia, ReferenciaArticulo } from '../../services/referencias'
 
 /** Color fijo tipo resaltador de verdad — no depende de modoOscuro (un
- * marcador amarillo se ve igual sobre cualquier fondo, es justamente la idea
- * de un resaltador físico). */
-const COLOR_RESALTADO = '#fde047'
+ * marcador se ve igual sobre cualquier fondo, es justamente la idea de un
+ * resaltador físico). */
+const COLOR_RESALTADO = '#fbcfe8'
 const COLOR_TEXTO_RESALTADO = '#1c1917'
 
 /**
@@ -44,15 +44,45 @@ export function ContenedorResaltable({
     }
     const rect = sel.getRangeAt(0).getBoundingClientRect()
     const rectContenedor = ref.current.getBoundingClientRect()
-    setBoton({ x: rect.left + rect.width / 2 - rectContenedor.left, y: rect.top - rectContenedor.top, frase })
+    // Debajo de la selección, no arriba: el menú nativo de iOS/Safari
+    // (Copiar/Consultar/Traducir...) se posiciona arriba de la selección, así
+    // que si el botón propio también va arriba, quedan uno encima del otro.
+    setBoton({ x: rect.left + rect.width / 2 - rectContenedor.left, y: rect.bottom - rectContenedor.top, frase })
   }, [])
+
+  // onMouseUp no dispara con selección táctil (iPad/celular): seleccionar
+  // texto con el dedo no es un "mouseup" para el navegador. selectionchange
+  // sí dispara con mouse, touch y teclado por igual -- es la forma correcta
+  // de detectar "el usuario terminó de seleccionar algo", pero dispara MUY
+  // seguido mientras se arrastra la selección (o los tiradores de iOS), así
+  // que se debounca un poco para no recalcular en cada micro-cambio.
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout>
+    const handler = () => {
+      clearTimeout(timeout)
+      timeout = setTimeout(revisarSeleccion, 150)
+    }
+    document.addEventListener('selectionchange', handler)
+    return () => {
+      document.removeEventListener('selectionchange', handler)
+      clearTimeout(timeout)
+    }
+  }, [revisarSeleccion])
 
   return (
     <div ref={ref} className="relative" onMouseUp={revisarSeleccion}>
       {children}
       {boton && (
         <button
-          onClick={() => {
+          // onPointerDown (no onClick): en iOS, tocar cualquier elemento
+          // mientras hay una selección activa primero la CIERRA (el navegador
+          // descarta el gesto para ocultar los tiradores de selección) y el
+          // click nunca llega a disparar -- por eso se veía el botón pero no
+          // hacía nada. pointerdown ocurre ANTES de ese cierre; preventDefault
+          // evita que el navegador lo dispare, así la selección sigue intacta
+          // cuando corremos onAgregar.
+          onPointerDown={(e) => {
+            e.preventDefault()
             onAgregar(boton.frase)
             window.getSelection()?.removeAllRanges()
             setBoton(null)
@@ -61,7 +91,7 @@ export function ContenedorResaltable({
           style={{
             left: boton.x,
             top: boton.y,
-            transform: 'translate(-50%, calc(-100% - 8px))',
+            transform: 'translate(-50%, 10px)',
             background: COLOR_RESALTADO,
             color: COLOR_TEXTO_RESALTADO,
           }}
