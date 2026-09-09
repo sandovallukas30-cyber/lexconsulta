@@ -230,6 +230,16 @@ export const CODIGOS_METADATA: Record<string, CodigoMetadata> = {
     notas: 'Conocido como PIDESC. Reconoce los derechos al trabajo digno, sindicación, seguridad social, protección de la familia, alimentación, vivienda, salud, educación y participación cultural. Mismo rango que el PIDCP en el bloque de constitucionalidad chileno.',
     relacionadas: ['con', 'pdc'],
   },
+  aap: {
+    tipo: 'aap',
+    nombreOficial: 'Auto Acordado sobre Tramitación y Fallo del Recurso de Protección de las Garantías Constitucionales',
+    norma: 'Acta N° 94-2015 de la Corte Suprema, de 17 de julio de 2015 (reemplazó el auto acordado de 1977); modificada por el Acta N° 173-2018',
+    fuenteUrl: 'https://www.bcn.cl/leychile/navegar?idNorma=1080916',
+    fechaIndexacion: '2026-09-09',
+    notas:
+      'Distinto de un "código": es un reglamento interno de la Corte Suprema sobre CÓMO se tramita el recurso de protección (competencia, plazo, admisibilidad, informe, prueba, fallo, apelación), no sobre cuándo procede (eso lo fija el art. 20 de la Constitución). El texto de cada numeral acá es un RESUMEN funcional para ubicarse rápido, no una transcripción literal — para la redacción de un escrito real, verificar siempre contra el ejemplar del Auto Acordado que corresponda usar (impreso, en la evaluación E01). Cubre los numerales 1° a 6°, 10°, 12°, 13° y 15° — los más relevantes para interponer y seguir el recurso; el instrumento completo tiene más numerales de detalle administrativo no incluidos acá.',
+    relacionadas: ['con', 'cot'],
+  },
 }
 
 /** Devuelve el nombre corto (3-4 palabras) usado en enlaces de la ficha. */
@@ -258,6 +268,7 @@ export function nombreCortoMetadata(tipo: CodigoTipo): string {
     rpa: 'Ley 20.084 (RPA)',
     pdc: 'Pacto DCP',
     pde: 'Pacto DESC',
+    aap: 'Auto Ac. Protección',
   }
   return nombres[tipo] ?? tipo
 }

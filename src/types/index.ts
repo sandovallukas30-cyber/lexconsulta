@@ -25,6 +25,7 @@ export type CodigoTipo =
   | 'rpa'
   | 'pdc'
   | 'pde'
+  | 'aap'
 
 export type CategoriaCodigo =
   | 'fundamentales'

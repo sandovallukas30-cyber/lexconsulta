@@ -869,6 +869,7 @@ const COLOR_POR_CODIGO: Record<CodigoTipo, FamiliaColor> = {
   agu: 'cyan', // Aguas
   san: 'emerald', // Sanitario (sin área fija en la lista, verde por salud)
   fam: 'fuchsia', // Familia
+  aap: 'red', // Auto Acordado del recurso de protección → familia Constitucional (implementa el art. 20)
 }
 
 const HEX_POR_FAMILIA: Record<FamiliaColor, string> = {

@@ -197,6 +197,7 @@ const codigosIniciales: CodigoActivo[] = [
   { tipo: 'rpa', nombre: 'Ley 20.084 - Responsabilidad Penal Adolescente', nombreCorto: 'Resp. Penal Adolescente', descripcion: 'Sistema especial de responsabilidad penal para adolescentes mayores de 14 y menores de 18 años', categoria: 'especiales', activo: true, cargado: true },
   { tipo: 'pdc', nombre: 'Pacto Internacional de Derechos Civiles y Políticos', nombreCorto: 'Pacto Civiles y Políticos', descripcion: 'Tratado internacional de DDHH ratificado por Chile; en virtud del Art. 5° inc. 2° de la Constitución integra el bloque de constitucionalidad', categoria: 'tratados', activo: true, cargado: true },
   { tipo: 'pde', nombre: 'Pacto Internacional de Derechos Económicos, Sociales y Culturales', nombreCorto: 'Pacto DESC', descripcion: 'Tratado internacional de DDHH (PIDESC) ratificado por Chile; reconoce derechos al trabajo, salud, educación, alimentación, vivienda y cultura', categoria: 'tratados', activo: true, cargado: true },
+  { tipo: 'aap', nombre: 'Auto Acordado sobre Tramitación del Recurso de Protección', nombreCorto: 'Auto Ac. Protección', descripcion: 'Corte competente, plazo, admisibilidad, informe, prueba, fallo y apelación del recurso de protección (Acta 94-2015 de la Corte Suprema)', categoria: 'procedimentales', activo: true, cargado: true },
 ]
 
 export const useStore = create<AppState>()(
