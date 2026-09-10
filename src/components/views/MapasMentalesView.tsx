@@ -729,9 +729,17 @@ function puntoDeHandleImpreso(caja: CajaNodoImpreso, handle: string | undefined)
  * position:fixed, sin depender de que nada se termine de "medir": lo que
  * hay en los datos es exactamente lo que se dibuja, siempre.
  *
- * Se encoge (viewBox + tamaño en cm) para entrar completo en una sola hoja,
- * igual de chico que haga falta — mismo criterio que tenía el lienzo vivo,
- * pero acá el cálculo es directo sobre los datos, no depende de medir nada.
+ * Se encoge (viewBox + tamaño en cm) para ocupar el ANCHO de una hoja —
+ * pero NO el alto: un mapa grande sigue siendo más alto que ancho (ver
+ * calcularLayoutMapaMental), y forzarlo a entrar en una sola hoja completa
+ * (ancho Y alto a la vez) dejaba el texto microscópico e ilegible — "cabía"
+ * todo, pero no servía para nada. Ahora se imprime a un tamaño legible y,
+ * si no entra en una hoja, sigue en la siguiente — igual que una tabla o
+ * una imagen alta en cualquier documento impreso. El corte entre hojas cae
+ * donde caiga (puede partir un nodo justo por la mitad visualmente, ya que
+ * es un solo SVG y no hay forma de controlar el salto de página adentro de
+ * uno) — no es prolijo, pero ningún nodo se pierde: sigue completo, solo
+ * que repartido en dos hojas en vez de una.
  */
 function VistaImprimibleMapaMental({ mapa }: { mapa: MapaMental }) {
   const cajas = useMemo(() => {
@@ -758,14 +766,15 @@ function VistaImprimibleMapaMental({ mapa }: { mapa: MapaMental }) {
 
   if (!dimensiones) return null
 
-  // Área impresa segura para carta/A4 con ~2cm de margen.
+  // Ancho impreso seguro para carta/A4 con ~2cm de margen a cada lado —
+  // SOLO el ancho: el alto no se limita, ver el comentario de arriba.
   const PAGINA_ANCHO_CM = 17
-  const PAGINA_ALTO_CM = 24
-  const escala = Math.min(PAGINA_ANCHO_CM / dimensiones.ancho, PAGINA_ALTO_CM / dimensiones.alto)
+  const escala = PAGINA_ANCHO_CM / dimensiones.ancho
 
   return createPortal(
     <div className="imprimir-mapa-mental-svg">
       <style>{`
+        @page { margin: 2cm; }
         .imprimir-mapa-mental-svg { color: #111; background: #fff; font-family: Georgia, 'Times New Roman', serif; padding: 24px; }
         .imprimir-mapa-mental-svg h1 { font-size: 20px; margin: 0 0 4px; font-family: inherit; }
         .imprimir-mapa-mental-svg .imm-meta { font-size: 11px; color: #666; margin-bottom: 16px; }
