@@ -91,6 +91,14 @@ interface NodoCallbacks {
 interface MentalCtx {
   modoOscuro: boolean
   callbacks: NodoCallbacks
+  /** Colapsar/expandir ramas — ver el useMemo de nodesVisibles/edgesVisibles
+   * en MapaMentalDetalle. Puramente de pantalla (no se guarda con el mapa):
+   * sirve para no tener que scrollear un mapa entero cuando solo hace falta
+   * mirar una rama a la vez. */
+  tieneHijos: (id: string) => boolean
+  estaColapsado: (id: string) => boolean
+  cantidadOcultosSi: (id: string) => number
+  toggleColapsado: (id: string) => void
 }
 
 const MentalContext = createContext<MentalCtx | null>(null)
@@ -916,6 +924,64 @@ function MapaMentalDetalle({
   const rfRef = useRef<ReactFlowInstance<NodoFlow, EdgeWithData> | null>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
 
+  // ============= COLAPSAR RAMAS =============
+  // Puramente de pantalla — a propósito NO se guarda con el mapa (no se
+  // toca `nodes`/`edges`, que es lo que el efecto de más abajo persiste):
+  // es una ayuda para no tener que scrollear un mapa grande entero cuando
+  // en el momento solo hace falta mirar una rama, no un cambio de
+  // estructura. Cada vez que se reabre el mapa, todo empieza expandido.
+  const [colapsados, setColapsados] = useState<Set<string>>(new Set())
+
+  const hijosDe = useMemo(() => {
+    const m = new Map<string, string[]>()
+    for (const e of edges) {
+      if (!m.has(e.source)) m.set(e.source, [])
+      m.get(e.source)!.push(e.target)
+    }
+    return m
+  }, [edges])
+
+  // Todo lo que queda oculto por estar debajo de ALGUNA rama colapsada —
+  // recursivo: colapsar una rama esconde toda su descendencia, no solo sus
+  // hijos directos.
+  const idsOcultos = useMemo(() => {
+    if (colapsados.size === 0) return new Set<string>()
+    const ocultos = new Set<string>()
+    function marcar(id: string) {
+      for (const hijo of hijosDe.get(id) ?? []) {
+        if (!ocultos.has(hijo)) {
+          ocultos.add(hijo)
+          marcar(hijo)
+        }
+      }
+    }
+    for (const id of colapsados) marcar(id)
+    return ocultos
+  }, [colapsados, hijosDe])
+
+  // `hidden` de React Flow (no borra el nodo, solo no lo pinta) — por eso
+  // se arma un array APARTE para el prop `nodes`/`edges` de <ReactFlow>, en
+  // vez de tocar el estado `nodes`/`edges` de verdad: ese es el que se
+  // persiste tal cual, y perder un nodo colapsado de esa lista lo habría
+  // borrado del mapa guardado, no solo escondido de la pantalla.
+  const nodesVisibles = useMemo(
+    () => nodes.map((n) => (idsOcultos.has(n.id) ? { ...n, hidden: true } : n)),
+    [nodes, idsOcultos]
+  )
+  const edgesVisibles = useMemo(
+    () => edges.map((e) => (idsOcultos.has(e.source) || idsOcultos.has(e.target) ? { ...e, hidden: true } : e)),
+    [edges, idsOcultos]
+  )
+
+  const toggleColapsado = useCallback((id: string) => {
+    setColapsados((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
+
   // Guardar en el store cada vez que cambian nodos/conexiones — mismo patrón
   // que Canvas: estado "vivo" en React Flow, persistencia en un efecto aparte.
   useEffect(() => {
@@ -1257,8 +1323,26 @@ function MapaMentalDetalle({
         duplicarRama: handleDuplicarRama,
         actualizarEtiqueta: handleActualizarEtiqueta,
       },
+      tieneHijos: (id) => (hijosDe.get(id)?.length ?? 0) > 0,
+      estaColapsado: (id) => colapsados.has(id),
+      // Cuántos nodos quedarían ocultos si SE colapsara este id ahora mismo
+      // — para mostrar "+N" en el badge sin tener que colapsar primero.
+      cantidadOcultosSi: (id) => {
+        const vistos = new Set<string>()
+        function marcar(actual: string) {
+          for (const hijo of hijosDe.get(actual) ?? []) {
+            if (!vistos.has(hijo)) {
+              vistos.add(hijo)
+              marcar(hijo)
+            }
+          }
+        }
+        marcar(id)
+        return vistos.size
+      },
+      toggleColapsado,
     }),
-    [modoOscuro, handleActualizar, handleEliminarNodo, handleDuplicar, handleDuplicarRama, handleActualizarEtiqueta]
+    [modoOscuro, handleActualizar, handleEliminarNodo, handleDuplicar, handleDuplicarRama, handleActualizarEtiqueta, hijosDe, colapsados, toggleColapsado]
   )
 
   const guardarTitulo = () => {
@@ -1464,8 +1548,8 @@ function MapaMentalDetalle({
             onInit={(instance) => {
               rfRef.current = instance
             }}
-            nodes={nodes}
-            edges={edges}
+            nodes={nodesVisibles}
+            edges={edgesVisibles}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
@@ -1619,7 +1703,7 @@ function renderTextoEnriquecido(texto: string): React.ReactNode[] {
 
 function NodoMental(props: NodeProps<NodoFlow>) {
   const { id, data, selected } = props
-  const { modoOscuro, callbacks } = useMentalCtx()
+  const { modoOscuro, callbacks, tieneHijos, estaColapsado, cantidadOcultosSi, toggleColapsado } = useMentalCtx()
   const { updateNode } = useReactFlow<NodoFlow, EdgeWithData>()
   const [editando, setEditando] = useState(false)
   const [mostrandoTamanos, setMostrandoTamanos] = useState(false)
@@ -1863,6 +1947,46 @@ function NodoMental(props: NodeProps<NodoFlow>) {
             style={{ background: color, width: 8, height: 8, zIndex: 20 }}
           />
         ))}
+
+        {/* Colapsar/expandir la rama — solo si este nodo tiene hijos. No
+            forma parte del mapa guardado (ver colapsados en
+            MapaMentalDetalle): es nada más para no tener que scrollear un
+            mapa grande entero cuando en el momento solo hace falta mirar
+            una rama. `nodrag` + parar la propagación: sin esto, el clic
+            movía el nodo en vez de colapsar (mismo problema que el
+            textarea de abajo). */}
+        {tieneHijos(id) && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              toggleColapsado(id)
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+            title={
+              estaColapsado(id)
+                ? `Expandir esta rama (${cantidadOcultosSi(id)} nodo${cantidadOcultosSi(id) === 1 ? '' : 's'} oculto${cantidadOcultosSi(id) === 1 ? '' : 's'})`
+                : 'Colapsar esta rama'
+            }
+            className="nodrag absolute z-30 flex items-center justify-center rounded-full border-2 shadow-sm"
+            style={{
+              right: -9,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              minWidth: 19,
+              height: 19,
+              padding: estaColapsado(id) ? '0 5px' : 0,
+              background: modoOscuro ? '#27272a' : '#ffffff',
+              borderColor: color,
+              color,
+              fontSize: 10,
+              fontWeight: 700,
+              lineHeight: 1,
+            }}
+          >
+            {estaColapsado(id) ? `+${cantidadOcultosSi(id)}` : <i className="ti ti-chevron-left text-[10px]" />}
+          </button>
+        )}
+
         <CuerpoNodo forma={data.forma} color={color} modoOscuro={modoOscuro} seleccionado={!!selected}>
           {editando ? (
             <textarea
