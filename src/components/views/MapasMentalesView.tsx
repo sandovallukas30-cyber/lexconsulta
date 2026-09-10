@@ -132,7 +132,8 @@ export function MapasMentalesView() {
     // recién acá, al crear la copia propia (mismo criterio que
     // usarPlantilla en Colecciones: copia independiente, no un vínculo).
     const idsReales = new Map(plantilla.nodos.map((n) => [n.id, crypto.randomUUID()]))
-    const posiciones = calcularLayoutMapaMental(
+    const calcularLayout = plantilla.layoutInicial === 'radial' ? calcularLayoutRadial : calcularLayoutMapaMental
+    const posiciones = calcularLayout(
       plantilla.nodos.map((n) => n.id),
       plantilla.conexiones
     )
@@ -503,6 +504,120 @@ function calcularLayoutMapaMental(
   const faltantes = ids.filter((id) => !resultado.has(id))
   faltantes.forEach((id, i) => {
     resultado.set(id, { x: -ESPACIO_X, y: MARGEN + (siguienteFila + i) * ESPACIO_Y })
+  })
+
+  return resultado
+}
+
+/**
+ * Variante RADIAL del mismo árbol prolijo de arriba: en vez de crecer hacia
+ * la derecha, reparte las ramas alrededor del título, como un mapa mental
+ * dibujado a mano — pensada para un árbol ancho y poco profundo (pocas
+ * ramas principales, cada una con sus propias hojas), no para uno angosto y
+ * profundo, donde ir agregando anillos concéntricos deja de tener sentido
+ * visual. Usa un mecanismo de plantilla (MapaMentalPlantilla.layoutInicial),
+ * no un botón: no es un reemplazo general de "Organizar" (que sigue siendo
+ * el árbol de siempre), solo la forma en que ALGUNAS plantillas (con esa
+ * forma ancha y pareja) se auto-organizan la primera vez que se usan.
+ *
+ * Reutiliza la MISMA combinatoria que la versión en árbol — cada hoja se
+ * lleva la siguiente fracción disponible del círculo completo (en vez de
+ * la siguiente fila), y un nodo con hijos queda en el ÁNGULO promedio de
+ * sus hijos (en vez de la Y promedio) — así hereda la misma garantía de
+ * que el subárbol de una rama nunca pisa el sector angular de otra. Lo
+ * nuevo acá es solo: (a) la transformación final de coordenadas (ángulo,
+ * radio) → (x, y), y (b) el cálculo del radio de cada anillo de
+ * profundidad, hecho ANTES de asignar ángulos — el anillo con más nodos es
+ * el que manda, porque su circunferencia (2πr) tiene que alcanzar para
+ * darle a cada uno un arco mínimo sin pisar al vecino.
+ */
+function calcularLayoutRadial(
+  ids: string[],
+  conexiones: { desde: string; hasta: string }[]
+): Map<string, { x: number; y: number }> {
+  const padrePrimario = new Map<string, string>()
+  const idsValidos = new Set(ids)
+  for (const cx of conexiones) {
+    if (!idsValidos.has(cx.desde) || !idsValidos.has(cx.hasta)) continue
+    if (!padrePrimario.has(cx.hasta)) padrePrimario.set(cx.hasta, cx.desde)
+  }
+  const hijosDe = new Map<string, string[]>()
+  for (const [hijo, padre] of padrePrimario) {
+    if (!hijosDe.has(padre)) hijosDe.set(padre, [])
+    hijosDe.get(padre)!.push(hijo)
+  }
+  const raices = ids.filter((id) => !padrePrimario.has(id))
+
+  // Profundidad de cada nodo y cantidad de nodos por profundidad (BFS
+  // simple con pila — el orden de recorrido no importa acá, solo contar).
+  const profundidadDe = new Map<string, number>()
+  const porProfundidad = new Map<number, number>()
+  {
+    const pendientes: { id: string; profundidad: number }[] = raices.map((id) => ({ id, profundidad: 0 }))
+    const visitados = new Set<string>()
+    while (pendientes.length > 0) {
+      const { id, profundidad } = pendientes.pop()!
+      if (visitados.has(id)) continue
+      visitados.add(id)
+      profundidadDe.set(id, profundidad)
+      porProfundidad.set(profundidad, (porProfundidad.get(profundidad) ?? 0) + 1)
+      for (const hijo of hijosDe.get(id) ?? []) pendientes.push({ id: hijo, profundidad: profundidad + 1 })
+    }
+  }
+  const profundidadMax = Math.max(0, ...porProfundidad.keys())
+
+  // Arco mínimo (px sobre la circunferencia) que necesita cada nodo para no
+  // pisar al de al lado — 210 cubre el peor caso real (nodo de 155-200px de
+  // ancho más un margen chico). Cada anillo es progresivamente más grande
+  // que el anterior (nunca menor, aunque tenga menos nodos): así el radio
+  // de un anillo con pocos nodos no queda apretado contra uno más interno.
+  const ARCO_MINIMO = 210
+  const RADIO_MINIMO = 260
+  const GAP_MINIMO_ENTRE_ANILLOS = 200
+  const radioDeProfundidadMapa = new Map<number, number>([[0, 0]])
+  for (let d = 1; d <= profundidadMax; d++) {
+    const cantidad = porProfundidad.get(d) ?? 1
+    const requerido = Math.max(RADIO_MINIMO, (ARCO_MINIMO * cantidad) / (2 * Math.PI))
+    const anterior = radioDeProfundidadMapa.get(d - 1) ?? 0
+    radioDeProfundidadMapa.set(d, Math.max(requerido, anterior + GAP_MINIMO_ENTRE_ANILLOS))
+  }
+
+  // Total de hojas: reparte el círculo completo (2π) entre ellas, igual que
+  // el árbol reparte el alto total entre filas.
+  function contarHojas(id: string, enCurso: Set<string>): number {
+    if (enCurso.has(id)) return 0
+    enCurso.add(id)
+    const hijos = hijosDe.get(id) ?? []
+    if (hijos.length === 0) return 1
+    return hijos.reduce((suma, h) => suma + contarHojas(h, enCurso), 0)
+  }
+  const totalHojas = raices.reduce((suma, r) => suma + contarHojas(r, new Set()), 0) || 1
+
+  const resultado = new Map<string, { x: number; y: number }>()
+  let siguienteFraccion = 0
+
+  function visitar(id: string, enCurso: Set<string>): number {
+    if (enCurso.has(id)) return 0
+    enCurso.add(id)
+    const hijos = hijosDe.get(id) ?? []
+    let angulo: number
+    if (hijos.length === 0) {
+      angulo = (siguienteFraccion / totalHojas) * Math.PI * 2
+      siguienteFraccion++
+    } else {
+      const angulos = hijos.map((h) => visitar(h, enCurso))
+      angulo = angulos.reduce((suma, a) => suma + a, 0) / angulos.length
+    }
+    const radio = radioDeProfundidadMapa.get(profundidadDe.get(id) ?? 0) ?? 0
+    resultado.set(id, { x: radio * Math.cos(angulo), y: radio * Math.sin(angulo) })
+    return angulo
+  }
+
+  for (const raiz of raices) visitar(raiz, new Set())
+
+  const faltantes = ids.filter((id) => !resultado.has(id))
+  faltantes.forEach((id, i) => {
+    resultado.set(id, { x: -(radioDeProfundidadMapa.get(profundidadMax) ?? RADIO_MINIMO), y: i * 140 })
   })
 
   return resultado

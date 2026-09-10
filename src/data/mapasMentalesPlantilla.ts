@@ -36,6 +36,13 @@ export interface MapaMentalPlantilla {
   descripcion: string
   nodos: NodoPlantillaMental[]
   conexiones: ConexionPlantillaMental[]
+  /** Cómo se auto-organiza la plantilla la primera vez que se usa (ver
+   * usarPlantilla en MapasMentalesView.tsx). Sin valor = 'arbol' (el árbol
+   * prolijo izquierda-derecha de siempre). 'radial' reparte las ramas
+   * principales alrededor del título, como un mapa mental dibujado a mano
+   * — pensado para un árbol ancho y poco profundo (pocas ramas, cada una
+   * con sus propias hojas), no para uno angosto y profundo. */
+  layoutInicial?: 'arbol' | 'radial'
 }
 
 export const MAPAS_MENTALES_PLANTILLA: MapaMentalPlantilla[] = [
@@ -1350,60 +1357,105 @@ export const MAPAS_MENTALES_PLANTILLA: MapaMentalPlantilla[] = [
   {
     id: 'plantilla-dco-esquema-general',
     titulo: 'Derecho Constitucional Orgánico — Esquema general',
-    descripcion: 'Panorama del curso en 5 bloques, solo con lo fundamental — para repasar de un vistazo antes de entrar al detalle de cada plantilla del curso.',
+    // Radial en vez de árbol izquierda-derecha (ver layoutInicial más abajo
+    // y calcularLayoutRadial en MapasMentalesView.tsx): con 5 ramas de
+    // tamaño parejo, quedan repartidas alrededor del título como un mapa
+    // mental dibujado a mano, en vez de una columna larga.
+    descripcion: 'Panorama del curso en 5 bloques repartidos alrededor del título — lo fundamental de cada bloque, con referencias directas a los ppts, para repasar de un vistazo antes de entrar al detalle de cada plantilla del curso.',
+    layoutInicial: 'radial',
     nodos: [
       { id: 'dco-raiz', texto: 'Derecho Constitucional\nOrgánico', forma: 'ovalo', tamanoTexto: 'titulo' },
 
       { id: 'dco-b1', texto: 'I. Fundamentos y\nTeoría del Órgano', forma: 'rectangulo', tamanoTexto: 'subtitulo', color: '#1d4ed8' },
       { id: 'dco-b1-1', texto: 'Relaciones entre órganos', forma: 'ovalo', tamanoTexto: 'texto', nota: 'separación/frenos · cooperación · jerarquía-tutela-autonomía' },
-      { id: 'dco-b1-2', texto: 'Órgano = Competencia + Titular', forma: 'ovalo', tamanoTexto: 'texto' },
-      { id: 'dco-b1-3', texto: 'Utilidad: continuidad de la función estatal', forma: 'ovalo', tamanoTexto: 'texto' },
+      { id: 'dco-b1-2', texto: 'Sustituye la representación/mandato', forma: 'ovalo', tamanoTexto: 'texto', nota: 'crítica normativista de Kelsen' },
+      { id: 'dco-b1-3', texto: 'Órgano = Competencia + Titular', forma: 'ovalo', tamanoTexto: 'texto', nota: 'competencia = objetivo · titular = subjetivo' },
+      { id: 'dco-b1-4', texto: 'Utilidad: continuidad de la función estatal', forma: 'ovalo', tamanoTexto: 'texto' },
+      { id: 'dco-b1-5', texto: 'Dualidad ciudadano / órgano', forma: 'ovalo', tamanoTexto: 'texto', nota: 'órgano y personalidad jurídica: Estado Fisco' },
+      { id: 'dco-b1-6', texto: 'Límites de la teoría', forma: 'ovalo', tamanoTexto: 'texto', color: '#b45309', nota: 'legitimidad democrática + equilibrio de poder (Estado de Derecho)' },
+      { id: 'dco-b1-7', texto: 'Clasificaciones de órganos', forma: 'ovalo', tamanoTexto: 'texto', nota: 'Jellinek: inmediatos/mediatos · primarios/secundarios · simples/potenciados · independientes/dependientes · normales/extraordinarios — Otras: constitucionales/legales · unipersonales/colegiados · activos/consultivos/de control · territoriales' },
 
       { id: 'dco-b2', texto: 'II. Separación\nde Poderes', forma: 'rectangulo', tamanoTexto: 'subtitulo', color: '#1d4ed8' },
-      { id: 'dco-b2-1', texto: 'Montesquieu: separación estricta', forma: 'ovalo', tamanoTexto: 'texto', nota: 'El espíritu de las leyes, 1748' },
-      { id: 'dco-b2-2', texto: 'Madison: frenos y contrapesos', forma: 'ovalo', tamanoTexto: 'texto', nota: 'El Federalista, 1788' },
-      { id: 'dco-b2-3', texto: 'Chile: art. 7', forma: 'ovalo', tamanoTexto: 'texto', color: '#b45309', nota: 'investidura + competencia + forma legal de actuación' },
+      { id: 'dco-b2-1', texto: 'Montesquieu: separación estricta', forma: 'ovalo', tamanoTexto: 'texto', nota: 'El espíritu de las leyes, 1748 — separación de órganos y funciones' },
+      { id: 'dco-b2-2', texto: 'Carré de Malberg: distribución y cooperación', forma: 'ovalo', tamanoTexto: 'texto', nota: 'Teoría General del Estado, 1920 — la voluntad del Estado es una sola' },
+      { id: 'dco-b2-3', texto: 'Madison: frenos y contrapesos', forma: 'ovalo', tamanoTexto: 'texto', nota: 'El Federalista, 1788 — "la ambición debe hacerse para contrarrestar la ambición"' },
+      { id: 'dco-b2-4', texto: 'Legitimidad Legislativa', forma: 'ovalo', tamanoTexto: 'texto', nota: 'representación y deliberación (arts. 65-75)' },
+      { id: 'dco-b2-5', texto: 'Legitimidad Jurisdiccional', forma: 'ovalo', tamanoTexto: 'texto', nota: 'independencia: inamovilidad · inavocabilidad · inexcusabilidad' },
+      { id: 'dco-b2-6', texto: 'Legitimidad Administrativa', forma: 'ovalo', tamanoTexto: 'texto', nota: 'mandato jerárquico: principio comisarial' },
+      { id: 'dco-b2-7', texto: 'Chile: art. 7', forma: 'ovalo', tamanoTexto: 'texto', color: '#b45309', nota: 'sin reconocimiento explícito — investidura regular + competencia + forma legal de actuación' },
 
       { id: 'dco-b3', texto: 'III. Régimen\nde Gobierno', forma: 'rectangulo', tamanoTexto: 'subtitulo', color: '#1d4ed8' },
-      { id: 'dco-b3-1', texto: 'Presidencial / Parlamentario / Semipresidencial', forma: 'ovalo', tamanoTexto: 'texto' },
-      { id: 'dco-b3-2', texto: 'Chile: presidencialismo reforzado', forma: 'ovalo', tamanoTexto: 'texto', color: '#b45309', nota: 'poderes constitucionales altos, partidarios débiles' },
+      { id: 'dco-b3-1', texto: 'Presidencial / Parlamentario / Semipresidencial', forma: 'ovalo', tamanoTexto: 'texto', nota: 'criterios: elección, duración, integración del gobierno' },
+      { id: 'dco-b3-2', texto: 'Alemania: censura constructiva', forma: 'ovalo', tamanoTexto: 'texto', color: '#7e22ce', nota: 'art. 67 Ley Fundamental, 1949 — exige elegir sucesor antes de derribar al Canciller' },
+      { id: 'dco-b3-3', texto: 'Francia: premier-parlamentario', forma: 'ovalo', tamanoTexto: 'texto', color: '#7e22ce', nota: 'Constitución de 1958 — problema de la "cohabitación"' },
+      { id: 'dco-b3-4', texto: 'Chile: presidencialismo reforzado', forma: 'ovalo', tamanoTexto: 'texto', color: '#b45309', nota: 'hiperpresidencialismo' },
+      { id: 'dco-b3-5', texto: 'Poderes constitucionales (altos) vs. partidarios (débiles)', forma: 'ovalo', tamanoTexto: 'texto', nota: 'proactivos: iniciativa exclusiva, potestad reglamentaria, delegación — reactivos: veto, control del presupuesto' },
+      { id: 'dco-b3-6', texto: '6 frentes de acumulación', forma: 'ovalo', tamanoTexto: 'texto', nota: 'proceso legislativo · presupuesto · jefatura del Ejecutivo · integración de otros órganos · estados de excepción · sin responsabilidad política' },
+      { id: 'dco-b3-7', texto: 'Correctores del modelo', forma: 'ovalo', tamanoTexto: 'texto', nota: 'presidencialismo de coalición · Tribunal Constitucional' },
 
       { id: 'dco-b4', texto: 'IV. Gobierno y\nAdministración', forma: 'rectangulo', tamanoTexto: 'subtitulo', color: '#1d4ed8' },
-      { id: 'dco-b4-1', texto: 'Gobierno = voluntad · Administración = acción', forma: 'ovalo', tamanoTexto: 'texto', nota: 'art. 24 / Huneeus' },
-      { id: 'dco-b4-2', texto: 'Principio comisarial', forma: 'ovalo', tamanoTexto: 'texto' },
-      { id: 'dco-b4-3', texto: 'Centralizados vs. descentralizados', forma: 'ovalo', tamanoTexto: 'texto' },
+      { id: 'dco-b4-1', texto: 'Gobierno = voluntad · Administración = acción', forma: 'ovalo', tamanoTexto: 'texto', nota: 'art. 24 / Huneeus, 1891' },
+      { id: 'dco-b4-2', texto: 'Principio comisarial', forma: 'ovalo', tamanoTexto: 'texto', nota: 'la legitimidad desciende del Presidente electo' },
+      { id: 'dco-b4-3', texto: 'Competencias regladas', forma: 'ovalo', tamanoTexto: 'texto', nota: 'ej: promulgar la ley en 10 días (art. 75)' },
+      { id: 'dco-b4-4', texto: 'Competencias discrecionales', forma: 'ovalo', tamanoTexto: 'texto', nota: 'ej: celebrar los tratados que estime convenientes (art. 32 N°15)' },
+      { id: 'dco-b4-5', texto: 'Actos de gobierno vs. administrativos', forma: 'ovalo', tamanoTexto: 'texto', color: '#b45309', nota: 'los de gobierno no son reclamables por ilegalidad ante tribunales' },
+      { id: 'dco-b4-6', texto: 'Centralizados', forma: 'ovalo', tamanoTexto: 'texto', nota: 'personalidad jurídica del Fisco · jerarquía — ej: ministerios, servicios públicos' },
+      { id: 'dco-b4-7', texto: 'Descentralizados', forma: 'ovalo', tamanoTexto: 'texto', nota: 'personalidad propia · supervigilancia — ej: gob. regionales, municipalidades, Contraloría, Banco Central' },
 
       { id: 'dco-b5', texto: 'V. El Presidente\nde la República', forma: 'rectangulo', tamanoTexto: 'subtitulo', color: '#1d4ed8' },
-      { id: 'dco-b5-1', texto: 'Elección', forma: 'ovalo', tamanoTexto: 'texto', nota: 'arts. 25-27 · 4 años, sin reelección inmediata' },
-      { id: 'dco-b5-2', texto: 'Subrogación (temporal) vs. Vacancia (definitiva)', forma: 'ovalo', tamanoTexto: 'texto', nota: 'art. 29' },
-      { id: 'dco-b5-3', texto: 'Triple función', forma: 'ovalo', tamanoTexto: 'texto', nota: 'Gobierno · Administración · Jefe de Estado (art. 24)' },
-      { id: 'dco-b5-4', texto: '4 tipos de atribuciones', forma: 'ovalo', tamanoTexto: 'texto', color: '#b45309', nota: 'gubernativas · administrativas · nomogenéticas · de control (art. 32)' },
+      { id: 'dco-b5-1', texto: 'Requisitos de elegibilidad', forma: 'ovalo', tamanoTexto: 'texto', nota: 'chileno, 35 años, ciudadano con derecho a sufragio (art. 25)' },
+      { id: 'dco-b5-2', texto: 'Elección y segunda vuelta', forma: 'ovalo', tamanoTexto: 'texto', nota: 'arts. 26-27 · 4 años, sin reelección inmediata' },
+      { id: 'dco-b5-3', texto: 'Subrogación (temporal)', forma: 'ovalo', tamanoTexto: 'texto', nota: 'art. 29 — enfermedad, ausencia del país, otro grave motivo' },
+      { id: 'dco-b5-4', texto: 'Vacancia (definitiva)', forma: 'ovalo', tamanoTexto: 'texto', nota: '< 2 años restantes: elige el Congreso Pleno — ≥ 2 años: nueva elección popular' },
+      { id: 'dco-b5-5', texto: 'Triple función', forma: 'ovalo', tamanoTexto: 'texto', nota: 'Gobierno · Administración · Jefe de Estado (art. 24)' },
+      { id: 'dco-b5-6', texto: 'Atribuciones gubernativas', forma: 'ovalo', tamanoTexto: 'texto', color: '#b45309', nota: 'proteger el orden constitucional · política exterior · nombrar autoridades · política fiscal · gracias · función consultiva (art. 32)' },
+      { id: 'dco-b5-7', texto: 'Administrativas, nomogenéticas y de control', forma: 'ovalo', tamanoTexto: 'texto', nota: 'nomogenéticas: ley, DFL, tratados, potestad reglamentaria, reforma constitucional — control: jueces, Fiscal Nacional, TC' },
     ],
     conexiones: [
       { desde: 'dco-raiz', hasta: 'dco-b1' },
       { desde: 'dco-b1', hasta: 'dco-b1-1' },
       { desde: 'dco-b1', hasta: 'dco-b1-2' },
       { desde: 'dco-b1', hasta: 'dco-b1-3' },
+      { desde: 'dco-b1', hasta: 'dco-b1-4' },
+      { desde: 'dco-b1', hasta: 'dco-b1-5' },
+      { desde: 'dco-b1', hasta: 'dco-b1-6' },
+      { desde: 'dco-b1', hasta: 'dco-b1-7' },
 
       { desde: 'dco-raiz', hasta: 'dco-b2' },
       { desde: 'dco-b2', hasta: 'dco-b2-1' },
       { desde: 'dco-b2', hasta: 'dco-b2-2' },
       { desde: 'dco-b2', hasta: 'dco-b2-3' },
+      { desde: 'dco-b2', hasta: 'dco-b2-4' },
+      { desde: 'dco-b2', hasta: 'dco-b2-5' },
+      { desde: 'dco-b2', hasta: 'dco-b2-6' },
+      { desde: 'dco-b2', hasta: 'dco-b2-7' },
 
       { desde: 'dco-raiz', hasta: 'dco-b3' },
       { desde: 'dco-b3', hasta: 'dco-b3-1' },
       { desde: 'dco-b3', hasta: 'dco-b3-2' },
+      { desde: 'dco-b3', hasta: 'dco-b3-3' },
+      { desde: 'dco-b3', hasta: 'dco-b3-4' },
+      { desde: 'dco-b3', hasta: 'dco-b3-5' },
+      { desde: 'dco-b3', hasta: 'dco-b3-6' },
+      { desde: 'dco-b3', hasta: 'dco-b3-7' },
 
       { desde: 'dco-raiz', hasta: 'dco-b4' },
       { desde: 'dco-b4', hasta: 'dco-b4-1' },
       { desde: 'dco-b4', hasta: 'dco-b4-2' },
       { desde: 'dco-b4', hasta: 'dco-b4-3' },
+      { desde: 'dco-b4', hasta: 'dco-b4-4' },
+      { desde: 'dco-b4', hasta: 'dco-b4-5' },
+      { desde: 'dco-b4', hasta: 'dco-b4-6' },
+      { desde: 'dco-b4', hasta: 'dco-b4-7' },
 
       { desde: 'dco-raiz', hasta: 'dco-b5' },
       { desde: 'dco-b5', hasta: 'dco-b5-1' },
       { desde: 'dco-b5', hasta: 'dco-b5-2' },
       { desde: 'dco-b5', hasta: 'dco-b5-3' },
       { desde: 'dco-b5', hasta: 'dco-b5-4' },
+      { desde: 'dco-b5', hasta: 'dco-b5-5' },
+      { desde: 'dco-b5', hasta: 'dco-b5-6' },
+      { desde: 'dco-b5', hasta: 'dco-b5-7' },
     ],
   },
 ]
