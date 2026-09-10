@@ -30,6 +30,7 @@ import type {
   RecordAhorcado,
   Coleccion,
   ArticuloColeccion,
+  ColeccionCompartida,
   EstadoRepaso,
   TipoRelacion,
   RefArticuloColeccion,
@@ -117,6 +118,22 @@ interface AppState {
   quitarSubrayado: (codigo: CodigoActivo['tipo'], articulo: string, frase: string) => void
   marcarEstadoArticulo: (id: string, ref: { codigo: CodigoActivo['tipo']; articulo: string }, estado: EstadoRepaso) => void
   guardarNotaArticulo: (id: string, ref: { codigo: CodigoActivo['tipo']; articulo: string }, nota: string) => void
+  /** Repetición espaciada (Leitner de 5 cajas) para un artículo de una
+   * colección: "sabia" sube una caja (y empuja proximoRepaso más lejos),
+   * "no_sabia" vuelve a la caja 1 (repasar mañana). Independiente de
+   * `estado` (esa sigue siendo la autoevaluación manual de siempre). */
+  registrarRepaso: (
+    id: string,
+    ref: { codigo: CodigoActivo['tipo']; articulo: string },
+    resultado: 'sabia' | 'no_sabia'
+  ) => void
+  /** Crea una Colección nueva a partir de un link/archivo compartido (ver
+   * services/compartirColeccion.ts) — id y fechas propias, para que nunca
+   * choque con una colección que el usuario ya tenía. Devuelve el id nuevo. */
+  importarColeccion: (compartida: ColeccionCompartida) => string
+  /** Vincula (o, con null, desvincula) una Colección con un Mapa mental
+   * sobre el mismo tema — ver Coleccion.mapaMentalVinculado. */
+  vincularMapaMental: (coleccionId: string, mapaMentalId: string | null) => void
   /** EXPERIMENTAL (rama experimento-visualizacion): no existe en main. */
   moverArticuloPosicionLibre: (id: string, ref: { codigo: CodigoActivo['tipo']; articulo: string }, posicion: { x: number; y: number }) => void
   crearConexionColeccion: (id: string, desde: RefArticuloColeccion, hasta: RefArticuloColeccion, tipo: TipoRelacion) => void
@@ -470,6 +487,55 @@ export const useStore = create<AppState>()(
                       : a
                   ),
                 }
+              : c
+          ),
+        })),
+      registrarRepaso: (id, ref, resultado) =>
+        set((s) => ({
+          colecciones: s.colecciones.map((c) =>
+            c.id === id
+              ? {
+                  ...c,
+                  articulos: c.articulos.map((a) => {
+                    if (a.codigo !== ref.codigo || a.articulo !== ref.articulo) return a
+                    // Leitner de 5 cajas: "me la sabía" sube una caja (y el
+                    // próximo repaso se aleja más); "no me la sabía" vuelve
+                    // siempre a la caja 1 — no hay "castigo" mayor a eso,
+                    // volver a ver el artículo pronto ya es la corrección.
+                    const cajaActual = a.caja ?? 1
+                    const cajaNueva = resultado === 'sabia' ? Math.min(5, cajaActual + 1) : 1
+                    const DIAS_POR_CAJA: Record<number, number> = { 1: 1, 2: 3, 3: 7, 4: 14, 5: 30 }
+                    const dias = DIAS_POR_CAJA[cajaNueva] ?? 1
+                    return { ...a, caja: cajaNueva, proximoRepaso: Date.now() + dias * 24 * 60 * 60 * 1000 }
+                  }),
+                }
+              : c
+          ),
+        })),
+      importarColeccion: (compartida) => {
+        const id = crypto.randomUUID()
+        const ahora = Date.now()
+        set((s) => ({
+          colecciones: [
+            {
+              id,
+              titulo: compartida.titulo,
+              articulos: compartida.articulos,
+              conexiones: compartida.conexiones,
+              grupos: compartida.grupos,
+              fechaCreacion: ahora,
+              fechaModificacion: ahora,
+            },
+            ...s.colecciones,
+          ],
+        }))
+        return id
+      },
+      vincularMapaMental: (coleccionId, mapaMentalId) =>
+        set((s) => ({
+          colecciones: s.colecciones.map((c) =>
+            c.id === coleccionId
+              ? { ...c, mapaMentalVinculado: mapaMentalId ?? undefined, fechaModificacion: Date.now() }
               : c
           ),
         })),

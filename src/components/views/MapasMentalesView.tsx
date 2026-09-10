@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   ReactFlow,
   Background,
@@ -138,7 +139,7 @@ export function MapasMentalesView() {
       // Más ancho para los nodos "título" (normalmente la raíz): antes este
       // extra dependía de la forma (nube), ahora de la jerarquía tipográfica,
       // que es lo que en realidad predecía "esto va a llevar más texto".
-      ancho: n.tamanoTexto === 'titulo' ? 220 : 170,
+      ancho: n.tamanoTexto === 'titulo' ? 200 : 155,
     }))
     const conexiones: ConexionMapaMental[] = plantilla.conexiones.map((c) => {
       const lados = elegirLadosConexion(
@@ -387,6 +388,18 @@ function semillaDesdeId(id: string): number {
  * clave: la rama de un subárbol jamás pisa el tramo de filas de otra, sea
  * cual sea su profundidad — cada una ocupa exactamente el alto que
  * necesitan sus propias hojas, ni más ni menos.
+ *
+ * Se intentó (y se sacó) una variante que compactaba en grilla las ramas
+ * con muchas hojas, para que no quedaran todas apiladas en una sola
+ * columna. La idea era sólida pero la implementación no: medido contra el
+ * DOM real, dejaba nodos superpuestos en casos reales (una rama con
+ * sub-categorías propias antes de llegar a las hojas — ver "I.
+ * Gubernativas" en la plantilla de Atribuciones del Presidente — porque
+ * los nodos INTERMEDIOS de esa rama no tenían ningún alto mínimo
+ * reservado entre hermanos, solo el promedio de sus propios hijos). Hacer
+ * eso bien de verdad es básicamente reimplementar el ajuste de contornos
+ * de Reingold-Tilford, no algo para apurar — se volvió a la versión
+ * simple, ya probada sin superposiciones.
  */
 function calcularLayoutMapaMental(
   ids: string[],
@@ -395,22 +408,28 @@ function calcularLayoutMapaMental(
   // Roles de eje invertidos respecto de la versión anterior (arriba→abajo):
   // ESPACIO_X ahora separa NIVELES de profundidad (columnas, izquierda→
   // derecha) y necesita ser ancho porque tiene que dejar lugar al ANCHO de
-  // un nodo (hasta 220px, el título); ESPACIO_Y ahora separa HOJAS
+  // un nodo (hasta 200px, el título); ESPACIO_Y ahora separa HOJAS
   // consecutivas (filas) y puede ser más angosto porque solo tiene que
   // dejar lugar al alto típico de un nodo de texto envuelto en 2-3 líneas.
-  const ESPACIO_X = 280
-  const ESPACIO_Y = 160
-  const MARGEN = 40
+  // Valores más chicos que antes (280/160) a pedido — más compacto — apoyado
+  // en que el padding del nodo también se achicó (px-4 py-3 → px-3 py-2 en
+  // CuerpoNodo) y el ancho no-título bajó de 170 a 155. Con eso, una etiqueta
+  // larga real (medida: hasta 106 caracteres en las plantillas actuales) se
+  // envuelve en 5-6 líneas y queda en ~100-115px de alto — ESPACIO_Y deja
+  // margen sobre ese peor caso incluso restando el jitter.
+  const ESPACIO_X = 240
+  const ESPACIO_Y = 140
+  const MARGEN = 30
   // Desplazamiento chico (mucho menor que ESPACIO_X/Y, no puede generar
   // superposición) para que el resultado se sienta más parecido a un mapa
   // mental hecho a mano y menos a un organigrama perfectamente cuadriculado.
-  // JITTER_Y más chico que antes a propósito: una hoja de texto largo (2-4
-  // líneas envueltas dentro de un nodo de 170px) puede llegar a unos 100-
-  // 120px de alto, y las filas de hoja están más apretadas verticalmente que
-  // las columnas de profundidad — un jitter grande ahí sí podía juntar dos
-  // fichas vecinas de texto largo.
-  const JITTER_X = 14
-  const JITTER_Y = 10
+  // JITTER_Y más chico que JITTER_X a propósito: una hoja de texto largo
+  // (5-6 líneas envueltas dentro de un nodo de 155px) puede llegar a unos
+  // 100-115px de alto, y las filas de hoja están más apretadas verticalmente
+  // que las columnas de profundidad — un jitter grande ahí sí podía juntar
+  // dos fichas vecinas de texto largo.
+  const JITTER_X = 12
+  const JITTER_Y = 6
 
   // Padre PRIMARIO de cada nodo: el primero que lo conectó (en el orden en
   // que se declaran las conexiones). Un nodo con más de un padre — dos
@@ -432,7 +451,15 @@ function calcularLayoutMapaMental(
   }
 
   const resultado = new Map<string, { x: number; y: number }>()
-  let siguienteHoja = 0
+  let siguienteFila = 0
+
+  function jitterXY(id: string): { jitterX: number; jitterY: number } {
+    const semilla = semillaDesdeId(id)
+    return {
+      jitterX: ((semilla % 1000) / 1000 - 0.5) * 2 * JITTER_X,
+      jitterY: (((semilla >>> 3) % 1000) / 1000 - 0.5) * 2 * JITTER_Y,
+    }
+  }
 
   function visitar(id: string, profundidad: number, enCurso: Set<string>): number {
     // Corta un ciclo (A conecta a B que conecta de vuelta a A) en vez de
@@ -443,15 +470,13 @@ function calcularLayoutMapaMental(
     const hijos = hijosDe.get(id) ?? []
     let y: number
     if (hijos.length === 0) {
-      y = MARGEN + siguienteHoja * ESPACIO_Y
-      siguienteHoja++
+      y = MARGEN + siguienteFila * ESPACIO_Y
+      siguienteFila++
     } else {
       const ysHijos = hijos.map((h) => visitar(h, profundidad + 1, enCurso))
       y = ysHijos.reduce((suma, v) => suma + v, 0) / ysHijos.length
     }
-    const semilla = semillaDesdeId(id)
-    const jitterX = ((semilla % 1000) / 1000 - 0.5) * 2 * JITTER_X
-    const jitterY = (((semilla >>> 3) % 1000) / 1000 - 0.5) * 2 * JITTER_Y
+    const { jitterX, jitterY } = jitterXY(id)
     // y SIN jitter es lo que se guarda para que lo use el promedio del
     // padre — si el jitter de un hijo se filtrara hacia arriba, se iría
     // acumulando de generación en generación en vez de quedar como un
@@ -469,7 +494,7 @@ function calcularLayoutMapaMental(
   // origen del lienzo.
   const faltantes = ids.filter((id) => !resultado.has(id))
   faltantes.forEach((id, i) => {
-    resultado.set(id, { x: -ESPACIO_X, y: MARGEN + (siguienteHoja + i) * ESPACIO_Y })
+    resultado.set(id, { x: -ESPACIO_X, y: MARGEN + (siguienteFila + i) * ESPACIO_Y })
   })
 
   return resultado
@@ -518,13 +543,38 @@ function elegirLadosConexion(
  * Con esa caja real se calcula el zoom/posición a mano y se aplica con
  * `setViewport` — la operación primitiva de la librería, sin la lógica
  * adicional de fitView que es justo la que se atasca.
+ *
+ * Alineado a la IZQUIERDA, no centrado: un árbol angosto y muy alto (título
+ * + pocas ramas pero muchas hojas — el caso típico acá, ver
+ * calcularLayoutMapaMental) tiene una caja mucho más alta que ancha; si se
+ * centrara esa caja completa en un contenedor panorámico, el título
+ * quedaba flotando en el medio de la pantalla con muchísimo margen vacío a
+ * los dos lados — técnicamente el nodo con menor X, pero no se leía como
+ * "el título está a la izquierda" de un vistazo. Pegando el borde
+ * izquierdo del contenido (que por construcción es siempre el título) al
+ * borde izquierdo del contenedor, la lectura izquierda→derecha queda
+ * inequívoca sea cual sea la forma del árbol.
+ *
+ * `zoomLegible` (opcional): en un mapa grande, el zoom que hace entrar TODO
+ * el contenido de una puede ser tan chico que el texto queda ilegible — se
+ * ve el mapa entero, pero no se puede leer nada a primera vista, que es
+ * justo lo contrario de lo que sirve al abrir un mapa para estudiar. Si se
+ * pasa este parámetro y el zoom "entra todo" queda por debajo de él, se usa
+ * este piso en su lugar y la vista se ancla en el TÍTULO (el nodo más a la
+ * izquierda) en vez de en el centro de todo el árbol — así lo primero que
+ * se ve, legible, es el título con sus primeras ramas; el resto del mapa
+ * se explora paneando/haciendo scroll, no forzando un zoom ilegible para
+ * que quepa todo de entrada. Sin este parámetro (como en el uso para
+ * imprimir) siempre se prioriza que entre todo, por chico que quede el
+ * texto — es lo esperable al imprimir un diagrama grande en una hoja.
  */
 function ajustarVista(
   rf: ReactFlowInstance<NodoFlow, EdgeWithData> | null,
   contenedor: HTMLElement | null,
   padding: number,
   minZoom: number,
-  maxZoom: number
+  maxZoom: number,
+  zoomLegible?: number
 ) {
   if (!rf || !contenedor) return
   const nodeEls = contenedor.querySelectorAll<HTMLElement>('.react-flow__node')
@@ -534,6 +584,13 @@ function ajustarVista(
   let minY = Infinity
   let maxX = -Infinity
   let maxY = -Infinity
+  // Caja del "título": el nodo con menor X (la raíz del árbol, ver
+  // calcularLayoutMapaMental — ahí siempre queda en la columna más a la
+  // izquierda). De haber varias raíces sueltas a la misma X, se prefiere la
+  // más cercana al centro vertical de todo el contenido.
+  let tituloMinX = Infinity
+  let tituloMinY = 0
+  let tituloMaxY = 0
   nodeEls.forEach((el) => {
     const r = el.getBoundingClientRect()
     const supIzq = rf.screenToFlowPosition({ x: r.left, y: r.top })
@@ -542,6 +599,11 @@ function ajustarVista(
     minY = Math.min(minY, supIzq.y)
     maxX = Math.max(maxX, infDer.x)
     maxY = Math.max(maxY, infDer.y)
+    if (supIzq.x < tituloMinX) {
+      tituloMinX = supIzq.x
+      tituloMinY = supIzq.y
+      tituloMaxY = infDer.y
+    }
   })
   const anchoContenido = Math.max(1, maxX - minX)
   const altoContenido = Math.max(1, maxY - minY)
@@ -549,13 +611,240 @@ function ajustarVista(
   const rectContenedor = contenedor.getBoundingClientRect()
   const anchoDisponible = Math.max(1, rectContenedor.width * (1 - padding * 2))
   const altoDisponible = Math.max(1, rectContenedor.height * (1 - padding * 2))
+  const zoomQueEntraTodo = Math.min(anchoDisponible / anchoContenido, altoDisponible / altoContenido)
 
-  const zoom = Math.min(maxZoom, Math.max(minZoom, Math.min(anchoDisponible / anchoContenido, altoDisponible / altoContenido)))
-  // Centrado: el punto medio del contenido (en coordenadas del lienzo) debe
-  // caer en el punto medio del contenedor (en coordenadas de pantalla).
-  const x = rectContenedor.width / 2 - ((minX + maxX) / 2) * zoom
-  const y = rectContenedor.height / 2 - ((minY + maxY) / 2) * zoom
+  let zoom: number
+  let ancla: { minX: number; minY: number; maxY: number }
+  if (!zoomLegible || zoomQueEntraTodo >= zoomLegible) {
+    // Entra todo a un zoom razonable (o no se pidió piso legible — caso
+    // impresión): usar el zoom que ajusta el contenido completo, anclado en
+    // la caja de TODO el árbol.
+    zoom = Math.min(maxZoom, Math.max(minZoom, zoomQueEntraTodo))
+    ancla = { minX, minY, maxY }
+  } else {
+    // No entra completo a un zoom legible: mejor un zoom fijo y cómodo,
+    // anclado en el título, que "todo el mapa" ilegible.
+    zoom = zoomLegible
+    ancla = { minX: tituloMinX, minY: tituloMinY, maxY: tituloMaxY }
+  }
+  // Horizontal: el borde izquierdo del ancla queda a `padding` del borde
+  // izquierdo del contenedor, no centrado.
+  // Vertical: centrado respecto del ancla — con el título como ancla (caso
+  // ilegible) esto lo deja vertical mente centrado en pantalla; con toda la
+  // caja como ancla (caso normal) el título ya queda cerca de ese centro
+  // por construcción del layout, así que da lo mismo.
+  const x = rectContenedor.width * padding - ancla.minX * zoom
+  const y = rectContenedor.height / 2 - ((ancla.minY + ancla.maxY) / 2) * zoom
   rf.setViewport({ x, y, zoom }, { duration: 0 })
+}
+
+// ============= IMPRIMIR (SVG estático, no el lienzo vivo) =============
+
+/** Caracteres por línea, alto de línea y tamaño de fuente para envolver el
+ * texto de un nodo a mano en el SVG de impresión — el navegador no envuelve
+ * texto SVG solo como hace con HTML, así que hay que decidir los saltos de
+ * línea nosotros. Aproximación (no pixel-perfect, en Inter ~0.52em por
+ * carácter): alcanza para que el texto no se salga groseramente de su caja
+ * al imprimir, que es lo único que importa acá. */
+const FUENTE_POR_TAMANO_IMPRESO: Record<TamanoTextoMental, number> = { titulo: 16, subtitulo: 14, texto: 12 }
+function medidasTextoImpreso(ancho: number, tamanoTexto: TamanoTextoMental): { maxCaracteresPorLinea: number; altoLinea: number; fuente: number } {
+  const fuente = FUENTE_POR_TAMANO_IMPRESO[tamanoTexto]
+  const usable = Math.max(20, ancho - 24)
+  return { maxCaracteresPorLinea: Math.max(6, Math.floor(usable / (fuente * 0.52))), altoLinea: fuente * 1.35, fuente }
+}
+function envolverTextoImpreso(texto: string, maxCaracteresPorLinea: number): string[] {
+  const palabras = texto.split(/\s+/).filter(Boolean)
+  const lineas: string[] = []
+  let actual = ''
+  for (const palabra of palabras) {
+    const candidata = actual ? `${actual} ${palabra}` : palabra
+    if (candidata.length > maxCaracteresPorLinea && actual) {
+      lineas.push(actual)
+      actual = palabra
+    } else {
+      actual = candidata
+    }
+  }
+  if (actual) lineas.push(actual)
+  return lineas.length > 0 ? lineas : ['']
+}
+
+interface CajaNodoImpreso {
+  nodo: NodoMapaMental
+  x: number
+  y: number
+  ancho: number
+  alto: number
+  lineas: string[]
+  fuente: number
+  altoLinea: number
+}
+
+/** Ancho/alto reales si el nodo fue redimensionado a mano (n.ancho/n.alto);
+ * si no, el mismo default que usarPlantilla()/agregarNodo() para el ancho, y
+ * una ESTIMACIÓN para el alto (acá no hay DOM real que medir, a diferencia
+ * del lienzo interactivo). */
+function calcularCajaNodoImpreso(n: NodoMapaMental): CajaNodoImpreso {
+  const ancho = n.ancho ?? (n.tamanoTexto === 'titulo' ? 200 : 155)
+  const { maxCaracteresPorLinea, altoLinea, fuente } = medidasTextoImpreso(ancho, n.tamanoTexto)
+  const lineas = envolverTextoImpreso(n.texto, maxCaracteresPorLinea)
+  const alto = n.alto ?? Math.max(44, lineas.length * altoLinea + 16)
+  return { nodo: n, x: n.posicion.x, y: n.posicion.y, ancho, alto, lineas, fuente, altoLinea }
+}
+
+/** Punto de conexión sobre el borde de la caja, según el lado guardado en
+ * la conexión (ver ConexionMapaMental.desdeHandle/hastaHandle) — mismo
+ * dato que ya usa el lienzo interactivo para saber por dónde sale/entra
+ * cada línea, reutilizado acá para que el SVG impreso no salga siempre
+ * "desde abajo, hacia arriba" sin importar dónde queda el otro nodo. */
+function puntoDeHandleImpreso(caja: CajaNodoImpreso, handle: string | undefined): { x: number; y: number } {
+  switch (handle) {
+    case 'left':
+      return { x: caja.x, y: caja.y + caja.alto / 2 }
+    case 'right':
+      return { x: caja.x + caja.ancho, y: caja.y + caja.alto / 2 }
+    case 'top':
+      return { x: caja.x + caja.ancho / 2, y: caja.y }
+    case 'bottom':
+    default:
+      return { x: caja.x + caja.ancho / 2, y: caja.y + caja.alto }
+  }
+}
+
+/**
+ * Vista imprimible de un mapa mental (botón "Exportar a PDF" -> window.print()
+ * -> el usuario elige "Guardar como PDF"), montada vía createPortal directo
+ * en document.body — mismo patrón que VistaImprimibleColeccion en
+ * ColeccionesView.tsx y VistaImprimibleCodigo en ExploradorView.tsx.
+ *
+ * A propósito NO imprime el lienzo vivo de React Flow (como hacía la
+ * versión anterior, con position:fixed + visibility sobre el canvas real
+ * dentro de #root): se comprobó que eso podía salir como una hoja
+ * completamente en blanco, sin nodos ni error visible — React Flow
+ * posiciona todo por CSS transform y depende de que ResizeObserver haya
+ * "medido" cada nodo, y ninguna de las dos cosas está garantizada en el
+ * momento exacto en que el navegador captura el contenido para imprimir.
+ * Acá en cambio se dibuja un SVG estático a mano a partir de los mismos
+ * datos guardados (mapa.nodos/mapa.conexiones) — sin transform, sin
+ * position:fixed, sin depender de que nada se termine de "medir": lo que
+ * hay en los datos es exactamente lo que se dibuja, siempre.
+ *
+ * Se encoge (viewBox + tamaño en cm) para entrar completo en una sola hoja,
+ * igual de chico que haga falta — mismo criterio que tenía el lienzo vivo,
+ * pero acá el cálculo es directo sobre los datos, no depende de medir nada.
+ */
+function VistaImprimibleMapaMental({ mapa }: { mapa: MapaMental }) {
+  const cajas = useMemo(() => {
+    const m = new Map<string, CajaNodoImpreso>()
+    for (const n of mapa.nodos) m.set(n.id, calcularCajaNodoImpreso(n))
+    return m
+  }, [mapa.nodos])
+
+  const dimensiones = useMemo(() => {
+    if (cajas.size === 0) return null
+    let minX = Infinity
+    let minY = Infinity
+    let maxX = -Infinity
+    let maxY = -Infinity
+    cajas.forEach((c) => {
+      minX = Math.min(minX, c.x)
+      minY = Math.min(minY, c.y)
+      maxX = Math.max(maxX, c.x + c.ancho)
+      maxY = Math.max(maxY, c.y + c.alto)
+    })
+    const MARGEN_SVG = 20
+    return { minX: minX - MARGEN_SVG, minY: minY - MARGEN_SVG, ancho: maxX - minX + MARGEN_SVG * 2, alto: maxY - minY + MARGEN_SVG * 2 }
+  }, [cajas])
+
+  if (!dimensiones) return null
+
+  // Área impresa segura para carta/A4 con ~2cm de margen.
+  const PAGINA_ANCHO_CM = 17
+  const PAGINA_ALTO_CM = 24
+  const escala = Math.min(PAGINA_ANCHO_CM / dimensiones.ancho, PAGINA_ALTO_CM / dimensiones.alto)
+
+  return createPortal(
+    <div className="imprimir-mapa-mental-svg">
+      <style>{`
+        .imprimir-mapa-mental-svg { color: #111; background: #fff; font-family: Georgia, 'Times New Roman', serif; padding: 24px; }
+        .imprimir-mapa-mental-svg h1 { font-size: 20px; margin: 0 0 4px; font-family: inherit; }
+        .imprimir-mapa-mental-svg .imm-meta { font-size: 11px; color: #666; margin-bottom: 16px; }
+        .imprimir-mapa-mental-svg svg { display: block; }
+        .imprimir-mapa-mental-svg text { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; }
+      `}</style>
+      <h1>{mapa.titulo}</h1>
+      <p className="imm-meta">{mapa.nodos.length} nodo{mapa.nodos.length === 1 ? '' : 's'} · Prima Lex</p>
+      <svg
+        viewBox={`${dimensiones.minX} ${dimensiones.minY} ${dimensiones.ancho} ${dimensiones.alto}`}
+        style={{ width: `${dimensiones.ancho * escala}cm`, height: `${dimensiones.alto * escala}cm` }}
+      >
+        <defs>
+          <marker id="imm-flecha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#71717a" />
+          </marker>
+        </defs>
+        {mapa.conexiones.map((c) => {
+          const cajaDesde = cajas.get(c.desde)
+          const cajaHasta = cajas.get(c.hasta)
+          if (!cajaDesde || !cajaHasta) return null
+          const p1 = puntoDeHandleImpreso(cajaDesde, c.desdeHandle)
+          const p2 = puntoDeHandleImpreso(cajaHasta, c.hastaHandle)
+          return (
+            <g key={c.id}>
+              <line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke="#a1a1aa" strokeWidth={1.5} markerEnd="url(#imm-flecha)" />
+              {c.etiqueta && (
+                <text x={(p1.x + p2.x) / 2} y={(p1.y + p2.y) / 2 - 4} fontSize={10} fill="#71717a" textAnchor="middle">
+                  {c.etiqueta}
+                </text>
+              )}
+            </g>
+          )
+        })}
+        {mapa.nodos.map((n) => (
+          <NodoSvgImpreso key={n.id} caja={cajas.get(n.id)!} />
+        ))}
+      </svg>
+    </div>,
+    document.body
+  )
+}
+
+function NodoSvgImpreso({ caja }: { caja: CajaNodoImpreso }) {
+  const { nodo, x, y, ancho, alto, lineas, fuente, altoLinea } = caja
+  const color = nodo.color ?? '#0F6E56'
+  const cx = x + ancho / 2
+  const cy = y + alto / 2
+  const peso = nodo.tamanoTexto === 'titulo' ? 700 : nodo.tamanoTexto === 'subtitulo' ? 600 : 400
+
+  const texto = (
+    <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fontSize={fuente} fontWeight={peso} fill="#18181b">
+      {lineas.map((linea, i) => (
+        <tspan key={i} x={cx} dy={i === 0 ? (-(lineas.length - 1) * altoLinea) / 2 : altoLinea}>
+          {linea}
+        </tspan>
+      ))}
+    </text>
+  )
+
+  if (nodo.forma === 'ninguna') {
+    return (
+      <g>
+        {texto}
+        <line x1={x} y1={y + alto} x2={x + ancho} y2={y + alto} stroke={color} strokeWidth={2} />
+      </g>
+    )
+  }
+
+  return (
+    <g>
+      {nodo.forma === 'ovalo' ? (
+        <ellipse cx={cx} cy={cy} rx={ancho / 2} ry={alto / 2} fill={color} fillOpacity={0.16} stroke={color} strokeWidth={2} />
+      ) : (
+        <rect x={x} y={y} width={ancho} height={alto} rx={10} ry={10} fill={color} fillOpacity={0.16} stroke={color} strokeWidth={2} />
+      )}
+      {texto}
+    </g>
+  )
 }
 
 function MapaMentalDetalle({
@@ -570,6 +859,11 @@ function MapaMentalDetalle({
   const renombrarMapaMental = useStore((s) => s.renombrarMapaMental)
   const actualizarMapaMental = useStore((s) => s.actualizarMapaMental)
   const eliminarMapaMental = useStore((s) => s.eliminarMapaMental)
+  // Colección vinculada (si alguna) — ver Coleccion.mapaMentalVinculado en
+  // types/index.ts: un solo lado guarda el vínculo, acá solo se consulta.
+  const coleccionVinculada = useStore((s) => s.colecciones.find((c) => c.mapaMentalVinculado === mapa.id))
+  const setColeccionActiva = useStore((s) => s.setColeccionActiva)
+  const setVistaActiva = useStore((s) => s.setVistaActiva)
 
   const [editandoTitulo, setEditandoTitulo] = useState(false)
   const [tituloTmp, setTituloTmp] = useState(mapa.titulo)
@@ -858,7 +1152,10 @@ function MapaMentalDetalle({
     )
     // 50ms para que React ya haya pintado las posiciones nuevas en el DOM
     // antes de medirlas — ajustarVista() mide cajas REALES (ver su comentario).
-    setTimeout(() => ajustarVista(rfRef.current, wrapperRef.current, 0.3, 0.02, 1.5), 50)
+    // Padding chico (no 0.3 como antes): ahora ajustarVista() pega el
+    // título contra el borde izquierdo en vez de centrar la caja, así que
+    // un padding grande acá solo dejaba un margen izquierdo enorme y vacío.
+    setTimeout(() => ajustarVista(rfRef.current, wrapperRef.current, 0.08, 0.02, 1.5, 0.6), 50)
   }, [setNodes, setEdges, pushHistory])
 
   // ============= BUSCAR =============
@@ -926,24 +1223,20 @@ function MapaMentalDetalle({
   // pegado en mapas grandes). Un tick (rAF) para dar tiempo a que el DOM
   // ya tenga los nodos pintados con su tamaño real antes de medirlos.
   useEffect(() => {
-    const id = requestAnimationFrame(() => ajustarVista(rfRef.current, wrapperRef.current, 0.3, 0.02, 1.5))
+    const id = requestAnimationFrame(() => ajustarVista(rfRef.current, wrapperRef.current, 0.08, 0.02, 1.5, 0.6))
     return () => cancelAnimationFrame(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // ============= EXPORTAR / IMPRIMIR =============
-  // Ajusta la vista para que entre todo el mapa justo antes de que se abra
-  // el diálogo de impresión — sin esto, imprime solo lo que estaba visible
-  // en pantalla en ese momento (recortado por el pan/zoom actual). Padding
-  // chico y piso de zoom muy bajo: un mapa de 50+ nodos necesita achicarse
-  // bastante más que el zoom interactivo normal para entrar entero en una
-  // sola hoja — ver ajustarVista() más arriba sobre por qué esto usa
-  // setViewport de forma manual en vez de fitView().
-  useEffect(() => {
-    const antesDeImprimir = () => ajustarVista(rfRef.current, wrapperRef.current, 0.05, 0.02, 1.5)
-    window.addEventListener('beforeprint', antesDeImprimir)
-    return () => window.removeEventListener('beforeprint', antesDeImprimir)
-  }, [])
+  // Ya NO se imprime el lienzo vivo de React Flow (ver VistaImprimibleMapaMental
+  // más abajo, y su comentario, para el porqué: imprimir el canvas real —
+  // posicionado con transform/position:fixed, dependiente de que React Flow
+  // haya "medido" cada nodo vía ResizeObserver — daba una hoja en blanco de
+  // forma intermitente, sin ningún error que lo delate. La vista imprimible
+  // ahora es un SVG estático aparte, armado a mano a partir de los mismos
+  // datos (mapa.nodos/mapa.conexiones), montado por fuera de #root igual que
+  // Colecciones y el Explorador — mismo patrón simple y ya probado.
 
   const ctxValue = useMemo<MentalCtx>(
     () => ({
@@ -1114,6 +1407,21 @@ function MapaMentalDetalle({
           </button>
         </div>
 
+        {coleccionVinculada && (
+          <button
+            onClick={() => {
+              setColeccionActiva(coleccionVinculada.id)
+              setVistaActiva('colecciones')
+            }}
+            title={`Ver la colección vinculada: "${coleccionVinculada.titulo}"`}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-white flex-shrink-0 transition-opacity hover:opacity-90"
+            style={{ background: VERDE }}
+          >
+            <i className="ti ti-stack-2 text-base" />
+            <span className="hidden md:inline">Ver colección</span>
+          </button>
+        )}
+
         <button
           onClick={() => window.print()}
           title="Exportar a PDF: abre el diálogo de impresión, elegí 'Guardar como PDF'"
@@ -1139,7 +1447,9 @@ function MapaMentalDetalle({
         </button>
       </div>
 
-      <div ref={wrapperRef} className="flex-1 relative imprimir-mapa-mental">
+      <VistaImprimibleMapaMental mapa={mapa} />
+
+      <div ref={wrapperRef} className="flex-1 relative">
         <MentalContext.Provider value={ctxValue}>
           <ReactFlow
             onInit={(instance) => {
@@ -1259,7 +1569,7 @@ function CuerpoNodo({
 
   return (
     <div
-      className="w-full h-full flex items-center justify-center text-center px-4 py-3"
+      className="w-full h-full flex items-center justify-center text-center px-3 py-2"
       style={{
         background: fondo,
         border: `2px solid ${color}`,

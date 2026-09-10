@@ -5,12 +5,19 @@ import { useStore } from '../../store/useStore'
 import { useCodigo } from '../../hooks/useCodigo'
 import { precargar, obtenerCodigo } from '../../services/codigos'
 import { COLECCIONES_PLANTILLA } from '../../data/coleccionesPlantilla'
+import { obtenerMetadata, nombreCortoMetadata } from '../../data/codigosMetadata'
 import { ContenedorResaltable, ParrafoResaltado } from '../ui/TextoResaltable'
 import { useReferenciasFiltradas } from '../../hooks/useReferencias'
 import { detectarReferencias } from '../../services/referencias'
+import {
+  decodificarColeccion,
+  generarLinkColeccion,
+  generarArchivoColeccion,
+} from '../../services/compartirColeccion'
 import type {
   Articulo,
   ArticuloColeccion,
+  ColeccionCompartida,
   Coleccion,
   CodigoTipo,
   EstadoRepaso,
@@ -19,6 +26,7 @@ import type {
   ConexionColeccion,
   FuncionJuridica,
   GrupoColeccion,
+  MapaMental,
 } from '../../types'
 
 const VERDE = 'var(--accent-base)'
@@ -35,6 +43,75 @@ export function ColeccionesView() {
   return <ListaColecciones />
 }
 
+/** Confirmación antes de agregar una colección recibida por link o archivo
+ * — muestra qué trae (título, cuántos artículos, de qué códigos) para que
+ * la decisión de importar sea informada, no un clic a ciegas. Vive acá
+ * (no un componente nuevo aparte) porque comparte estilos y datos con el
+ * resto del archivo, pero se exporta: quien detecta el link compartido y
+ * la muestra es App.tsx, a nivel raíz — tiene que funcionar sea cual sea
+ * la vista en la que el link agarró a quien lo abrió, no solo si ya
+ * estaba parado en Colecciones (que ni siquiera es la vista por defecto). */
+export function ModalConfirmarImportacion({
+  compartida,
+  onCancelar,
+  onConfirmar,
+}: {
+  compartida: ColeccionCompartida
+  onCancelar: () => void
+  onConfirmar: () => void
+}) {
+  const modoOscuro = useStore((s) => s.modoOscuro)
+  const codigosPresentes = useMemo(
+    () => Array.from(new Set(compartida.articulos.map((a) => a.codigo))),
+    [compartida]
+  )
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.5)' }}
+      onClick={onCancelar}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className={`w-full max-w-md rounded-2xl shadow-2xl overflow-hidden ${modoOscuro ? 'bg-zinc-900' : 'bg-white'}`}
+      >
+        <div className={`px-5 py-4 border-b ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
+          <h2 className={`text-base font-serif font-semibold flex items-center gap-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+            <i className="ti ti-download text-lg" style={{ color: VERDE }} />
+            Importar colección compartida
+          </h2>
+        </div>
+        <div className="px-5 py-4">
+          <p className={`text-sm font-semibold mb-1 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{compartida.titulo}</p>
+          <p className={`text-xs ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
+            {compartida.articulos.length} artículo{compartida.articulos.length === 1 ? '' : 's'} · {codigosPresentes.map((c) => nombreCortoMetadata(c)).join(', ')}
+          </p>
+          <p className={`text-xs mt-3 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
+            Se agrega como una colección nueva propia — no reemplaza ni toca ninguna de las tuyas.
+          </p>
+        </div>
+        <div className={`px-5 py-3 border-t flex justify-end gap-2 ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
+          <button
+            onClick={onCancelar}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              modoOscuro ? 'text-zinc-300 hover:bg-zinc-800' : 'text-zinc-600 hover:bg-zinc-100'
+            }`}
+          >
+            Descartar
+          </button>
+          <button
+            onClick={onConfirmar}
+            className="px-4 py-2 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            style={{ background: VERDE }}
+          >
+            Importar
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ============================================================
 // LISTA
 // ============================================================
@@ -44,12 +121,29 @@ function ListaColecciones() {
   const colecciones = useStore((s) => s.colecciones)
   const setColeccionActiva = useStore((s) => s.setColeccionActiva)
   const eliminarColeccion = useStore((s) => s.eliminarColeccion)
+  const importarColeccion = useStore((s) => s.importarColeccion)
   const [modalNueva, setModalNueva] = useState(false)
+  const inputArchivoRef = useRef<HTMLInputElement>(null)
 
   const ordenadas = useMemo(
     () => [...colecciones].sort((a, b) => b.fechaModificacion - a.fechaModificacion),
     [colecciones]
   )
+
+  // "Importar archivo": alternativa al link compartido (ver PARAM_IMPORTAR
+  // en ColeccionesView) para cuando el destinatario prefiere mandar/recibir
+  // un .json en vez de un link — mismo formato, mismo decodificarColeccion().
+  const importarDesdeArchivo = async (archivo: File) => {
+    const texto = await archivo.text()
+    const decodificada = decodificarColeccion(texto)
+    if (!decodificada) {
+      alert('Ese archivo no es una colección de Prima Lex válida.')
+      return
+    }
+    if (!confirm(`¿Importar "${decodificada.titulo}" (${decodificada.articulos.length} artículos) como colección nueva?`)) return
+    const id = importarColeccion(decodificada)
+    setColeccionActiva(id)
+  }
 
   return (
     <div className={`h-full overflow-y-auto ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
@@ -64,14 +158,37 @@ function ListaColecciones() {
               todos juntos sin ir cambiando de pantalla.
             </p>
           </div>
-          <button
-            onClick={() => setModalNueva(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-white flex-shrink-0 transition-opacity hover:opacity-90"
-            style={{ background: VERDE }}
-          >
-            <i className="ti ti-plus text-base" />
-            Nueva colección
-          </button>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <input
+              ref={inputArchivoRef}
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              onChange={(e) => {
+                const archivo = e.target.files?.[0]
+                if (archivo) importarDesdeArchivo(archivo)
+                e.target.value = ''
+              }}
+            />
+            <button
+              onClick={() => inputArchivoRef.current?.click()}
+              title="Importar una colección compartida como archivo .json"
+              className={`flex items-center gap-2 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                modoOscuro ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+              }`}
+            >
+              <i className="ti ti-upload text-base" />
+              <span className="hidden sm:inline">Importar</span>
+            </button>
+            <button
+              onClick={() => setModalNueva(true)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-white flex-shrink-0 transition-opacity hover:opacity-90"
+              style={{ background: VERDE }}
+            >
+              <i className="ti ti-plus text-base" />
+              Nueva colección
+            </button>
+          </div>
         </div>
 
         {ordenadas.length === 0 ? (
@@ -581,6 +698,7 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
   const moverArticulo = useStore((s) => s.moverArticuloColeccion)
   const marcarEstado = useStore((s) => s.marcarEstadoArticulo)
   const guardarNota = useStore((s) => s.guardarNotaArticulo)
+  const registrarRepaso = useStore((s) => s.registrarRepaso)
   const moverPosicionLibre = useStore((s) => s.moverArticuloPosicionLibre)
   const crearConexion = useStore((s) => s.crearConexionColeccion)
   const eliminarConexion = useStore((s) => s.eliminarConexionColeccion)
@@ -588,11 +706,18 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
   const crearGrupo = useStore((s) => s.crearGrupoColeccion)
   const eliminarGrupo = useStore((s) => s.eliminarGrupoColeccion)
   const organizarPorConexiones = useStore((s) => s.organizarPorConexiones)
+  const vincularMapaMental = useStore((s) => s.vincularMapaMental)
+  const mapasMentales = useStore((s) => s.mapasMentales)
+  const setMapaMentalActivo = useStore((s) => s.setMapaMentalActivo)
+  const setVistaActiva = useStore((s) => s.setVistaActiva)
 
   const [editandoTitulo, setEditandoTitulo] = useState(false)
   const [tituloTmp, setTituloTmp] = useState(coleccion.titulo)
   const [modalAgregar, setModalAgregar] = useState(false)
   const [modoRepaso, setModoRepaso] = useState(false)
+  const [busqueda, setBusqueda] = useState('')
+  const [modalCompartir, setModalCompartir] = useState(false)
+  const [modalVincular, setModalVincular] = useState(false)
   // EXPERIMENTAL (rama experimento-visualizacion): selector de layout, no existe en main.
   const [modoVista, setModoVista] = useState<ModoVistaColeccion>('mamposteria')
   const inputTituloRef = useRef<HTMLInputElement>(null)
@@ -616,12 +741,52 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
 
   const dominados = articulosResueltos.filter((a) => a.estado === 'dominado').length
 
+  // Buscador dentro de la colección: por número de artículo, texto oficial
+  // o la nota propia — para una colección de 30-40 artículos, sin esto la
+  // única forma de encontrar uno puntual es scrollear a ojo. Se guarda el
+  // índice ORIGINAL de cada ficha (no la posición ya filtrada) porque
+  // "mover antes/después" necesita el índice real dentro de la colección
+  // completa — por eso, mientras hay una búsqueda activa, esos botones se
+  // ocultan (ocultarReordenar): reordenar contra vecinos que no se están
+  // mostrando sería confuso.
+  const busquedaNorm = busqueda.trim().toLowerCase()
+  const articulosFiltrados = useMemo(() => {
+    const conIndice = articulosResueltos.map((ar, indiceOriginal) => ({ ar, indiceOriginal }))
+    if (!busquedaNorm) return conIndice
+    return conIndice.filter(({ ar }) => {
+      if (ar.articulo.toLowerCase().includes(busquedaNorm)) return true
+      if (ar.nota.toLowerCase().includes(busquedaNorm)) return true
+      if (ar.art?.t.toLowerCase().includes(busquedaNorm)) return true
+      return false
+    })
+  }, [articulosResueltos, busquedaNorm])
+
   // Leyenda de colores: solo tiene sentido mostrarla si la colección mezcla
   // más de un área (si es puro Civil, por ejemplo, no hay nada que distinguir).
   const areasPresentes = useMemo(() => {
     const familias = new Set(coleccion.articulos.map((a) => COLOR_POR_CODIGO[a.codigo]))
     return Array.from(familias).map((f) => ({ familia: f, nombre: NOMBRE_FAMILIA[f], hex: HEX_POR_FAMILIA[f] }))
   }, [coleccion.articulos])
+
+  // Aviso de contenido no oficial: códigos únicos presentes cuyo `t` de
+  // cada artículo es un RESUMEN propio, no el texto legal verbatim (ver
+  // CodigoMetadata.esTextoOficial) — para no confiar en citarlo literal en
+  // un examen sin haberlo verificado contra el instrumento oficial.
+  const codigosResumen = useMemo(() => {
+    const tipos = Array.from(new Set(coleccion.articulos.map((a) => a.codigo)))
+    return tipos.filter((t) => obtenerMetadata(t)?.esTextoOficial === false)
+  }, [coleccion.articulos])
+
+  // Repetición espaciada: cuántos artículos ya tocan hoy (o nunca se
+  // calendarizaron todavía) — ver registrarRepaso en useStore.ts.
+  const paraHoy = useMemo(() => {
+    const ahora = Date.now()
+    return coleccion.articulos.filter((a) => !a.proximoRepaso || a.proximoRepaso <= ahora).length
+  }, [coleccion.articulos])
+
+  const mapaVinculado = coleccion.mapaMentalVinculado
+    ? mapasMentales.find((m) => m.id === coleccion.mapaMentalVinculado)
+    : undefined
 
   return (
     <div className={`h-full flex flex-col ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
@@ -684,7 +849,11 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
         {coleccion.articulos.length > 0 && (
           <button
             onClick={() => setModoRepaso(!modoRepaso)}
-            title="En modo repaso, las fichas empiezan ocultas: intenta recordar antes de tocarlas"
+            title={
+              paraHoy > 0
+                ? `${paraHoy} artículo${paraHoy === 1 ? '' : 's'} te toca${paraHoy === 1 ? '' : 'n'} repasar hoy — en modo repaso, las fichas empiezan ocultas: intenta recordar antes de tocarlas`
+                : "En modo repaso, las fichas empiezan ocultas: intenta recordar antes de tocarlas"
+            }
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium flex-shrink-0 transition-colors ${
               modoRepaso
                 ? 'text-white'
@@ -696,6 +865,16 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
           >
             <i className="ti ti-brain text-base" />
             <span className="hidden md:inline">Modo repaso</span>
+            {paraHoy > 0 && (
+              <span
+                className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold leading-none ${
+                  modoRepaso ? 'bg-white/25 text-white' : 'text-white'
+                }`}
+                style={modoRepaso ? undefined : { background: '#b45309' }}
+              >
+                {paraHoy}
+              </span>
+            )}
           </button>
         )}
 
@@ -739,6 +918,33 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
           <span className="hidden sm:inline">Agregar artículo</span>
         </button>
 
+        <button
+          onClick={() => setModalVincular(true)}
+          title={mapaVinculado ? `Vinculada con el mapa mental "${mapaVinculado.titulo}"` : 'Vincular con un mapa mental sobre el mismo tema'}
+          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
+            mapaVinculado
+              ? 'text-white'
+              : modoOscuro
+                ? 'text-zinc-400 hover:bg-zinc-800'
+                : 'text-zinc-500 hover:bg-zinc-100'
+          }`}
+          style={mapaVinculado ? { background: VERDE } : undefined}
+        >
+          <i className="ti ti-hierarchy-2 text-base" />
+        </button>
+
+        {coleccion.articulos.length > 0 && (
+          <button
+            onClick={() => setModalCompartir(true)}
+            title="Compartir esta colección con un link o un archivo"
+            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
+              modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'
+            }`}
+          >
+            <i className="ti ti-share-2 text-base" />
+          </button>
+        )}
+
         {coleccion.articulos.length > 0 && (
           <button
             onClick={() => window.print()}
@@ -772,6 +978,53 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
         conexiones={coleccion.conexiones ?? []}
         grupos={coleccion.grupos ?? []}
       />
+
+      {codigosResumen.length > 0 && (
+        <div
+          className={`flex items-start gap-2 px-6 py-2.5 border-b text-xs ${
+            modoOscuro ? 'bg-amber-950/30 border-amber-900/40 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-800'
+          }`}
+        >
+          <i className="ti ti-alert-triangle text-sm flex-shrink-0 mt-0.5" />
+          <p>
+            <strong>{codigosResumen.map((t) => nombreCortoMetadata(t)).join(', ')}</strong>: el texto de estos artículos es un
+            resumen propio de Prima Lex, no la transcripción oficial — verificá contra la fuente antes de citarlo en un examen.
+          </p>
+        </div>
+      )}
+
+      {coleccion.articulos.length > 6 && (
+        <div className={`px-6 py-2.5 border-b ${modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+          <div
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm max-w-sm ${
+              modoOscuro ? 'bg-zinc-800' : 'bg-zinc-100'
+            }`}
+          >
+            <i className={`ti ti-search text-base flex-shrink-0 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`} />
+            <input
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="Buscar por número, texto o tu nota..."
+              className={`flex-1 min-w-0 bg-transparent outline-none ${
+                modoOscuro ? 'text-white placeholder:text-zinc-500' : 'text-zinc-900 placeholder:text-zinc-400'
+              }`}
+            />
+            {busqueda && (
+              <button
+                onClick={() => setBusqueda('')}
+                className={`flex-shrink-0 ${modoOscuro ? 'text-zinc-500 hover:text-zinc-300' : 'text-zinc-400 hover:text-zinc-600'}`}
+              >
+                <i className="ti ti-x text-sm" />
+              </button>
+            )}
+            {busqueda && (
+              <span className={`flex-shrink-0 text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                {articulosFiltrados.length}/{articulosResueltos.length}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       {areasPresentes.length > 1 && (
         <div
@@ -827,19 +1080,28 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
                   Agregar artículo
                 </button>
               </div>
+            ) : articulosFiltrados.length === 0 ? (
+              <div className="text-center py-16 px-6">
+                <i className={`ti ti-search-off text-2xl block mb-2 ${modoOscuro ? 'text-zinc-700' : 'text-zinc-300'}`} />
+                <p className={`text-sm ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                  Ningún artículo de esta colección coincide con "{busqueda}".
+                </p>
+              </div>
             ) : modoVista === 'horizontal' ? (
               // EXPERIMENTAL: fila única con scroll horizontal, no existe en main.
               <div className="flex gap-4 overflow-x-auto px-6 pb-4">
-                {articulosResueltos.map((ar, i) => (
+                {articulosFiltrados.map(({ ar, indiceOriginal: i }) => (
                   <div key={`${ar.codigo}::${ar.articulo}`} className="flex-shrink-0 w-[380px]">
                     <TarjetaArticulo
                       item={ar}
                       posicion={i}
                       total={articulosResueltos.length}
+                      ocultarReordenar={!!busquedaNorm}
                       onQuitar={() => quitarArticulo(coleccion.id, { codigo: ar.codigo, articulo: ar.articulo })}
                       onMover={(dir) => moverArticulo(coleccion.id, i, dir)}
                       onCambiarEstado={(estado) => marcarEstado(coleccion.id, { codigo: ar.codigo, articulo: ar.articulo }, estado)}
                       onGuardarNota={(nota) => guardarNota(coleccion.id, { codigo: ar.codigo, articulo: ar.articulo }, nota)}
+                      onRegistrarRepaso={(resultado) => registrarRepaso(coleccion.id, { codigo: ar.codigo, articulo: ar.articulo }, resultado)}
                       modoRepaso={modoRepaso}
                       modoOscuro={modoOscuro}
                     />
@@ -856,16 +1118,18 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
               // sin scrollear mucho — esto no lo elimina (no es posible con
               // texto legal completo) pero sí muestra bastantes más de una.
               <div className="columns-1 sm:columns-2 xl:columns-3 2xl:columns-4 gap-3">
-                {articulosResueltos.map((ar, i) => (
+                {articulosFiltrados.map(({ ar, indiceOriginal: i }) => (
                   <div key={`${ar.codigo}::${ar.articulo}`} className="break-inside-avoid mb-3">
                     <TarjetaArticulo
                       item={ar}
                       posicion={i}
                       total={articulosResueltos.length}
+                      ocultarReordenar={!!busquedaNorm}
                       onQuitar={() => quitarArticulo(coleccion.id, { codigo: ar.codigo, articulo: ar.articulo })}
                       onMover={(dir) => moverArticulo(coleccion.id, i, dir)}
                       onCambiarEstado={(estado) => marcarEstado(coleccion.id, { codigo: ar.codigo, articulo: ar.articulo }, estado)}
                       onGuardarNota={(nota) => guardarNota(coleccion.id, { codigo: ar.codigo, articulo: ar.articulo }, nota)}
+                      onRegistrarRepaso={(resultado) => registrarRepaso(coleccion.id, { codigo: ar.codigo, articulo: ar.articulo }, resultado)}
                       modoRepaso={modoRepaso}
                       modoOscuro={modoOscuro}
                     />
@@ -883,6 +1147,200 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
         coleccionId={coleccion.id}
         modoOscuro={modoOscuro}
       />
+
+      {modalCompartir && <ModalCompartirColeccion coleccion={coleccion} onCerrar={() => setModalCompartir(false)} />}
+
+      {modalVincular && (
+        <ModalVincularMapaMental
+          coleccion={coleccion}
+          mapasMentales={mapasMentales}
+          onCerrar={() => setModalVincular(false)}
+          onVincular={(mapaMentalId) => {
+            vincularMapaMental(coleccion.id, mapaMentalId)
+            setModalVincular(false)
+          }}
+          onIrAlMapa={(mapaMentalId) => {
+            setMapaMentalActivo(mapaMentalId)
+            setVistaActiva('mapasmentales')
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+/** Compartir la colección actual como link (copiar al portapapeles) o como
+ * archivo .json descargable — ver services/compartirColeccion.ts para el
+ * porqué de este formato (sin backend, todo el estado vive en el propio
+ * link/archivo, y solo referencias a artículos, no el texto completo). */
+function ModalCompartirColeccion({ coleccion, onCerrar }: { coleccion: Coleccion; onCerrar: () => void }) {
+  const modoOscuro = useStore((s) => s.modoOscuro)
+  const [copiado, setCopiado] = useState(false)
+  const link = useMemo(() => generarLinkColeccion(coleccion), [coleccion])
+
+  const copiarLink = async () => {
+    try {
+      await navigator.clipboard.writeText(link)
+      setCopiado(true)
+      setTimeout(() => setCopiado(false), 2000)
+    } catch {
+      prompt('Copiá el link manualmente:', link)
+    }
+  }
+
+  const descargarArchivo = () => {
+    const { nombre, contenido } = generarArchivoColeccion(coleccion)
+    const blob = new Blob([contenido], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = nombre
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }} onClick={onCerrar}>
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className={`w-full max-w-md rounded-2xl shadow-2xl overflow-hidden ${modoOscuro ? 'bg-zinc-900' : 'bg-white'}`}
+      >
+        <div className={`px-5 py-4 border-b ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
+          <h2 className={`text-base font-serif font-semibold flex items-center gap-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+            <i className="ti ti-share-2 text-lg" style={{ color: VERDE }} />
+            Compartir "{coleccion.titulo}"
+          </h2>
+          <p className={`text-xs mt-1 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
+            Manda el link o el archivo a un compañero — al abrirlo, Prima Lex le va a ofrecer agregar esta colección a la suya, sin tocar nada tuyo.
+          </p>
+        </div>
+        <div className="px-5 py-4 space-y-2.5">
+          <button
+            onClick={copiarLink}
+            className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              modoOscuro ? 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+            }`}
+          >
+            <i className={`ti ${copiado ? 'ti-check text-emerald-500' : 'ti-link'} text-base flex-shrink-0`} />
+            {copiado ? 'Link copiado' : 'Copiar link'}
+          </button>
+          <button
+            onClick={descargarArchivo}
+            className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              modoOscuro ? 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+            }`}
+          >
+            <i className="ti ti-file-download text-base flex-shrink-0" />
+            Descargar archivo .json
+          </button>
+        </div>
+        <div className={`px-5 py-3 border-t flex justify-end ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
+          <button
+            onClick={onCerrar}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              modoOscuro ? 'text-zinc-300 hover:bg-zinc-800' : 'text-zinc-600 hover:bg-zinc-100'
+            }`}
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/** Elegir (o quitar) qué Mapa mental está vinculado a esta Colección — ver
+ * Coleccion.mapaMentalVinculado. Un solo lado guarda el vínculo; Mapas
+ * mentales solo lo consulta para mostrar el botón de vuelta. */
+function ModalVincularMapaMental({
+  coleccion,
+  mapasMentales,
+  onCerrar,
+  onVincular,
+  onIrAlMapa,
+}: {
+  coleccion: Coleccion
+  mapasMentales: MapaMental[]
+  onCerrar: () => void
+  onVincular: (mapaMentalId: string | null) => void
+  onIrAlMapa: (mapaMentalId: string) => void
+}) {
+  const modoOscuro = useStore((s) => s.modoOscuro)
+  const vinculado = mapasMentales.find((m) => m.id === coleccion.mapaMentalVinculado)
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }} onClick={onCerrar}>
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className={`w-full max-w-md rounded-2xl shadow-2xl overflow-hidden ${modoOscuro ? 'bg-zinc-900' : 'bg-white'}`}
+      >
+        <div className={`px-5 py-4 border-b ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
+          <h2 className={`text-base font-serif font-semibold flex items-center gap-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+            <i className="ti ti-hierarchy-2 text-lg" style={{ color: VERDE }} />
+            Vincular con un mapa mental
+          </h2>
+          <p className={`text-xs mt-1 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
+            Para saltar directo entre esta colección y su mapa mental cuando son sobre el mismo tema.
+          </p>
+        </div>
+
+        {vinculado && (
+          <div className={`mx-5 mt-4 flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-100'}`}>
+            <i className="ti ti-hierarchy-2 text-base flex-shrink-0" style={{ color: VERDE }} />
+            <span className={`flex-1 min-w-0 truncate ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{vinculado.titulo}</span>
+            <button
+              onClick={() => onIrAlMapa(vinculado.id)}
+              title="Ir al mapa mental"
+              className={`flex-shrink-0 w-7 h-7 rounded-md flex items-center justify-center ${modoOscuro ? 'hover:bg-zinc-700' : 'hover:bg-zinc-200'}`}
+            >
+              <i className="ti ti-arrow-up-right text-sm" />
+            </button>
+            <button
+              onClick={() => onVincular(null)}
+              title="Desvincular"
+              className={`flex-shrink-0 w-7 h-7 rounded-md flex items-center justify-center ${modoOscuro ? 'hover:bg-zinc-700 text-zinc-500' : 'hover:bg-zinc-200 text-zinc-400'}`}
+            >
+              <i className="ti ti-x text-sm" />
+            </button>
+          </div>
+        )}
+
+        <div className="px-5 py-4 max-h-72 overflow-y-auto">
+          {mapasMentales.length === 0 ? (
+            <p className={`text-sm text-center py-6 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
+              Todavía no tenés ningún mapa mental creado.
+            </p>
+          ) : (
+            <div className="space-y-1">
+              {mapasMentales
+                .filter((m) => m.id !== vinculado?.id)
+                .map((m) => (
+                  <button
+                    key={m.id}
+                    onClick={() => onVincular(m.id)}
+                    className={`w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${
+                      modoOscuro ? 'hover:bg-zinc-800 text-zinc-200' : 'hover:bg-zinc-100 text-zinc-700'
+                    }`}
+                  >
+                    <i className={`ti ti-hierarchy-2 text-base flex-shrink-0 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`} />
+                    <span className="truncate">{m.titulo}</span>
+                  </button>
+                ))}
+            </div>
+          )}
+        </div>
+
+        <div className={`px-5 py-3 border-t flex justify-end ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
+          <button
+            onClick={onCerrar}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              modoOscuro ? 'text-zinc-300 hover:bg-zinc-800' : 'text-zinc-600 hover:bg-zinc-100'
+            }`}
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -997,6 +1455,7 @@ function TarjetaArticulo({
   onMover,
   onCambiarEstado,
   onGuardarNota,
+  onRegistrarRepaso,
   modoRepaso,
   modoOscuro,
   ocultarReordenar,
@@ -1009,6 +1468,10 @@ function TarjetaArticulo({
   onMover: (direccion: -1 | 1) => void
   onCambiarEstado: (estado: EstadoRepaso) => void
   onGuardarNota: (nota: string) => void
+  /** Repetición espaciada (Leitner) — opcional: solo lo pasan mamposteria/
+   * horizontal, que son las vistas donde tiene sentido "modo repaso" de
+   * verdad. Sin esto, la ficha no muestra los botones Sí/No. */
+  onRegistrarRepaso?: (resultado: 'sabia' | 'no_sabia') => void
   modoRepaso: boolean
   modoOscuro: boolean
   /** En pizarra libre "mover antes/después" no tiene sentido (no hay una
@@ -1209,6 +1672,35 @@ function TarjetaArticulo({
                   }`}
                 />
               </div>
+
+              {/* Repetición espaciada (Leitner): registrar el resultado
+                  programa cuándo vuelve a tocar este artículo — ver
+                  registrarRepaso en useStore.ts. Independiente del botón de
+                  `estado` de la tira de arriba, que sigue siendo la
+                  autoevaluación manual de siempre. */}
+              {modoRepaso && onRegistrarRepaso && (
+                <div className={`px-3.5 py-2.5 border-t flex items-center gap-2 ${modoOscuro ? 'border-zinc-800' : 'border-zinc-100'}`}>
+                  <span className={`text-xs flex-1 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>¿Te la sabías?</span>
+                  <button
+                    onClick={() => onRegistrarRepaso('no_sabia')}
+                    className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                      modoOscuro ? 'bg-red-950/40 text-red-400 hover:bg-red-950/70' : 'bg-red-50 text-red-600 hover:bg-red-100'
+                    }`}
+                  >
+                    <i className="ti ti-x text-xs" />
+                    No
+                  </button>
+                  <button
+                    onClick={() => onRegistrarRepaso('sabia')}
+                    className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                      modoOscuro ? 'bg-emerald-950/40 text-emerald-400 hover:bg-emerald-950/70' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+                    }`}
+                  >
+                    <i className="ti ti-check text-xs" />
+                    Sí
+                  </button>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

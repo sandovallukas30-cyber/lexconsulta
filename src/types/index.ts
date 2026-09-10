@@ -273,6 +273,15 @@ export interface ArticuloColeccion {
   posicion?: { x: number; y: number }
   /** EXPERIMENTAL: función jurídica asignada libremente por el usuario. */
   funcion?: FuncionJuridica
+  /** Repetición espaciada (Leitner, 5 cajas — ver registrarRepaso en
+   * useStore.ts): caja actual del artículo. Sin valor = nunca repasado
+   * todavía, se trata como caja 1 (repasar cuanto antes). No tiene relación
+   * con `estado`, que sigue siendo la autoevaluación manual de siempre —
+   * esto es la programación automática de CUÁNDO te toca repasarlo. */
+  caja?: number
+  /** Fecha (epoch ms) desde la que este artículo vuelve a estar "para hoy"
+   * en el repaso. Sin valor = para hoy (nunca se calendarizó). */
+  proximoRepaso?: number
 }
 
 /** EXPERIMENTAL: modo de visualización de las fichas dentro de una colección. */
@@ -337,6 +346,24 @@ export interface Coleccion {
   conexiones?: ConexionColeccion[]
   /** EXPERIMENTAL (rama experimento-visualizacion): agrupaciones visuales
    * creadas en modo pizarra. No existe en main. */
+  grupos?: GrupoColeccion[]
+  /** Id de un Mapa mental sobre el mismo tema, para poder saltar de uno a
+   * otro sin tener que buscarlo — ej. la Colección "Recurso de protección"
+   * junto con el Mapa mental "Recurso de Protección — Cómo redactarlo". Un
+   * solo lado guarda el vínculo (acá); Mapas mentales solo lo consulta,
+   * para no tener que mantener sincronizados dos punteros. */
+  mapaMentalVinculado?: string
+}
+
+/** Lo mínimo que hace falta para reconstruir una Colección al importarla
+ * desde un link o archivo compartido — SIN el texto de cada artículo (eso
+ * ya lo tiene el propio código indexado localmente en quien la recibe, no
+ * hace falta duplicarlo) y sin id/fechas propias (se generan de nuevo al
+ * importar, ver importarColeccion en useStore.ts). Ver services/compartirColeccion.ts. */
+export interface ColeccionCompartida {
+  titulo: string
+  articulos: ArticuloColeccion[]
+  conexiones?: ConexionColeccion[]
   grupos?: GrupoColeccion[]
 }
 

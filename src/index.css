@@ -33,32 +33,42 @@ html, body, #root { height: 100%; width: 100%; overflow: hidden; }
   font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Exportar a PDF (Ctrl+P / "Guardar como PDF" del navegador), dos casos:
-   - Colecciones (.imprimir-coleccion): vista de texto aparte, montada fuera
-     de #root vía createPortal.
-   - Mapas mentales (.imprimir-mapa-mental): imprime el propio lienzo de
-     React Flow tal cual está en pantalla (vive DENTRO de #root, a
-     diferencia del portal de arriba).
-   Misma técnica genérica para ambos ("ocultar todo, mostrar solo esto") en
-   vez de "ocultar #root entero": esa regla más simple le serviría a
-   Colecciones pero apagaría también el lienzo de Mapas mentales, que sí
-   vive dentro de #root. En pantalla ninguno de los dos se nota. */
-.imprimir-coleccion { display: none; }
+/* Exportar a PDF (Ctrl+P / "Guardar como PDF" del navegador). Las tres
+   vistas imprimibles de la app (Colecciones, Explorador de códigos y Mapas
+   mentales) son vistas de texto/SVG aparte, montadas FUERA de #root
+   (createPortal directo a document.body) — ninguna imprime el lienzo o la
+   interfaz interactiva tal cual. Como ninguna vive adentro de #root,
+   alcanza con sacar #root entero del flujo (display:none) y mostrar la que
+   corresponda; no hace falta ni :has() ni visibility ni distinguir casos.
+   (Mapas mentales SÍ vivía dentro de #root en una versión anterior —
+   imprimía el propio canvas de React Flow con position:fixed +
+   visibility — pero eso podía salir como una hoja en blanco sin ningún
+   nodo, de forma intermitente y sin error visible: React Flow posiciona
+   todo por CSS transform y depende de que ResizeObserver haya "medido"
+   cada nodo, ninguna de las dos cosas garantizada en el momento exacto en
+   que el navegador captura el contenido para imprimir. Ver
+   VistaImprimibleMapaMental en MapasMentalesView.tsx.)
+   `position:fixed;inset:0` NUNCA debe usarse acá — encierra el contenido
+   en el tamaño de UNA sola hoja y no repagina, así que todo lo que no
+   entraba en esa primera hoja quedaba cortado, no en una segunda página.
+   Colecciones y Explorador tienen que poder fluir en el documento como
+   cualquier texto largo, para que el navegador los reparta solos en tantas
+   hojas como haga falta (por eso cada artículo tiene `break-inside:
+   avoid` — evita partirlo a la mitad entre páginas, pero no le pone techo
+   a cuántas páginas puede usar la lista). Para que de verdad puedan fluir
+   hace falta ADEMÁS anular el `overflow: hidden; height: 100%` de
+   html/body de acá abajo (es lo que usa el resto de la app para que cada
+   vista maneje su propio scroll interno, sin scroll en body) — sin esto
+   quedaban cortados al tamaño de una pantalla igual, aunque ya no llevaran
+   position:fixed: era el bug real detrás de "solo aparece hasta el
+   artículo/numeral tal". Mapas mentales en cambio se encoge a mano (ver
+   VistaImprimibleMapaMental) para entrar en una sola hoja siempre, así que
+   no necesita ni le molesta este cambio. */
+.imprimir-coleccion, .imprimir-codigo, .imprimir-mapa-mental-svg { display: none; }
 @media print {
-  body * { visibility: hidden; }
-  .imprimir-coleccion, .imprimir-coleccion *,
-  .imprimir-mapa-mental, .imprimir-mapa-mental * { visibility: visible; }
-  .imprimir-coleccion { display: block; position: fixed; inset: 0; }
-  .imprimir-mapa-mental { position: fixed; inset: 0; width: 100%; height: 100%; }
-  /* Minimapa, controles de zoom y la cuadrícula de fondo son ayudas de
-     pantalla, no parte del mapa en sí — impresos se ven como manchas sueltas
-     sobre la hoja y le restan espacio útil al contenido real. El fit-to-view
-     de MapasMentalesView.tsx ya se encarga de que TODO el mapa entre en la
-     hoja; esto solo saca el resto de la interfaz de en medio. */
-  .imprimir-mapa-mental .react-flow__minimap,
-  .imprimir-mapa-mental .react-flow__controls,
-  .imprimir-mapa-mental .react-flow__attribution,
-  .imprimir-mapa-mental .react-flow__background { display: none !important; }
+  html, body { height: auto; overflow: visible; }
+  #root { display: none; }
+  .imprimir-coleccion, .imprimir-codigo, .imprimir-mapa-mental-svg { display: block; width: 100%; }
 }
 
 /* Scrollbar custom — claro */

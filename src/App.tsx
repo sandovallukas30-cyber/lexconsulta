@@ -7,7 +7,9 @@ import { SituacionView } from './components/views/SituacionView'
 import { CanvasView } from './components/views/CanvasView'
 import { MapaView } from './components/views/MapaView'
 import { ExploradorView } from './components/views/ExploradorView'
-import { ColeccionesView } from './components/views/ColeccionesView'
+import { ColeccionesView, ModalConfirmarImportacion } from './components/views/ColeccionesView'
+import { PARAM_IMPORTAR, decodificarColeccion } from './services/compartirColeccion'
+import type { ColeccionCompartida } from './types'
 import { MapasMentalesView } from './components/views/MapasMentalesView'
 import { HistorialView } from './components/views/HistorialView'
 import { AdminView } from './components/views/AdminView'
@@ -43,8 +45,34 @@ function App() {
   const temaColor = useStore((s) => s.temaColor)
   const omnibarAbierto = useStore((s) => s.omnibarAbierto)
   const setOmnibarAbierto = useStore((s) => s.setOmnibarAbierto)
+  const importarColeccion = useStore((s) => s.importarColeccion)
+  const setColeccionActiva = useStore((s) => s.setColeccionActiva)
+  const setVistaActiva = useStore((s) => s.setVistaActiva)
   const VistaComponente = vistaActiva === 'admin' && !esAdmin(usuarioEmail) ? vistas.consultar : vistas[vistaActiva]
   const [modalRegistroAbierto, setModalRegistroAbierto] = useState(false)
+  const [coleccionParaImportar, setColeccionParaImportar] = useState<ColeccionCompartida | null>(null)
+
+  // Detecta un link de Colección compartida (?colImportar=...) al entrar a
+  // la app — a nivel raíz, no dentro de ColeccionesView, porque la vista
+  // por defecto es Consultar: si esto viviera adentro de esa vista, un link
+  // abierto por alguien que nunca usó la app antes (el caso típico al
+  // compartir) nunca lo detectaría. No importa directo: primero se
+  // confirma con el usuario (ModalConfirmarImportacion), para que abrir el
+  // link de alguien no agregue una colección sin avisar. El parámetro se
+  // saca de la URL apenas se lee (haya salido válido o no), para que
+  // recargar la página no vuelva a preguntar ni a repetir el mismo error.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const crudo = params.get(PARAM_IMPORTAR)
+    if (crudo === null) return
+    params.delete(PARAM_IMPORTAR)
+    const nuevaQuery = params.toString()
+    window.history.replaceState(null, '', window.location.pathname + (nuevaQuery ? `?${nuevaQuery}` : '') + window.location.hash)
+    const decodificada = decodificarColeccion(crudo)
+    if (decodificada) setColeccionParaImportar(decodificada)
+    else alert('El link de colección compartida no es válido o está dañado.')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Aplicar el tema de color al :root cada vez que cambia. Se ejecuta también
   // al montar la app, así si el usuario tenía guardada una preferencia previa
@@ -86,6 +114,18 @@ function App() {
       <AnimatePresence>
         {omnibarAbierto && <Omnibar onClose={() => setOmnibarAbierto(false)} />}
       </AnimatePresence>
+      {coleccionParaImportar && (
+        <ModalConfirmarImportacion
+          compartida={coleccionParaImportar}
+          onCancelar={() => setColeccionParaImportar(null)}
+          onConfirmar={() => {
+            const id = importarColeccion(coleccionParaImportar)
+            setColeccionParaImportar(null)
+            setColeccionActiva(id)
+            setVistaActiva('colecciones')
+          }}
+        />
+      )}
     </div>
   )
 }

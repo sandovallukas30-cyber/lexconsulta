@@ -25,6 +25,15 @@ export interface CodigoMetadata {
    * (regula la misma materia, es procedimiento aplicable, ley especial que la
    * desplaza, etc.). Se muestran como enlaces clickeables en la ficha. */
   relacionadas?: CodigoTipo[]
+  /** false SOLO para el puñado de códigos cuyo `articulos[].t` es un RESUMEN
+   * funcional propio, no la transcripción literal del texto oficial (hoy:
+   * el Auto Acordado del recurso de protección — ver su `notas`). Sin
+   * valor = true (texto oficial verbatim, que es el caso normal). Existe
+   * como campo estructurado — no bastaba con la advertencia en `notas`,
+   * que hay que abrir la ficha para leer — para poder mostrar un aviso
+   * visible en Colecciones/Mapas mentales cuando corresponda, sin tener
+   * que parsear texto libre buscando la palabra "resumen". */
+  esTextoOficial?: boolean
 }
 
 export const CODIGOS_METADATA: Record<string, CodigoMetadata> = {
@@ -239,6 +248,7 @@ export const CODIGOS_METADATA: Record<string, CodigoMetadata> = {
     notas:
       'Distinto de un "código": es un reglamento interno de la Corte Suprema sobre CÓMO se tramita el recurso de protección (competencia, plazo, admisibilidad, informe, prueba, fallo, apelación), no sobre cuándo procede (eso lo fija el art. 20 de la Constitución). El texto de cada numeral acá es un RESUMEN funcional para ubicarse rápido, no una transcripción literal — para la redacción de un escrito real, verificar siempre contra el ejemplar del Auto Acordado que corresponda usar (impreso, en la evaluación E01). Cubre los numerales 1° a 6°, 10°, 12°, 13° y 15° — los más relevantes para interponer y seguir el recurso; el instrumento completo tiene más numerales de detalle administrativo no incluidos acá.',
     relacionadas: ['con', 'cot'],
+    esTextoOficial: false,
   },
 }
 

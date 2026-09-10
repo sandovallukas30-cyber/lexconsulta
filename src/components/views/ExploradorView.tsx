@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef, type ReactNode, type TouchEvent } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { useCodigo } from '../../hooks/useCodigo'
@@ -9,6 +10,7 @@ import { ContenedorResaltable, ParrafoResaltado } from '../ui/TextoResaltable'
 import { useLecturaVoz } from '../../hooks/useLecturaVoz'
 import { modernizar, necesitaModernizacion } from '../../services/moderniza'
 import { obtenerMetadata, formatearFechaIndexacion, nombreCortoMetadata } from '../../data/codigosMetadata'
+import { construirEsquema, ETIQUETAS_NIVEL, type NodoEsquema } from '../../services/esquema'
 import type { Articulo, CodigoData, CodigoTipo, TemaLectura } from '../../types'
 
 const VERDE = 'var(--accent-base)'
@@ -236,7 +238,19 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
             Ctrl+K
           </kbd>
         </button>
+
+        <button
+          onClick={() => window.print()}
+          title="Exportar el código completo a PDF: abre el diálogo de impresión, elegí 'Guardar como PDF'"
+          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
+            modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'
+          }`}
+        >
+          <i className="ti ti-printer text-base" />
+        </button>
       </div>
+
+      <VistaImprimibleCodigo codigo={codigo} tipo={tipoActivo} transformarTexto={transformarTexto} />
 
       {seleccionado && (
         <div
@@ -387,6 +401,104 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
         totalArticulos={arts.length}
       />
     </div>
+  )
+}
+
+/** Vista imprimible de un código completo (botón "Exportar a PDF" ->
+ * window.print() -> el usuario elige "Guardar como PDF"). Se monta vía
+ * createPortal directo en document.body y solo se hace visible bajo
+ * @media print (ver .imprimir-codigo en index.css) — mismo patrón que
+ * VistaImprimibleColeccion en ColeccionesView.tsx.
+ *
+ * A diferencia de esa, acá respeta la jerarquía real del código
+ * (Libro → Título → Capítulo → Párrafo, ver services/esquema.ts) en vez de
+ * una lista plana: es lo que hace que un código con estructura (la
+ * Constitución, el Código Civil...) se lea como el índice impreso de
+ * verdad, con sus encabezados de sección, no como 400 artículos sueltos
+ * uno atrás de otro. Un código SIN esa jerarquía (el Auto Acordado, que es
+ * solo una lista de numerales sin Libro/Título/Capítulo) hace que
+ * construirEsquema() devuelva un árbol vacío — ahí se cae al listado plano
+ * directamente, que es exactamente lo que corresponde en ese caso. */
+function VistaImprimibleCodigo({
+  codigo,
+  tipo,
+  transformarTexto,
+}: {
+  codigo: CodigoData
+  tipo: CodigoTipo
+  transformarTexto: (t: string) => string
+}) {
+  const meta = obtenerMetadata(tipo)
+  const arbol = useMemo(() => construirEsquema(codigo.articulos), [codigo])
+  const hoy = new Date().toLocaleDateString('es-CL', { year: 'numeric', month: 'long', day: 'numeric' })
+
+  return createPortal(
+    <div className="imprimir-codigo">
+      <style>{`
+        @page { margin: 2cm; }
+        .imprimir-codigo { color: #111; background: #fff; font-family: Georgia, 'Times New Roman', serif; padding: 24px; }
+        .imprimir-codigo h1 { font-size: 20px; margin: 0 0 4px; font-family: inherit; }
+        .imprimir-codigo .ic2-meta { font-size: 11px; color: #666; margin-bottom: 4px; }
+        .imprimir-codigo .ic2-nota { font-size: 11px; line-height: 1.5; margin: 16px 0 28px; padding: 10px 12px; background: #f5f5f5; border-left: 3px solid #999; }
+        .imprimir-codigo .ic2-seccion-1 { font-size: 15px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid #333; padding-bottom: 4px; margin-top: 30px; break-after: avoid; }
+        .imprimir-codigo .ic2-seccion-2 { font-size: 13px; font-weight: bold; margin-top: 18px; break-after: avoid; }
+        .imprimir-codigo .ic2-seccion-3, .imprimir-codigo .ic2-seccion-4 { font-size: 12px; font-weight: bold; font-style: italic; margin-top: 14px; break-after: avoid; }
+        .imprimir-codigo .ic2-articulo { break-inside: avoid; margin: 12px 0; }
+        .imprimir-codigo .ic2-numero { font-size: 12.5px; font-weight: bold; margin-bottom: 2px; }
+        .imprimir-codigo .ic2-texto { font-size: 12px; line-height: 1.55; white-space: pre-wrap; }
+      `}</style>
+      <h1>{meta?.nombreOficial ?? codigo.codigo}</h1>
+      <p className="ic2-meta">
+        {meta?.norma ? `${meta.norma} · ` : ''}
+        {codigo.articulos.length} artículo{codigo.articulos.length === 1 ? '' : 's'} · impreso el {hoy} · Prima Lex
+      </p>
+      {meta?.notas && <div className="ic2-nota">{meta.notas}</div>}
+
+      {arbol.length > 0 ? (
+        arbol.map((nodo, i) => (
+          <NodoImprimible key={i} nodo={nodo} nivel={1} transformarTexto={transformarTexto} />
+        ))
+      ) : (
+        <ArticulosImprimibles articulos={codigo.articulos} transformarTexto={transformarTexto} />
+      )}
+    </div>,
+    document.body
+  )
+}
+
+function NodoImprimible({
+  nodo,
+  nivel,
+  transformarTexto,
+}: {
+  nodo: NodoEsquema
+  nivel: number
+  transformarTexto: (t: string) => string
+}) {
+  return (
+    <div>
+      {nodo.clave && <div className={`ic2-seccion-${Math.min(nivel, 4)}`}>{ETIQUETAS_NIVEL[nodo.campo]} {nodo.clave}</div>}
+      {nodo.hijos.length > 0 ? (
+        nodo.hijos.map((h, i) => (
+          <NodoImprimible key={i} nodo={h} nivel={nivel + 1} transformarTexto={transformarTexto} />
+        ))
+      ) : (
+        <ArticulosImprimibles articulos={nodo.articulos} transformarTexto={transformarTexto} />
+      )}
+    </div>
+  )
+}
+
+function ArticulosImprimibles({ articulos, transformarTexto }: { articulos: Articulo[]; transformarTexto: (t: string) => string }) {
+  return (
+    <>
+      {articulos.map((a) => (
+        <div className="ic2-articulo" key={a.a}>
+          <div className="ic2-numero">{a.a}</div>
+          <div className="ic2-texto">{transformarTexto(a.t)}</div>
+        </div>
+      ))}
+    </>
   )
 }
 
