@@ -2094,7 +2094,14 @@ function NodoMental(props: NodeProps<NodoFlow>) {
             mapa grande entero cuando en el momento solo hace falta mirar
             una rama. `nodrag` + parar la propagación: sin esto, el clic
             movía el nodo en vez de colapsar (mismo problema que el
-            textarea de abajo). */}
+            textarea de abajo).
+            En la ESQUINA superior derecha, no pegado al medio del borde
+            derecho: ahí es donde vive el Handle 'right' (ver
+            HANDLES_POR_LADO más arriba) — con los dos superpuestos, el
+            botón (z-index más alto) le ganaba el clic al handle, y no había
+            forma de arrastrar una conexión NUEVA desde el lado derecho de
+            un nodo que ya tuviera al menos un hijo. La esquina no compite
+            con ninguno de los 4 handles (todos centrados en su lado). */}
         {tieneHijos(id) && (
           <button
             onClick={(e) => {
@@ -2110,8 +2117,7 @@ function NodoMental(props: NodeProps<NodoFlow>) {
             className="nodrag absolute z-30 flex items-center justify-center rounded-full border-2 shadow-sm"
             style={{
               right: -9,
-              top: '50%',
-              transform: 'translateY(-50%)',
+              top: -9,
               minWidth: 19,
               height: 19,
               padding: estaColapsado(id) ? '0 5px' : 0,
@@ -2123,7 +2129,7 @@ function NodoMental(props: NodeProps<NodoFlow>) {
               lineHeight: 1,
             }}
           >
-            {estaColapsado(id) ? `+${cantidadOcultosSi(id)}` : <i className="ti ti-chevron-left text-[10px]" />}
+            {estaColapsado(id) ? `+${cantidadOcultosSi(id)}` : <i className="ti ti-chevron-up text-[10px]" />}
           </button>
         )}
 
