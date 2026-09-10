@@ -1827,6 +1827,7 @@ function NodoMental(props: NodeProps<NodoFlow>) {
   const [editandoNota, setEditandoNota] = useState(false)
   const [notaTmp, setNotaTmp] = useState(data.nota ?? '')
   const ref = useRef<HTMLTextAreaElement>(null)
+  const medicionRef = useRef<HTMLDivElement>(null)
 
   const color = data.color ?? VERDE
 
@@ -1861,6 +1862,30 @@ function NodoMental(props: NodeProps<NodoFlow>) {
       return deseada > actual ? { style: { ...n.style, height: deseada } } : {}
     })
   }, [data.texto, data.forma, editando, id, updateNode])
+
+  // Mismo criterio que el efecto de arriba, pero para el modo VISTA (fuera
+  // de edición) — sin esto, un nodo recién creado (plantilla, "usar
+  // plantilla" o pegar/duplicar) se quedaba con el alto mínimo de CuerpoNodo
+  // hasta que alguien lo abría para editar UNA vez: con texto largo, el
+  // óvalo/rectángulo se veía "sin terminar de agrandar" (el texto real se
+  // salía de la caja) y las conexiones apuntaban a los bordes de esa caja
+  // chica en vez de a los del contenido real — de ahí que hiciera falta un
+  // doble clic para que "el marco calzara con los puntos". Mide con
+  // scrollHeight (como el de arriba), no con getBoundingClientRect(): el
+  // lienzo puede estar zoomeado, y getBoundingClientRect() devuelve el alto
+  // YA escalado por ese zoom, lo que daría un resultado distinto según con
+  // cuánto zoom esté el mapa en ese momento.
+  useLayoutEffect(() => {
+    if (editando) return
+    const el = medicionRef.current
+    if (!el) return
+    const PADDING_VERTICAL = data.forma === 'ninguna' ? 8 : 16 // ver py-1/py-2 en CuerpoNodo
+    const deseada = Math.max(MIN_TAMANO[data.forma].h, Math.ceil(el.scrollHeight + PADDING_VERTICAL))
+    updateNode(id, (n) => {
+      const actual = typeof n.style?.height === 'number' ? n.style.height : 0
+      return deseada > actual ? { style: { ...n.style, height: deseada } } : {}
+    })
+  }, [data.texto, data.forma, data.tamanoTexto, editando, id, updateNode])
 
   useEffect(() => {
     setNotaTmp(data.nota ?? '')
@@ -2122,13 +2147,14 @@ function NodoMental(props: NodeProps<NodoFlow>) {
               }`}
             />
           ) : (
-            <span
+            <div
+              ref={medicionRef}
               className={`${TAMANO_CLASE[data.tamanoTexto]} whitespace-pre-wrap break-words ${
                 modoOscuro ? 'text-zinc-100' : 'text-zinc-900'
               }`}
             >
               {data.texto ? renderTextoEnriquecido(data.texto) : 'Doble clic para escribir'}
-            </span>
+            </div>
           )}
         </CuerpoNodo>
 
