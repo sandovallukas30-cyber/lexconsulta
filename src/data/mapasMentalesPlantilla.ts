@@ -1347,4 +1347,63 @@ export const MAPAS_MENTALES_PLANTILLA: MapaMentalPlantilla[] = [
       { desde: 'preguntas', hasta: 'q-6' },
     ],
   },
+  {
+    id: 'plantilla-dco-esquema-general',
+    titulo: 'Derecho Constitucional Orgánico — Esquema general',
+    descripcion: 'Panorama del curso en 5 bloques, solo con lo fundamental — para repasar de un vistazo antes de entrar al detalle de cada plantilla del curso.',
+    nodos: [
+      { id: 'dco-raiz', texto: 'Derecho Constitucional\nOrgánico', forma: 'ovalo', tamanoTexto: 'titulo' },
+
+      { id: 'dco-b1', texto: 'I. Fundamentos y\nTeoría del Órgano', forma: 'rectangulo', tamanoTexto: 'subtitulo', color: '#1d4ed8' },
+      { id: 'dco-b1-1', texto: 'Relaciones entre órganos', forma: 'ovalo', tamanoTexto: 'texto', nota: 'separación/frenos · cooperación · jerarquía-tutela-autonomía' },
+      { id: 'dco-b1-2', texto: 'Órgano = Competencia + Titular', forma: 'ovalo', tamanoTexto: 'texto' },
+      { id: 'dco-b1-3', texto: 'Utilidad: continuidad de la función estatal', forma: 'ovalo', tamanoTexto: 'texto' },
+
+      { id: 'dco-b2', texto: 'II. Separación\nde Poderes', forma: 'rectangulo', tamanoTexto: 'subtitulo', color: '#1d4ed8' },
+      { id: 'dco-b2-1', texto: 'Montesquieu: separación estricta', forma: 'ovalo', tamanoTexto: 'texto', nota: 'El espíritu de las leyes, 1748' },
+      { id: 'dco-b2-2', texto: 'Madison: frenos y contrapesos', forma: 'ovalo', tamanoTexto: 'texto', nota: 'El Federalista, 1788' },
+      { id: 'dco-b2-3', texto: 'Chile: art. 7', forma: 'ovalo', tamanoTexto: 'texto', color: '#b45309', nota: 'investidura + competencia + forma legal de actuación' },
+
+      { id: 'dco-b3', texto: 'III. Régimen\nde Gobierno', forma: 'rectangulo', tamanoTexto: 'subtitulo', color: '#1d4ed8' },
+      { id: 'dco-b3-1', texto: 'Presidencial / Parlamentario / Semipresidencial', forma: 'ovalo', tamanoTexto: 'texto' },
+      { id: 'dco-b3-2', texto: 'Chile: presidencialismo reforzado', forma: 'ovalo', tamanoTexto: 'texto', color: '#b45309', nota: 'poderes constitucionales altos, partidarios débiles' },
+
+      { id: 'dco-b4', texto: 'IV. Gobierno y\nAdministración', forma: 'rectangulo', tamanoTexto: 'subtitulo', color: '#1d4ed8' },
+      { id: 'dco-b4-1', texto: 'Gobierno = voluntad · Administración = acción', forma: 'ovalo', tamanoTexto: 'texto', nota: 'art. 24 / Huneeus' },
+      { id: 'dco-b4-2', texto: 'Principio comisarial', forma: 'ovalo', tamanoTexto: 'texto' },
+      { id: 'dco-b4-3', texto: 'Centralizados vs. descentralizados', forma: 'ovalo', tamanoTexto: 'texto' },
+
+      { id: 'dco-b5', texto: 'V. El Presidente\nde la República', forma: 'rectangulo', tamanoTexto: 'subtitulo', color: '#1d4ed8' },
+      { id: 'dco-b5-1', texto: 'Elección', forma: 'ovalo', tamanoTexto: 'texto', nota: 'arts. 25-27 · 4 años, sin reelección inmediata' },
+      { id: 'dco-b5-2', texto: 'Subrogación (temporal) vs. Vacancia (definitiva)', forma: 'ovalo', tamanoTexto: 'texto', nota: 'art. 29' },
+      { id: 'dco-b5-3', texto: 'Triple función', forma: 'ovalo', tamanoTexto: 'texto', nota: 'Gobierno · Administración · Jefe de Estado (art. 24)' },
+      { id: 'dco-b5-4', texto: '4 tipos de atribuciones', forma: 'ovalo', tamanoTexto: 'texto', color: '#b45309', nota: 'gubernativas · administrativas · nomogenéticas · de control (art. 32)' },
+    ],
+    conexiones: [
+      { desde: 'dco-raiz', hasta: 'dco-b1' },
+      { desde: 'dco-b1', hasta: 'dco-b1-1' },
+      { desde: 'dco-b1', hasta: 'dco-b1-2' },
+      { desde: 'dco-b1', hasta: 'dco-b1-3' },
+
+      { desde: 'dco-raiz', hasta: 'dco-b2' },
+      { desde: 'dco-b2', hasta: 'dco-b2-1' },
+      { desde: 'dco-b2', hasta: 'dco-b2-2' },
+      { desde: 'dco-b2', hasta: 'dco-b2-3' },
+
+      { desde: 'dco-raiz', hasta: 'dco-b3' },
+      { desde: 'dco-b3', hasta: 'dco-b3-1' },
+      { desde: 'dco-b3', hasta: 'dco-b3-2' },
+
+      { desde: 'dco-raiz', hasta: 'dco-b4' },
+      { desde: 'dco-b4', hasta: 'dco-b4-1' },
+      { desde: 'dco-b4', hasta: 'dco-b4-2' },
+      { desde: 'dco-b4', hasta: 'dco-b4-3' },
+
+      { desde: 'dco-raiz', hasta: 'dco-b5' },
+      { desde: 'dco-b5', hasta: 'dco-b5-1' },
+      { desde: 'dco-b5', hasta: 'dco-b5-2' },
+      { desde: 'dco-b5', hasta: 'dco-b5-3' },
+      { desde: 'dco-b5', hasta: 'dco-b5-4' },
+    ],
+  },
 ]
