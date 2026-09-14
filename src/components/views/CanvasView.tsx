@@ -34,6 +34,7 @@ const tipoColor: Record<string, string> = {
   concepto: VERDE,
   definicion: '#1E5AA8',
   articulos: '#8B4789',
+  'articulo-completo': '#8B4789', // misma familia que "articulos": nace de ahí
   caso: '#B23A48',
   libre: COLOR_NEUTRO,
 }
@@ -42,6 +43,7 @@ const tipoIcono: Record<string, string> = {
   concepto: 'ti-bulb',
   definicion: 'ti-book',
   articulos: 'ti-list',
+  'articulo-completo': 'ti-file-text',
   caso: 'ti-scale',
   libre: 'ti-note',
 }
@@ -60,6 +62,9 @@ type NodoData = {
   colapsado: boolean
   nivelExpansion?: number // cuántas veces se ha profundizado este nodo
   expandiendo?: boolean
+  /** true mientras se están creando los nodos "articulo-completo" a partir
+   * de este nodo "articulos" (spinner en el botón de la toolbar). */
+  creandoArticulos?: boolean
 }
 
 interface NodoCallbacks {
@@ -70,6 +75,10 @@ interface NodoCallbacks {
   cambiarColor: (id: string, color: string | undefined) => void
   actualizarEtiqueta: (id: string, etiqueta: string) => void
   profundizar: (id: string, modo: import('../../services/canvas').ModoProfundizacion) => Promise<void>
+  /** Crea un nodo "articulo-completo" (conectado a este) por cada entrada de
+   * data.articulos, con el texto oficial completo cargado bajo demanda.
+   * Solo aplica a nodos tipo 'articulos'. */
+  crearNodosArticulos: (id: string) => Promise<void>
 }
 
 interface CanvasCtx {
@@ -98,6 +107,7 @@ export function CanvasView() {
   const actualizarCanvas = useStore((s) => s.actualizarCanvas)
   const eliminarCanvas = useStore((s) => s.eliminarCanvas)
   const setCanvasActivo = useStore((s) => s.setCanvasActivo)
+  const codigosStore = useStore((s) => s.codigos)
 
   const canvasActivo = useMemo(
     () => canvases.find((c) => c.id === canvasActivoId) ?? null,
@@ -220,6 +230,16 @@ export function CanvasView() {
     async (id: string, modo: import('../../services/canvas').ModoProfundizacion) => {
       const nodo = nodesRef.current.find((n) => n.id === id)
       if (!nodo) return
+      // 'articulo-completo' guarda texto oficial verbatim -- no tiene sentido
+      // dejar que la IA le agregue contenido encima (además, su tipo no
+      // existe en ParametrosProfundizar, que solo conoce los tipos que la IA
+      // puede generar). El botón de la toolbar ya no se muestra para este
+      // tipo, pero el guard queda acá también por si se llega por otra vía.
+      // Se guarda en una variable plana (no nodo.data.tipo) porque el
+      // angostamiento de TS sobre una propiedad anidada no sobrevive el
+      // `await import(...)` de más abajo -- una variable simple sí.
+      const tipoNodoOrigen = nodo.data.tipo
+      if (tipoNodoOrigen === 'articulo-completo') return
       // marcar expandiendo
       setNodes((nds) =>
         nds.map((n) => (n.id === id ? { ...n, data: { ...n.data, expandiendo: true } } : n))
@@ -228,7 +248,7 @@ export function CanvasView() {
         const { profundizarNodo } = await import('../../services/canvas')
         const data = nodo.data
         const res = await profundizarNodo({
-          tipoNodo: data.tipo === 'concepto' ? 'definicion' : data.tipo,
+          tipoNodo: tipoNodoOrigen === 'concepto' ? 'definicion' : tipoNodoOrigen,
           titulo: data.titulo,
           contenidoActual: data.contenido,
           articulosActuales: data.articulos,
@@ -275,6 +295,100 @@ export function CanvasView() {
     [setNodes, pushHistory]
   )
 
+  // El nodo "articulos relevantes" solo trae número + código + una relevancia
+  // breve por artículo (texto libre generado por la IA). Este botón crea, por
+  // cada entrada, un nodo "articulo-completo" propio con el texto oficial
+  // (mismo diseño que una ficha de Colecciones/Explorador: Art. X grande +
+  // contenido abajo) conectado al nodo de origen -- en vez de un texto que se
+  // despliega adentro de la misma tarjeta, cada artículo queda como su propio
+  // nodo movible/conectable en el lienzo.
+  const handleCrearNodosArticulos = useCallback(
+    async (id: string) => {
+      const nodoOrigen = nodesRef.current.find((n) => n.id === id)
+      if (!nodoOrigen || nodoOrigen.data.tipo !== 'articulos' || !nodoOrigen.data.articulos?.length) return
+
+      setNodes((nds) =>
+        nds.map((n) => (n.id === id ? { ...n, data: { ...n.data, creandoArticulos: true } } : n))
+      )
+
+      try {
+        // No duplicar: un artículo (mismo código + número) que ya tenga un
+        // nodo "articulo-completo" conectado a este se salta.
+        const yaConectadosIds = new Set(
+          edgesRef.current.filter((e) => e.source === id).map((e) => e.target)
+        )
+        const yaCreados = new Set(
+          [...yaConectadosIds]
+            .map((targetId) => nodesRef.current.find((n) => n.id === targetId))
+            .filter((n): n is NodoFlow => !!n && n.data.tipo === 'articulo-completo')
+            .map((n) => `${n.data.articulos?.[0]?.codigo ?? ''}::${n.data.articulos?.[0]?.numero ?? ''}`)
+        )
+
+        const anchoOrigen = typeof nodoOrigen.style?.width === 'number' ? nodoOrigen.style.width : 280
+        const origenX = nodoOrigen.position.x + anchoOrigen + 90
+        const ALTO_ESTIMADO = 220
+        const GAP = 30
+        let cursorY = nodoOrigen.position.y
+
+        const nuevosNodos: NodoFlow[] = []
+        const nuevasEdges: EdgeWithData[] = []
+
+        for (const art of nodoOrigen.data.articulos) {
+          const clave = `${art.codigo ?? ''}::${art.numero}`
+          if (yaCreados.has(clave)) continue
+
+          let contenido: string
+          const tipoCodigo = art.codigo ? inferirTipoCodigo(art.codigo, codigosStore) : null
+          if (!tipoCodigo) {
+            contenido = 'No se pudo identificar a qué código pertenece este artículo.'
+          } else {
+            try {
+              const codigoData = await cargarCodigo(tipoCodigo)
+              const encontrado = codigoData?.articulos.find((a) => a.a === art.numero)
+              contenido = encontrado ? encontrado.t : 'No se encontró este artículo en el código.'
+            } catch {
+              contenido = 'No se pudo cargar el código.'
+            }
+          }
+
+          const nuevoId = crypto.randomUUID()
+          nuevosNodos.push({
+            id: nuevoId,
+            type: 'articulo-completo',
+            position: { x: origenX, y: cursorY },
+            data: {
+              titulo: art.numero,
+              contenido,
+              articulos: [art],
+              tipo: 'articulo-completo',
+              colapsado: false,
+            },
+            style: { width: 300 },
+          })
+          nuevasEdges.push({ id: `earts-${id}-${nuevoId}`, source: id, target: nuevoId, type: 'editable' })
+          cursorY += ALTO_ESTIMADO + GAP
+        }
+
+        if (nuevosNodos.length === 0) {
+          alert('Ya hay un nodo con el texto completo de cada artículo de esta lista.')
+          return
+        }
+
+        pushHistory()
+        setNodes((nds) => [...nds, ...nuevosNodos])
+        setEdges((eds) => [...eds, ...nuevasEdges])
+      } catch (e) {
+        console.error('Error al crear nodos de artículos:', e)
+        alert(e instanceof Error ? e.message : 'No se pudieron crear los nodos. Intenta de nuevo.')
+      } finally {
+        setNodes((nds) =>
+          nds.map((n) => (n.id === id ? { ...n, data: { ...n.data, creandoArticulos: false } } : n))
+        )
+      }
+    },
+    [setNodes, setEdges, pushHistory, codigosStore]
+  )
+
   const callbacks: NodoCallbacks = useMemo(
     () => ({
       actualizar: handleActualizar,
@@ -284,8 +398,18 @@ export function CanvasView() {
       cambiarColor: handleCambiarColor,
       actualizarEtiqueta: handleActualizarEtiqueta,
       profundizar: handleProfundizar,
+      crearNodosArticulos: handleCrearNodosArticulos,
     }),
-    [handleActualizar, handleEliminar, handleDuplicar, handleToggleColapso, handleCambiarColor, handleActualizarEtiqueta, handleProfundizar]
+    [
+      handleActualizar,
+      handleEliminar,
+      handleDuplicar,
+      handleToggleColapso,
+      handleCambiarColor,
+      handleActualizarEtiqueta,
+      handleProfundizar,
+      handleCrearNodosArticulos,
+    ]
   )
 
   const ctxValue = useMemo<CanvasCtx>(() => ({ modoOscuro, callbacks }), [modoOscuro, callbacks])
@@ -711,17 +835,6 @@ function NodoBase(props: NodeProps<NodoFlow>) {
   const [mostrandoProfundizar, setMostrandoProfundizar] = useState(false)
   const refTit = useRef<HTMLInputElement>(null)
   const refCont = useRef<HTMLTextAreaElement>(null)
-  const codigosStore = useStore((s) => s.codigos)
-
-  // Texto completo de cada artículo del nodo "artículos relevantes" (índice
-  // -> estado), pedido bajo demanda con el botón de "ver completo": el nodo
-  // solo trae número + código + una relevancia breve generada por la IA, no
-  // el texto oficial. Se guarda por índice (no por número de artículo) para
-  // no chocar si dos entradas citan el mismo artículo de códigos distintos.
-  const [articulosAbiertos, setArticulosAbiertos] = useState<Set<number>>(new Set())
-  const [textoArticulos, setTextoArticulos] = useState<
-    Record<number, { cargando: boolean; texto: string | null; error?: string }>
-  >({})
 
   const color =
     data.colorOverride ?? (data.tipo === 'libre' ? data.colorHeredado ?? COLOR_NEUTRO : tipoColor[data.tipo])
@@ -733,51 +846,6 @@ function NodoBase(props: NodeProps<NodoFlow>) {
   useEffect(() => {
     if (editandoContenido) refCont.current?.focus()
   }, [editandoContenido])
-
-  const cargarTextoArticulo = async (idx: number, art: ArticuloRelevante) => {
-    setTextoArticulos((prev) => ({ ...prev, [idx]: { cargando: true, texto: null } }))
-    const tipo = art.codigo ? inferirTipoCodigo(art.codigo, codigosStore) : null
-    if (!tipo) {
-      setTextoArticulos((prev) => ({
-        ...prev,
-        [idx]: { cargando: false, texto: null, error: 'No se pudo identificar a qué código pertenece.' },
-      }))
-      return
-    }
-    try {
-      const codigoData = await cargarCodigo(tipo)
-      const encontrado = codigoData?.articulos.find((a) => a.a === art.numero)
-      if (!encontrado) {
-        setTextoArticulos((prev) => ({
-          ...prev,
-          [idx]: { cargando: false, texto: null, error: 'No se encontró este artículo en el código.' },
-        }))
-        return
-      }
-      setTextoArticulos((prev) => ({ ...prev, [idx]: { cargando: false, texto: encontrado.t } }))
-    } catch {
-      setTextoArticulos((prev) => ({
-        ...prev,
-        [idx]: { cargando: false, texto: null, error: 'No se pudo cargar el código.' },
-      }))
-    }
-  }
-
-  const toggleArticuloCompleto = (idx: number, art: ArticuloRelevante) => {
-    setArticulosAbiertos((prev) => {
-      const next = new Set(prev)
-      if (next.has(idx)) {
-        next.delete(idx)
-      } else {
-        next.add(idx)
-        // Recién la primera vez que se abre (o si la carga anterior falló)
-        // pedimos el texto -- cerrar y volver a abrir no repite la carga.
-        const previo = textoArticulos[idx]
-        if (!previo || previo.error) void cargarTextoArticulo(idx, art)
-      }
-      return next
-    })
-  }
 
   const tieneArticulos = data.tipo === 'articulos' && data.articulos && data.articulos.length > 0
 
@@ -822,6 +890,15 @@ function NodoBase(props: NodeProps<NodoFlow>) {
             onClick={() => callbacks.duplicar(id)}
             modoOscuro={modoOscuro}
           />
+          {data.tipo === 'articulos' && tieneArticulos && (
+            <ToolbarBtn
+              icono={data.creandoArticulos ? 'ti-loader-2' : 'ti-sitemap'}
+              label="Crear un nodo con el texto completo de cada artículo"
+              onClick={() => !data.creandoArticulos && callbacks.crearNodosArticulos(id)}
+              modoOscuro={modoOscuro}
+              deshabilitado={data.creandoArticulos}
+            />
+          )}
           <div className="relative">
             <ToolbarBtn
               icono="ti-palette"
@@ -863,7 +940,7 @@ function NodoBase(props: NodeProps<NodoFlow>) {
               </div>
             )}
           </div>
-          {data.tipo !== 'libre' && (
+          {data.tipo !== 'libre' && data.tipo !== 'articulo-completo' && (
             <div className="relative">
               <ToolbarBtn
                 icono={data.expandiendo ? 'ti-loader-2' : 'ti-sparkles'}
@@ -1001,58 +1078,48 @@ function NodoBase(props: NodeProps<NodoFlow>) {
 
         {!data.colapsado && (
           <div className="p-3 flex-1 overflow-y-auto min-h-0">
-            {tieneArticulos ? (
+            {data.tipo === 'articulo-completo' ? (
+              // Mismo diseño que una ficha de artículo en Colecciones/Explorador:
+              // código chico arriba, "Art. X" grande, texto oficial abajo en serif.
+              <div>
+                {data.articulos?.[0]?.codigo && (
+                  <div className="text-[10px] uppercase tracking-wider font-semibold mb-1" style={{ color }}>
+                    {data.articulos[0].codigo}
+                  </div>
+                )}
+                <div className="font-serif text-lg font-bold leading-none mb-2" style={{ color }}>
+                  {data.articulos?.[0]?.numero ?? data.titulo}
+                </div>
+                <p
+                  className={`text-[13px] leading-relaxed whitespace-pre-line ${
+                    modoOscuro ? 'text-zinc-100' : 'text-zinc-900'
+                  }`}
+                  style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
+                >
+                  {data.contenido}
+                </p>
+              </div>
+            ) : tieneArticulos ? (
               <ul className="space-y-2">
-                {data.articulos!.map((art, i) => {
-                  const abierto = articulosAbiertos.has(i)
-                  const estado = textoArticulos[i]
-                  return (
-                    <li key={i} className="text-[12px] leading-snug">
-                      <div className="flex items-baseline gap-1.5 flex-wrap">
-                        <span className="font-mono font-semibold" style={{ color }}>
-                          {art.numero}
+                {data.articulos!.map((art, i) => (
+                  <li key={i} className="text-[12px] leading-snug">
+                    <div className="flex items-baseline gap-1.5 flex-wrap">
+                      <span className="font-mono font-semibold" style={{ color }}>
+                        {art.numero}
+                      </span>
+                      {art.codigo && (
+                        <span
+                          className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                            modoOscuro ? 'bg-zinc-700 text-zinc-300' : 'bg-zinc-100 text-zinc-600'
+                          }`}
+                        >
+                          {art.codigo}
                         </span>
-                        {art.codigo && (
-                          <span
-                            className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
-                              modoOscuro ? 'bg-zinc-700 text-zinc-300' : 'bg-zinc-100 text-zinc-600'
-                            }`}
-                          >
-                            {art.codigo}
-                          </span>
-                        )}
-                        <button
-                          onClick={() => toggleArticuloCompleto(i, art)}
-                          title={abierto ? 'Ocultar texto completo' : 'Ver texto completo del artículo'}
-                          className={`nodrag ml-auto flex-shrink-0 w-5 h-5 rounded flex items-center justify-center transition-colors ${
-                            modoOscuro
-                              ? 'text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700'
-                              : 'text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100'
-                          }`}
-                        >
-                          <i className={`ti ${abierto ? 'ti-chevron-up' : 'ti-file-text'} text-xs`} />
-                        </button>
-                      </div>
-                      <span className={modoOscuro ? 'text-zinc-200' : 'text-zinc-800'}>{art.relevancia}</span>
-                      {abierto && (
-                        <div
-                          className={`mt-1.5 pt-1.5 border-t text-[11px] leading-relaxed whitespace-pre-line ${
-                            modoOscuro ? 'border-zinc-700 text-zinc-300' : 'border-zinc-200 text-zinc-700'
-                          }`}
-                          style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
-                        >
-                          {!estado || estado.cargando ? (
-                            <span className="italic opacity-70">Cargando texto…</span>
-                          ) : estado.error ? (
-                            <span className="italic opacity-70">{estado.error}</span>
-                          ) : (
-                            estado.texto
-                          )}
-                        </div>
                       )}
-                    </li>
-                  )
-                })}
+                    </div>
+                    <span className={modoOscuro ? 'text-zinc-200' : 'text-zinc-800'}>{art.relevancia}</span>
+                  </li>
+                ))}
               </ul>
             ) : editandoContenido ? (
               <textarea
@@ -1157,6 +1224,7 @@ const nodeTypes = {
   concepto: NodoBase,
   definicion: NodoBase,
   articulos: NodoBase,
+  'articulo-completo': NodoBase,
   caso: NodoBase,
   libre: NodoBase,
 }

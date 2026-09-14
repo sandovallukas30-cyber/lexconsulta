@@ -158,7 +158,7 @@ export interface EstadisticasDestello {
   nivelActual: number // 1-5 basado en dominio general
 }
 
-export type TipoNodoCanvas = 'definicion' | 'articulos' | 'caso' | 'libre' | 'concepto'
+export type TipoNodoCanvas = 'definicion' | 'articulos' | 'caso' | 'libre' | 'concepto' | 'articulo-completo'
 
 export interface ArticuloRelevante {
   numero: string
