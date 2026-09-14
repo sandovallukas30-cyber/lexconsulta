@@ -1,0 +1,48 @@
+{
+  "codigo": "Auto Acordado sobre Tramitación y Fallo del Recurso de Protección de las Garantías Constitucionales",
+  "tipo": "aap",
+  "fuente": "Resumen funcional del texto refundido, Acta N° 94-2015 de la Corte Suprema (modificada por Acta N° 173-2018) — verificar siempre contra el ejemplar oficial impreso",
+  "total_articulos": 10,
+  "articulos": [
+    {
+      "a": "N° 1",
+      "t": "Tribunal competente y plazo. El recurso se interpone ante la Corte de Apelaciones en cuya jurisdicción se hubiere cometido el acto o incurrido en la omisión, o donde éstos hubieren producido sus efectos, a elección del recurrente. Plazo: 30 días corridos y fatales, contados desde la ejecución del acto o la ocurrencia de la omisión o, según la naturaleza de estos, desde que se tuvo noticia o conocimiento cierto de ellos, lo que se hará constar en autos."
+    },
+    {
+      "a": "N° 2",
+      "t": "Legitimación, forma y admisibilidad. Puede recurrir el afectado o cualquier otra persona en su nombre, capaz de parecer en juicio, aunque no tenga mandato especial. El recurso se presenta por escrito en papel simple o por cualquier medio electrónico. La Corte examina en cuenta si se interpuso dentro de plazo y si menciona hechos que puedan constituir vulneración de las garantías del art. 20 de la Constitución; si falta alguno de esos requisitos, lo declara inadmisible por resolución fundada. Procede reposición dentro de tercero día y, en subsidio, apelación ante la Corte Suprema, resuelta en cuenta."
+    },
+    {
+      "a": "N° 3",
+      "t": "Informe del recurrido y orden de no innovar. Acogido a tramitación, la Corte pide informe, por la vía más rápida y efectiva, a la persona, funcionario u órgano que hubiere ejecutado el acto o incurrido en la omisión, con plazo breve y perentorio, exigiendo remitir todos los antecedentes en su poder (si es un organismo público, basta notificar al jefe local del servicio). La Corte puede también pedir informe a terceros que puedan resultar afectados por la sentencia, y decretar orden de no innovar cuando lo juzgue conveniente. Recibido el informe, o sin él, se traen los autos en relación y se agrega extraordinariamente a la tabla del día subsiguiente."
+    },
+    {
+      "a": "N° 4",
+      "t": "Comparecencia. Las personas, funcionarios u órganos afectados o recurridos pueden hacerse parte en el procedimiento."
+    },
+    {
+      "a": "N° 5",
+      "t": "Prueba. Los antecedentes se aprecian conforme a las reglas de la sana crítica; la Corte puede decretar todas las diligencias que estime necesarias para el acertado fallo del recurso."
+    },
+    {
+      "a": "N° 6",
+      "t": "Apelación. La sentencia que se pronuncie sobre el recurso —lo acoja, lo rechace o lo declare inadmisible— es apelable ante la Corte Suprema, dentro del término fatal de cinco días hábiles contado desde la notificación por el estado diario."
+    },
+    {
+      "a": "N° 10",
+      "t": "Plazo para fallar. Vista la causa, el fallo debe dictarse a más tardar el quinto día hábil siguiente; el plazo se reduce al segundo día hábil tratándose de las garantías del art. 19 N° 1, N° 3 inciso 5°, N° 12 y N° 13 de la Constitución."
+    },
+    {
+      "a": "N° 12",
+      "t": "Casación. No procede el recurso de casación en contra de la sentencia de la Corte de Apelaciones que resuelve un recurso de protección."
+    },
+    {
+      "a": "N° 13",
+      "t": "Acumulación. Cuando se interpongan dos o más recursos respecto de unos mismos hechos, se acumulan al que ingresó primero y se fallan en una misma sentencia."
+    },
+    {
+      "a": "N° 15",
+      "t": "Sanciones por incumplimiento. El incumplimiento de lo resuelto por la Corte puede sancionarse con amonestación privada, censura por escrito, multa de una a cinco UTM, o suspensión de funciones hasta por cuatro meses, sin perjuicio de la responsabilidad penal que pudiere corresponder."
+    }
+  ]
+}

@@ -25,6 +25,7 @@ export type CodigoTipo =
   | 'rpa'
   | 'pdc'
   | 'pde'
+  | 'aap'
 
 export type CategoriaCodigo =
   | 'fundamentales'
@@ -40,6 +41,7 @@ export type VistaId =
   | 'mapa'
   | 'explorador'
   | 'colecciones'
+  | 'mapasmentales'
   | 'historial'
   | 'admin'
   | 'practica'
@@ -194,6 +196,64 @@ export interface Canvas {
   fechaModificacion: Date
 }
 
+// ============ MAPAS MENTALES (diagramas libres por tema) ============
+
+/** A diferencia de Canvas (tipo de nodo SEMÁNTICO: definición/caso/concepto),
+ * acá el tipo es la FORMA VISUAL en sí — es lo que un mapa mental de estudio
+ * necesita: distinguir de un vistazo "esto es una categoría" (rectángulo) de
+ * "esto es una subcategoría" (óvalo) o "esto no necesita caja" (sin figura).
+ * 'nube' y 'rombo' existieron y se sacaron (no convencían visualmente) — un
+ * nodo guardado con alguno de esos dos valores se migra solo a 'ovalo' la
+ * primera vez que se abre su mapa (ver nodosIniciales en
+ * MapasMentalesView.tsx), así que el tipo ya no necesita incluirlos. */
+export type FormaNodoMental = 'rectangulo' | 'ovalo' | 'ninguna'
+
+/** Nivel tipográfico del texto del nodo — el mismo mapa necesita títulos de
+ * categoría en grande y texto de detalle más chico, sin que eso dependa de
+ * la forma (una nube puede llevar un subtítulo, un rectángulo un texto). */
+export type TamanoTextoMental = 'titulo' | 'subtitulo' | 'texto'
+
+export interface NodoMapaMental {
+  id: string
+  posicion: { x: number; y: number }
+  texto: string
+  forma: FormaNodoMental
+  tamanoTexto: TamanoTextoMental
+  color?: string
+  ancho?: number
+  alto?: number
+  /** Nota al margen: una cita, ejemplo o referencia corta pegada a ESTE nodo
+   * sin que haga falta crear otro nodo + conexión para algo tan chico (ej.
+   * "(ej: art. 494 N°14 CP)" al lado de un concepto, como en un apunte de
+   * mano real). Se muestra siempre visible, chica, junto al nodo. */
+  nota?: string
+}
+
+export interface ConexionMapaMental {
+  id: string
+  desde: string
+  hasta: string
+  /** De qué lado del nodo ORIGEN sale la línea ('top' | 'right' | 'bottom' |
+   * 'left') — sin esto, todas las conexiones salían desde abajo/entraban
+   * por arriba sin importar dónde quedara el otro nodo, lo que además hacía
+   * que la curva se viera torcida cuando el destino quedaba al costado.
+   * Opcional: una conexión vieja sin este campo cae al comportamiento
+   * anterior (ver defaults en MapasMentalesView.tsx). */
+  desdeHandle?: string
+  /** Mismo criterio que desdeHandle, pero para el lado del nodo DESTINO. */
+  hastaHandle?: string
+  etiqueta?: string
+}
+
+export interface MapaMental {
+  id: string
+  titulo: string
+  nodos: NodoMapaMental[]
+  conexiones: ConexionMapaMental[]
+  fechaCreacion: number
+  fechaModificacion: number
+}
+
 // ============ COLECCIONES (fichas de estudio por tema) ============
 
 /** Nivel de repaso que el propio usuario le asigna a un artículo dentro de
@@ -213,6 +273,15 @@ export interface ArticuloColeccion {
   posicion?: { x: number; y: number }
   /** EXPERIMENTAL: función jurídica asignada libremente por el usuario. */
   funcion?: FuncionJuridica
+  /** Repetición espaciada (Leitner, 5 cajas — ver registrarRepaso en
+   * useStore.ts): caja actual del artículo. Sin valor = nunca repasado
+   * todavía, se trata como caja 1 (repasar cuanto antes). No tiene relación
+   * con `estado`, que sigue siendo la autoevaluación manual de siempre —
+   * esto es la programación automática de CUÁNDO te toca repasarlo. */
+  caja?: number
+  /** Fecha (epoch ms) desde la que este artículo vuelve a estar "para hoy"
+   * en el repaso. Sin valor = para hoy (nunca se calendarizó). */
+  proximoRepaso?: number
 }
 
 /** EXPERIMENTAL: modo de visualización de las fichas dentro de una colección. */
@@ -277,6 +346,24 @@ export interface Coleccion {
   conexiones?: ConexionColeccion[]
   /** EXPERIMENTAL (rama experimento-visualizacion): agrupaciones visuales
    * creadas en modo pizarra. No existe en main. */
+  grupos?: GrupoColeccion[]
+  /** Id de un Mapa mental sobre el mismo tema, para poder saltar de uno a
+   * otro sin tener que buscarlo — ej. la Colección "Recurso de protección"
+   * junto con el Mapa mental "Recurso de Protección — Cómo redactarlo". Un
+   * solo lado guarda el vínculo (acá); Mapas mentales solo lo consulta,
+   * para no tener que mantener sincronizados dos punteros. */
+  mapaMentalVinculado?: string
+}
+
+/** Lo mínimo que hace falta para reconstruir una Colección al importarla
+ * desde un link o archivo compartido — SIN el texto de cada artículo (eso
+ * ya lo tiene el propio código indexado localmente en quien la recibe, no
+ * hace falta duplicarlo) y sin id/fechas propias (se generan de nuevo al
+ * importar, ver importarColeccion en useStore.ts). Ver services/compartirColeccion.ts. */
+export interface ColeccionCompartida {
+  titulo: string
+  articulos: ArticuloColeccion[]
+  conexiones?: ConexionColeccion[]
   grupos?: GrupoColeccion[]
 }
 

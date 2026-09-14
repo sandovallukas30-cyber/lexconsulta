@@ -30,10 +30,12 @@ import type {
   RecordAhorcado,
   Coleccion,
   ArticuloColeccion,
+  ColeccionCompartida,
   EstadoRepaso,
   TipoRelacion,
   RefArticuloColeccion,
   FuncionJuridica,
+  MapaMental,
   TemaLectura,
 } from '../types'
 
@@ -46,6 +48,9 @@ interface AppState {
   favoritos: Favorito[]
   canvases: Canvas[]
   canvasActivoId: string | null
+  mapasMentales: MapaMental[]
+  /** No persistido — mismo patrón que canvasActivoId/coleccionActivaId. */
+  mapaMentalActivoId: string | null
   colecciones: Coleccion[]
   coleccionActivaId: string | null
   /** Subrayados de texto dentro de un artículo (Explorador y fichas de
@@ -66,6 +71,13 @@ interface AppState {
   consultaActivaId: string | null
   codigoExploradorActivo: CodigoActivo['tipo'] | null
   codigoMapaActivo: CodigoActivo['tipo'] | null
+  /** Artículo específico a seleccionar la próxima vez que Explorador monte
+   * o reciba esto (lo consume y lo vuelve a null de inmediato). Necesario
+   * para navegar a una referencia detectada en el texto ("ver artículo
+   * 1698") desde CUALQUIER vista, no solo desde dentro del propio
+   * Explorador — Colecciones no tiene forma de tocar el estado interno
+   * (seleccionadoId es local a ExploradorInterno). */
+  articuloExploradorPendiente: string | null
 
   setPerfil: (perfil: PerfilUsuario) => void
   setVistaActiva: (vista: VistaId) => void
@@ -90,6 +102,11 @@ interface AppState {
   actualizarCanvas: (id: string, cambios: Partial<Canvas>) => void
   eliminarCanvas: (id: string) => void
   setCanvasActivo: (id: string | null) => void
+  crearMapaMental: (titulo: string) => string
+  renombrarMapaMental: (id: string, titulo: string) => void
+  actualizarMapaMental: (id: string, cambios: Partial<MapaMental>) => void
+  eliminarMapaMental: (id: string) => void
+  setMapaMentalActivo: (id: string | null) => void
   crearColeccion: (titulo: string) => string
   renombrarColeccion: (id: string, titulo: string) => void
   eliminarColeccion: (id: string) => void
@@ -101,6 +118,22 @@ interface AppState {
   quitarSubrayado: (codigo: CodigoActivo['tipo'], articulo: string, frase: string) => void
   marcarEstadoArticulo: (id: string, ref: { codigo: CodigoActivo['tipo']; articulo: string }, estado: EstadoRepaso) => void
   guardarNotaArticulo: (id: string, ref: { codigo: CodigoActivo['tipo']; articulo: string }, nota: string) => void
+  /** Repetición espaciada (Leitner de 5 cajas) para un artículo de una
+   * colección: "sabia" sube una caja (y empuja proximoRepaso más lejos),
+   * "no_sabia" vuelve a la caja 1 (repasar mañana). Independiente de
+   * `estado` (esa sigue siendo la autoevaluación manual de siempre). */
+  registrarRepaso: (
+    id: string,
+    ref: { codigo: CodigoActivo['tipo']; articulo: string },
+    resultado: 'sabia' | 'no_sabia'
+  ) => void
+  /** Crea una Colección nueva a partir de un link/archivo compartido (ver
+   * services/compartirColeccion.ts) — id y fechas propias, para que nunca
+   * choque con una colección que el usuario ya tenía. Devuelve el id nuevo. */
+  importarColeccion: (compartida: ColeccionCompartida) => string
+  /** Vincula (o, con null, desvincula) una Colección con un Mapa mental
+   * sobre el mismo tema — ver Coleccion.mapaMentalVinculado. */
+  vincularMapaMental: (coleccionId: string, mapaMentalId: string | null) => void
   /** EXPERIMENTAL (rama experimento-visualizacion): no existe en main. */
   moverArticuloPosicionLibre: (id: string, ref: { codigo: CodigoActivo['tipo']; articulo: string }, posicion: { x: number; y: number }) => void
   crearConexionColeccion: (id: string, desde: RefArticuloColeccion, hasta: RefArticuloColeccion, tipo: TipoRelacion) => void
@@ -114,6 +147,11 @@ interface AppState {
   toggleSidebar: () => void
   toggleModernizar: () => void
   setCodigoExplorador: (tipo: CodigoActivo['tipo'] | null) => void
+  /** Cambia a la vista Explorador, con el código y artículo indicados ya
+   * seleccionados — el "ir a" detrás de una referencia detectada en el
+   * texto de otro artículo. */
+  abrirArticuloEnExplorador: (codigo: CodigoActivo['tipo'], articulo: string) => void
+  limpiarArticuloExploradorPendiente: () => void
   setCodigoMapa: (tipo: CodigoActivo['tipo'] | null) => void
   abrirModalPerfil: () => void
   cerrarModalPerfil: () => void
@@ -182,6 +220,7 @@ const codigosIniciales: CodigoActivo[] = [
   { tipo: 'rpa', nombre: 'Ley 20.084 - Responsabilidad Penal Adolescente', nombreCorto: 'Resp. Penal Adolescente', descripcion: 'Sistema especial de responsabilidad penal para adolescentes mayores de 14 y menores de 18 años', categoria: 'especiales', activo: true, cargado: true },
   { tipo: 'pdc', nombre: 'Pacto Internacional de Derechos Civiles y Políticos', nombreCorto: 'Pacto Civiles y Políticos', descripcion: 'Tratado internacional de DDHH ratificado por Chile; en virtud del Art. 5° inc. 2° de la Constitución integra el bloque de constitucionalidad', categoria: 'tratados', activo: true, cargado: true },
   { tipo: 'pde', nombre: 'Pacto Internacional de Derechos Económicos, Sociales y Culturales', nombreCorto: 'Pacto DESC', descripcion: 'Tratado internacional de DDHH (PIDESC) ratificado por Chile; reconoce derechos al trabajo, salud, educación, alimentación, vivienda y cultura', categoria: 'tratados', activo: true, cargado: true },
+  { tipo: 'aap', nombre: 'Auto Acordado sobre Tramitación del Recurso de Protección', nombreCorto: 'Auto Ac. Protección', descripcion: 'Corte competente, plazo, admisibilidad, informe, prueba, fallo y apelación del recurso de protección (Acta 94-2015 de la Corte Suprema)', categoria: 'procedimentales', activo: true, cargado: true },
 ]
 
 export const useStore = create<AppState>()(
@@ -195,6 +234,8 @@ export const useStore = create<AppState>()(
       favoritos: [],
       canvases: [],
       canvasActivoId: null,
+      mapasMentales: [],
+      mapaMentalActivoId: null,
       colecciones: [],
       subrayados: {},
       coleccionActivaId: null,
@@ -212,6 +253,7 @@ export const useStore = create<AppState>()(
       temaColor: 'esmeralda' as TemaColorId,
       consultaActivaId: null,
       codigoExploradorActivo: null,
+      articuloExploradorPendiente: null,
       codigoMapaActivo: null,
       omnibarAbierto: false,
       rightSidebarAbierto: false,
@@ -307,6 +349,41 @@ export const useStore = create<AppState>()(
           canvasActivoId: s.canvasActivoId === id ? null : s.canvasActivoId,
         })),
       setCanvasActivo: (id) => set({ canvasActivoId: id }),
+      crearMapaMental: (titulo) => {
+        const id = crypto.randomUUID()
+        const ahora = Date.now()
+        // La fecha va PEGADA al título (no solo en fechaCreacion) porque la
+        // lista de mapas se identifica por título a simple vista — "Nuevo
+        // mapa mental" repetido, o la misma plantilla usada varias veces,
+        // se volvía indistinguible sin abrir cada uno.
+        const fecha = new Date(ahora).toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' })
+        const tituloConFecha = `${titulo} — ${fecha}`
+        set((s) => ({
+          mapasMentales: [
+            { id, titulo: tituloConFecha, nodos: [], conexiones: [], fechaCreacion: ahora, fechaModificacion: ahora },
+            ...s.mapasMentales,
+          ],
+        }))
+        return id
+      },
+      renombrarMapaMental: (id, titulo) =>
+        set((s) => ({
+          mapasMentales: s.mapasMentales.map((m) =>
+            m.id === id ? { ...m, titulo, fechaModificacion: Date.now() } : m
+          ),
+        })),
+      actualizarMapaMental: (id, cambios) =>
+        set((s) => ({
+          mapasMentales: s.mapasMentales.map((m) =>
+            m.id === id ? { ...m, ...cambios, fechaModificacion: Date.now() } : m
+          ),
+        })),
+      eliminarMapaMental: (id) =>
+        set((s) => ({
+          mapasMentales: s.mapasMentales.filter((m) => m.id !== id),
+          mapaMentalActivoId: s.mapaMentalActivoId === id ? null : s.mapaMentalActivoId,
+        })),
+      setMapaMentalActivo: (id) => set({ mapaMentalActivoId: id }),
       crearColeccion: (titulo) => {
         const id = crypto.randomUUID()
         const ahora = Date.now()
@@ -423,6 +500,55 @@ export const useStore = create<AppState>()(
               : c
           ),
         })),
+      registrarRepaso: (id, ref, resultado) =>
+        set((s) => ({
+          colecciones: s.colecciones.map((c) =>
+            c.id === id
+              ? {
+                  ...c,
+                  articulos: c.articulos.map((a) => {
+                    if (a.codigo !== ref.codigo || a.articulo !== ref.articulo) return a
+                    // Leitner de 5 cajas: "me la sabía" sube una caja (y el
+                    // próximo repaso se aleja más); "no me la sabía" vuelve
+                    // siempre a la caja 1 — no hay "castigo" mayor a eso,
+                    // volver a ver el artículo pronto ya es la corrección.
+                    const cajaActual = a.caja ?? 1
+                    const cajaNueva = resultado === 'sabia' ? Math.min(5, cajaActual + 1) : 1
+                    const DIAS_POR_CAJA: Record<number, number> = { 1: 1, 2: 3, 3: 7, 4: 14, 5: 30 }
+                    const dias = DIAS_POR_CAJA[cajaNueva] ?? 1
+                    return { ...a, caja: cajaNueva, proximoRepaso: Date.now() + dias * 24 * 60 * 60 * 1000 }
+                  }),
+                }
+              : c
+          ),
+        })),
+      importarColeccion: (compartida) => {
+        const id = crypto.randomUUID()
+        const ahora = Date.now()
+        set((s) => ({
+          colecciones: [
+            {
+              id,
+              titulo: compartida.titulo,
+              articulos: compartida.articulos,
+              conexiones: compartida.conexiones,
+              grupos: compartida.grupos,
+              fechaCreacion: ahora,
+              fechaModificacion: ahora,
+            },
+            ...s.colecciones,
+          ],
+        }))
+        return id
+      },
+      vincularMapaMental: (coleccionId, mapaMentalId) =>
+        set((s) => ({
+          colecciones: s.colecciones.map((c) =>
+            c.id === coleccionId
+              ? { ...c, mapaMentalVinculado: mapaMentalId ?? undefined, fechaModificacion: Date.now() }
+              : c
+          ),
+        })),
       moverArticuloPosicionLibre: (id, ref, posicion) =>
         set((s) => ({
           colecciones: s.colecciones.map((c) =>
@@ -502,6 +628,9 @@ export const useStore = create<AppState>()(
       toggleSidebar: () => set((s) => ({ sidebarColapsado: !s.sidebarColapsado })),
       toggleModernizar: () => set((s) => ({ modernizarLenguaje: !s.modernizarLenguaje })),
       setCodigoExplorador: (tipo) => set({ codigoExploradorActivo: tipo }),
+      abrirArticuloEnExplorador: (codigo, articulo) =>
+        set({ vistaActiva: 'explorador', codigoExploradorActivo: codigo, articuloExploradorPendiente: articulo }),
+      limpiarArticuloExploradorPendiente: () => set({ articuloExploradorPendiente: null }),
       setCodigoMapa: (tipo) => set({ codigoMapaActivo: tipo }),
       abrirModalPerfil: () => set({ modalPerfilAbierto: true }),
       cerrarModalPerfil: () => set({ modalPerfilAbierto: false }),
@@ -697,6 +826,7 @@ export const useStore = create<AppState>()(
         historial: s.historial,
         favoritos: s.favoritos,
         canvases: s.canvases,
+        mapasMentales: s.mapasMentales,
         colecciones: s.colecciones,
         subrayados: s.subrayados,
         modoOscuro: s.modoOscuro,

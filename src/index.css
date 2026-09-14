@@ -1,4 +1,7 @@
 @import url('https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css');
+/* Solo para Mapas mentales (.fuente-mapa-mental) — el resto de la app sigue
+   con la fuente del sistema, esto no es un cambio de tipografía global. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 /* === Paleta de acento (tema esmeralda por defecto) ===
@@ -22,15 +25,50 @@
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; width: 100%; overflow: hidden; }
 
-/* Exportar Colección a PDF (Ctrl+P / "Guardar como PDF" del navegador).
-   La vista imprimible se monta fuera de #root vía createPortal — evita tener
-   que marcar cada capa de la app (Sidebar, Topbar, modales...) como "no
-   imprimir" una por una; alcanza con ocultar #root entero al imprimir y
-   mostrar solo el portal. En pantalla el portal no se ve nunca. */
-.imprimir-coleccion { display: none; }
+/* Mapas mentales: Inter en vez de la fuente del sistema — misma tipografía
+   que la maqueta de referencia que armó el usuario, más limpia/legible en
+   los nodos que el sans-serif por defecto. Con clase propia (no en :root)
+   para no cambiar la tipografía del resto de la app. */
+.fuente-mapa-mental, .fuente-mapa-mental input, .fuente-mapa-mental textarea {
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Exportar a PDF (Ctrl+P / "Guardar como PDF" del navegador). Las tres
+   vistas imprimibles de la app (Colecciones, Explorador de códigos y Mapas
+   mentales) son vistas de texto/SVG aparte, montadas FUERA de #root
+   (createPortal directo a document.body) — ninguna imprime el lienzo o la
+   interfaz interactiva tal cual. Como ninguna vive adentro de #root,
+   alcanza con sacar #root entero del flujo (display:none) y mostrar la que
+   corresponda; no hace falta ni :has() ni visibility ni distinguir casos.
+   (Mapas mentales SÍ vivía dentro de #root en una versión anterior —
+   imprimía el propio canvas de React Flow con position:fixed +
+   visibility — pero eso podía salir como una hoja en blanco sin ningún
+   nodo, de forma intermitente y sin error visible: React Flow posiciona
+   todo por CSS transform y depende de que ResizeObserver haya "medido"
+   cada nodo, ninguna de las dos cosas garantizada en el momento exacto en
+   que el navegador captura el contenido para imprimir. Ver
+   VistaImprimibleMapaMental en MapasMentalesView.tsx.)
+   `position:fixed;inset:0` NUNCA debe usarse acá — encierra el contenido
+   en el tamaño de UNA sola hoja y no repagina, así que todo lo que no
+   entraba en esa primera hoja quedaba cortado, no en una segunda página.
+   Colecciones y Explorador tienen que poder fluir en el documento como
+   cualquier texto largo, para que el navegador los reparta solos en tantas
+   hojas como haga falta (por eso cada artículo tiene `break-inside:
+   avoid` — evita partirlo a la mitad entre páginas, pero no le pone techo
+   a cuántas páginas puede usar la lista). Para que de verdad puedan fluir
+   hace falta ADEMÁS anular el `overflow: hidden; height: 100%` de
+   html/body de acá abajo (es lo que usa el resto de la app para que cada
+   vista maneje su propio scroll interno, sin scroll en body) — sin esto
+   quedaban cortados al tamaño de una pantalla igual, aunque ya no llevaran
+   position:fixed: era el bug real detrás de "solo aparece hasta el
+   artículo/numeral tal". Mapas mentales en cambio se encoge a mano (ver
+   VistaImprimibleMapaMental) para entrar en una sola hoja siempre, así que
+   no necesita ni le molesta este cambio. */
+.imprimir-coleccion, .imprimir-codigo, .imprimir-mapa-mental-svg { display: none; }
 @media print {
+  html, body { height: auto; overflow: visible; }
   #root { display: none; }
-  .imprimir-coleccion { display: block; }
+  .imprimir-coleccion, .imprimir-codigo, .imprimir-mapa-mental-svg { display: block; width: 100%; }
 }
 
 /* Scrollbar custom — claro */
