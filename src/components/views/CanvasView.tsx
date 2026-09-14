@@ -24,7 +24,8 @@ import '@xyflow/react/dist/style.css'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { generarConcepto, generarRelacion, type ResultadoConcepto } from '../../services/canvas'
-import type { Canvas, NodoCanvas, ArticuloRelevante } from '../../types'
+import { cargarCodigo } from '../../services/codigos'
+import type { Canvas, NodoCanvas, ArticuloRelevante, CodigoActivo, CodigoTipo } from '../../types'
 
 const VERDE = 'var(--accent-base)'
 const COLOR_NEUTRO = '#6b7280'
@@ -710,6 +711,17 @@ function NodoBase(props: NodeProps<NodoFlow>) {
   const [mostrandoProfundizar, setMostrandoProfundizar] = useState(false)
   const refTit = useRef<HTMLInputElement>(null)
   const refCont = useRef<HTMLTextAreaElement>(null)
+  const codigosStore = useStore((s) => s.codigos)
+
+  // Texto completo de cada artículo del nodo "artículos relevantes" (índice
+  // -> estado), pedido bajo demanda con el botón de "ver completo": el nodo
+  // solo trae número + código + una relevancia breve generada por la IA, no
+  // el texto oficial. Se guarda por índice (no por número de artículo) para
+  // no chocar si dos entradas citan el mismo artículo de códigos distintos.
+  const [articulosAbiertos, setArticulosAbiertos] = useState<Set<number>>(new Set())
+  const [textoArticulos, setTextoArticulos] = useState<
+    Record<number, { cargando: boolean; texto: string | null; error?: string }>
+  >({})
 
   const color =
     data.colorOverride ?? (data.tipo === 'libre' ? data.colorHeredado ?? COLOR_NEUTRO : tipoColor[data.tipo])
@@ -721,6 +733,51 @@ function NodoBase(props: NodeProps<NodoFlow>) {
   useEffect(() => {
     if (editandoContenido) refCont.current?.focus()
   }, [editandoContenido])
+
+  const cargarTextoArticulo = async (idx: number, art: ArticuloRelevante) => {
+    setTextoArticulos((prev) => ({ ...prev, [idx]: { cargando: true, texto: null } }))
+    const tipo = art.codigo ? inferirTipoCodigo(art.codigo, codigosStore) : null
+    if (!tipo) {
+      setTextoArticulos((prev) => ({
+        ...prev,
+        [idx]: { cargando: false, texto: null, error: 'No se pudo identificar a qué código pertenece.' },
+      }))
+      return
+    }
+    try {
+      const codigoData = await cargarCodigo(tipo)
+      const encontrado = codigoData?.articulos.find((a) => a.a === art.numero)
+      if (!encontrado) {
+        setTextoArticulos((prev) => ({
+          ...prev,
+          [idx]: { cargando: false, texto: null, error: 'No se encontró este artículo en el código.' },
+        }))
+        return
+      }
+      setTextoArticulos((prev) => ({ ...prev, [idx]: { cargando: false, texto: encontrado.t } }))
+    } catch {
+      setTextoArticulos((prev) => ({
+        ...prev,
+        [idx]: { cargando: false, texto: null, error: 'No se pudo cargar el código.' },
+      }))
+    }
+  }
+
+  const toggleArticuloCompleto = (idx: number, art: ArticuloRelevante) => {
+    setArticulosAbiertos((prev) => {
+      const next = new Set(prev)
+      if (next.has(idx)) {
+        next.delete(idx)
+      } else {
+        next.add(idx)
+        // Recién la primera vez que se abre (o si la carga anterior falló)
+        // pedimos el texto -- cerrar y volver a abrir no repite la carga.
+        const previo = textoArticulos[idx]
+        if (!previo || previo.error) void cargarTextoArticulo(idx, art)
+      }
+      return next
+    })
+  }
 
   const tieneArticulos = data.tipo === 'articulos' && data.articulos && data.articulos.length > 0
 
@@ -946,25 +1003,56 @@ function NodoBase(props: NodeProps<NodoFlow>) {
           <div className="p-3 flex-1 overflow-y-auto min-h-0">
             {tieneArticulos ? (
               <ul className="space-y-2">
-                {data.articulos!.map((art, i) => (
-                  <li key={i} className="text-[12px] leading-snug">
-                    <div className="flex items-baseline gap-1.5 flex-wrap">
-                      <span className="font-mono font-semibold" style={{ color }}>
-                        {art.numero}
-                      </span>
-                      {art.codigo && (
-                        <span
-                          className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
-                            modoOscuro ? 'bg-zinc-700 text-zinc-300' : 'bg-zinc-100 text-zinc-600'
+                {data.articulos!.map((art, i) => {
+                  const abierto = articulosAbiertos.has(i)
+                  const estado = textoArticulos[i]
+                  return (
+                    <li key={i} className="text-[12px] leading-snug">
+                      <div className="flex items-baseline gap-1.5 flex-wrap">
+                        <span className="font-mono font-semibold" style={{ color }}>
+                          {art.numero}
+                        </span>
+                        {art.codigo && (
+                          <span
+                            className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                              modoOscuro ? 'bg-zinc-700 text-zinc-300' : 'bg-zinc-100 text-zinc-600'
+                            }`}
+                          >
+                            {art.codigo}
+                          </span>
+                        )}
+                        <button
+                          onClick={() => toggleArticuloCompleto(i, art)}
+                          title={abierto ? 'Ocultar texto completo' : 'Ver texto completo del artículo'}
+                          className={`nodrag ml-auto flex-shrink-0 w-5 h-5 rounded flex items-center justify-center transition-colors ${
+                            modoOscuro
+                              ? 'text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700'
+                              : 'text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100'
                           }`}
                         >
-                          {art.codigo}
-                        </span>
+                          <i className={`ti ${abierto ? 'ti-chevron-up' : 'ti-file-text'} text-xs`} />
+                        </button>
+                      </div>
+                      <span className={modoOscuro ? 'text-zinc-200' : 'text-zinc-800'}>{art.relevancia}</span>
+                      {abierto && (
+                        <div
+                          className={`mt-1.5 pt-1.5 border-t text-[11px] leading-relaxed whitespace-pre-line ${
+                            modoOscuro ? 'border-zinc-700 text-zinc-300' : 'border-zinc-200 text-zinc-700'
+                          }`}
+                          style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
+                        >
+                          {!estado || estado.cargando ? (
+                            <span className="italic opacity-70">Cargando texto…</span>
+                          ) : estado.error ? (
+                            <span className="italic opacity-70">{estado.error}</span>
+                          ) : (
+                            estado.texto
+                          )}
+                        </div>
                       )}
-                    </div>
-                    <span className={modoOscuro ? 'text-zinc-200' : 'text-zinc-800'}>{art.relevancia}</span>
-                  </li>
-                ))}
+                    </li>
+                  )
+                })}
               </ul>
             ) : editandoContenido ? (
               <textarea
@@ -1162,6 +1250,39 @@ function EdgeEditable(props: EdgeProps<EdgeWithData>) {
 const edgeTypes = { editable: EdgeEditable }
 
 // ============= HELPERS =============
+
+/** Minúsculas, sin tildes, sin puntuación -- para comparar nombres de código
+ * sin que un punto ("20.000" vs "20 000") o una mayúscula rompan el match. */
+function normalizarNombreCodigo(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
+/** El nodo "articulos relevantes" solo trae el NOMBRE del código como texto
+ * libre generado por la IA (ej. "Código Civil", "Ley 20.000"), no el tipo
+ * interno ('civ', 'dro', ...) que hace falta para cargar el JSON y buscar el
+ * artículo. Lo inferimos comparando contra el nombre/nombreCorto de los
+ * códigos activos: primero coincidencia exacta, y si no, que uno contenga al
+ * otro (cubre variantes como la IA citando solo "Ley 20.000" cuando el
+ * nombre completo es "Ley 20.000 - Sanciona el Tráfico..."). */
+function inferirTipoCodigo(nombreLibre: string, codigos: CodigoActivo[]): CodigoTipo | null {
+  const q = normalizarNombreCodigo(nombreLibre)
+  if (!q) return null
+  const exacto = codigos.find(
+    (c) => normalizarNombreCodigo(c.nombre) === q || normalizarNombreCodigo(c.nombreCorto) === q
+  )
+  if (exacto) return exacto.tipo
+  const parcial = codigos.find((c) => {
+    const nombre = normalizarNombreCodigo(c.nombre)
+    const corto = normalizarNombreCodigo(c.nombreCorto)
+    return nombre.includes(q) || q.includes(nombre) || corto.includes(q) || q.includes(corto)
+  })
+  return parcial?.tipo ?? null
+}
 
 interface BloqueConcepto {
   nodos: NodoCanvas[]
