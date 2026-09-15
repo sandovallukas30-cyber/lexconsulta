@@ -21,8 +21,45 @@
 // año específico (plebiscitos, censos, etc.) -- ninguno de los dos es
 // predecible de antemano sin una fuente oficial año a año.
 
-export type UnidadPlazo = 'dias' | 'meses' | 'anios'
+export type UnidadPlazo = 'horas' | 'dias' | 'meses' | 'anios'
 export type TipoConteo = 'corridos' | 'habiles'
+
+// ------------------------------------------------------------------
+// Regímenes de cómputo por norma (informe "Plazos en la legislación
+// chilena indexada en Prima Lex"): "hábil" no significa lo mismo en todos
+// los cuerpos legales, y un motor de cómputo no puede usar una sola tabla
+// de feriados para todos ellos. Ver REGIMENES_INFO para el detalle de cada
+// uno y qué cuerpos legales lo usan.
+// ------------------------------------------------------------------
+export type RegimenComputo = 'civil' | 'judicial' | 'penal' | 'administrativo' | 'util'
+
+export const REGIMENES_INFO: Record<RegimenComputo, { nombre: string; regla: string; cuerpos: string }> = {
+  civil: {
+    nombre: 'Civil (corridos)',
+    regla: 'Cuenta todos los días, incluidos feriados, salvo que la norma diga expresamente "días útiles".',
+    cuerpos: 'Código Civil (Art. 50) y, por defecto, los plazos sustantivos que no fijan una regla propia.',
+  },
+  judicial: {
+    nombre: 'Judicial (hábil)',
+    regla: 'Días hábiles excluyendo domingo y festivos — la definición histórica, que no excluye el sábado.',
+    cuerpos: 'Código de Procedimiento Civil, Código Orgánico de Tribunales, procedimientos judiciales en general.',
+  },
+  penal: {
+    nombre: 'Penal (sin inhábiles)',
+    regla: 'No existen días inhábiles: se cuenta todo, pero si el plazo vence justo en un feriado, el vencimiento se corre al día siguiente que no sea feriado.',
+    cuerpos: 'Código Procesal Penal (Art. 14) y la Ley de Responsabilidad Penal Adolescente.',
+  },
+  administrativo: {
+    nombre: 'Administrativo (hábil)',
+    regla: 'Días hábiles excluyendo sábado, domingo y festivos.',
+    cuerpos: 'Ley 19.880, Código Tributario (Art. 10), Código Sanitario y, en general, actuaciones ante órganos de la Administración.',
+  },
+  util: {
+    nombre: 'Útil',
+    regla: 'Un cuarto vocabulario, textualmente distinto de "hábil", aunque hoy funcionalmente equivalente a él.',
+    cuerpos: 'Art. 459 del Código de Procedimiento Civil (oposición en el juicio ejecutivo).',
+  },
+}
 
 export interface FeriadoInfo {
   fecha: Date
@@ -115,6 +152,12 @@ function sumarMeses(fecha: Date, n: number): Date {
   return resultado
 }
 
+function sumarHoras(fecha: Date, n: number): Date {
+  const r = new Date(fecha)
+  r.setHours(r.getHours() + n)
+  return r
+}
+
 export function calcularPlazo(params: {
   fechaInicio: Date
   cantidad: number
@@ -124,6 +167,9 @@ export function calcularPlazo(params: {
 }): ResultadoPlazo {
   const { fechaInicio, cantidad, unidad, tipo, excluirSabados } = params
 
+  // Los plazos de horas corren de forma continua, sin pausar de noche ni en
+  // inhábiles (Art. 15 CPP) -- no hay "hábil/corrido" que aplicar aquí.
+  if (unidad === 'horas') return { fechaFin: sumarHoras(fechaInicio, cantidad), diasSaltados: [] }
   if (unidad === 'meses') return { fechaFin: sumarMeses(fechaInicio, cantidad), diasSaltados: [] }
   if (unidad === 'anios') return { fechaFin: sumarMeses(fechaInicio, cantidad * 12), diasSaltados: [] }
 
@@ -153,4 +199,56 @@ export function calcularPlazo(params: {
     if (cursor > limite) break
   }
   return { fechaFin: cursor, diasSaltados }
+}
+
+/** Solo un día FERIADO detiene el cómputo penal (Art. 14 CPP: "no se
+ *  suspenderán los plazos por la interposición de días feriados" no exime
+ *  el domingo de contarse, solo el feriado propiamente tal) -- por eso NO
+ *  reutiliza motivoNoHabil (que trata domingo como inhábil en todos los
+ *  demás regímenes). */
+function esFeriado(fecha: Date): boolean {
+  return nombreFeriado(fecha) !== null
+}
+
+/** Calcula un plazo a partir del régimen de cómputo de una norma concreta
+ *  (ver RegimenComputo / REGIMENES_INFO), no de un tipo de conteo genérico
+ *  "hábil/corrido" que el usuario tenga que adivinar. Cubre los cinco
+ *  regímenes catalogados en el informe de plazos: civil, judicial, penal,
+ *  administrativo y útil. */
+export function calcularPlazoPorRegimen(params: {
+  fechaInicio: Date
+  cantidad: number
+  unidad: UnidadPlazo
+  regimen: RegimenComputo
+}): ResultadoPlazo {
+  const { fechaInicio, cantidad, unidad, regimen } = params
+
+  if (unidad === 'horas') return { fechaFin: sumarHoras(fechaInicio, cantidad), diasSaltados: [] }
+
+  if (regimen === 'judicial' || regimen === 'util') {
+    return calcularPlazo({ fechaInicio, cantidad, unidad, tipo: unidad === 'dias' ? 'habiles' : 'corridos', excluirSabados: false })
+  }
+  if (regimen === 'administrativo') {
+    const base = calcularPlazo({ fechaInicio, cantidad, unidad, tipo: unidad === 'dias' ? 'habiles' : 'corridos', excluirSabados: true })
+    // Días hábiles ya cae en día hábil por construcción; solo los plazos de
+    // mes/año necesitan la prórroga expresa del Art. 25 Ley 19.880 / Art. 10
+    // CT si el vencimiento cae en inhábil.
+    if (unidad === 'dias') return base
+    let fechaFin = base.fechaFin
+    while (motivoNoHabil(fechaFin, true)) fechaFin = sumarDias(fechaFin, 1)
+    return { fechaFin, diasSaltados: [] }
+  }
+  if (regimen === 'penal') {
+    // No hay días inhábiles (Art. 14 CPP): se cuentan TODOS los días como
+    // corridos, y solo al final, si el vencimiento cae en un feriado (no en
+    // domingo, que sí se cuenta y sí puede ser el día de vencimiento), se
+    // corre al día siguiente que no sea feriado.
+    const base = calcularPlazo({ fechaInicio, cantidad, unidad, tipo: 'corridos', excluirSabados: false })
+    let fechaFin = base.fechaFin
+    while (esFeriado(fechaFin)) fechaFin = sumarDias(fechaFin, 1)
+    return { fechaFin, diasSaltados: [] }
+  }
+  // regimen === 'civil': la regla por defecto del Código Civil, sin prórroga
+  // de vencimiento (el Art. 48 no la contempla para plazos de días).
+  return calcularPlazo({ fechaInicio, cantidad, unidad, tipo: 'corridos', excluirSabados: false })
 }
