@@ -324,11 +324,16 @@ export function CanvasView() {
             .map((n) => `${n.data.articulos?.[0]?.codigo ?? ''}::${n.data.articulos?.[0]?.numero ?? ''}`)
         )
 
-        const anchoOrigen = typeof nodoOrigen.style?.width === 'number' ? nodoOrigen.style.width : 280
-        const origenX = nodoOrigen.position.x + anchoOrigen + 90
+        // Abajo del nodo de origen, no a la derecha: en el layout de bloque
+        // que arma "Generar" (ver construirBloqueConcepto), "articulos" queda
+        // en el medio con "definición" a la izquierda y "caso didáctico" a la
+        // derecha -- crecer hacia la derecha chocaba justo con ese vecino.
+        // Debajo no tiene nada por defecto.
+        const altoOrigen = typeof nodoOrigen.style?.height === 'number' ? nodoOrigen.style.height : 240
+        const origenX = nodoOrigen.position.x
         const ALTO_ESTIMADO = 220
         const GAP = 30
-        let cursorY = nodoOrigen.position.y
+        let cursorY = nodoOrigen.position.y + altoOrigen + 60
 
         const nuevosNodos: NodoFlow[] = []
         const nuevasEdges: EdgeWithData[] = []
