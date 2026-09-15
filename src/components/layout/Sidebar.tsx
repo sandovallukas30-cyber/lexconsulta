@@ -12,17 +12,24 @@ interface ItemMenu {
   label: string
 }
 
-const items: ItemMenu[] = [
+// Separadas en dos grupos -- uso práctico/profesional primero (resolver algo
+// concreto: preguntar, diagnosticar una situación, calcular un plazo, ver lo
+// ya consultado) y herramientas de estudio después (Canvas en adelante). El
+// divisor fino entre ambas se dibuja aparte, no es un ItemMenu más.
+const itemsProfesionales: ItemMenu[] = [
   { id: 'consultar', icono: 'ti-messages', label: 'Consultar' },
   { id: 'situacion', icono: 'ti-list-numbers', label: 'Situación' },
+  { id: 'plazos', icono: 'ti-calendar-time', label: 'Plazos' },
+  { id: 'historial', icono: 'ti-history', label: 'Historial' },
+]
+
+const itemsAcademicos: ItemMenu[] = [
   { id: 'canvas', icono: 'ti-affiliate', label: 'Canvas' },
   { id: 'mapa', icono: 'ti-network', label: 'Mapa' },
   { id: 'explorador', icono: 'ti-book-2', label: 'Explorador' },
   { id: 'colecciones', icono: 'ti-stack-2', label: 'Colecciones' },
   { id: 'mapasmentales', icono: 'ti-hierarchy-2', label: 'Mapas mentales' },
   { id: 'practica', icono: 'ti-puzzle', label: 'Práctica' },
-  { id: 'plazos', icono: 'ti-calendar-time', label: 'Plazos' },
-  { id: 'historial', icono: 'ti-history', label: 'Historial' },
 ]
 
 const itemAdmin: ItemMenu = { id: 'admin', icono: 'ti-settings-2', label: 'Admin' }
@@ -57,7 +64,7 @@ export function Sidebar() {
 
   const activos = codigos.filter((c) => c.activo).length
   const total = codigos.length
-  const itemsVisibles = esAdmin(usuarioEmail) ? [...items, itemAdmin] : items
+  const grupoAcademico = esAdmin(usuarioEmail) ? [...itemsAcademicos, itemAdmin] : itemsAcademicos
 
   return (
     <>
@@ -118,50 +125,34 @@ export function Sidebar() {
           )}
         </div>
 
-        <nav className={`flex-1 py-4 space-y-0.5 overflow-y-auto ${colapsado ? 'px-2' : 'px-3'}`}>
-          {itemsVisibles.map((item) => {
-            const activo = vistaActiva === item.id
-            return (
-              <button
+        <nav className={`flex-1 py-4 overflow-y-auto ${colapsado ? 'px-2' : 'px-3'}`}>
+          <div className="space-y-0.5">
+            {itemsProfesionales.map((item) => (
+              <BotonNav
                 key={item.id}
+                item={item}
+                activo={vistaActiva === item.id}
+                colapsado={colapsado}
+                modoOscuro={modoOscuro}
                 onClick={() => setVistaActiva(item.id)}
-                title={colapsado ? item.label : undefined}
-                className={`w-full rounded-lg text-sm font-medium transition-colors text-left relative flex items-center ${
-                  colapsado ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2.5'
-                } ${
-                  activo
-                    ? modoOscuro
-                      ? 'bg-zinc-800 text-white'
-                      : 'bg-[var(--accent-50)] text-[var(--accent-900)]'
-                    : modoOscuro
-                    ? 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
-                    : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900'
-                }`}
-              >
-                {activo && (
-                  <motion.div
-                    layoutId="sidebar-active"
-                    className="absolute left-0 top-2 bottom-2 w-1 rounded-r"
-                    style={{ background: VERDE }}
-                  />
-                )}
-                <i className={`ti ${item.icono} text-xl flex-shrink-0`} />
-                <AnimatePresence initial={false}>
-                  {!colapsado && (
-                    <motion.span
-                      initial={{ opacity: 0, width: 0 }}
-                      animate={{ opacity: 1, width: 'auto' }}
-                      exit={{ opacity: 0, width: 0 }}
-                      transition={{ duration: 0.15 }}
-                      className="whitespace-nowrap overflow-hidden"
-                    >
-                      {item.label}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </button>
-            )
-          })}
+              />
+            ))}
+          </div>
+
+          <DivisorDifuminado modoOscuro={modoOscuro} />
+
+          <div className="space-y-0.5">
+            {grupoAcademico.map((item) => (
+              <BotonNav
+                key={item.id}
+                item={item}
+                activo={vistaActiva === item.id}
+                colapsado={colapsado}
+                modoOscuro={modoOscuro}
+                onClick={() => setVistaActiva(item.id)}
+              />
+            ))}
+          </div>
         </nav>
 
         <div className={`border-t ${colapsado ? 'p-2' : 'p-3'} ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
@@ -239,5 +230,78 @@ export function Sidebar() {
       <ModalCodigos abierto={modalCodigos} onCerrar={() => setModalCodigos(false)} />
       <ModalAcercaDe abierto={acercaAbierto} onCerrar={cerrarAcerca} pestanaInicial={acercaPestana} />
     </>
+  )
+}
+
+function BotonNav({
+  item,
+  activo,
+  colapsado,
+  modoOscuro,
+  onClick,
+}: {
+  item: ItemMenu
+  activo: boolean
+  colapsado: boolean
+  modoOscuro: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      title={colapsado ? item.label : undefined}
+      className={`w-full rounded-lg text-sm font-medium transition-colors text-left relative flex items-center ${
+        colapsado ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2.5'
+      } ${
+        activo
+          ? modoOscuro
+            ? 'bg-zinc-800 text-white'
+            : 'bg-[var(--accent-50)] text-[var(--accent-900)]'
+          : modoOscuro
+          ? 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
+          : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900'
+      }`}
+    >
+      {activo && (
+        <motion.div
+          layoutId="sidebar-active"
+          className="absolute left-0 top-2 bottom-2 w-1 rounded-r"
+          style={{ background: VERDE }}
+        />
+      )}
+      <i className={`ti ${item.icono} text-xl flex-shrink-0`} />
+      <AnimatePresence initial={false}>
+        {!colapsado && (
+          <motion.span
+            initial={{ opacity: 0, width: 0 }}
+            animate={{ opacity: 1, width: 'auto' }}
+            exit={{ opacity: 0, width: 0 }}
+            transition={{ duration: 0.15 }}
+            className="whitespace-nowrap overflow-hidden"
+          >
+            {item.label}
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </button>
+  )
+}
+
+/** Separa las funciones de uso práctico/profesional (arriba) de las de
+ * estudio (abajo): una línea fina que no toca las paredes del sidebar y se
+ * difumina en las puntas -- un `<hr>` normal se ve como un corte duro de
+ * pared a pared, esto en cambio lee como una pausa suave entre dos grupos,
+ * no como una frontera. El margen horizontal (mx-3 / mx-4) es a propósito
+ * menor que el ancho útil del nav para que nunca llegue a tocar los bordes. */
+function DivisorDifuminado({ modoOscuro }: { modoOscuro: boolean }) {
+  const color = modoOscuro ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.12)'
+  return (
+    <div
+      aria-hidden="true"
+      className="h-px my-3 mx-3"
+      style={{
+        background: `linear-gradient(to right, transparent, ${color} 25%, ${color} 75%, transparent)`,
+      }}
+    />
   )
 }
