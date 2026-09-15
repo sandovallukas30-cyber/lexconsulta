@@ -329,11 +329,18 @@ export function CanvasView() {
         // en el medio con "definición" a la izquierda y "caso didáctico" a la
         // derecha -- crecer hacia la derecha chocaba justo con ese vecino.
         // Debajo no tiene nada por defecto.
+        //
+        // En FILA horizontal, no en columna: apilados verticalmente quedan
+        // "desordenados" en cuanto un artículo es largo (el nodo se alarga y
+        // empuja al siguiente bien abajo), obligando a reacomodar todo a
+        // mano. En fila, cada nodo crece hacia abajo de forma independiente
+        // sin desplazar a los demás -- quedan alineados en la misma fila de
+        // entrada, listos para leer sin mover nada.
         const altoOrigen = typeof nodoOrigen.style?.height === 'number' ? nodoOrigen.style.height : 240
-        const origenX = nodoOrigen.position.x
-        const ALTO_ESTIMADO = 220
+        const origenY = nodoOrigen.position.y + altoOrigen + 60
+        const ANCHO_NUEVO = 300
         const GAP = 30
-        let cursorY = nodoOrigen.position.y + altoOrigen + 60
+        let cursorX = nodoOrigen.position.x
 
         const nuevosNodos: NodoFlow[] = []
         const nuevasEdges: EdgeWithData[] = []
@@ -360,7 +367,7 @@ export function CanvasView() {
           nuevosNodos.push({
             id: nuevoId,
             type: 'articulo-completo',
-            position: { x: origenX, y: cursorY },
+            position: { x: cursorX, y: origenY },
             data: {
               titulo: art.numero,
               contenido,
@@ -368,10 +375,10 @@ export function CanvasView() {
               tipo: 'articulo-completo',
               colapsado: false,
             },
-            style: { width: 300 },
+            style: { width: ANCHO_NUEVO },
           })
           nuevasEdges.push({ id: `earts-${id}-${nuevoId}`, source: id, target: nuevoId, type: 'editable' })
-          cursorY += ALTO_ESTIMADO + GAP
+          cursorX += ANCHO_NUEVO + GAP
         }
 
         if (nuevosNodos.length === 0) {
