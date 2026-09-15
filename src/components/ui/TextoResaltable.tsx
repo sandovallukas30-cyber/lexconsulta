@@ -42,7 +42,22 @@ export function ContenedorResaltable({
       setBoton(null)
       return
     }
-    const rect = sel.getRangeAt(0).getBoundingClientRect()
+    const range = sel.getRangeAt(0)
+    // Cada <p> se resalta buscando la frase como substring de SU PROPIO
+    // texto (ver ParrafoResaltado): si la selección cruza de un párrafo a
+    // otro (fácil de hacer sin querer arrastrando el mouse, con el
+    // interlineado amplio del modo lectura en particular), la frase
+    // completa no existe entera en ninguno de los dos párrafos por
+    // separado y el resaltado se guardaría sin llegar a verse nunca. Se
+    // descarta aquí, antes de ofrecer el botón, para no prometer algo que
+    // fallaría en silencio.
+    const nodoComun = range.commonAncestorContainer
+    const parrafoComun = (nodoComun instanceof Element ? nodoComun : nodoComun.parentElement)?.closest('p')
+    if (!parrafoComun) {
+      setBoton(null)
+      return
+    }
+    const rect = range.getBoundingClientRect()
     const rectContenedor = ref.current.getBoundingClientRect()
     // Debajo de la selección, no arriba: el menú nativo de iOS/Safari
     // (Copiar/Consultar/Traducir...) se posiciona arriba de la selección, así
@@ -111,12 +126,63 @@ export function ContenedorResaltable({
  * cambia, así que buscarla literal en el párrafo alcanza, sin tener que
  * recalcular offsets si el texto se parte en incisos para renderizarlo. Si
  * la misma frase aparece más de una vez en el artículo, se resalta en todas
- * las apariciones — aceptable para una primera versión.
+ * las apariciones.
  */
 type Segmento =
   | { tipo: 'texto'; texto: string }
   | { tipo: 'resaltado'; texto: string }
   | { tipo: 'referencia'; texto: string; referencia: ReferenciaArticulo }
+
+type Rango =
+  | { inicio: number; fin: number; tipo: 'resaltado' }
+  | { inicio: number; fin: number; tipo: 'referencia'; referencia: ReferenciaArticulo }
+
+/**
+ * Calcula los rangos (offsets sobre el `texto` ORIGINAL) de cada resaltado y
+ * referencia, en vez de ir cortando el texto frase por frase como antes.
+ * Cortar en cadena (buscar la frase 1, partir el texto, buscar la frase 2
+ * solo en los pedazos que quedaron...) fallaba en silencio apenas dos
+ * resaltados se solapaban entre sí o con una referencia: la frase completa
+ * dejaba de existir como substring en cualquiera de los pedazos ya
+ * recortados, aunque sí se hubiera guardado. Calculando todos los rangos
+ * primero contra el texto original, y recién después decidiendo cuáles se
+ * solapan, un resaltado siempre se encuentra sin importar el orden en que
+ * se haya creado o si cae encima de otro.
+ */
+function calcularRangos(texto: string, subrayados: string[], referencias: CoincidenciaReferencia[]): Rango[] {
+  const rangos: Rango[] = referencias.map((c) => ({ inicio: c.inicio, fin: c.fin, tipo: 'referencia', referencia: c.referencia }))
+  for (const frase of subrayados) {
+    if (!frase) continue
+    let desde = 0
+    let idx: number
+    while ((idx = texto.indexOf(frase, desde)) !== -1) {
+      rangos.push({ inicio: idx, fin: idx + frase.length, tipo: 'resaltado' })
+      desde = idx + frase.length
+    }
+  }
+  if (rangos.length === 0) return rangos
+
+  // Ante solape, gana el rango que empieza antes; en un empate, el más
+  // largo; y si aun así empatan, la referencia (es información estructural
+  // del texto, no una marca del usuario, así que se prefiere mantenerla
+  // clicable). El resto de los rangos que se solapen con el ganador se
+  // descarta: su texto queda igual visible, solo que dentro del segmento
+  // del ganador.
+  const ordenados = [...rangos].sort(
+    (a, b) =>
+      a.inicio - b.inicio ||
+      b.fin - b.inicio - (a.fin - a.inicio) ||
+      (a.tipo === b.tipo ? 0 : a.tipo === 'referencia' ? -1 : 1)
+  )
+  const elegidos: Rango[] = []
+  let cursor = 0
+  for (const r of ordenados) {
+    if (r.inicio < cursor) continue
+    elegidos.push(r)
+    cursor = r.fin
+  }
+  return elegidos
+}
 
 export function ParrafoResaltado({
   texto,
@@ -148,38 +214,17 @@ export function ParrafoResaltado({
     )
   }
 
-  // 1. Cortar primero por las referencias (offsets sobre el texto ORIGINAL,
-  // ordenadas y sin solaparse por diseño de detectarReferencias) — quedan
-  // como piezas ya resueltas, no se les vuelve a tocar.
-  let segmentos: Segmento[] = []
+  const rangos = calcularRangos(texto, subrayados, referencias ?? [])
+  const segmentos: Segmento[] = []
   {
     let cursor = 0
-    for (const c of referencias ?? []) {
-      if (c.inicio < cursor) continue // defensivo: ignora un solape inesperado
-      if (c.inicio > cursor) segmentos.push({ tipo: 'texto', texto: texto.slice(cursor, c.inicio) })
-      segmentos.push({ tipo: 'referencia', texto: texto.slice(c.inicio, c.fin), referencia: c.referencia })
-      cursor = c.fin
+    for (const r of rangos) {
+      if (r.inicio > cursor) segmentos.push({ tipo: 'texto', texto: texto.slice(cursor, r.inicio) })
+      if (r.tipo === 'referencia') segmentos.push({ tipo: 'referencia', texto: texto.slice(r.inicio, r.fin), referencia: r.referencia })
+      else segmentos.push({ tipo: 'resaltado', texto: texto.slice(r.inicio, r.fin) })
+      cursor = r.fin
     }
     if (cursor < texto.length) segmentos.push({ tipo: 'texto', texto: texto.slice(cursor) })
-  }
-
-  // 2. Sobre cada pieza de texto plano (las de 'referencia' quedan intactas),
-  // aplicar el resaltado por frase exacta — mismo algoritmo de antes.
-  for (const frase of subrayados) {
-    if (!frase) continue
-    const siguientes: Segmento[] = []
-    for (const seg of segmentos) {
-      if (seg.tipo !== 'texto') {
-        siguientes.push(seg)
-        continue
-      }
-      const partes = seg.texto.split(frase)
-      partes.forEach((parte, i) => {
-        if (parte) siguientes.push({ tipo: 'texto', texto: parte })
-        if (i < partes.length - 1) siguientes.push({ tipo: 'resaltado', texto: frase })
-      })
-    }
-    segmentos = siguientes
   }
 
   return (
