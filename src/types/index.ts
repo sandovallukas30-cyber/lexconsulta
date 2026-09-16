@@ -552,3 +552,49 @@ export interface ProgresoModulo {
   ejerciciosResueltos: number
   tasaAcierto: number
 }
+
+/** Espacio de estudio personal por Módulo -- a diferencia del contenido
+ *  legal (códigos, jurisprudencia), estos son datos propios del usuario
+ *  sobre su propio ramo (clases, evaluaciones, bibliografía, apuntes).
+ *  Todo arranca vacío: no hay contenido "de fábrica" que cargar. */
+export interface SesionClase {
+  id: string
+  fecha: string // YYYY-MM-DD
+  tema: string
+  notas?: string
+  completada: boolean
+}
+
+export interface EvaluacionModulo {
+  id: string
+  nombre: string
+  fecha: string // YYYY-MM-DD
+  ponderacion: number // 0-100, % que vale sobre la nota final del ramo
+  notaMaxima: number // ej. 7 (escala chilena) o 100
+  nota: number | null // null = aún no rendida o sin calificar
+}
+
+export interface TextoObligatorio {
+  id: string
+  titulo: string
+  autor?: string
+  leido: boolean
+  enlace?: string
+  codigoRelacionado?: CodigoTipo
+  articuloRelacionado?: string
+}
+
+export interface ApunteModulo {
+  id: string
+  titulo: string
+  contenido: string
+  fechaCreacion: number
+  fechaModificacion: number
+}
+
+export interface DatosAcademicosModulo {
+  clases: SesionClase[]
+  evaluaciones: EvaluacionModulo[]
+  textos: TextoObligatorio[]
+  apuntes: ApunteModulo[]
+}
