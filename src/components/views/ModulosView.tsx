@@ -3,7 +3,10 @@ import { useStore } from '../../store/useStore'
 import { MODULOS } from '../../data/modulos'
 import { ModuloCard } from '../ui/ModuloCard'
 import { ModuloDetalle, type Tab } from '../ui/ModuloDetalle'
+import { RamoCard } from '../ui/RamoCard'
+import { ModalRamo } from '../ui/ModalRamo'
 import { obtenerProximosEventos, diasHasta, formatearCountdown, urgenciaDe, type Urgencia } from '../../services/modulosAcademico'
+import type { Ramo } from '../../types'
 
 const VERDE = 'var(--accent-base)'
 const MAX_EVENTOS_PROXIMOS = 6
@@ -59,6 +62,62 @@ function ProximosEventos({ modoOscuro, onAbrir }: { modoOscuro: boolean; onAbrir
   )
 }
 
+function MisRamos({ modoOscuro }: { modoOscuro: boolean }) {
+  const ramos = useStore((s) => s.ramos)
+  const [modalAbierto, setModalAbierto] = useState(false)
+  const [ramoEditando, setRamoEditando] = useState<Ramo | null>(null)
+
+  const abrirNuevo = () => {
+    setRamoEditando(null)
+    setModalAbierto(true)
+  }
+
+  const abrirEdicion = (ramo: Ramo) => {
+    setRamoEditando(ramo)
+    setModalAbierto(true)
+  }
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-3">
+        <h2 className={`text-sm font-semibold ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>Mis ramos</h2>
+        <button
+          onClick={abrirNuevo}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+            modoOscuro ? 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700' : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50'
+          }`}
+        >
+          <i className="ti ti-plus text-sm" />
+          Agregar ramo
+        </button>
+      </div>
+
+      {ramos.length === 0 ? (
+        <div className={`flex flex-col items-center justify-center text-center py-10 rounded-xl border border-dashed ${
+          modoOscuro ? 'border-zinc-800 text-zinc-500' : 'border-zinc-300 text-zinc-400'
+        }`}>
+          <i className="ti ti-school text-2xl mb-2 opacity-60" />
+          <p className="text-sm">Agrega los ramos que cursas este semestre, con su profesor y horario.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {ramos.map((ramo) => (
+            <RamoCard
+              key={ramo.id}
+              ramo={ramo}
+              modulos={MODULOS.filter((m) => ramo.modulosVinculados.includes(m.id))}
+              modoOscuro={modoOscuro}
+              onClick={() => abrirEdicion(ramo)}
+            />
+          ))}
+        </div>
+      )}
+
+      <ModalRamo abierto={modalAbierto} ramoEditando={ramoEditando} onCerrar={() => setModalAbierto(false)} />
+    </div>
+  )
+}
+
 export function ModulosView() {
   const modoOscuro = useStore((s) => s.modoOscuro)
   const progresoModulos = useStore((s) => s.progresoModulos)
@@ -103,6 +162,8 @@ export function ModulosView() {
         </div>
 
         <div className="mt-8 space-y-8">
+          <MisRamos modoOscuro={modoOscuro} />
+
           <ProximosEventos modoOscuro={modoOscuro} onAbrir={abrirModulo} />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

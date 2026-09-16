@@ -594,6 +594,16 @@ export interface ApunteModulo {
   fechaModificacion: number
   /** Sesión de clase (SesionClase['id']) de la que son estos apuntes. */
   claseId?: string
+  /** Cuaderno (CuadernoApuntes['id']) que agrupa este apunte -- ausente =
+   *  apunte suelto, sin cuaderno asignado. */
+  cuadernoId?: string
+}
+
+/** Agrupador de Apuntes dentro de un Módulo (ej. "Cuaderno de audiencias"),
+ *  para no dejar todos los apuntes como una lista plana sin organizar. */
+export interface CuadernoApuntes {
+  id: string
+  nombre: string
 }
 
 export interface DatosAcademicosModulo {
@@ -601,4 +611,22 @@ export interface DatosAcademicosModulo {
   evaluaciones: EvaluacionModulo[]
   textos: TextoObligatorio[]
   apuntes: ApunteModulo[]
+  cuadernos: CuadernoApuntes[]
+}
+
+/** Ramo concreto que el usuario cursa (con su propio profesor, horario,
+ *  código y semestre) -- a diferencia de Modulo, que es un área del derecho
+ *  fija y permanente del catálogo. Un Ramo se vincula a uno o más Módulos
+ *  (ej. "Historia del Derecho Chileno" podría tocar Civil y Constitucional). */
+export interface Ramo {
+  id: string
+  nombre: string
+  semestre?: string
+  codigoCurso?: string
+  profesor?: string
+  email?: string
+  horario?: string
+  sala?: string
+  syllabusUrl?: string
+  modulosVinculados: string[]
 }

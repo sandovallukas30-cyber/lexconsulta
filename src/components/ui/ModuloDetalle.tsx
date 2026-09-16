@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useStore } from '../../store/useStore'
-import type { Modulo, SesionClase, EvaluacionModulo, TextoObligatorio, ApunteModulo } from '../../types'
+import type { Modulo, SesionClase, EvaluacionModulo, TextoObligatorio, ApunteModulo, CuadernoApuntes } from '../../types'
 import { diasHasta, formatearCountdown, urgenciaDe, calcularPonderacionTotal, type Urgencia } from '../../services/modulosAcademico'
 
 const VERDE = 'var(--accent-base)'
@@ -52,7 +52,7 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial }: Prop
   const [tab, setTab] = useState<Tab>(tabInicial ?? 'resumen')
   const setCodigoExplorador = useStore((s) => s.setCodigoExplorador)
   const setVistaActiva = useStore((s) => s.setVistaActiva)
-  const datos = useStore((s) => s.academicoModulos[modulo.id]) ?? { clases: [], evaluaciones: [], textos: [], apuntes: [] }
+  const datos = useStore((s) => s.academicoModulos[modulo.id]) ?? { clases: [], evaluaciones: [], textos: [], apuntes: [], cuadernos: [] }
 
   const abrirCodigo = () => {
     if (!modulo.codigoRelacionado) return
@@ -129,7 +129,7 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial }: Prop
         {tab === 'clases' && <TabClases moduloId={modulo.id} clases={datos.clases} modoOscuro={modoOscuro} />}
         {tab === 'examenes' && <TabExamenes moduloId={modulo.id} evaluaciones={datos.evaluaciones} modoOscuro={modoOscuro} />}
         {tab === 'textos' && <TabTextos moduloId={modulo.id} textos={datos.textos} clases={datos.clases} modoOscuro={modoOscuro} />}
-        {tab === 'apuntes' && <TabApuntes moduloId={modulo.id} apuntes={datos.apuntes} clases={datos.clases} modoOscuro={modoOscuro} />}
+        {tab === 'apuntes' && <TabApuntes moduloId={modulo.id} apuntes={datos.apuntes} clases={datos.clases} cuadernos={datos.cuadernos} modoOscuro={modoOscuro} />}
       </div>
     </div>
   )
@@ -760,21 +760,40 @@ function TabTextos({ moduloId, textos, clases, modoOscuro }: { moduloId: string;
 // Apuntes
 // ------------------------------------------------------------------
 
-function TabApuntes({ moduloId, apuntes, clases, modoOscuro }: { moduloId: string; apuntes: ApunteModulo[]; clases: SesionClase[]; modoOscuro: boolean }) {
+function TabApuntes({
+  moduloId, apuntes, clases, cuadernos, modoOscuro,
+}: {
+  moduloId: string
+  apuntes: ApunteModulo[]
+  clases: SesionClase[]
+  cuadernos: CuadernoApuntes[]
+  modoOscuro: boolean
+}) {
   const setApuntesModulo = useStore((s) => s.setApuntesModulo)
+  const setCuadernosModulo = useStore((s) => s.setCuadernosModulo)
   const [editandoId, setEditandoId] = useState<string | null>(null)
   const [mostrarForm, setMostrarForm] = useState(false)
   const [titulo, setTitulo] = useState('')
   const [contenido, setContenido] = useState('')
   const [claseId, setClaseId] = useState('')
+  const [cuadernoId, setCuadernoId] = useState('')
+  const [filtro, setFiltro] = useState<string>('todos')
+  const [mostrarNuevoCuaderno, setMostrarNuevoCuaderno] = useState(false)
+  const [nombreNuevoCuaderno, setNombreNuevoCuaderno] = useState('')
 
   const ordenados = [...apuntes].sort((a, b) => b.fechaModificacion - a.fechaModificacion)
+  const filtrados = ordenados.filter((a) => {
+    if (filtro === 'todos') return true
+    if (filtro === 'sin-cuaderno') return !a.cuadernoId
+    return a.cuadernoId === filtro
+  })
 
   const iniciarNuevo = () => {
     setEditandoId(null)
     setTitulo('')
     setContenido('')
     setClaseId('')
+    setCuadernoId(filtro !== 'todos' && filtro !== 'sin-cuaderno' ? filtro : '')
     setMostrarForm(true)
   }
 
@@ -783,6 +802,7 @@ function TabApuntes({ moduloId, apuntes, clases, modoOscuro }: { moduloId: strin
     setTitulo(a.titulo)
     setContenido(a.contenido)
     setClaseId(a.claseId ?? '')
+    setCuadernoId(a.cuadernoId ?? '')
     setMostrarForm(true)
   }
 
@@ -790,9 +810,9 @@ function TabApuntes({ moduloId, apuntes, clases, modoOscuro }: { moduloId: strin
     if (!titulo.trim()) return
     const ahora = Date.now()
     if (editandoId) {
-      setApuntesModulo(moduloId, apuntes.map((a) => (a.id === editandoId ? { ...a, titulo: titulo.trim(), contenido, claseId: claseId || undefined, fechaModificacion: ahora } : a)))
+      setApuntesModulo(moduloId, apuntes.map((a) => (a.id === editandoId ? { ...a, titulo: titulo.trim(), contenido, claseId: claseId || undefined, cuadernoId: cuadernoId || undefined, fechaModificacion: ahora } : a)))
     } else {
-      const nuevo: ApunteModulo = { id: crypto.randomUUID(), titulo: titulo.trim(), contenido, claseId: claseId || undefined, fechaCreacion: ahora, fechaModificacion: ahora }
+      const nuevo: ApunteModulo = { id: crypto.randomUUID(), titulo: titulo.trim(), contenido, claseId: claseId || undefined, cuadernoId: cuadernoId || undefined, fechaCreacion: ahora, fechaModificacion: ahora }
       setApuntesModulo(moduloId, [...apuntes, nuevo])
     }
     setMostrarForm(false)
@@ -803,12 +823,40 @@ function TabApuntes({ moduloId, apuntes, clases, modoOscuro }: { moduloId: strin
     setApuntesModulo(moduloId, apuntes.filter((a) => a.id !== id))
   }
 
+  const crearCuaderno = () => {
+    if (!nombreNuevoCuaderno.trim()) return
+    const nuevo: CuadernoApuntes = { id: crypto.randomUUID(), nombre: nombreNuevoCuaderno.trim() }
+    setCuadernosModulo(moduloId, [...cuadernos, nuevo])
+    setCuadernoId(nuevo.id)
+    setNombreNuevoCuaderno('')
+    setMostrarNuevoCuaderno(false)
+  }
+
   return (
     <div>
       <div className="flex justify-between items-center mb-3">
         <h2 className={`text-sm font-semibold ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>Apuntes propios</h2>
         <BotonAgregar label="Nuevo apunte" onClick={iniciarNuevo} modoOscuro={modoOscuro} />
       </div>
+
+      {cuadernos.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {[{ id: 'todos', nombre: 'Todos' }, { id: 'sin-cuaderno', nombre: 'Sin cuaderno' }, ...cuadernos].map((c) => (
+            <button
+              key={c.id}
+              onClick={() => setFiltro(c.id)}
+              className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                filtro === c.id
+                  ? 'text-white border-transparent'
+                  : modoOscuro ? 'border-zinc-700 text-zinc-400 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'
+              }`}
+              style={filtro === c.id ? { background: VERDE } : undefined}
+            >
+              {c.nombre}
+            </button>
+          ))}
+        </div>
+      )}
 
       {mostrarForm && (
         <div className={`p-4 rounded-xl border mb-4 space-y-3 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
@@ -828,30 +876,74 @@ function TabApuntes({ moduloId, apuntes, clases, modoOscuro }: { moduloId: strin
           {clases.length > 0 && (
             <CampoSelectClase label="Clase a la que pertenece (opcional)" valor={claseId} onChange={setClaseId} clases={clases} modoOscuro={modoOscuro} />
           )}
+          <div>
+            <span className={`block text-xs font-medium mb-1 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>Cuaderno (opcional)</span>
+            {mostrarNuevoCuaderno ? (
+              <div className="flex gap-2">
+                <input
+                  autoFocus
+                  value={nombreNuevoCuaderno}
+                  onChange={(e) => setNombreNuevoCuaderno(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') crearCuaderno() }}
+                  placeholder="Ej: Cuaderno de audiencias"
+                  className={`flex-1 rounded-lg px-3 py-2 text-sm outline-none border ${
+                    modoOscuro ? 'bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-600' : 'bg-white border-zinc-200 text-zinc-900 placeholder:text-zinc-400'
+                  }`}
+                />
+                <button onClick={crearCuaderno} className="px-3 py-1.5 rounded-lg text-xs font-medium text-white" style={{ background: VERDE }}>Crear</button>
+                <button onClick={() => setMostrarNuevoCuaderno(false)} className={`px-3 py-1.5 rounded-lg text-xs ${modoOscuro ? 'text-zinc-400 hover:bg-zinc-700' : 'text-zinc-500 hover:bg-zinc-100'}`}>Cancelar</button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <select
+                  value={cuadernoId}
+                  onChange={(e) => setCuadernoId(e.target.value)}
+                  className={`flex-1 rounded-lg px-3 py-2 text-sm outline-none border ${
+                    modoOscuro ? 'bg-zinc-800 border-zinc-700 text-white' : 'bg-white border-zinc-200 text-zinc-900'
+                  }`}
+                >
+                  <option value="">Sin cuaderno</option>
+                  {cuadernos.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                </select>
+                <button onClick={() => setMostrarNuevoCuaderno(true)} className={`px-3 py-1.5 rounded-lg text-xs whitespace-nowrap ${modoOscuro ? 'bg-zinc-700 text-zinc-200 hover:bg-zinc-600' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'}`}>
+                  + Nuevo
+                </button>
+              </div>
+            )}
+          </div>
           <BotonesFormulario onCancelar={() => { setMostrarForm(false); setEditandoId(null) }} onGuardar={guardar} modoOscuro={modoOscuro} />
         </div>
       )}
 
-      {ordenados.length === 0 ? (
-        <EstadoVacio icono="ti-notes" texto="Aún no tienes apuntes en este módulo." modoOscuro={modoOscuro} />
+      {filtrados.length === 0 ? (
+        <EstadoVacio icono="ti-notes" texto={apuntes.length === 0 ? 'Aún no tienes apuntes en este módulo.' : 'No hay apuntes en este cuaderno.'} modoOscuro={modoOscuro} />
       ) : (
         <div className="space-y-2">
-          {ordenados.map((a) => (
-            <div key={a.id} className={`p-3 rounded-xl border ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
-              <div className="flex items-start justify-between gap-2 mb-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <button onClick={() => iniciarEdicion(a)} className={`text-sm font-medium text-left hover:underline ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>
-                    {a.titulo}
-                  </button>
-                  <EtiquetaClase clase={clases.find((c) => c.id === a.claseId)} modoOscuro={modoOscuro} />
+          {filtrados.map((a) => {
+            const cuaderno = cuadernos.find((c) => c.id === a.cuadernoId)
+            return (
+              <div key={a.id} className={`p-3 rounded-xl border ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button onClick={() => iniciarEdicion(a)} className={`text-sm font-medium text-left hover:underline ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>
+                      {a.titulo}
+                    </button>
+                    {cuaderno && (
+                      <span className={`inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-md ${modoOscuro ? 'bg-zinc-700 text-zinc-300' : 'bg-zinc-100 text-zinc-600'}`}>
+                        <i className="ti ti-notebook text-xs" />
+                        {cuaderno.nombre}
+                      </span>
+                    )}
+                    <EtiquetaClase clase={clases.find((c) => c.id === a.claseId)} modoOscuro={modoOscuro} />
+                  </div>
+                  <BotonEliminar onClick={() => eliminar(a.id)} modoOscuro={modoOscuro} />
                 </div>
-                <BotonEliminar onClick={() => eliminar(a.id)} modoOscuro={modoOscuro} />
+                {a.contenido && (
+                  <p className={`text-xs whitespace-pre-wrap line-clamp-3 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>{a.contenido}</p>
+                )}
               </div>
-              {a.contenido && (
-                <p className={`text-xs whitespace-pre-wrap line-clamp-3 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>{a.contenido}</p>
-              )}
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
