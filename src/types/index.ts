@@ -582,6 +582,8 @@ export interface TextoObligatorio {
   enlace?: string
   codigoRelacionado?: CodigoTipo
   articuloRelacionado?: string
+  /** Sesión de clase (SesionClase['id']) para la que es lectura asignada. */
+  claseId?: string
 }
 
 export interface ApunteModulo {
@@ -590,6 +592,8 @@ export interface ApunteModulo {
   contenido: string
   fechaCreacion: number
   fechaModificacion: number
+  /** Sesión de clase (SesionClase['id']) de la que son estos apuntes. */
+  claseId?: string
 }
 
 export interface DatosAcademicosModulo {
