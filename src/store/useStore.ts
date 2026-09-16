@@ -43,6 +43,8 @@ import type {
   EvaluacionModulo,
   TextoObligatorio,
   ApunteModulo,
+  CuadernoApuntes,
+  Ramo,
 } from '../types'
 
 interface AppState {
@@ -221,9 +223,17 @@ interface AppState {
   setEvaluacionesModulo: (moduloId: string, evaluaciones: EvaluacionModulo[]) => void
   setTextosModulo: (moduloId: string, textos: TextoObligatorio[]) => void
   setApuntesModulo: (moduloId: string, apuntes: ApunteModulo[]) => void
+  setCuadernosModulo: (moduloId: string, cuadernos: CuadernoApuntes[]) => void
+
+  /** Ramos que el usuario cursa (metadata real de curso -- profesor,
+   *  horario, semestre), cada uno vinculado a uno o más Módulos. */
+  ramos: Ramo[]
+  crearRamo: (ramo: Omit<Ramo, 'id'>) => string
+  actualizarRamo: (id: string, cambios: Partial<Omit<Ramo, 'id'>>) => void
+  eliminarRamo: (id: string) => void
 }
 
-const datosAcademicosVacios: DatosAcademicosModulo = { clases: [], evaluaciones: [], textos: [], apuntes: [] }
+const datosAcademicosVacios: DatosAcademicosModulo = { clases: [], evaluaciones: [], textos: [], apuntes: [], cuadernos: [] }
 
 const codigosIniciales: CodigoActivo[] = [
   { tipo: 'con', nombre: 'Constitución Política', nombreCorto: 'Constitución', descripcion: 'Carta fundamental de la República', categoria: 'fundamentales', activo: true, cargado: true },
@@ -294,6 +304,7 @@ export const useStore = create<AppState>()(
       progresoModulos: {},
       moduloActivoId: null,
       academicoModulos: {},
+      ramos: [],
 
       setPerfil: (perfil) => set({ perfil, modalPerfilAbierto: false }),
       setVistaActiva: (vistaActiva) =>
@@ -893,10 +904,26 @@ export const useStore = create<AppState>()(
             [moduloId]: { ...(s.academicoModulos[moduloId] ?? datosAcademicosVacios), apuntes },
           },
         })),
+      setCuadernosModulo: (moduloId, cuadernos) =>
+        set((s) => ({
+          academicoModulos: {
+            ...s.academicoModulos,
+            [moduloId]: { ...(s.academicoModulos[moduloId] ?? datosAcademicosVacios), cuadernos },
+          },
+        })),
+      crearRamo: (ramo) => {
+        const id = crypto.randomUUID()
+        set((s) => ({ ramos: [...s.ramos, { ...ramo, id }] }))
+        return id
+      },
+      actualizarRamo: (id, cambios) =>
+        set((s) => ({ ramos: s.ramos.map((r) => (r.id === id ? { ...r, ...cambios } : r)) })),
+      eliminarRamo: (id) =>
+        set((s) => ({ ramos: s.ramos.filter((r) => r.id !== id) })),
     }),
     {
       name: 'prima-lex-storage-v3',
-      version: 24,
+      version: 25,
       partialize: (s) => ({
         perfil: s.perfil,
         codigos: s.codigos,
@@ -924,6 +951,7 @@ export const useStore = create<AppState>()(
         fechaConsultas: s.fechaConsultas,
         progresoModulos: s.progresoModulos,
         academicoModulos: s.academicoModulos,
+        ramos: s.ramos,
       }),
       migrate: (persisted: unknown, version: number) => {
         if (version < 3) {
@@ -955,6 +983,19 @@ export const useStore = create<AppState>()(
           const idsExistentes = new Set(existentes.map((j) => j.id))
           const nuevas = JURISPRUDENCIA_SEED.filter((j) => !idsExistentes.has(j.id))
           return { ...state, jurisprudencia: [...nuevas, ...existentes] }
+        }
+        if (version < 25) {
+          // v25: DatosAcademicosModulo incorpora `cuadernos` -- las entradas
+          // guardadas antes de este cambio no lo tienen.
+          type DatosSinCuadernos = Omit<DatosAcademicosModulo, 'cuadernos'> & { cuadernos?: CuadernoApuntes[] }
+          const state = persisted as { academicoModulos?: Record<string, DatosSinCuadernos> }
+          if (state.academicoModulos) {
+            const conCuadernos: Record<string, DatosAcademicosModulo> = {}
+            for (const [id, datos] of Object.entries(state.academicoModulos)) {
+              conCuadernos[id] = { ...datos, cuadernos: datos.cuadernos ?? [] }
+            }
+            return { ...state, academicoModulos: conCuadernos }
+          }
         }
         return persisted as never
       },
