@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useStore } from '../../store/useStore'
 import type { Modulo, SesionClase, EvaluacionModulo, TextoObligatorio, ApunteModulo } from '../../types'
+import { diasHasta, formatearCountdown, urgenciaDe, calcularPonderacionTotal, type Urgencia } from '../../services/modulosAcademico'
 
 const VERDE = 'var(--accent-base)'
 
-type Tab = 'resumen' | 'clases' | 'examenes' | 'textos' | 'apuntes'
+export type Tab = 'resumen' | 'clases' | 'examenes' | 'textos' | 'apuntes'
 
 const TABS: { id: Tab; label: string; icono: string }[] = [
   { id: 'resumen', label: 'Resumen', icono: 'ti-layout-dashboard' },
@@ -20,14 +21,35 @@ function formatearFechaCorta(iso: string): string {
   return `${dia}/${mes}/${anio}`
 }
 
+function colorUrgencia(u: Urgencia): string {
+  if (u === 'vencido') return 'text-zinc-400'
+  if (u === 'urgente') return 'text-red-600'
+  if (u === 'proximo') return 'text-amber-600'
+  return ''
+}
+
+/** Fecha + countdown lado a lado, con color según urgencia -- se usa en
+ *  Clases y Exámenes para no repetirlo dos veces. */
+function FechaConCountdown({ fecha, modoOscuro }: { fecha: string; modoOscuro: boolean }) {
+  const dias = diasHasta(fecha)
+  const u = urgenciaDe(dias)
+  return (
+    <span className="inline-flex items-baseline gap-1.5">
+      <span className={`text-xs font-mono ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>{formatearFechaCorta(fecha)}</span>
+      <span className={`text-xs font-medium ${colorUrgencia(u)}`}>{formatearCountdown(dias)}</span>
+    </span>
+  )
+}
+
 interface Props {
   modulo: Modulo
   modoOscuro: boolean
   onVolver: () => void
+  tabInicial?: Tab
 }
 
-export function ModuloDetalle({ modulo, modoOscuro, onVolver }: Props) {
-  const [tab, setTab] = useState<Tab>('resumen')
+export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial }: Props) {
+  const [tab, setTab] = useState<Tab>(tabInicial ?? 'resumen')
   const setCodigoExplorador = useStore((s) => s.setCodigoExplorador)
   const setVistaActiva = useStore((s) => s.setVistaActiva)
   const datos = useStore((s) => s.academicoModulos[modulo.id]) ?? { clases: [], evaluaciones: [], textos: [], apuntes: [] }
@@ -106,8 +128,8 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver }: Props) {
         {tab === 'resumen' && <TabResumen datos={datos} modoOscuro={modoOscuro} onIrA={setTab} />}
         {tab === 'clases' && <TabClases moduloId={modulo.id} clases={datos.clases} modoOscuro={modoOscuro} />}
         {tab === 'examenes' && <TabExamenes moduloId={modulo.id} evaluaciones={datos.evaluaciones} modoOscuro={modoOscuro} />}
-        {tab === 'textos' && <TabTextos moduloId={modulo.id} textos={datos.textos} modoOscuro={modoOscuro} />}
-        {tab === 'apuntes' && <TabApuntes moduloId={modulo.id} apuntes={datos.apuntes} modoOscuro={modoOscuro} />}
+        {tab === 'textos' && <TabTextos moduloId={modulo.id} textos={datos.textos} clases={datos.clases} modoOscuro={modoOscuro} />}
+        {tab === 'apuntes' && <TabApuntes moduloId={modulo.id} apuntes={datos.apuntes} clases={datos.clases} modoOscuro={modoOscuro} />}
       </div>
     </div>
   )
@@ -171,6 +193,47 @@ function CampoTexto({
   )
 }
 
+function CampoSelectClase({
+  label, valor, onChange, clases, modoOscuro,
+}: {
+  label: string
+  valor: string
+  onChange: (v: string) => void
+  clases: SesionClase[]
+  modoOscuro: boolean
+}) {
+  const ordenadas = [...clases].sort((a, b) => a.fecha.localeCompare(b.fecha))
+  return (
+    <label className="block">
+      <span className={`block text-xs font-medium mb-1 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>{label}</span>
+      <select
+        value={valor}
+        onChange={(e) => onChange(e.target.value)}
+        className={`w-full rounded-lg px-3 py-2 text-sm outline-none border ${
+          modoOscuro ? 'bg-zinc-800 border-zinc-700 text-white' : 'bg-white border-zinc-200 text-zinc-900'
+        }`}
+      >
+        <option value="">Sin vincular a una clase</option>
+        {ordenadas.map((c) => (
+          <option key={c.id} value={c.id}>{formatearFechaCorta(c.fecha)} — {c.tema}</option>
+        ))}
+      </select>
+    </label>
+  )
+}
+
+function EtiquetaClase({ clase, modoOscuro }: { clase: SesionClase | undefined; modoOscuro: boolean }) {
+  if (!clase) return null
+  return (
+    <span className={`inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-md ${
+      modoOscuro ? 'bg-zinc-700 text-zinc-300' : 'bg-zinc-100 text-zinc-600'
+    }`}>
+      <i className="ti ti-calendar-event text-xs" />
+      {clase.tema}
+    </span>
+  )
+}
+
 function BotonEliminar({ onClick, modoOscuro }: { onClick: () => void; modoOscuro: boolean }) {
   return (
     <button
@@ -182,6 +245,25 @@ function BotonEliminar({ onClick, modoOscuro }: { onClick: () => void; modoOscur
     >
       <i className="ti ti-trash text-sm" />
     </button>
+  )
+}
+
+function BotonesFormulario({
+  onCancelar, onGuardar, modoOscuro, error,
+}: {
+  onCancelar: () => void
+  onGuardar: () => void
+  modoOscuro: boolean
+  error?: string | null
+}) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      {error ? <span className="text-xs text-red-600">{error}</span> : <span />}
+      <div className="flex justify-end gap-2">
+        <button onClick={onCancelar} className={`px-3 py-1.5 rounded-lg text-xs ${modoOscuro ? 'text-zinc-400 hover:bg-zinc-700' : 'text-zinc-500 hover:bg-zinc-100'}`}>Cancelar</button>
+        <button onClick={onGuardar} className="px-3 py-1.5 rounded-lg text-xs font-medium text-white" style={{ background: VERDE }}>Guardar</button>
+      </div>
+    </div>
   )
 }
 
@@ -211,7 +293,7 @@ function TabResumen({
       label: 'Clases',
       valor: `${datos.clases.length}`,
       detalle: proximaClase
-        ? `Próxima: ${formatearFechaCorta(proximaClase.fecha)}`
+        ? `Próxima: ${formatearCountdown(diasHasta(proximaClase.fecha)).toLowerCase()}`
         : datos.clases.length > 0
         ? 'Todas completadas'
         : 'Sin sesiones registradas',
@@ -222,7 +304,7 @@ function TabResumen({
       label: 'Exámenes',
       valor: `${datos.evaluaciones.length}`,
       detalle: proximoExamen
-        ? `Próximo: ${proximoExamen.nombre}`
+        ? `${proximoExamen.nombre} · ${formatearCountdown(diasHasta(proximoExamen.fecha)).toLowerCase()}`
         : datos.evaluaciones.length > 0
         ? 'Todas calificadas'
         : 'Sin evaluaciones registradas',
@@ -260,20 +342,39 @@ function TabResumen({
 function TabClases({ moduloId, clases, modoOscuro }: { moduloId: string; clases: SesionClase[]; modoOscuro: boolean }) {
   const setClasesModulo = useStore((s) => s.setClasesModulo)
   const [mostrarForm, setMostrarForm] = useState(false)
+  const [editandoId, setEditandoId] = useState<string | null>(null)
   const [fecha, setFecha] = useState('')
   const [tema, setTema] = useState('')
   const [notas, setNotas] = useState('')
 
   const ordenadas = [...clases].sort((a, b) => a.fecha.localeCompare(b.fecha))
 
-  const agregar = () => {
-    if (!fecha || !tema.trim()) return
-    const nueva: SesionClase = { id: crypto.randomUUID(), fecha, tema: tema.trim(), notas: notas.trim() || undefined, completada: false }
-    setClasesModulo(moduloId, [...clases, nueva])
+  const iniciarNuevo = () => {
+    setEditandoId(null)
     setFecha('')
     setTema('')
     setNotas('')
+    setMostrarForm(true)
+  }
+
+  const iniciarEdicion = (c: SesionClase) => {
+    setEditandoId(c.id)
+    setFecha(c.fecha)
+    setTema(c.tema)
+    setNotas(c.notas ?? '')
+    setMostrarForm(true)
+  }
+
+  const guardar = () => {
+    if (!fecha || !tema.trim()) return
+    if (editandoId) {
+      setClasesModulo(moduloId, clases.map((c) => (c.id === editandoId ? { ...c, fecha, tema: tema.trim(), notas: notas.trim() || undefined } : c)))
+    } else {
+      const nueva: SesionClase = { id: crypto.randomUUID(), fecha, tema: tema.trim(), notas: notas.trim() || undefined, completada: false }
+      setClasesModulo(moduloId, [...clases, nueva])
+    }
     setMostrarForm(false)
+    setEditandoId(null)
   }
 
   const toggleCompletada = (id: string) => {
@@ -288,7 +389,7 @@ function TabClases({ moduloId, clases, modoOscuro }: { moduloId: string; clases:
     <div>
       <div className="flex justify-between items-center mb-3">
         <h2 className={`text-sm font-semibold ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>Cronograma de clases</h2>
-        <BotonAgregar label="Agregar clase" onClick={() => setMostrarForm((v) => !v)} modoOscuro={modoOscuro} />
+        <BotonAgregar label="Agregar clase" onClick={iniciarNuevo} modoOscuro={modoOscuro} />
       </div>
 
       {mostrarForm && (
@@ -298,10 +399,7 @@ function TabClases({ moduloId, clases, modoOscuro }: { moduloId: string; clases:
             <CampoTexto label="Tema" valor={tema} onChange={setTema} modoOscuro={modoOscuro} placeholder="Ej: Teoría del acto jurídico" />
           </div>
           <CampoTexto label="Notas (opcional)" valor={notas} onChange={setNotas} modoOscuro={modoOscuro} placeholder="Lo que quieras recordar de esta sesión" />
-          <div className="flex justify-end gap-2">
-            <button onClick={() => setMostrarForm(false)} className={`px-3 py-1.5 rounded-lg text-xs ${modoOscuro ? 'text-zinc-400 hover:bg-zinc-700' : 'text-zinc-500 hover:bg-zinc-100'}`}>Cancelar</button>
-            <button onClick={agregar} className="px-3 py-1.5 rounded-lg text-xs font-medium text-white" style={{ background: VERDE }}>Guardar</button>
-          </div>
+          <BotonesFormulario onCancelar={() => { setMostrarForm(false); setEditandoId(null) }} onGuardar={guardar} modoOscuro={modoOscuro} />
         </div>
       )}
 
@@ -318,9 +416,15 @@ function TabClases({ moduloId, clases, modoOscuro }: { moduloId: string; clases:
                 />
               </button>
               <div className="flex-1 min-w-0">
-                <div className="flex items-baseline gap-2">
-                  <span className={`text-xs font-mono ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>{formatearFechaCorta(c.fecha)}</span>
-                  <span className={`text-sm font-medium ${c.completada ? 'line-through opacity-60' : ''} ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>{c.tema}</span>
+                <div className="flex items-baseline gap-2 flex-wrap">
+                  {c.completada ? (
+                    <span className={`text-xs font-mono ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>{formatearFechaCorta(c.fecha)}</span>
+                  ) : (
+                    <FechaConCountdown fecha={c.fecha} modoOscuro={modoOscuro} />
+                  )}
+                  <button onClick={() => iniciarEdicion(c)} className={`text-sm font-medium text-left hover:underline ${c.completada ? 'line-through opacity-60' : ''} ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>
+                    {c.tema}
+                  </button>
                 </div>
                 {c.notas && <p className={`text-xs mt-1 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>{c.notas}</p>}
               </div>
@@ -356,33 +460,67 @@ function calcularNotaNecesaria(evaluaciones: EvaluacionModulo[], objetivo: numbe
 function TabExamenes({ moduloId, evaluaciones, modoOscuro }: { moduloId: string; evaluaciones: EvaluacionModulo[]; modoOscuro: boolean }) {
   const setEvaluacionesModulo = useStore((s) => s.setEvaluacionesModulo)
   const [mostrarForm, setMostrarForm] = useState(false)
+  const [editandoId, setEditandoId] = useState<string | null>(null)
   const [nombre, setNombre] = useState('')
   const [fecha, setFecha] = useState('')
   const [ponderacion, setPonderacion] = useState('')
   const [nota, setNota] = useState('')
   const [objetivo, setObjetivo] = useState('4')
+  const [error, setError] = useState<string | null>(null)
 
   const ordenadas = [...evaluaciones].sort((a, b) => a.fecha.localeCompare(b.fecha))
   const objetivoNum = Number(objetivo) || 4
+  const ponderacionCargada = calcularPonderacionTotal(evaluaciones, editandoId ?? undefined)
 
-  const agregar = () => {
-    const pond = Number(ponderacion)
-    if (!nombre.trim() || !fecha || !Number.isFinite(pond) || pond <= 0) return
-    const notaNum = nota.trim() === '' ? null : Number(nota)
-    const nueva: EvaluacionModulo = {
-      id: crypto.randomUUID(),
-      nombre: nombre.trim(),
-      fecha,
-      ponderacion: pond,
-      notaMaxima: 7,
-      nota: notaNum !== null && Number.isFinite(notaNum) ? notaNum : null,
-    }
-    setEvaluacionesModulo(moduloId, [...evaluaciones, nueva])
+  const iniciarNuevo = () => {
+    setEditandoId(null)
     setNombre('')
     setFecha('')
     setPonderacion('')
     setNota('')
+    setError(null)
+    setMostrarForm(true)
+  }
+
+  const iniciarEdicion = (e: EvaluacionModulo) => {
+    setEditandoId(e.id)
+    setNombre(e.nombre)
+    setFecha(e.fecha)
+    setPonderacion(String(e.ponderacion))
+    setNota(e.nota === null ? '' : String(e.nota))
+    setError(null)
+    setMostrarForm(true)
+  }
+
+  const guardar = () => {
+    const pond = Number(ponderacion)
+    if (!nombre.trim() || !fecha || !Number.isFinite(pond) || pond <= 0) {
+      setError('Completa nombre, fecha y una ponderación válida.')
+      return
+    }
+    if (ponderacionCargada + pond > 100) {
+      setError(`Con ${pond}% superarías el 100% (ya tienes ${ponderacionCargada}% cargado).`)
+      return
+    }
+    const notaNum = nota.trim() === '' ? null : Number(nota)
+    if (editandoId) {
+      setEvaluacionesModulo(moduloId, evaluaciones.map((e) => (e.id === editandoId
+        ? { ...e, nombre: nombre.trim(), fecha, ponderacion: pond, nota: notaNum !== null && Number.isFinite(notaNum) ? notaNum : null }
+        : e)))
+    } else {
+      const nueva: EvaluacionModulo = {
+        id: crypto.randomUUID(),
+        nombre: nombre.trim(),
+        fecha,
+        ponderacion: pond,
+        notaMaxima: 7,
+        nota: notaNum !== null && Number.isFinite(notaNum) ? notaNum : null,
+      }
+      setEvaluacionesModulo(moduloId, [...evaluaciones, nueva])
+    }
     setMostrarForm(false)
+    setEditandoId(null)
+    setError(null)
   }
 
   const eliminar = (id: string) => {
@@ -390,12 +528,20 @@ function TabExamenes({ moduloId, evaluaciones, modoOscuro }: { moduloId: string;
   }
 
   const { promedioActual, ponderacionEvaluada, ponderacionPendiente, notaNecesaria } = calcularNotaNecesaria(evaluaciones, objetivoNum)
+  const ponderacionTotalActual = calcularPonderacionTotal(evaluaciones)
 
   return (
     <div>
       <div className="flex justify-between items-center mb-3">
-        <h2 className={`text-sm font-semibold ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>Exámenes y evaluaciones</h2>
-        <BotonAgregar label="Agregar evaluación" onClick={() => setMostrarForm((v) => !v)} modoOscuro={modoOscuro} />
+        <div className="flex items-baseline gap-2">
+          <h2 className={`text-sm font-semibold ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>Exámenes y evaluaciones</h2>
+          {evaluaciones.length > 0 && (
+            <span className={`text-xs ${ponderacionTotalActual === 100 ? 'text-emerald-600' : modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
+              {ponderacionTotalActual}% de 100% cargado
+            </span>
+          )}
+        </div>
+        <BotonAgregar label="Agregar evaluación" onClick={iniciarNuevo} modoOscuro={modoOscuro} />
       </div>
 
       {mostrarForm && (
@@ -406,10 +552,7 @@ function TabExamenes({ moduloId, evaluaciones, modoOscuro }: { moduloId: string;
             <CampoTexto label="Ponderación (%)" tipo="number" valor={ponderacion} onChange={setPonderacion} modoOscuro={modoOscuro} placeholder="Ej: 30" />
             <CampoTexto label="Nota (opcional, escala 1-7)" tipo="number" valor={nota} onChange={setNota} modoOscuro={modoOscuro} placeholder="Déjalo vacío si aún no la rindes" />
           </div>
-          <div className="flex justify-end gap-2">
-            <button onClick={() => setMostrarForm(false)} className={`px-3 py-1.5 rounded-lg text-xs ${modoOscuro ? 'text-zinc-400 hover:bg-zinc-700' : 'text-zinc-500 hover:bg-zinc-100'}`}>Cancelar</button>
-            <button onClick={agregar} className="px-3 py-1.5 rounded-lg text-xs font-medium text-white" style={{ background: VERDE }}>Guardar</button>
-          </div>
+          <BotonesFormulario onCancelar={() => { setMostrarForm(false); setEditandoId(null); setError(null) }} onGuardar={guardar} modoOscuro={modoOscuro} error={error} />
         </div>
       )}
 
@@ -421,9 +564,15 @@ function TabExamenes({ moduloId, evaluaciones, modoOscuro }: { moduloId: string;
             {ordenadas.map((e) => (
               <div key={e.id} className={`flex items-center gap-3 p-3 rounded-xl border ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline gap-2">
-                    <span className={`text-xs font-mono ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>{formatearFechaCorta(e.fecha)}</span>
-                    <span className={`text-sm font-medium ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>{e.nombre}</span>
+                  <div className="flex items-baseline gap-2 flex-wrap">
+                    {e.nota === null ? (
+                      <FechaConCountdown fecha={e.fecha} modoOscuro={modoOscuro} />
+                    ) : (
+                      <span className={`text-xs font-mono ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>{formatearFechaCorta(e.fecha)}</span>
+                    )}
+                    <button onClick={() => iniciarEdicion(e)} className={`text-sm font-medium text-left hover:underline ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>
+                      {e.nombre}
+                    </button>
                   </div>
                   <span className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>{e.ponderacion}% de la nota final</span>
                 </div>
@@ -479,6 +628,11 @@ function TabExamenes({ moduloId, evaluaciones, modoOscuro }: { moduloId: string;
                 Necesitas un promedio de <span style={{ color: VERDE }}>{notaNecesaria?.toFixed(2)}</span> en el {ponderacionPendiente}% que falta para lograr un {objetivoNum}.
               </p>
             )}
+            {ponderacionTotalActual < 100 && (
+              <p className={`text-xs mt-2 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
+                Ojo: solo tienes {ponderacionTotalActual}% de evaluaciones cargadas — falta agregar el {100 - ponderacionTotalActual}% restante para que el cálculo sea exacto.
+              </p>
+            )}
           </div>
         </>
       )}
@@ -490,27 +644,52 @@ function TabExamenes({ moduloId, evaluaciones, modoOscuro }: { moduloId: string;
 // Textos obligatorios
 // ------------------------------------------------------------------
 
-function TabTextos({ moduloId, textos, modoOscuro }: { moduloId: string; textos: TextoObligatorio[]; modoOscuro: boolean }) {
+function TabTextos({ moduloId, textos, clases, modoOscuro }: { moduloId: string; textos: TextoObligatorio[]; clases: SesionClase[]; modoOscuro: boolean }) {
   const setTextosModulo = useStore((s) => s.setTextosModulo)
   const [mostrarForm, setMostrarForm] = useState(false)
+  const [editandoId, setEditandoId] = useState<string | null>(null)
   const [titulo, setTitulo] = useState('')
   const [autor, setAutor] = useState('')
   const [enlace, setEnlace] = useState('')
+  const [claseId, setClaseId] = useState('')
 
-  const agregar = () => {
-    if (!titulo.trim()) return
-    const nuevo: TextoObligatorio = {
-      id: crypto.randomUUID(),
-      titulo: titulo.trim(),
-      autor: autor.trim() || undefined,
-      enlace: enlace.trim() || undefined,
-      leido: false,
-    }
-    setTextosModulo(moduloId, [...textos, nuevo])
+  const iniciarNuevo = () => {
+    setEditandoId(null)
     setTitulo('')
     setAutor('')
     setEnlace('')
+    setClaseId('')
+    setMostrarForm(true)
+  }
+
+  const iniciarEdicion = (t: TextoObligatorio) => {
+    setEditandoId(t.id)
+    setTitulo(t.titulo)
+    setAutor(t.autor ?? '')
+    setEnlace(t.enlace ?? '')
+    setClaseId(t.claseId ?? '')
+    setMostrarForm(true)
+  }
+
+  const guardar = () => {
+    if (!titulo.trim()) return
+    if (editandoId) {
+      setTextosModulo(moduloId, textos.map((t) => (t.id === editandoId
+        ? { ...t, titulo: titulo.trim(), autor: autor.trim() || undefined, enlace: enlace.trim() || undefined, claseId: claseId || undefined }
+        : t)))
+    } else {
+      const nuevo: TextoObligatorio = {
+        id: crypto.randomUUID(),
+        titulo: titulo.trim(),
+        autor: autor.trim() || undefined,
+        enlace: enlace.trim() || undefined,
+        claseId: claseId || undefined,
+        leido: false,
+      }
+      setTextosModulo(moduloId, [...textos, nuevo])
+    }
     setMostrarForm(false)
+    setEditandoId(null)
   }
 
   const toggleLeido = (id: string) => {
@@ -525,7 +704,7 @@ function TabTextos({ moduloId, textos, modoOscuro }: { moduloId: string; textos:
     <div>
       <div className="flex justify-between items-center mb-3">
         <h2 className={`text-sm font-semibold ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>Textos obligatorios</h2>
-        <BotonAgregar label="Agregar texto" onClick={() => setMostrarForm((v) => !v)} modoOscuro={modoOscuro} />
+        <BotonAgregar label="Agregar texto" onClick={iniciarNuevo} modoOscuro={modoOscuro} />
       </div>
 
       {mostrarForm && (
@@ -535,10 +714,10 @@ function TabTextos({ moduloId, textos, modoOscuro }: { moduloId: string; textos:
             <CampoTexto label="Autor (opcional)" valor={autor} onChange={setAutor} modoOscuro={modoOscuro} placeholder="Ej: René Abeliuk" />
             <CampoTexto label="Enlace (opcional)" valor={enlace} onChange={setEnlace} modoOscuro={modoOscuro} placeholder="https://..." />
           </div>
-          <div className="flex justify-end gap-2">
-            <button onClick={() => setMostrarForm(false)} className={`px-3 py-1.5 rounded-lg text-xs ${modoOscuro ? 'text-zinc-400 hover:bg-zinc-700' : 'text-zinc-500 hover:bg-zinc-100'}`}>Cancelar</button>
-            <button onClick={agregar} className="px-3 py-1.5 rounded-lg text-xs font-medium text-white" style={{ background: VERDE }}>Guardar</button>
-          </div>
+          {clases.length > 0 && (
+            <CampoSelectClase label="Lectura para la clase (opcional)" valor={claseId} onChange={setClaseId} clases={clases} modoOscuro={modoOscuro} />
+          )}
+          <BotonesFormulario onCancelar={() => { setMostrarForm(false); setEditandoId(null) }} onGuardar={guardar} modoOscuro={modoOscuro} />
         </div>
       )}
 
@@ -555,8 +734,13 @@ function TabTextos({ moduloId, textos, modoOscuro }: { moduloId: string; textos:
                 />
               </button>
               <div className="flex-1 min-w-0">
-                <span className={`text-sm font-medium block ${t.leido ? 'line-through opacity-60' : ''} ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>{t.titulo}</span>
-                {t.autor && <span className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>{t.autor}</span>}
+                <button onClick={() => iniciarEdicion(t)} className={`text-sm font-medium block text-left hover:underline ${t.leido ? 'line-through opacity-60' : ''} ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>
+                  {t.titulo}
+                </button>
+                <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                  {t.autor && <span className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>{t.autor}</span>}
+                  <EtiquetaClase clase={clases.find((c) => c.id === t.claseId)} modoOscuro={modoOscuro} />
+                </div>
                 {t.enlace && (
                   <a href={t.enlace} target="_blank" rel="noopener noreferrer" className="text-xs block mt-0.5 hover:underline" style={{ color: VERDE }}>
                     Ver enlace
@@ -576,12 +760,13 @@ function TabTextos({ moduloId, textos, modoOscuro }: { moduloId: string; textos:
 // Apuntes
 // ------------------------------------------------------------------
 
-function TabApuntes({ moduloId, apuntes, modoOscuro }: { moduloId: string; apuntes: ApunteModulo[]; modoOscuro: boolean }) {
+function TabApuntes({ moduloId, apuntes, clases, modoOscuro }: { moduloId: string; apuntes: ApunteModulo[]; clases: SesionClase[]; modoOscuro: boolean }) {
   const setApuntesModulo = useStore((s) => s.setApuntesModulo)
   const [editandoId, setEditandoId] = useState<string | null>(null)
   const [mostrarForm, setMostrarForm] = useState(false)
   const [titulo, setTitulo] = useState('')
   const [contenido, setContenido] = useState('')
+  const [claseId, setClaseId] = useState('')
 
   const ordenados = [...apuntes].sort((a, b) => b.fechaModificacion - a.fechaModificacion)
 
@@ -589,6 +774,7 @@ function TabApuntes({ moduloId, apuntes, modoOscuro }: { moduloId: string; apunt
     setEditandoId(null)
     setTitulo('')
     setContenido('')
+    setClaseId('')
     setMostrarForm(true)
   }
 
@@ -596,6 +782,7 @@ function TabApuntes({ moduloId, apuntes, modoOscuro }: { moduloId: string; apunt
     setEditandoId(a.id)
     setTitulo(a.titulo)
     setContenido(a.contenido)
+    setClaseId(a.claseId ?? '')
     setMostrarForm(true)
   }
 
@@ -603,9 +790,9 @@ function TabApuntes({ moduloId, apuntes, modoOscuro }: { moduloId: string; apunt
     if (!titulo.trim()) return
     const ahora = Date.now()
     if (editandoId) {
-      setApuntesModulo(moduloId, apuntes.map((a) => (a.id === editandoId ? { ...a, titulo: titulo.trim(), contenido, fechaModificacion: ahora } : a)))
+      setApuntesModulo(moduloId, apuntes.map((a) => (a.id === editandoId ? { ...a, titulo: titulo.trim(), contenido, claseId: claseId || undefined, fechaModificacion: ahora } : a)))
     } else {
-      const nuevo: ApunteModulo = { id: crypto.randomUUID(), titulo: titulo.trim(), contenido, fechaCreacion: ahora, fechaModificacion: ahora }
+      const nuevo: ApunteModulo = { id: crypto.randomUUID(), titulo: titulo.trim(), contenido, claseId: claseId || undefined, fechaCreacion: ahora, fechaModificacion: ahora }
       setApuntesModulo(moduloId, [...apuntes, nuevo])
     }
     setMostrarForm(false)
@@ -638,10 +825,10 @@ function TabApuntes({ moduloId, apuntes, modoOscuro }: { moduloId: string; apunt
               placeholder="Escribe tu apunte..."
             />
           </label>
-          <div className="flex justify-end gap-2">
-            <button onClick={() => { setMostrarForm(false); setEditandoId(null) }} className={`px-3 py-1.5 rounded-lg text-xs ${modoOscuro ? 'text-zinc-400 hover:bg-zinc-700' : 'text-zinc-500 hover:bg-zinc-100'}`}>Cancelar</button>
-            <button onClick={guardar} className="px-3 py-1.5 rounded-lg text-xs font-medium text-white" style={{ background: VERDE }}>Guardar</button>
-          </div>
+          {clases.length > 0 && (
+            <CampoSelectClase label="Clase a la que pertenece (opcional)" valor={claseId} onChange={setClaseId} clases={clases} modoOscuro={modoOscuro} />
+          )}
+          <BotonesFormulario onCancelar={() => { setMostrarForm(false); setEditandoId(null) }} onGuardar={guardar} modoOscuro={modoOscuro} />
         </div>
       )}
 
@@ -652,9 +839,12 @@ function TabApuntes({ moduloId, apuntes, modoOscuro }: { moduloId: string; apunt
           {ordenados.map((a) => (
             <div key={a.id} className={`p-3 rounded-xl border ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
               <div className="flex items-start justify-between gap-2 mb-1">
-                <button onClick={() => iniciarEdicion(a)} className={`text-sm font-medium text-left hover:underline ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>
-                  {a.titulo}
-                </button>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button onClick={() => iniciarEdicion(a)} className={`text-sm font-medium text-left hover:underline ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>
+                    {a.titulo}
+                  </button>
+                  <EtiquetaClase clase={clases.find((c) => c.id === a.claseId)} modoOscuro={modoOscuro} />
+                </div>
                 <BotonEliminar onClick={() => eliminar(a.id)} modoOscuro={modoOscuro} />
               </div>
               {a.contenido && (
