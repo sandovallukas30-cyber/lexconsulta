@@ -45,7 +45,9 @@ import type {
   ApunteModulo,
   CuadernoApuntes,
   Ramo,
+  BriefCaso,
 } from '../types'
+import { agregarActividadHoy } from '../services/actividadEstudio'
 
 interface AppState {
   perfil: PerfilUsuario
@@ -224,6 +226,7 @@ interface AppState {
   setTextosModulo: (moduloId: string, textos: TextoObligatorio[]) => void
   setApuntesModulo: (moduloId: string, apuntes: ApunteModulo[]) => void
   setCuadernosModulo: (moduloId: string, cuadernos: CuadernoApuntes[]) => void
+  setBriefsModulo: (moduloId: string, briefs: BriefCaso[]) => void
 
   /** Ramos que el usuario cursa (metadata real de curso -- profesor,
    *  horario, semestre), cada uno vinculado a uno o más Módulos. */
@@ -231,9 +234,16 @@ interface AppState {
   crearRamo: (ramo: Omit<Ramo, 'id'>) => string
   actualizarRamo: (id: string, cambios: Partial<Omit<Ramo, 'id'>>) => void
   eliminarRamo: (id: string) => void
+
+  /** Días (YYYY-MM-DD, hora local) en que hubo alguna actividad de estudio
+   *  -- repasar una tarjeta, tocar el contenido académico de un módulo, o
+   *  terminar una partida de Práctica. Alimenta la racha del Dashboard
+   *  "Hoy" (ver services/actividadEstudio.ts); no es un registro fino de
+   *  qué se hizo, solo de qué días hubo actividad. */
+  diasActividadEstudio: string[]
 }
 
-const datosAcademicosVacios: DatosAcademicosModulo = { clases: [], evaluaciones: [], textos: [], apuntes: [], cuadernos: [] }
+const datosAcademicosVacios: DatosAcademicosModulo = { clases: [], evaluaciones: [], textos: [], apuntes: [], cuadernos: [], briefs: [] }
 
 const codigosIniciales: CodigoActivo[] = [
   { tipo: 'con', nombre: 'Constitución Política', nombreCorto: 'Constitución', descripcion: 'Carta fundamental de la República', categoria: 'fundamentales', activo: true, cargado: true },
@@ -305,6 +315,7 @@ export const useStore = create<AppState>()(
       moduloActivoId: null,
       academicoModulos: {},
       ramos: [],
+      diasActividadEstudio: [],
 
       setPerfil: (perfil) => set({ perfil, modalPerfilAbierto: false }),
       setVistaActiva: (vistaActiva) =>
@@ -564,6 +575,7 @@ export const useStore = create<AppState>()(
                 }
               : c
           ),
+          diasActividadEstudio: agregarActividadHoy(s.diasActividadEstudio),
         })),
       importarColeccion: (compartida) => {
         const id = crypto.randomUUID()
@@ -756,8 +768,9 @@ export const useStore = create<AppState>()(
         set((s) => {
           const p = s.partidaPasapalabra
           if (!p || !p.finalizada) return {}
-          // Modo estudio no cuenta para récords.
-          if (p.modoEstudio) return {}
+          const diasActividadEstudio = agregarActividadHoy(s.diasActividadEstudio)
+          // Modo estudio no cuenta para récords, pero sí para la racha.
+          if (p.modoEstudio) return { diasActividadEstudio }
           const aciertos = p.rosco.filter((r) => r.estado === 'acertada').length
           const fallos = p.rosco.filter((r) => r.estado === 'fallada').length
           const tiempoUsado = p.duracionTotalSeg - p.segundosRestantes
@@ -767,8 +780,9 @@ export const useStore = create<AppState>()(
             !previo ||
             aciertos > previo.aciertos ||
             (aciertos === previo.aciertos && tiempoUsado < previo.tiempoUsadoSeg)
-          if (!esRecord) return {}
+          if (!esRecord) return { diasActividadEstudio }
           return {
+            diasActividadEstudio,
             recordsPasapalabra: {
               ...s.recordsPasapalabra,
               [p.area]: { aciertos, fallos, tiempoUsadoSeg: tiempoUsado, fecha: Date.now() },
@@ -803,7 +817,9 @@ export const useStore = create<AppState>()(
         set((s) => {
           const p = s.partidaAhorcado
           if (!p || p.estado === 'jugando') return {}
-          if (p.modoEstudio) return {}
+          const diasActividadEstudio = agregarActividadHoy(s.diasActividadEstudio)
+          // Modo estudio no cuenta para stats, pero sí para la racha.
+          if (p.modoEstudio) return { diasActividadEstudio }
           const previo = s.statsAhorcado[p.area] ?? {
             partidasJugadas: 0,
             partidasGanadas: 0,
@@ -813,6 +829,7 @@ export const useStore = create<AppState>()(
           const gano = p.estado === 'ganada'
           const rachaActual = gano ? previo.rachaActual + 1 : 0
           return {
+            diasActividadEstudio,
             statsAhorcado: {
               ...s.statsAhorcado,
               [p.area]: {
@@ -882,6 +899,7 @@ export const useStore = create<AppState>()(
             ...s.academicoModulos,
             [moduloId]: { ...(s.academicoModulos[moduloId] ?? datosAcademicosVacios), clases },
           },
+          diasActividadEstudio: agregarActividadHoy(s.diasActividadEstudio),
         })),
       setEvaluacionesModulo: (moduloId, evaluaciones) =>
         set((s) => ({
@@ -889,6 +907,7 @@ export const useStore = create<AppState>()(
             ...s.academicoModulos,
             [moduloId]: { ...(s.academicoModulos[moduloId] ?? datosAcademicosVacios), evaluaciones },
           },
+          diasActividadEstudio: agregarActividadHoy(s.diasActividadEstudio),
         })),
       setTextosModulo: (moduloId, textos) =>
         set((s) => ({
@@ -896,6 +915,7 @@ export const useStore = create<AppState>()(
             ...s.academicoModulos,
             [moduloId]: { ...(s.academicoModulos[moduloId] ?? datosAcademicosVacios), textos },
           },
+          diasActividadEstudio: agregarActividadHoy(s.diasActividadEstudio),
         })),
       setApuntesModulo: (moduloId, apuntes) =>
         set((s) => ({
@@ -903,6 +923,7 @@ export const useStore = create<AppState>()(
             ...s.academicoModulos,
             [moduloId]: { ...(s.academicoModulos[moduloId] ?? datosAcademicosVacios), apuntes },
           },
+          diasActividadEstudio: agregarActividadHoy(s.diasActividadEstudio),
         })),
       setCuadernosModulo: (moduloId, cuadernos) =>
         set((s) => ({
@@ -910,6 +931,14 @@ export const useStore = create<AppState>()(
             ...s.academicoModulos,
             [moduloId]: { ...(s.academicoModulos[moduloId] ?? datosAcademicosVacios), cuadernos },
           },
+        })),
+      setBriefsModulo: (moduloId, briefs) =>
+        set((s) => ({
+          academicoModulos: {
+            ...s.academicoModulos,
+            [moduloId]: { ...(s.academicoModulos[moduloId] ?? datosAcademicosVacios), briefs },
+          },
+          diasActividadEstudio: agregarActividadHoy(s.diasActividadEstudio),
         })),
       crearRamo: (ramo) => {
         const id = crypto.randomUUID()
@@ -923,7 +952,7 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'prima-lex-storage-v3',
-      version: 25,
+      version: 26,
       partialize: (s) => ({
         perfil: s.perfil,
         codigos: s.codigos,
@@ -952,6 +981,7 @@ export const useStore = create<AppState>()(
         progresoModulos: s.progresoModulos,
         academicoModulos: s.academicoModulos,
         ramos: s.ramos,
+        diasActividadEstudio: s.diasActividadEstudio,
       }),
       migrate: (persisted: unknown, version: number) => {
         if (version < 3) {
@@ -984,17 +1014,22 @@ export const useStore = create<AppState>()(
           const nuevas = JURISPRUDENCIA_SEED.filter((j) => !idsExistentes.has(j.id))
           return { ...state, jurisprudencia: [...nuevas, ...existentes] }
         }
-        if (version < 25) {
-          // v25: DatosAcademicosModulo incorpora `cuadernos` -- las entradas
-          // guardadas antes de este cambio no lo tienen.
-          type DatosSinCuadernos = Omit<DatosAcademicosModulo, 'cuadernos'> & { cuadernos?: CuadernoApuntes[] }
-          const state = persisted as { academicoModulos?: Record<string, DatosSinCuadernos> }
+        if (version < 26) {
+          // v25: DatosAcademicosModulo incorpora `cuadernos`. v26: incorpora
+          // `briefs`. Un mismo bloque para las dos -- las entradas guardadas
+          // antes de v25 tampoco tienen `briefs`, así que no alcanza con
+          // migrar solo el campo de la versión inmediatamente anterior.
+          type DatosParciales = Omit<DatosAcademicosModulo, 'cuadernos' | 'briefs'> & {
+            cuadernos?: CuadernoApuntes[]
+            briefs?: BriefCaso[]
+          }
+          const state = persisted as { academicoModulos?: Record<string, DatosParciales> }
           if (state.academicoModulos) {
-            const conCuadernos: Record<string, DatosAcademicosModulo> = {}
+            const migrados: Record<string, DatosAcademicosModulo> = {}
             for (const [id, datos] of Object.entries(state.academicoModulos)) {
-              conCuadernos[id] = { ...datos, cuadernos: datos.cuadernos ?? [] }
+              migrados[id] = { ...datos, cuadernos: datos.cuadernos ?? [], briefs: datos.briefs ?? [] }
             }
-            return { ...state, academicoModulos: conCuadernos }
+            return { ...state, academicoModulos: migrados }
           }
         }
         return persisted as never

@@ -6,6 +6,7 @@ import { ModuloDetalle, type Tab } from '../ui/ModuloDetalle'
 import { RamoCard } from '../ui/RamoCard'
 import { ModalRamo } from '../ui/ModalRamo'
 import { obtenerProximosEventos, diasHasta, formatearCountdown, urgenciaDe, type Urgencia } from '../../services/modulosAcademico'
+import { calcularRachaEstudio, contarTarjetasVencidas } from '../../services/actividadEstudio'
 import type { Ramo } from '../../types'
 
 const VERDE = 'var(--accent-base)'
@@ -58,6 +59,56 @@ function ProximosEventos({ modoOscuro, onAbrir }: { modoOscuro: boolean; onAbrir
           )
         })}
       </div>
+    </div>
+  )
+}
+
+function DashboardHoy({ modoOscuro }: { modoOscuro: boolean }) {
+  const diasActividadEstudio = useStore((s) => s.diasActividadEstudio)
+  const colecciones = useStore((s) => s.colecciones)
+  const setVistaActiva = useStore((s) => s.setVistaActiva)
+
+  const racha = calcularRachaEstudio(diasActividadEstudio)
+  const tarjetasVencidas = contarTarjetasVencidas(colecciones)
+
+  if (racha === 0 && tarjetasVencidas === 0) return null
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {racha > 0 && (
+        <div className={`flex items-center gap-3 p-4 rounded-xl border ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-orange-500/15">
+            <i className="ti ti-flame text-lg text-orange-500" />
+          </div>
+          <div>
+            <div className={`text-xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{racha}</div>
+            <div className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
+              {racha === 1 ? 'día seguido estudiando' : 'días seguidos estudiando'}
+            </div>
+          </div>
+        </div>
+      )}
+      {tarjetasVencidas > 0 && (
+        <button
+          onClick={() => setVistaActiva('colecciones')}
+          className={`flex items-center gap-3 p-4 rounded-xl border text-left transition-colors ${
+            modoOscuro ? 'bg-zinc-800/60 border-zinc-800 hover:bg-zinc-800' : 'bg-white border-zinc-200 hover:bg-zinc-50'
+          }`}
+        >
+          <div
+            className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: 'color-mix(in srgb, var(--accent-base) 15%, transparent)' }}
+          >
+            <i className="ti ti-cards text-lg" style={{ color: VERDE }} />
+          </div>
+          <div>
+            <div className={`text-xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{tarjetasVencidas}</div>
+            <div className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
+              {tarjetasVencidas === 1 ? 'tarjeta para repasar hoy' : 'tarjetas para repasar hoy'}
+            </div>
+          </div>
+        </button>
+      )}
     </div>
   )
 }
@@ -162,6 +213,8 @@ export function ModulosView() {
         </div>
 
         <div className="mt-8 space-y-8">
+          <DashboardHoy modoOscuro={modoOscuro} />
+
           <MisRamos modoOscuro={modoOscuro} />
 
           <ProximosEventos modoOscuro={modoOscuro} onAbrir={abrirModulo} />
