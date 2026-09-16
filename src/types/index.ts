@@ -37,6 +37,7 @@ export type CategoriaCodigo =
 export type VistaId =
   | 'consultar'
   | 'situacion'
+  | 'modulos'
   | 'canvas'
   | 'mapa'
   | 'explorador'
@@ -527,4 +528,27 @@ export interface RelacionNorma {
   desde: string
   hasta: string
   tipo: 'complementa' | 'modifica' | 'deroga' | 'remite'
+}
+
+export interface Modulo {
+  id: string
+  nombre: string
+  descripcion: string
+  icono: string
+  color: string
+  orden: number
+  temasIncluidos: number
+  /** Código del Explorador al que navega la tarjeta ("Explorar" abre este
+   *  código directamente) -- null cuando el módulo no corresponde a un solo
+   *  código (ej. agrupa varias leyes especiales). */
+  codigoRelacionado: CodigoTipo | null
+}
+
+export interface ProgresoModulo {
+  moduloId: string
+  porcentajeDominio: number
+  temasCompletados: number
+  ultimaActividad: number | null
+  ejerciciosResueltos: number
+  tasaAcierto: number
 }

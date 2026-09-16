@@ -4,6 +4,7 @@ import { ModalPerfil } from './components/ui/ModalPerfil'
 import { ModalRegistro } from './components/ui/ModalRegistro'
 import { ConsultarView } from './components/views/ConsultarView'
 import { SituacionView } from './components/views/SituacionView'
+import { ModulosView } from './components/views/ModulosView'
 import { CanvasView } from './components/views/CanvasView'
 import { MapaView } from './components/views/MapaView'
 import { ExploradorView } from './components/views/ExploradorView'
@@ -27,6 +28,7 @@ import type { VistaId } from './types'
 const vistas: Record<VistaId, React.ComponentType> = {
   consultar: ConsultarView,
   situacion: SituacionView,
+  modulos: ModulosView,
   canvas: CanvasView,
   mapa: MapaView,
   explorador: ExploradorView,

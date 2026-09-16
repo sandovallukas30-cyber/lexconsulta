@@ -37,6 +37,7 @@ import type {
   FuncionJuridica,
   MapaMental,
   TemaLectura,
+  ProgresoModulo,
 } from '../types'
 
 interface AppState {
@@ -194,6 +195,11 @@ interface AppState {
   registrarUsuario: (email: string) => void
   cerrarSesion: () => void
   setConsultasRestantes: (n: number) => void
+
+  /** Progreso del usuario en cada Módulo académico (vista "Módulos"),
+   * indexado por Modulo['id']. Ausente = 0% dominio, sin actividad aún. */
+  progresoModulos: Record<string, ProgresoModulo>
+  registrarProgresoModulo: (moduloId: string, cambios: Partial<Omit<ProgresoModulo, 'moduloId'>>) => void
 }
 
 const codigosIniciales: CodigoActivo[] = [
@@ -262,6 +268,7 @@ export const useStore = create<AppState>()(
       usuarioRegistrado: false,
       consultasRestantes: null,
       fechaConsultas: null,
+      progresoModulos: {},
 
       setPerfil: (perfil) => set({ perfil, modalPerfilAbierto: false }),
       setVistaActiva: (vistaActiva) =>
@@ -815,6 +822,23 @@ export const useStore = create<AppState>()(
           consultasRestantes: n,
           fechaConsultas: new Date().toISOString().slice(0, 10),
         }),
+      registrarProgresoModulo: (moduloId, cambios) =>
+        set((s) => {
+          const actual = s.progresoModulos[moduloId] ?? {
+            moduloId,
+            porcentajeDominio: 0,
+            temasCompletados: 0,
+            ultimaActividad: null,
+            ejerciciosResueltos: 0,
+            tasaAcierto: 0,
+          }
+          return {
+            progresoModulos: {
+              ...s.progresoModulos,
+              [moduloId]: { ...actual, ...cambios, ultimaActividad: Date.now() },
+            },
+          }
+        }),
     }),
     {
       name: 'prima-lex-storage-v3',
@@ -844,6 +868,7 @@ export const useStore = create<AppState>()(
         usuarioRegistrado: s.usuarioRegistrado,
         consultasRestantes: s.consultasRestantes,
         fechaConsultas: s.fechaConsultas,
+        progresoModulos: s.progresoModulos,
       }),
       migrate: (persisted: unknown, version: number) => {
         if (version < 3) {
