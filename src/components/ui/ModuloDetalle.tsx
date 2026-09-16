@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { useStore } from '../../store/useStore'
-import type { Modulo, SesionClase, EvaluacionModulo, TextoObligatorio, ApunteModulo, CuadernoApuntes } from '../../types'
+import type { Modulo, SesionClase, EvaluacionModulo, TextoObligatorio, ApunteModulo, CuadernoApuntes, BriefCaso } from '../../types'
 import { diasHasta, formatearCountdown, urgenciaDe, calcularPonderacionTotal, type Urgencia } from '../../services/modulosAcademico'
 
 const VERDE = 'var(--accent-base)'
 
-export type Tab = 'resumen' | 'clases' | 'examenes' | 'textos' | 'apuntes'
+export type Tab = 'resumen' | 'clases' | 'examenes' | 'textos' | 'apuntes' | 'casos'
 
 const TABS: { id: Tab; label: string; icono: string }[] = [
   { id: 'resumen', label: 'Resumen', icono: 'ti-layout-dashboard' },
@@ -13,6 +13,7 @@ const TABS: { id: Tab; label: string; icono: string }[] = [
   { id: 'examenes', label: 'Exámenes', icono: 'ti-clipboard-check' },
   { id: 'textos', label: 'Textos', icono: 'ti-books' },
   { id: 'apuntes', label: 'Apuntes', icono: 'ti-notes' },
+  { id: 'casos', label: 'Casos', icono: 'ti-gavel' },
 ]
 
 function formatearFechaCorta(iso: string): string {
@@ -52,7 +53,7 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial }: Prop
   const [tab, setTab] = useState<Tab>(tabInicial ?? 'resumen')
   const setCodigoExplorador = useStore((s) => s.setCodigoExplorador)
   const setVistaActiva = useStore((s) => s.setVistaActiva)
-  const datos = useStore((s) => s.academicoModulos[modulo.id]) ?? { clases: [], evaluaciones: [], textos: [], apuntes: [], cuadernos: [] }
+  const datos = useStore((s) => s.academicoModulos[modulo.id]) ?? { clases: [], evaluaciones: [], textos: [], apuntes: [], cuadernos: [], briefs: [] }
 
   const abrirCodigo = () => {
     if (!modulo.codigoRelacionado) return
@@ -130,6 +131,7 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial }: Prop
         {tab === 'examenes' && <TabExamenes moduloId={modulo.id} evaluaciones={datos.evaluaciones} modoOscuro={modoOscuro} />}
         {tab === 'textos' && <TabTextos moduloId={modulo.id} textos={datos.textos} clases={datos.clases} modoOscuro={modoOscuro} />}
         {tab === 'apuntes' && <TabApuntes moduloId={modulo.id} apuntes={datos.apuntes} clases={datos.clases} cuadernos={datos.cuadernos} modoOscuro={modoOscuro} />}
+        {tab === 'casos' && <TabCasos moduloId={modulo.id} briefs={datos.briefs} clases={datos.clases} modoOscuro={modoOscuro} />}
       </div>
     </div>
   )
@@ -274,7 +276,7 @@ function BotonesFormulario({
 function TabResumen({
   datos, modoOscuro, onIrA,
 }: {
-  datos: { clases: SesionClase[]; evaluaciones: EvaluacionModulo[]; textos: TextoObligatorio[]; apuntes: ApunteModulo[] }
+  datos: { clases: SesionClase[]; evaluaciones: EvaluacionModulo[]; textos: TextoObligatorio[]; apuntes: ApunteModulo[]; briefs: BriefCaso[] }
   modoOscuro: boolean
   onIrA: (tab: Tab) => void
 }) {
@@ -311,6 +313,7 @@ function TabResumen({
     },
     { tab: 'textos' as Tab, icono: 'ti-books', label: 'Textos', valor: `${textosLeidos}/${datos.textos.length}`, detalle: 'leídos' },
     { tab: 'apuntes' as Tab, icono: 'ti-notes', label: 'Apuntes', valor: `${datos.apuntes.length}`, detalle: datos.apuntes.length === 1 ? 'apunte guardado' : 'apuntes guardados' },
+    { tab: 'casos' as Tab, icono: 'ti-gavel', label: 'Casos', valor: `${datos.briefs.length}`, detalle: datos.briefs.length === 1 ? 'caso analizado' : 'casos analizados' },
   ]
 
   return (
@@ -940,6 +943,200 @@ function TabApuntes({
                 </div>
                 {a.contenido && (
                   <p className={`text-xs whitespace-pre-wrap line-clamp-3 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>{a.contenido}</p>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ------------------------------------------------------------------
+// Casos (brief IRAC/FIRAC)
+// ------------------------------------------------------------------
+
+function campoBriefVacio() {
+  return { caratula: '', tribunal: '', fecha: '', hechos: '', cuestionJuridica: '', normaAplicable: '', analisis: '', conclusion: '', claseId: '' }
+}
+
+function CampoArea({
+  label, valor, onChange, modoOscuro, placeholder,
+}: {
+  label: string
+  valor: string
+  onChange: (v: string) => void
+  modoOscuro: boolean
+  placeholder?: string
+}) {
+  return (
+    <label className="block">
+      <span className={`block text-xs font-medium mb-1 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>{label}</span>
+      <textarea
+        value={valor}
+        onChange={(e) => onChange(e.target.value)}
+        rows={3}
+        placeholder={placeholder}
+        className={`w-full rounded-lg px-3 py-2 text-sm outline-none border resize-y ${
+          modoOscuro ? 'bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-600' : 'bg-white border-zinc-200 text-zinc-900 placeholder:text-zinc-400'
+        }`}
+      />
+    </label>
+  )
+}
+
+function TabCasos({ moduloId, briefs, clases, modoOscuro }: { moduloId: string; briefs: BriefCaso[]; clases: SesionClase[]; modoOscuro: boolean }) {
+  const setBriefsModulo = useStore((s) => s.setBriefsModulo)
+  const [mostrarForm, setMostrarForm] = useState(false)
+  const [editandoId, setEditandoId] = useState<string | null>(null)
+  const [campos, setCampos] = useState(campoBriefVacio())
+  const [expandidoId, setExpandidoId] = useState<string | null>(null)
+
+  const ordenados = [...briefs].sort((a, b) => b.fechaModificacion - a.fechaModificacion)
+
+  const set = (campo: keyof ReturnType<typeof campoBriefVacio>) => (valor: string) => setCampos((c) => ({ ...c, [campo]: valor }))
+
+  const iniciarNuevo = () => {
+    setEditandoId(null)
+    setCampos(campoBriefVacio())
+    setMostrarForm(true)
+  }
+
+  const iniciarEdicion = (b: BriefCaso) => {
+    setEditandoId(b.id)
+    setCampos({
+      caratula: b.caratula,
+      tribunal: b.tribunal ?? '',
+      fecha: b.fecha ?? '',
+      hechos: b.hechos,
+      cuestionJuridica: b.cuestionJuridica,
+      normaAplicable: b.normaAplicable,
+      analisis: b.analisis,
+      conclusion: b.conclusion,
+      claseId: b.claseId ?? '',
+    })
+    setMostrarForm(true)
+  }
+
+  const guardar = () => {
+    if (!campos.caratula.trim()) return
+    const ahora = Date.now()
+    const limpiar = (v: string) => v.trim() || undefined
+    if (editandoId) {
+      setBriefsModulo(moduloId, briefs.map((b) => (b.id === editandoId
+        ? {
+            ...b,
+            caratula: campos.caratula.trim(),
+            tribunal: limpiar(campos.tribunal),
+            fecha: limpiar(campos.fecha),
+            hechos: campos.hechos,
+            cuestionJuridica: campos.cuestionJuridica,
+            normaAplicable: campos.normaAplicable,
+            analisis: campos.analisis,
+            conclusion: campos.conclusion,
+            claseId: campos.claseId || undefined,
+            fechaModificacion: ahora,
+          }
+        : b)))
+    } else {
+      const nuevo: BriefCaso = {
+        id: crypto.randomUUID(),
+        caratula: campos.caratula.trim(),
+        tribunal: limpiar(campos.tribunal),
+        fecha: limpiar(campos.fecha),
+        hechos: campos.hechos,
+        cuestionJuridica: campos.cuestionJuridica,
+        normaAplicable: campos.normaAplicable,
+        analisis: campos.analisis,
+        conclusion: campos.conclusion,
+        claseId: campos.claseId || undefined,
+        fechaCreacion: ahora,
+        fechaModificacion: ahora,
+      }
+      setBriefsModulo(moduloId, [...briefs, nuevo])
+    }
+    setMostrarForm(false)
+    setEditandoId(null)
+  }
+
+  const eliminar = (id: string) => {
+    setBriefsModulo(moduloId, briefs.filter((b) => b.id !== id))
+  }
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-3">
+        <div>
+          <h2 className={`text-sm font-semibold ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>Casos (brief IRAC)</h2>
+          <p className={`text-xs mt-0.5 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
+            Hechos, Cuestión jurídica, Norma aplicable, Análisis y Conclusión de un fallo.
+          </p>
+        </div>
+        <BotonAgregar label="Agregar caso" onClick={iniciarNuevo} modoOscuro={modoOscuro} />
+      </div>
+
+      {mostrarForm && (
+        <div className={`p-4 rounded-xl border mb-4 space-y-3 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+          <div className="grid grid-cols-2 gap-3">
+            <CampoTexto label="Carátula / rol" valor={campos.caratula} onChange={set('caratula')} modoOscuro={modoOscuro} placeholder="Ej: Rol 12.345-2023, Corte Suprema" />
+            <CampoTexto label="Tribunal (opcional)" valor={campos.tribunal} onChange={set('tribunal')} modoOscuro={modoOscuro} />
+          </div>
+          <CampoTexto label="Fecha del fallo (opcional)" tipo="date" valor={campos.fecha} onChange={set('fecha')} modoOscuro={modoOscuro} />
+          <CampoArea label="Hechos" valor={campos.hechos} onChange={set('hechos')} modoOscuro={modoOscuro} placeholder="Qué pasó, quiénes son las partes" />
+          <CampoArea label="Cuestión jurídica (Issue)" valor={campos.cuestionJuridica} onChange={set('cuestionJuridica')} modoOscuro={modoOscuro} placeholder="La pregunta de derecho que el tribunal debe resolver" />
+          <CampoArea label="Norma aplicable (Rule)" valor={campos.normaAplicable} onChange={set('normaAplicable')} modoOscuro={modoOscuro} placeholder="Artículos, normas o principios que rigen el caso" />
+          <CampoArea label="Análisis (Application)" valor={campos.analisis} onChange={set('analisis')} modoOscuro={modoOscuro} placeholder="Cómo el tribunal aplicó la norma a estos hechos" />
+          <CampoArea label="Conclusión" valor={campos.conclusion} onChange={set('conclusion')} modoOscuro={modoOscuro} placeholder="Qué resolvió el tribunal" />
+          {clases.length > 0 && (
+            <CampoSelectClase label="Clase a la que pertenece (opcional)" valor={campos.claseId} onChange={set('claseId')} clases={clases} modoOscuro={modoOscuro} />
+          )}
+          <BotonesFormulario onCancelar={() => { setMostrarForm(false); setEditandoId(null) }} onGuardar={guardar} modoOscuro={modoOscuro} />
+        </div>
+      )}
+
+      {ordenados.length === 0 ? (
+        <EstadoVacio icono="ti-gavel" texto="Aún no has analizado ningún caso en este módulo." modoOscuro={modoOscuro} />
+      ) : (
+        <div className="space-y-2">
+          {ordenados.map((b) => {
+            const expandido = expandidoId === b.id
+            return (
+              <div key={b.id} className={`rounded-xl border ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+                <div className="flex items-start justify-between gap-2 p-3">
+                  <button onClick={() => setExpandidoId(expandido ? null : b.id)} className="flex-1 min-w-0 text-left">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`text-sm font-medium ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>{b.caratula}</span>
+                      <EtiquetaClase clase={clases.find((c) => c.id === b.claseId)} modoOscuro={modoOscuro} />
+                    </div>
+                    {(b.tribunal || b.fecha) && (
+                      <span className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
+                        {[b.tribunal, b.fecha ? formatearFechaCorta(b.fecha) : null].filter(Boolean).join(' · ')}
+                      </span>
+                    )}
+                  </button>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button onClick={() => iniciarEdicion(b)} className={`w-7 h-7 rounded-md flex items-center justify-center ${modoOscuro ? 'text-zinc-500 hover:bg-zinc-700 hover:text-zinc-200' : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700'}`}>
+                      <i className="ti ti-pencil text-sm" />
+                    </button>
+                    <BotonEliminar onClick={() => eliminar(b.id)} modoOscuro={modoOscuro} />
+                  </div>
+                </div>
+                {expandido && (
+                  <div className={`px-3 pb-3 space-y-2 border-t pt-3 ${modoOscuro ? 'border-zinc-700' : 'border-zinc-100'}`}>
+                    {[
+                      ['Hechos', b.hechos],
+                      ['Cuestión jurídica', b.cuestionJuridica],
+                      ['Norma aplicable', b.normaAplicable],
+                      ['Análisis', b.analisis],
+                      ['Conclusión', b.conclusion],
+                    ].filter(([, v]) => v).map(([label, valor]) => (
+                      <div key={label}>
+                        <span className={`block text-[11px] font-semibold uppercase tracking-wide ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>{label}</span>
+                        <p className={`text-xs whitespace-pre-wrap ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>{valor}</p>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             )

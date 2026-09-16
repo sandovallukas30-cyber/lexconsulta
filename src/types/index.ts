@@ -606,12 +606,31 @@ export interface CuadernoApuntes {
   nombre: string
 }
 
+/** Brief de un fallo/sentencia, con la estructura IRAC/FIRAC que se enseña
+ *  para analizar jurisprudencia (Hechos, Cuestión jurídica, Norma aplicable,
+ *  Análisis, Conclusión) -- llenado a mano por el usuario, no generado. */
+export interface BriefCaso {
+  id: string
+  caratula: string
+  tribunal?: string
+  fecha?: string
+  hechos: string
+  cuestionJuridica: string
+  normaAplicable: string
+  analisis: string
+  conclusion: string
+  claseId?: string
+  fechaCreacion: number
+  fechaModificacion: number
+}
+
 export interface DatosAcademicosModulo {
   clases: SesionClase[]
   evaluaciones: EvaluacionModulo[]
   textos: TextoObligatorio[]
   apuntes: ApunteModulo[]
   cuadernos: CuadernoApuntes[]
+  briefs: BriefCaso[]
 }
 
 /** Ramo concreto que el usuario cursa (con su propio profesor, horario,
