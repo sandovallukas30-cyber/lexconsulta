@@ -1084,6 +1084,7 @@ function ModalBusqueda({
 
 function FichaCodigo({ tipo, modoOscuro }: { tipo: CodigoTipo; modoOscuro: boolean }) {
   const [abierto, setAbierto] = useState(false)
+  const [mostrarHistoria, setMostrarHistoria] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const meta = obtenerMetadata(tipo)
   const setCodigoExplorador = useStore((s) => s.setCodigoExplorador)
@@ -1188,6 +1189,27 @@ function FichaCodigo({ tipo, modoOscuro }: { tipo: CodigoTipo; modoOscuro: boole
                     ))}
                   </div>
                 </FichaFila>
+              )}
+              {meta.historia && (
+                <div className={`-mx-4 border-t ${modoOscuro ? 'border-zinc-800' : 'border-zinc-100'}`}>
+                  <button
+                    onClick={() => setMostrarHistoria((v) => !v)}
+                    className={`w-full flex items-center justify-between gap-2 px-4 py-2 text-left transition-colors ${
+                      modoOscuro ? 'hover:bg-zinc-800/60' : 'hover:bg-zinc-50'
+                    }`}
+                  >
+                    <span className={`flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                      <i className="ti ti-history text-xs" />
+                      Historia del código
+                    </span>
+                    <i className={`ti ti-chevron-down text-xs transition-transform ${mostrarHistoria ? 'rotate-180' : ''} ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`} />
+                  </button>
+                  {mostrarHistoria && (
+                    <p className={`px-4 pb-3 text-[11px] leading-relaxed ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                      {meta.historia}
+                    </p>
+                  )}
+                </div>
               )}
               <p className={`text-[10px] leading-relaxed pt-1 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
                 La fecha indica cuándo se procesó el PDF oficial. <strong>Puede no incluir reformas legales posteriores</strong>. Verifica siempre contra el texto vigente en la fuente.
