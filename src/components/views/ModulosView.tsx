@@ -1,23 +1,21 @@
 import { useStore } from '../../store/useStore'
 import { MODULOS } from '../../data/modulos'
 import { ModuloCard } from '../ui/ModuloCard'
+import { ModuloDetalle } from '../ui/ModuloDetalle'
 
 const VERDE = 'var(--accent-base)'
 
 export function ModulosView() {
   const modoOscuro = useStore((s) => s.modoOscuro)
   const progresoModulos = useStore((s) => s.progresoModulos)
-  const setCodigoExplorador = useStore((s) => s.setCodigoExplorador)
-  const setVistaActiva = useStore((s) => s.setVistaActiva)
+  const moduloActivoId = useStore((s) => s.moduloActivoId)
+  const setModuloActivo = useStore((s) => s.setModuloActivo)
 
   const modulosOrdenados = [...MODULOS].sort((a, b) => a.orden - b.orden)
+  const moduloActivo = moduloActivoId ? MODULOS.find((m) => m.id === moduloActivoId) : undefined
 
-  const abrirModulo = (moduloId: string) => {
-    const modulo = MODULOS.find((m) => m.id === moduloId)
-    if (modulo?.codigoRelacionado) {
-      setCodigoExplorador(modulo.codigoRelacionado)
-      setVistaActiva('explorador')
-    }
+  if (moduloActivo) {
+    return <ModuloDetalle modulo={moduloActivo} modoOscuro={modoOscuro} onVolver={() => setModuloActivo(null)} />
   }
 
   return (
@@ -51,7 +49,7 @@ export function ModulosView() {
               modulo={modulo}
               progreso={progresoModulos[modulo.id]}
               modoOscuro={modoOscuro}
-              onClick={() => abrirModulo(modulo.id)}
+              onClick={() => setModuloActivo(modulo.id)}
             />
           ))}
         </div>

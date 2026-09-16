@@ -38,6 +38,11 @@ import type {
   MapaMental,
   TemaLectura,
   ProgresoModulo,
+  DatosAcademicosModulo,
+  SesionClase,
+  EvaluacionModulo,
+  TextoObligatorio,
+  ApunteModulo,
 } from '../types'
 
 interface AppState {
@@ -200,7 +205,25 @@ interface AppState {
    * indexado por Modulo['id']. Ausente = 0% dominio, sin actividad aún. */
   progresoModulos: Record<string, ProgresoModulo>
   registrarProgresoModulo: (moduloId: string, cambios: Partial<Omit<ProgresoModulo, 'moduloId'>>) => void
+
+  /** Módulo cuyo detalle académico está abierto en la vista "Módulos" (null =
+   * se muestra el grid de tarjetas). Vive acá, no como estado local del
+   * componente, por el mismo motivo que coleccionActivaId/canvasActivoId. */
+  moduloActivoId: string | null
+  setModuloActivo: (id: string | null) => void
+
+  /** Espacio de estudio personal por Módulo: clases, evaluaciones,
+   * bibliografía y apuntes propios del usuario -- vacío por defecto, sin
+   * datos de fábrica. Cada setter reemplaza la lista completa; el
+   * componente arma el array (agregar/editar/eliminar) y lo pasa entero. */
+  academicoModulos: Record<string, DatosAcademicosModulo>
+  setClasesModulo: (moduloId: string, clases: SesionClase[]) => void
+  setEvaluacionesModulo: (moduloId: string, evaluaciones: EvaluacionModulo[]) => void
+  setTextosModulo: (moduloId: string, textos: TextoObligatorio[]) => void
+  setApuntesModulo: (moduloId: string, apuntes: ApunteModulo[]) => void
 }
+
+const datosAcademicosVacios: DatosAcademicosModulo = { clases: [], evaluaciones: [], textos: [], apuntes: [] }
 
 const codigosIniciales: CodigoActivo[] = [
   { tipo: 'con', nombre: 'Constitución Política', nombreCorto: 'Constitución', descripcion: 'Carta fundamental de la República', categoria: 'fundamentales', activo: true, cargado: true },
@@ -269,6 +292,8 @@ export const useStore = create<AppState>()(
       consultasRestantes: null,
       fechaConsultas: null,
       progresoModulos: {},
+      moduloActivoId: null,
+      academicoModulos: {},
 
       setPerfil: (perfil) => set({ perfil, modalPerfilAbierto: false }),
       setVistaActiva: (vistaActiva) =>
@@ -839,6 +864,35 @@ export const useStore = create<AppState>()(
             },
           }
         }),
+      setModuloActivo: (id) => set({ moduloActivoId: id }),
+      setClasesModulo: (moduloId, clases) =>
+        set((s) => ({
+          academicoModulos: {
+            ...s.academicoModulos,
+            [moduloId]: { ...(s.academicoModulos[moduloId] ?? datosAcademicosVacios), clases },
+          },
+        })),
+      setEvaluacionesModulo: (moduloId, evaluaciones) =>
+        set((s) => ({
+          academicoModulos: {
+            ...s.academicoModulos,
+            [moduloId]: { ...(s.academicoModulos[moduloId] ?? datosAcademicosVacios), evaluaciones },
+          },
+        })),
+      setTextosModulo: (moduloId, textos) =>
+        set((s) => ({
+          academicoModulos: {
+            ...s.academicoModulos,
+            [moduloId]: { ...(s.academicoModulos[moduloId] ?? datosAcademicosVacios), textos },
+          },
+        })),
+      setApuntesModulo: (moduloId, apuntes) =>
+        set((s) => ({
+          academicoModulos: {
+            ...s.academicoModulos,
+            [moduloId]: { ...(s.academicoModulos[moduloId] ?? datosAcademicosVacios), apuntes },
+          },
+        })),
     }),
     {
       name: 'prima-lex-storage-v3',
@@ -869,6 +923,7 @@ export const useStore = create<AppState>()(
         consultasRestantes: s.consultasRestantes,
         fechaConsultas: s.fechaConsultas,
         progresoModulos: s.progresoModulos,
+        academicoModulos: s.academicoModulos,
       }),
       migrate: (persisted: unknown, version: number) => {
         if (version < 3) {
