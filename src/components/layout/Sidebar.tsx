@@ -24,6 +24,7 @@ const itemsProfesionales: ItemMenu[] = [
 ]
 
 const itemsAcademicos: ItemMenu[] = [
+  { id: 'modulos', icono: 'ti-layout-grid', label: 'Módulos' },
   { id: 'canvas', icono: 'ti-affiliate', label: 'Canvas' },
   { id: 'mapa', icono: 'ti-network', label: 'Mapa' },
   { id: 'explorador', icono: 'ti-book-2', label: 'Explorador' },
