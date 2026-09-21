@@ -47,9 +47,15 @@ interface Props {
   modoOscuro: boolean
   onVolver: () => void
   tabInicial?: Tab
+  /** Solo presente cuando `modulo` es en realidad un Ramo propio (ver
+   *  moduloDesdeRamo en services/modulosAcademico.ts) -- muestra el botón
+   *  "Editar ramo" para llegar a ModalRamo sin tener que volver a la lista.
+   *  Un Módulo fijo del catálogo no es editable, así que en ese caso este
+   *  prop simplemente se omite y el botón no aparece. */
+  onEditar?: () => void
 }
 
-export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial }: Props) {
+export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEditar }: Props) {
   const [tab, setTab] = useState<Tab>(tabInicial ?? 'resumen')
   const setCodigoExplorador = useStore((s) => s.setCodigoExplorador)
   const setVistaActiva = useStore((s) => s.setVistaActiva)
@@ -62,7 +68,7 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial }: Prop
   const setCanvasActivo = useStore((s) => s.setCanvasActivo)
   const setMapaMentalActivo = useStore((s) => s.setMapaMentalActivo)
   const datos = useStore((s) => s.academicoModulos[modulo.id]) ?? { clases: [], evaluaciones: [], textos: [], apuntes: [], cuadernos: [], briefs: [] }
-  const coleccionesModulo = coleccionesDeModulo(colecciones, modulo.id)
+  const coleccionesModulo = coleccionesDeModulo(colecciones, modulo.codigoRelacionado)
   const canvasesModulo = canvases.filter((c) => c.moduloId === modulo.id)
   const canvasesDisponibles = canvases.filter((c) => c.moduloId !== modulo.id)
   const mapasModulo = mapasMentales.filter((m) => m.moduloId === modulo.id)
@@ -119,17 +125,30 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial }: Prop
               </p>
             </div>
           </div>
-          {modulo.codigoRelacionado && (
-            <button
-              onClick={abrirCodigo}
-              className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                modoOscuro ? 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700' : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50'
-              }`}
-            >
-              <i className="ti ti-book-2 text-sm" />
-              Ver código
-            </button>
-          )}
+          <div className="flex-shrink-0 flex items-center gap-2">
+            {onEditar && (
+              <button
+                onClick={onEditar}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                  modoOscuro ? 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700' : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50'
+                }`}
+              >
+                <i className="ti ti-pencil text-sm" />
+                Editar ramo
+              </button>
+            )}
+            {modulo.codigoRelacionado && (
+              <button
+                onClick={abrirCodigo}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                  modoOscuro ? 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700' : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50'
+                }`}
+              >
+                <i className="ti ti-book-2 text-sm" />
+                Ver código
+              </button>
+            )}
+          </div>
         </div>
 
         <div className={`flex gap-1 mb-6 border-b ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>

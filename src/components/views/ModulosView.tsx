@@ -5,7 +5,7 @@ import { ModuloCard } from '../ui/ModuloCard'
 import { ModuloDetalle, type Tab } from '../ui/ModuloDetalle'
 import { RamoCard } from '../ui/RamoCard'
 import { ModalRamo } from '../ui/ModalRamo'
-import { obtenerProximosEventos, diasHasta, formatearCountdown, urgenciaDe, type Urgencia } from '../../services/modulosAcademico'
+import { obtenerProximosEventos, diasHasta, formatearCountdown, urgenciaDe, moduloDesdeRamo, type Urgencia } from '../../services/modulosAcademico'
 import { calcularRachaEstudio, contarTarjetasVencidas } from '../../services/actividadEstudio'
 import type { Ramo } from '../../types'
 
@@ -113,27 +113,25 @@ function DashboardHoy({ modoOscuro }: { modoOscuro: boolean }) {
   )
 }
 
-function MisRamos({ modoOscuro }: { modoOscuro: boolean }) {
+function MisRamos({
+  modoOscuro,
+  onAbrirRamo,
+  onEditarRamo,
+  onNuevoRamo,
+}: {
+  modoOscuro: boolean
+  onAbrirRamo: (id: string) => void
+  onEditarRamo: (ramo: Ramo) => void
+  onNuevoRamo: () => void
+}) {
   const ramos = useStore((s) => s.ramos)
-  const [modalAbierto, setModalAbierto] = useState(false)
-  const [ramoEditando, setRamoEditando] = useState<Ramo | null>(null)
-
-  const abrirNuevo = () => {
-    setRamoEditando(null)
-    setModalAbierto(true)
-  }
-
-  const abrirEdicion = (ramo: Ramo) => {
-    setRamoEditando(ramo)
-    setModalAbierto(true)
-  }
 
   return (
     <div>
       <div className="flex justify-between items-center mb-3">
         <h2 className={`text-sm font-semibold ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>Mis ramos</h2>
         <button
-          onClick={abrirNuevo}
+          onClick={onNuevoRamo}
           className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
             modoOscuro ? 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700' : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50'
           }`}
@@ -158,13 +156,12 @@ function MisRamos({ modoOscuro }: { modoOscuro: boolean }) {
               ramo={ramo}
               modulos={MODULOS.filter((m) => ramo.modulosVinculados.includes(m.id))}
               modoOscuro={modoOscuro}
-              onClick={() => abrirEdicion(ramo)}
+              onClick={() => onAbrirRamo(ramo.id)}
+              onEditar={() => onEditarRamo(ramo)}
             />
           ))}
         </div>
       )}
-
-      <ModalRamo abierto={modalAbierto} ramoEditando={ramoEditando} onCerrar={() => setModalAbierto(false)} />
     </div>
   )
 }
@@ -174,18 +171,53 @@ export function ModulosView() {
   const progresoModulos = useStore((s) => s.progresoModulos)
   const moduloActivoId = useStore((s) => s.moduloActivoId)
   const setModuloActivo = useStore((s) => s.setModuloActivo)
+  const ramos = useStore((s) => s.ramos)
   const [tabInicial, setTabInicial] = useState<Tab | undefined>(undefined)
+  const [modalAbierto, setModalAbierto] = useState(false)
+  const [ramoEditando, setRamoEditando] = useState<Ramo | null>(null)
 
   const modulosOrdenados = [...MODULOS].sort((a, b) => a.orden - b.orden)
-  const moduloActivo = moduloActivoId ? MODULOS.find((m) => m.id === moduloActivoId) : undefined
+  const moduloDeCatalogo = moduloActivoId ? MODULOS.find((m) => m.id === moduloActivoId) : undefined
+  // Un Ramo propio se abre con el mismo moduloActivoId (su id de Ramo hace
+  // de id de "módulo virtual" -- ver moduloDesdeRamo): si el id activo no
+  // está en el catálogo fijo, se busca acá antes de darlo por inexistente.
+  const ramoActivo = !moduloDeCatalogo && moduloActivoId ? ramos.find((r) => r.id === moduloActivoId) : undefined
+  const moduloActivo = moduloDeCatalogo ?? (ramoActivo ? moduloDesdeRamo(ramoActivo, MODULOS.filter((m) => ramoActivo.modulosVinculados.includes(m.id))) : undefined)
 
   const abrirModulo = (moduloId: string, tab?: Tab) => {
     setTabInicial(tab)
     setModuloActivo(moduloId)
   }
 
+  const abrirNuevoRamo = () => {
+    setRamoEditando(null)
+    setModalAbierto(true)
+  }
+
+  const abrirEdicionRamo = (ramo: Ramo) => {
+    setRamoEditando(ramo)
+    setModalAbierto(true)
+  }
+
+  // ModalRamo se renderiza UNA sola vez, envolviendo ambas ramas (detalle y
+  // lista) -- antes vivía solo dentro del `return` de la lista, así que
+  // "Editar ramo" desde dentro del detalle (ModuloDetalle ya hizo su propio
+  // `return` antes de llegar ahí) nunca llegaba a montarlo: el botón
+  // encendía el estado pero no había ningún <ModalRamo> presente para
+  // mostrarlo.
   if (moduloActivo) {
-    return <ModuloDetalle modulo={moduloActivo} modoOscuro={modoOscuro} tabInicial={tabInicial} onVolver={() => setModuloActivo(null)} />
+    return (
+      <>
+        <ModuloDetalle
+          modulo={moduloActivo}
+          modoOscuro={modoOscuro}
+          tabInicial={tabInicial}
+          onVolver={() => setModuloActivo(null)}
+          onEditar={ramoActivo ? () => abrirEdicionRamo(ramoActivo) : undefined}
+        />
+        <ModalRamo abierto={modalAbierto} ramoEditando={ramoEditando} onCerrar={() => setModalAbierto(false)} />
+      </>
+    )
   }
 
   return (
@@ -215,7 +247,12 @@ export function ModulosView() {
         <div className="mt-8 space-y-8">
           <DashboardHoy modoOscuro={modoOscuro} />
 
-          <MisRamos modoOscuro={modoOscuro} />
+          <MisRamos
+            modoOscuro={modoOscuro}
+            onAbrirRamo={(id) => abrirModulo(id)}
+            onEditarRamo={abrirEdicionRamo}
+            onNuevoRamo={abrirNuevoRamo}
+          />
 
           <ProximosEventos modoOscuro={modoOscuro} onAbrir={abrirModulo} />
 
@@ -232,6 +269,8 @@ export function ModulosView() {
           </div>
         </div>
       </div>
+
+      <ModalRamo abierto={modalAbierto} ramoEditando={ramoEditando} onCerrar={() => setModalAbierto(false)} />
     </div>
   )
 }

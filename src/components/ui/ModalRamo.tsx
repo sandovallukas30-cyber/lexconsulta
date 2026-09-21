@@ -2,9 +2,34 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { MODULOS } from '../../data/modulos'
+import { ICONO_RAMO_DEFECTO } from '../../services/modulosAcademico'
 import type { Ramo } from '../../types'
 
 const VERDE = 'var(--accent-base)'
+
+/** Mismo criterio visual que los íconos/colores ya usados en MODULOS (ver
+ *  data/modulos.ts) -- así un Ramo propio, sin ningún módulo afín, igual
+ *  puede verse "de la casa" en vez de gris/anónimo. */
+const ICONOS_RAMO = [
+  ICONO_RAMO_DEFECTO,
+  'ti-scale',
+  'ti-gavel',
+  'ti-book',
+  'ti-books',
+  'ti-files',
+  'ti-briefcase',
+  'ti-coin',
+  'ti-building-store',
+  'ti-building',
+  'ti-home-shield',
+  'ti-certificate',
+  'ti-notebook',
+  'ti-users-group',
+  'ti-world',
+  'ti-landmark',
+]
+
+const COLORES_RAMO = [VERDE, '#dc2626', '#9333ea', '#0891b2', '#ea580c', '#7c3aed', '#0284c7', '#059669', '#d97706']
 
 interface Props {
   abierto: boolean
@@ -38,6 +63,8 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
 
   const [campos, setCampos] = useState(() => estadoDesdeRamo(ramoEditando))
   const [modulosVinculados, setModulosVinculados] = useState<string[]>(ramoEditando?.modulosVinculados ?? [])
+  const [icono, setIcono] = useState<string>(ramoEditando?.icono ?? ICONO_RAMO_DEFECTO)
+  const [color, setColor] = useState<string>(ramoEditando?.color ?? VERDE)
 
   // Reinicia el formulario cada vez que se abre (crear nuevo o editar otro
   // ramo). Normalizado a '' en ambos lados -- comparar ramoEditando?.id
@@ -50,6 +77,8 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
     setUltimoId(idComparable)
     setCampos(estadoDesdeRamo(ramoEditando))
     setModulosVinculados(ramoEditando?.modulosVinculados ?? [])
+    setIcono(ramoEditando?.icono ?? ICONO_RAMO_DEFECTO)
+    setColor(ramoEditando?.color ?? VERDE)
   }
 
   if (!abierto) return null
@@ -74,6 +103,8 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
       sala: limpiar(campos.sala),
       syllabusUrl: limpiar(campos.syllabusUrl),
       modulosVinculados,
+      icono,
+      color,
     }
     if (ramoEditando) actualizarRamo(ramoEditando.id, datos)
     else crearRamo(datos)
@@ -120,10 +151,65 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
           </div>
 
           <div className="px-6 py-4 overflow-y-auto space-y-3">
-            <label className="block">
-              <span className={labelClase}>Nombre del ramo</span>
-              <input className={inputClase} value={campos.nombre} onChange={(e) => set('nombre')(e.target.value)} placeholder="Ej: Historia del Derecho Chileno" />
-            </label>
+            <div className="flex items-center gap-3">
+              <div
+                className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: color + '20' }}
+              >
+                <i className={`ti ${icono} text-xl`} style={{ color }} />
+              </div>
+              <label className="block flex-1">
+                <span className={labelClase}>Nombre del ramo</span>
+                <input className={inputClase} value={campos.nombre} onChange={(e) => set('nombre')(e.target.value)} placeholder="Ej: Principios Fundamentales del Derecho Privado" />
+              </label>
+            </div>
+
+            <div>
+              <span className={labelClase}>Ícono</span>
+              <div className="flex flex-wrap gap-1.5">
+                {ICONOS_RAMO.map((ic) => {
+                  const activo = ic === icono
+                  return (
+                    <button
+                      key={ic}
+                      type="button"
+                      onClick={() => setIcono(ic)}
+                      title={ic}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center border transition-colors"
+                      style={
+                        activo
+                          ? { background: color + '20', color, borderColor: color }
+                          : { borderColor: modoOscuro ? '#3f3f46' : '#e4e4e7', color: modoOscuro ? '#a1a1aa' : '#71717a' }
+                      }
+                    >
+                      <i className={`ti ${ic} text-sm`} />
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            <div>
+              <span className={labelClase}>Color</span>
+              <div className="flex flex-wrap gap-1.5">
+                {COLORES_RAMO.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setColor(c)}
+                    title={c}
+                    className="w-7 h-7 rounded-full flex items-center justify-center transition-transform"
+                    style={{
+                      background: c,
+                      transform: c === color ? 'scale(1.15)' : 'scale(1)',
+                      boxShadow: c === color ? `0 0 0 2px ${modoOscuro ? '#18181b' : '#ffffff'}, 0 0 0 4px ${c}` : 'none',
+                    }}
+                  >
+                    {c === color && <i className="ti ti-check text-xs text-white" />}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <label className="block">
                 <span className={labelClase}>Semestre</span>

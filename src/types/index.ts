@@ -662,4 +662,12 @@ export interface Ramo {
   sala?: string
   syllabusUrl?: string
   modulosVinculados: string[]
+  /** Icono propio (clase tabler, ej. "ti-school") -- independiente de los
+   *  Módulos vinculados: un Ramo sin ningún Módulo afín (ej. "Principios
+   *  Fundamentales del Derecho Privado") igual necesita su propia identidad
+   *  visual. Sin valor = icono por defecto (ver DEFAULT_ICONO_RAMO). */
+  icono?: string
+  /** Color propio, mismo criterio que icono. Sin valor = verde de acento
+   *  de la app (var(--accent-base)). */
+  color?: string
 }
