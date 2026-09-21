@@ -46,8 +46,10 @@ import type {
   CuadernoApuntes,
   Ramo,
   BriefCaso,
+  CodigoTipo,
 } from '../types'
 import { agregarActividadHoy } from '../services/actividadEstudio'
+import { aplicarResultadoPracticaATodos, aplicarResultadoQuizATodos } from '../services/progresoModulos'
 
 interface AppState {
   perfil: PerfilUsuario
@@ -88,6 +90,17 @@ interface AppState {
    * Explorador — Colecciones no tiene forma de tocar el estado interno
    * (seleccionadoId es local a ExploradorInterno). */
   articuloExploradorPendiente: string | null
+
+  /** Texto a buscar en el modo "Buscar por norma" de Plazos, dejado por
+   * Situación al ofrecer "Calcular este plazo" sobre un plazo crítico del
+   * diagnóstico -- incluye el nombre del código relacionado a la
+   * situación para que el usuario encuentre rápido la norma exacta, ya
+   * que `plazosCriticos` es texto libre sin estructura para autocompletar
+   * cantidad/unidad con certeza. Mismo patrón que
+   * articuloExploradorPendiente: se consume y se limpia de inmediato. */
+  busquedaPlazoPendiente: string | null
+  abrirBusquedaEnPlazos: (texto: string) => void
+  limpiarBusquedaPlazoPendiente: () => void
 
   setPerfil: (perfil: PerfilUsuario) => void
   setVistaActiva: (vista: VistaId) => void
@@ -187,6 +200,10 @@ interface AppState {
   intentarLetraAhorcado: (letra: string) => void
   abandonarPartidaAhorcado: () => void
   registrarStatsAhorcadoSiCorresponde: () => void
+  /** Quiz Jurídico no guarda su partida en el store (vive en el hook local
+   * useDestello) ni tiene stats propios -- solo aporta al dominio de
+   * Módulos cuando termina una ronda. */
+  registrarProgresoQuiz: (codigo: CodigoTipo, aciertos: number, errores: number) => void
   temaColor: TemaColorId
   setTemaColor: (id: TemaColorId) => void
   omnibarAbierto: boolean
@@ -303,6 +320,7 @@ export const useStore = create<AppState>()(
       consultaActivaId: null,
       codigoExploradorActivo: null,
       articuloExploradorPendiente: null,
+      busquedaPlazoPendiente: null,
       codigoMapaActivo: null,
       omnibarAbierto: false,
       rightSidebarAbierto: false,
@@ -686,6 +704,8 @@ export const useStore = create<AppState>()(
       abrirArticuloEnExplorador: (codigo, articulo) =>
         set({ vistaActiva: 'explorador', codigoExploradorActivo: codigo, articuloExploradorPendiente: articulo }),
       limpiarArticuloExploradorPendiente: () => set({ articuloExploradorPendiente: null }),
+      abrirBusquedaEnPlazos: (texto) => set({ vistaActiva: 'plazos', busquedaPlazoPendiente: texto }),
+      limpiarBusquedaPlazoPendiente: () => set({ busquedaPlazoPendiente: null }),
       setCodigoMapa: (tipo) => set({ codigoMapaActivo: tipo }),
       abrirModalPerfil: () => set({ modalPerfilAbierto: true }),
       cerrarModalPerfil: () => set({ modalPerfilAbierto: false }),
@@ -769,10 +789,14 @@ export const useStore = create<AppState>()(
           const p = s.partidaPasapalabra
           if (!p || !p.finalizada) return {}
           const diasActividadEstudio = agregarActividadHoy(s.diasActividadEstudio)
-          // Modo estudio no cuenta para récords, pero sí para la racha.
-          if (p.modoEstudio) return { diasActividadEstudio }
           const aciertos = p.rosco.filter((r) => r.estado === 'acertada').length
           const fallos = p.rosco.filter((r) => r.estado === 'fallada').length
+          // El dominio de Módulos se actualiza con cualquier resultado (incluido
+          // modo estudio: responder bien sigue siendo evidencia de saber la
+          // materia, aunque no cuente para récords).
+          const progresoModulos = aplicarResultadoPracticaATodos(s.progresoModulos, p.area, aciertos + fallos, aciertos)
+          // Modo estudio no cuenta para récords, pero sí para la racha y el dominio.
+          if (p.modoEstudio) return { diasActividadEstudio, progresoModulos }
           const tiempoUsado = p.duracionTotalSeg - p.segundosRestantes
           const previo = s.recordsPasapalabra[p.area]
           // Es récord si: más aciertos, o igual aciertos con menos tiempo.
@@ -780,15 +804,21 @@ export const useStore = create<AppState>()(
             !previo ||
             aciertos > previo.aciertos ||
             (aciertos === previo.aciertos && tiempoUsado < previo.tiempoUsadoSeg)
-          if (!esRecord) return { diasActividadEstudio }
+          if (!esRecord) return { diasActividadEstudio, progresoModulos }
           return {
             diasActividadEstudio,
+            progresoModulos,
             recordsPasapalabra: {
               ...s.recordsPasapalabra,
               [p.area]: { aciertos, fallos, tiempoUsadoSeg: tiempoUsado, fecha: Date.now() },
             },
           }
         }),
+      registrarProgresoQuiz: (codigo, aciertos, errores) =>
+        set((s) => ({
+          diasActividadEstudio: agregarActividadHoy(s.diasActividadEstudio),
+          progresoModulos: aplicarResultadoQuizATodos(s.progresoModulos, codigo, aciertos + errores, aciertos),
+        })),
       iniciarPartidaAhorcado: (partida) => set({ partidaAhorcado: partida }),
       intentarLetraAhorcado: (letra) =>
         set((s) => {
@@ -818,18 +848,22 @@ export const useStore = create<AppState>()(
           const p = s.partidaAhorcado
           if (!p || p.estado === 'jugando') return {}
           const diasActividadEstudio = agregarActividadHoy(s.diasActividadEstudio)
-          // Modo estudio no cuenta para stats, pero sí para la racha.
-          if (p.modoEstudio) return { diasActividadEstudio }
+          const gano = p.estado === 'ganada'
+          // El dominio de Módulos se actualiza con cualquier resultado, igual
+          // que en Pasapalabra (ver ahí el porqué de incluir modo estudio).
+          const progresoModulos = aplicarResultadoPracticaATodos(s.progresoModulos, p.area, 1, gano ? 1 : 0)
+          // Modo estudio no cuenta para stats, pero sí para la racha y el dominio.
+          if (p.modoEstudio) return { diasActividadEstudio, progresoModulos }
           const previo = s.statsAhorcado[p.area] ?? {
             partidasJugadas: 0,
             partidasGanadas: 0,
             rachaActual: 0,
             rachaMaxima: 0,
           }
-          const gano = p.estado === 'ganada'
           const rachaActual = gano ? previo.rachaActual + 1 : 0
           return {
             diasActividadEstudio,
+            progresoModulos,
             statsAhorcado: {
               ...s.statsAhorcado,
               [p.area]: {

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useStore } from '../../store/useStore'
-import type { Modulo, SesionClase, EvaluacionModulo, TextoObligatorio, ApunteModulo, CuadernoApuntes, BriefCaso } from '../../types'
-import { diasHasta, formatearCountdown, urgenciaDe, calcularPonderacionTotal, type Urgencia } from '../../services/modulosAcademico'
+import type { Modulo, SesionClase, EvaluacionModulo, TextoObligatorio, ApunteModulo, CuadernoApuntes, BriefCaso, Coleccion, Canvas, MapaMental } from '../../types'
+import { diasHasta, formatearCountdown, urgenciaDe, calcularPonderacionTotal, coleccionesDeModulo, type Urgencia } from '../../services/modulosAcademico'
 
 const VERDE = 'var(--accent-base)'
 
@@ -53,12 +53,40 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial }: Prop
   const [tab, setTab] = useState<Tab>(tabInicial ?? 'resumen')
   const setCodigoExplorador = useStore((s) => s.setCodigoExplorador)
   const setVistaActiva = useStore((s) => s.setVistaActiva)
+  const setColeccionActiva = useStore((s) => s.setColeccionActiva)
+  const colecciones = useStore((s) => s.colecciones)
+  const canvases = useStore((s) => s.canvases)
+  const mapasMentales = useStore((s) => s.mapasMentales)
+  const actualizarCanvas = useStore((s) => s.actualizarCanvas)
+  const actualizarMapaMental = useStore((s) => s.actualizarMapaMental)
+  const setCanvasActivo = useStore((s) => s.setCanvasActivo)
+  const setMapaMentalActivo = useStore((s) => s.setMapaMentalActivo)
   const datos = useStore((s) => s.academicoModulos[modulo.id]) ?? { clases: [], evaluaciones: [], textos: [], apuntes: [], cuadernos: [], briefs: [] }
+  const coleccionesModulo = coleccionesDeModulo(colecciones, modulo.id)
+  const canvasesModulo = canvases.filter((c) => c.moduloId === modulo.id)
+  const canvasesDisponibles = canvases.filter((c) => c.moduloId !== modulo.id)
+  const mapasModulo = mapasMentales.filter((m) => m.moduloId === modulo.id)
+  const mapasDisponibles = mapasMentales.filter((m) => m.moduloId !== modulo.id)
 
   const abrirCodigo = () => {
     if (!modulo.codigoRelacionado) return
     setCodigoExplorador(modulo.codigoRelacionado)
     setVistaActiva('explorador')
+  }
+
+  const abrirColeccion = (id: string) => {
+    setColeccionActiva(id)
+    setVistaActiva('colecciones')
+  }
+
+  const abrirCanvas = (id: string) => {
+    setCanvasActivo(id)
+    setVistaActiva('canvas')
+  }
+
+  const abrirMapaMental = (id: string) => {
+    setMapaMentalActivo(id)
+    setVistaActiva('mapasmentales')
   }
 
   return (
@@ -126,7 +154,23 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial }: Prop
           ))}
         </div>
 
-        {tab === 'resumen' && <TabResumen datos={datos} modoOscuro={modoOscuro} onIrA={setTab} />}
+        {tab === 'resumen' && (
+          <TabResumen
+            datos={datos}
+            modoOscuro={modoOscuro}
+            onIrA={setTab}
+            colecciones={coleccionesModulo}
+            onAbrirColeccion={abrirColeccion}
+            canvases={canvasesModulo}
+            canvasesDisponibles={canvasesDisponibles}
+            onAbrirCanvas={abrirCanvas}
+            onVincularCanvas={(id) => actualizarCanvas(id, { moduloId: modulo.id })}
+            mapas={mapasModulo}
+            mapasDisponibles={mapasDisponibles}
+            onAbrirMapa={abrirMapaMental}
+            onVincularMapa={(id) => actualizarMapaMental(id, { moduloId: modulo.id })}
+          />
+        )}
         {tab === 'clases' && <TabClases moduloId={modulo.id} clases={datos.clases} modoOscuro={modoOscuro} />}
         {tab === 'examenes' && <TabExamenes moduloId={modulo.id} evaluaciones={datos.evaluaciones} modoOscuro={modoOscuro} />}
         {tab === 'textos' && <TabTextos moduloId={modulo.id} textos={datos.textos} clases={datos.clases} modoOscuro={modoOscuro} />}
@@ -236,6 +280,18 @@ function EtiquetaClase({ clase, modoOscuro }: { clase: SesionClase | undefined; 
   )
 }
 
+function EtiquetaArticulo({ articulo, modoOscuro }: { articulo: string | undefined; modoOscuro: boolean }) {
+  if (!articulo) return null
+  return (
+    <span className={`inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-md ${
+      modoOscuro ? 'bg-zinc-700 text-zinc-300' : 'bg-zinc-100 text-zinc-600'
+    }`}>
+      <i className="ti ti-file-text text-xs" />
+      {articulo}
+    </span>
+  )
+}
+
 function BotonEliminar({ onClick, modoOscuro }: { onClick: () => void; modoOscuro: boolean }) {
   return (
     <button
@@ -274,11 +330,23 @@ function BotonesFormulario({
 // ------------------------------------------------------------------
 
 function TabResumen({
-  datos, modoOscuro, onIrA,
+  datos, modoOscuro, onIrA, colecciones, onAbrirColeccion,
+  canvases, canvasesDisponibles, onAbrirCanvas, onVincularCanvas,
+  mapas, mapasDisponibles, onAbrirMapa, onVincularMapa,
 }: {
   datos: { clases: SesionClase[]; evaluaciones: EvaluacionModulo[]; textos: TextoObligatorio[]; apuntes: ApunteModulo[]; briefs: BriefCaso[] }
   modoOscuro: boolean
   onIrA: (tab: Tab) => void
+  colecciones: Coleccion[]
+  onAbrirColeccion: (id: string) => void
+  canvases: Canvas[]
+  canvasesDisponibles: Canvas[]
+  onAbrirCanvas: (id: string) => void
+  onVincularCanvas: (id: string) => void
+  mapas: MapaMental[]
+  mapasDisponibles: MapaMental[]
+  onAbrirMapa: (id: string) => void
+  onVincularMapa: (id: string) => void
 }) {
   const proximaClase = [...datos.clases]
     .filter((c) => !c.completada)
@@ -317,23 +385,126 @@ function TabResumen({
   ]
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      {tarjetas.map((t) => (
-        <button
-          key={t.tab}
-          onClick={() => onIrA(t.tab)}
-          className={`text-left p-4 rounded-xl border transition-colors ${
-            modoOscuro ? 'bg-zinc-800/60 border-zinc-800 hover:bg-zinc-800' : 'bg-white border-zinc-200 hover:bg-zinc-50'
+    <div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {tarjetas.map((t) => (
+          <button
+            key={t.tab}
+            onClick={() => onIrA(t.tab)}
+            className={`text-left p-4 rounded-xl border transition-colors ${
+              modoOscuro ? 'bg-zinc-800/60 border-zinc-800 hover:bg-zinc-800' : 'bg-white border-zinc-200 hover:bg-zinc-50'
+            }`}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <i className={`ti ${t.icono} text-base`} style={{ color: VERDE }} />
+              <span className={`text-xs font-medium ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>{t.label}</span>
+            </div>
+            <div className={`text-xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{t.valor}</div>
+            <div className={`text-xs mt-0.5 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>{t.detalle}</div>
+          </button>
+        ))}
+      </div>
+
+      {colecciones.length > 0 && (
+        <div className="mt-6">
+          <h2 className={`text-sm font-semibold mb-3 ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>
+            Colecciones de este módulo
+          </h2>
+          <div className="space-y-2">
+            {colecciones.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => onAbrirColeccion(c.id)}
+                className={`w-full flex items-center justify-between gap-2 p-3 rounded-xl border text-left transition-colors ${
+                  modoOscuro ? 'bg-zinc-800/60 border-zinc-800 hover:bg-zinc-800' : 'bg-white border-zinc-200 hover:bg-zinc-50'
+                }`}
+              >
+                <span className={`text-sm font-medium ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>{c.titulo}</span>
+                <span className={`text-xs flex-shrink-0 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
+                  {c.articulos.length} {c.articulos.length === 1 ? 'artículo' : 'artículos'}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <VinculoModuloSeccion
+        titulo="Canvas de este módulo"
+        icono="ti-affiliate"
+        vinculados={canvases.map((c) => ({ id: c.id, label: c.nombre }))}
+        disponibles={canvasesDisponibles.map((c) => ({ id: c.id, label: c.nombre }))}
+        placeholder="Vincular un Canvas existente..."
+        onAbrir={onAbrirCanvas}
+        onVincular={onVincularCanvas}
+        modoOscuro={modoOscuro}
+      />
+
+      <VinculoModuloSeccion
+        titulo="Mapas mentales de este módulo"
+        icono="ti-hierarchy-2"
+        vinculados={mapas.map((m) => ({ id: m.id, label: m.titulo }))}
+        disponibles={mapasDisponibles.map((m) => ({ id: m.id, label: m.titulo }))}
+        placeholder="Vincular un mapa mental existente..."
+        onAbrir={onAbrirMapa}
+        onVincular={onVincularMapa}
+        modoOscuro={modoOscuro}
+      />
+    </div>
+  )
+}
+
+/** Sección "X de este módulo" reutilizada por Canvas y Mapas mentales:
+ *  lista lo ya vinculado (abre directo) y, si hay candidatos sin vincular,
+ *  ofrece un select que vincula al elegir -- mismo patrón que Colecciones,
+ *  pero estos dos sí necesitan una acción de vincular porque no se infieren
+ *  de datos existentes (código relacionado) sino que se asignan a mano. */
+function VinculoModuloSeccion({
+  titulo, icono, vinculados, disponibles, placeholder, onAbrir, onVincular, modoOscuro,
+}: {
+  titulo: string
+  icono: string
+  vinculados: { id: string; label: string }[]
+  disponibles: { id: string; label: string }[]
+  placeholder: string
+  onAbrir: (id: string) => void
+  onVincular: (id: string) => void
+  modoOscuro: boolean
+}) {
+  if (vinculados.length === 0 && disponibles.length === 0) return null
+  return (
+    <div className="mt-6">
+      <h2 className={`text-sm font-semibold mb-3 ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>{titulo}</h2>
+      {vinculados.length > 0 && (
+        <div className="space-y-2 mb-2">
+          {vinculados.map((v) => (
+            <button
+              key={v.id}
+              onClick={() => onAbrir(v.id)}
+              className={`w-full flex items-center gap-2 p-3 rounded-xl border text-left transition-colors ${
+                modoOscuro ? 'bg-zinc-800/60 border-zinc-800 hover:bg-zinc-800' : 'bg-white border-zinc-200 hover:bg-zinc-50'
+              }`}
+            >
+              <i className={`ti ${icono} text-sm flex-shrink-0`} style={{ color: VERDE }} />
+              <span className={`text-sm font-medium truncate ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>{v.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      {disponibles.length > 0 && (
+        <select
+          value=""
+          onChange={(e) => { if (e.target.value) onVincular(e.target.value) }}
+          className={`w-full rounded-lg px-3 py-2 text-xs outline-none border ${
+            modoOscuro ? 'bg-zinc-800 border-zinc-700 text-zinc-400' : 'bg-white border-zinc-200 text-zinc-500'
           }`}
         >
-          <div className="flex items-center gap-2 mb-2">
-            <i className={`ti ${t.icono} text-base`} style={{ color: VERDE }} />
-            <span className={`text-xs font-medium ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>{t.label}</span>
-          </div>
-          <div className={`text-xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{t.valor}</div>
-          <div className={`text-xs mt-0.5 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>{t.detalle}</div>
-        </button>
-      ))}
+          <option value="">{placeholder}</option>
+          {disponibles.map((d) => (
+            <option key={d.id} value={d.id}>{d.label}</option>
+          ))}
+        </select>
+      )}
     </div>
   )
 }
@@ -655,6 +826,7 @@ function TabTextos({ moduloId, textos, clases, modoOscuro }: { moduloId: string;
   const [autor, setAutor] = useState('')
   const [enlace, setEnlace] = useState('')
   const [claseId, setClaseId] = useState('')
+  const [articuloRelacionado, setArticuloRelacionado] = useState('')
 
   const iniciarNuevo = () => {
     setEditandoId(null)
@@ -662,6 +834,7 @@ function TabTextos({ moduloId, textos, clases, modoOscuro }: { moduloId: string;
     setAutor('')
     setEnlace('')
     setClaseId('')
+    setArticuloRelacionado('')
     setMostrarForm(true)
   }
 
@@ -671,6 +844,7 @@ function TabTextos({ moduloId, textos, clases, modoOscuro }: { moduloId: string;
     setAutor(t.autor ?? '')
     setEnlace(t.enlace ?? '')
     setClaseId(t.claseId ?? '')
+    setArticuloRelacionado(t.articuloRelacionado ?? '')
     setMostrarForm(true)
   }
 
@@ -678,7 +852,7 @@ function TabTextos({ moduloId, textos, clases, modoOscuro }: { moduloId: string;
     if (!titulo.trim()) return
     if (editandoId) {
       setTextosModulo(moduloId, textos.map((t) => (t.id === editandoId
-        ? { ...t, titulo: titulo.trim(), autor: autor.trim() || undefined, enlace: enlace.trim() || undefined, claseId: claseId || undefined }
+        ? { ...t, titulo: titulo.trim(), autor: autor.trim() || undefined, enlace: enlace.trim() || undefined, claseId: claseId || undefined, articuloRelacionado: articuloRelacionado.trim() || undefined }
         : t)))
     } else {
       const nuevo: TextoObligatorio = {
@@ -687,6 +861,7 @@ function TabTextos({ moduloId, textos, clases, modoOscuro }: { moduloId: string;
         autor: autor.trim() || undefined,
         enlace: enlace.trim() || undefined,
         claseId: claseId || undefined,
+        articuloRelacionado: articuloRelacionado.trim() || undefined,
         leido: false,
       }
       setTextosModulo(moduloId, [...textos, nuevo])
@@ -717,6 +892,7 @@ function TabTextos({ moduloId, textos, clases, modoOscuro }: { moduloId: string;
             <CampoTexto label="Autor (opcional)" valor={autor} onChange={setAutor} modoOscuro={modoOscuro} placeholder="Ej: René Abeliuk" />
             <CampoTexto label="Enlace (opcional)" valor={enlace} onChange={setEnlace} modoOscuro={modoOscuro} placeholder="https://..." />
           </div>
+          <CampoTexto label="Artículo relacionado (opcional)" valor={articuloRelacionado} onChange={setArticuloRelacionado} modoOscuro={modoOscuro} placeholder="Ej: Art. 1545" />
           {clases.length > 0 && (
             <CampoSelectClase label="Lectura para la clase (opcional)" valor={claseId} onChange={setClaseId} clases={clases} modoOscuro={modoOscuro} />
           )}
@@ -742,6 +918,7 @@ function TabTextos({ moduloId, textos, clases, modoOscuro }: { moduloId: string;
                 </button>
                 <div className="flex items-center gap-2 flex-wrap mt-0.5">
                   {t.autor && <span className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>{t.autor}</span>}
+                  <EtiquetaArticulo articulo={t.articuloRelacionado} modoOscuro={modoOscuro} />
                   <EtiquetaClase clase={clases.find((c) => c.id === t.claseId)} modoOscuro={modoOscuro} />
                 </div>
                 {t.enlace && (
@@ -780,6 +957,7 @@ function TabApuntes({
   const [contenido, setContenido] = useState('')
   const [claseId, setClaseId] = useState('')
   const [cuadernoId, setCuadernoId] = useState('')
+  const [articuloRelacionado, setArticuloRelacionado] = useState('')
   const [filtro, setFiltro] = useState<string>('todos')
   const [mostrarNuevoCuaderno, setMostrarNuevoCuaderno] = useState(false)
   const [nombreNuevoCuaderno, setNombreNuevoCuaderno] = useState('')
@@ -797,6 +975,7 @@ function TabApuntes({
     setContenido('')
     setClaseId('')
     setCuadernoId(filtro !== 'todos' && filtro !== 'sin-cuaderno' ? filtro : '')
+    setArticuloRelacionado('')
     setMostrarForm(true)
   }
 
@@ -806,6 +985,7 @@ function TabApuntes({
     setContenido(a.contenido)
     setClaseId(a.claseId ?? '')
     setCuadernoId(a.cuadernoId ?? '')
+    setArticuloRelacionado(a.articuloRelacionado ?? '')
     setMostrarForm(true)
   }
 
@@ -813,9 +993,9 @@ function TabApuntes({
     if (!titulo.trim()) return
     const ahora = Date.now()
     if (editandoId) {
-      setApuntesModulo(moduloId, apuntes.map((a) => (a.id === editandoId ? { ...a, titulo: titulo.trim(), contenido, claseId: claseId || undefined, cuadernoId: cuadernoId || undefined, fechaModificacion: ahora } : a)))
+      setApuntesModulo(moduloId, apuntes.map((a) => (a.id === editandoId ? { ...a, titulo: titulo.trim(), contenido, claseId: claseId || undefined, cuadernoId: cuadernoId || undefined, articuloRelacionado: articuloRelacionado.trim() || undefined, fechaModificacion: ahora } : a)))
     } else {
-      const nuevo: ApunteModulo = { id: crypto.randomUUID(), titulo: titulo.trim(), contenido, claseId: claseId || undefined, cuadernoId: cuadernoId || undefined, fechaCreacion: ahora, fechaModificacion: ahora }
+      const nuevo: ApunteModulo = { id: crypto.randomUUID(), titulo: titulo.trim(), contenido, claseId: claseId || undefined, cuadernoId: cuadernoId || undefined, articuloRelacionado: articuloRelacionado.trim() || undefined, fechaCreacion: ahora, fechaModificacion: ahora }
       setApuntesModulo(moduloId, [...apuntes, nuevo])
     }
     setMostrarForm(false)
@@ -879,6 +1059,7 @@ function TabApuntes({
           {clases.length > 0 && (
             <CampoSelectClase label="Clase a la que pertenece (opcional)" valor={claseId} onChange={setClaseId} clases={clases} modoOscuro={modoOscuro} />
           )}
+          <CampoTexto label="Artículo relacionado (opcional)" valor={articuloRelacionado} onChange={setArticuloRelacionado} modoOscuro={modoOscuro} placeholder="Ej: Art. 1545" />
           <div>
             <span className={`block text-xs font-medium mb-1 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>Cuaderno (opcional)</span>
             {mostrarNuevoCuaderno ? (
@@ -937,6 +1118,7 @@ function TabApuntes({
                         {cuaderno.nombre}
                       </span>
                     )}
+                    <EtiquetaArticulo articulo={a.articuloRelacionado} modoOscuro={modoOscuro} />
                     <EtiquetaClase clase={clases.find((c) => c.id === a.claseId)} modoOscuro={modoOscuro} />
                   </div>
                   <BotonEliminar onClick={() => eliminar(a.id)} modoOscuro={modoOscuro} />
@@ -958,7 +1140,7 @@ function TabApuntes({
 // ------------------------------------------------------------------
 
 function campoBriefVacio() {
-  return { caratula: '', tribunal: '', fecha: '', hechos: '', cuestionJuridica: '', normaAplicable: '', analisis: '', conclusion: '', claseId: '' }
+  return { caratula: '', tribunal: '', fecha: '', hechos: '', cuestionJuridica: '', normaAplicable: '', analisis: '', conclusion: '', claseId: '', articuloRelacionado: '' }
 }
 
 function CampoArea({
@@ -1015,6 +1197,7 @@ function TabCasos({ moduloId, briefs, clases, modoOscuro }: { moduloId: string; 
       analisis: b.analisis,
       conclusion: b.conclusion,
       claseId: b.claseId ?? '',
+      articuloRelacionado: b.articuloRelacionado ?? '',
     })
     setMostrarForm(true)
   }
@@ -1036,6 +1219,7 @@ function TabCasos({ moduloId, briefs, clases, modoOscuro }: { moduloId: string; 
             analisis: campos.analisis,
             conclusion: campos.conclusion,
             claseId: campos.claseId || undefined,
+            articuloRelacionado: campos.articuloRelacionado.trim() || undefined,
             fechaModificacion: ahora,
           }
         : b)))
@@ -1051,6 +1235,7 @@ function TabCasos({ moduloId, briefs, clases, modoOscuro }: { moduloId: string; 
         analisis: campos.analisis,
         conclusion: campos.conclusion,
         claseId: campos.claseId || undefined,
+        articuloRelacionado: campos.articuloRelacionado.trim() || undefined,
         fechaCreacion: ahora,
         fechaModificacion: ahora,
       }
@@ -1088,6 +1273,7 @@ function TabCasos({ moduloId, briefs, clases, modoOscuro }: { moduloId: string; 
           <CampoArea label="Norma aplicable (Rule)" valor={campos.normaAplicable} onChange={set('normaAplicable')} modoOscuro={modoOscuro} placeholder="Artículos, normas o principios que rigen el caso" />
           <CampoArea label="Análisis (Application)" valor={campos.analisis} onChange={set('analisis')} modoOscuro={modoOscuro} placeholder="Cómo el tribunal aplicó la norma a estos hechos" />
           <CampoArea label="Conclusión" valor={campos.conclusion} onChange={set('conclusion')} modoOscuro={modoOscuro} placeholder="Qué resolvió el tribunal" />
+          <CampoTexto label="Artículo relacionado (opcional)" valor={campos.articuloRelacionado} onChange={set('articuloRelacionado')} modoOscuro={modoOscuro} placeholder="Ej: Art. 1545" />
           {clases.length > 0 && (
             <CampoSelectClase label="Clase a la que pertenece (opcional)" valor={campos.claseId} onChange={set('claseId')} clases={clases} modoOscuro={modoOscuro} />
           )}
@@ -1107,6 +1293,7 @@ function TabCasos({ moduloId, briefs, clases, modoOscuro }: { moduloId: string; 
                   <button onClick={() => setExpandidoId(expandido ? null : b.id)} className="flex-1 min-w-0 text-left">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className={`text-sm font-medium ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>{b.caratula}</span>
+                      <EtiquetaArticulo articulo={b.articuloRelacionado} modoOscuro={modoOscuro} />
                       <EtiquetaClase clase={clases.find((c) => c.id === b.claseId)} modoOscuro={modoOscuro} />
                     </div>
                     {(b.tribunal || b.fecha) && (

@@ -11,6 +11,7 @@ import { useLecturaVoz } from '../../hooks/useLecturaVoz'
 import { modernizar, necesitaModernizacion } from '../../services/moderniza'
 import { obtenerMetadata, formatearFechaIndexacion, nombreCortoMetadata } from '../../data/codigosMetadata'
 import { construirEsquema, ETIQUETAS_NIVEL, type NodoEsquema } from '../../services/esquema'
+import { buscarVinculosArticulo } from '../../services/modulosAcademico'
 import type { Articulo, CodigoData, CodigoTipo, TemaLectura } from '../../types'
 
 const VERDE = 'var(--accent-base)'
@@ -300,6 +301,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
                 codigo={tipoActivo}
                 articulo={seleccionado.a}
               />
+              <VinculosArticulo codigo={tipoActivo} articulo={seleccionado.a} modoOscuro={modoOscuro} />
             </motion.article>
           </AnimatePresence>
         )}
@@ -1084,6 +1086,7 @@ function ModalBusqueda({
 
 function FichaCodigo({ tipo, modoOscuro }: { tipo: CodigoTipo; modoOscuro: boolean }) {
   const [abierto, setAbierto] = useState(false)
+  const [mostrarHistoria, setMostrarHistoria] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const meta = obtenerMetadata(tipo)
   const setCodigoExplorador = useStore((s) => s.setCodigoExplorador)
@@ -1188,6 +1191,27 @@ function FichaCodigo({ tipo, modoOscuro }: { tipo: CodigoTipo; modoOscuro: boole
                     ))}
                   </div>
                 </FichaFila>
+              )}
+              {meta.historia && (
+                <div className={`-mx-4 border-t ${modoOscuro ? 'border-zinc-800' : 'border-zinc-100'}`}>
+                  <button
+                    onClick={() => setMostrarHistoria((v) => !v)}
+                    className={`w-full flex items-center justify-between gap-2 px-4 py-2 text-left transition-colors ${
+                      modoOscuro ? 'hover:bg-zinc-800/60' : 'hover:bg-zinc-50'
+                    }`}
+                  >
+                    <span className={`flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                      <i className="ti ti-history text-xs" />
+                      Historia del código
+                    </span>
+                    <i className={`ti ti-chevron-down text-xs transition-transform ${mostrarHistoria ? 'rotate-180' : ''} ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`} />
+                  </button>
+                  {mostrarHistoria && (
+                    <p className={`px-4 pb-3 text-[11px] leading-relaxed ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                      {meta.historia}
+                    </p>
+                  )}
+                </div>
               )}
               <p className={`text-[10px] leading-relaxed pt-1 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
                 La fecha indica cuándo se procesó el PDF oficial. <strong>Puede no incluir reformas legales posteriores</strong>. Verifica siempre contra el texto vigente en la fuente.
@@ -1548,6 +1572,7 @@ function ModoLecturaOverlay({
                 articulo={seleccionado.a}
                 tamanoFuente={TAMANOS_FUENTE[indiceTamano]}
               />
+              <VinculosArticulo codigo={tipoActivo} articulo={seleccionado.a} modoOscuro={temaLectura === 'oscuro'} />
             </div>
           </div>
 
@@ -1678,5 +1703,47 @@ function ArticuloTexto({
         </div>
       )}
     </>
+  )
+}
+
+const ICONO_VINCULO: Record<string, string> = { apunte: 'ti-notes', texto: 'ti-books', caso: 'ti-gavel' }
+const LABEL_VINCULO: Record<string, string> = { apunte: 'Apunte', texto: 'Texto', caso: 'Caso' }
+
+/** Apuntes, Textos y Casos que el propio usuario vinculó a este artículo
+ *  desde Módulos (ver ModuloDetalle.tsx) -- el Explorador no sabe nada de
+ *  esto por sí solo, se calcula recorriendo academicoModulos. */
+function VinculosArticulo({ codigo, articulo, modoOscuro }: { codigo: CodigoTipo; articulo: string; modoOscuro: boolean }) {
+  const academicoModulos = useStore((s) => s.academicoModulos)
+  const setModuloActivo = useStore((s) => s.setModuloActivo)
+  const setVistaActiva = useStore((s) => s.setVistaActiva)
+  const vinculos = buscarVinculosArticulo(academicoModulos, codigo, articulo)
+
+  if (vinculos.length === 0) return null
+
+  const abrirModulo = (moduloId: string) => {
+    setModuloActivo(moduloId)
+    setVistaActiva('modulos')
+  }
+
+  return (
+    <div className={`mt-6 pt-4 border-t ${modoOscuro ? 'border-zinc-700' : 'border-zinc-100'}`}>
+      <span className={`block text-xs font-semibold mb-2 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
+        Tienes contenido propio sobre este artículo
+      </span>
+      <div className="flex flex-wrap gap-2">
+        {vinculos.map((v, i) => (
+          <button
+            key={i}
+            onClick={() => abrirModulo(v.moduloId)}
+            className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border transition-colors ${
+              modoOscuro ? 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700' : 'bg-zinc-50 border-zinc-200 text-zinc-700 hover:bg-zinc-100'
+            }`}
+          >
+            <i className={`ti ${ICONO_VINCULO[v.tipo]} text-sm`} />
+            {LABEL_VINCULO[v.tipo]}: {v.titulo}
+          </button>
+        ))}
+      </div>
+    </div>
   )
 }
