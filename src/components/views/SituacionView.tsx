@@ -4,6 +4,7 @@ import { useSituacion } from '../../hooks/useSituacion'
 import { areasPorCodigo } from '../../data/situaciones'
 import { CitaBlock } from '../ui/CitaBlock'
 import { SelectorCodigo } from '../ui/SelectorCodigo'
+import { nombreCortoMetadata } from '../../data/codigosMetadata'
 import type { AreaSituacion, PreguntaSituacion, ResultadoSituacion } from '../../types'
 
 const VERDE = 'var(--accent-base)'
@@ -436,6 +437,8 @@ function PantallaResultado({
   onNueva: () => void
   onRefinar: () => void
 }) {
+  const abrirBusquedaEnPlazos = useStore((s) => s.abrirBusquedaEnPlazos)
+
   const exportar = () => {
     const texto = construirTextoExportable(resultado, area)
     const blob = new Blob([texto], { type: 'text/plain;charset=utf-8' })
@@ -508,12 +511,24 @@ function PantallaResultado({
             {resultado.plazosCriticos.map((p, i) => (
               <li
                 key={i}
-                className={`flex items-start gap-2 text-sm ${
+                className={`flex items-start justify-between gap-3 text-sm ${
                   modoOscuro ? 'text-amber-200' : 'text-amber-900'
                 }`}
               >
-                <i className="ti ti-alert-triangle text-base mt-0.5 flex-shrink-0" />
-                <span>{p}</span>
+                <span className="flex items-start gap-2">
+                  <i className="ti ti-alert-triangle text-base mt-0.5 flex-shrink-0" />
+                  <span>{p}</span>
+                </span>
+                <button
+                  onClick={() => abrirBusquedaEnPlazos(nombreCortoMetadata(area.codigo))}
+                  className={`flex-shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                    modoOscuro ? 'bg-amber-900/40 hover:bg-amber-900/60 text-amber-200' : 'bg-amber-100 hover:bg-amber-200 text-amber-900'
+                  }`}
+                  title="Abrir en la Calculadora de Plazos, buscando normas de esta área"
+                >
+                  <i className="ti ti-calculator text-sm" />
+                  Calcular
+                </button>
               </li>
             ))}
           </ul>

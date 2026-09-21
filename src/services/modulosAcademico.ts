@@ -1,4 +1,5 @@
-import type { DatosAcademicosModulo, EvaluacionModulo } from '../types'
+import type { Coleccion, CodigoTipo, DatosAcademicosModulo, EvaluacionModulo } from '../types'
+import { MODULOS } from '../data/modulos'
 
 /** input[type=date] entrega "YYYY-MM-DD"; parsearlo con `new Date(string)` lo
  *  interpreta como UTC medianoche y puede correr un día en la fecha local
@@ -73,4 +74,45 @@ export function obtenerProximosEventos(academicoModulos: Record<string, DatosAca
     }
   }
   return eventos.sort((a, b) => a.fecha.localeCompare(b.fecha))
+}
+
+/** Colecciones que tocan el código del Módulo -- una Colección no declara a
+ *  qué Módulo pertenece (es una entidad libre, no académica-por-módulo),
+ *  así que se infiere por si alguno de sus artículos es del código
+ *  relacionado del Módulo. */
+export function coleccionesDeModulo(colecciones: Coleccion[], moduloId: string): Coleccion[] {
+  const modulo = MODULOS.find((m) => m.id === moduloId)
+  if (!modulo?.codigoRelacionado) return []
+  return colecciones.filter((c) => c.articulos.some((a) => a.codigo === modulo.codigoRelacionado))
+}
+
+export interface VinculoArticulo {
+  tipo: 'apunte' | 'texto' | 'caso'
+  moduloId: string
+  titulo: string
+}
+
+/** Apuntes, Textos y Casos de CUALQUIER módulo que se refieran a este
+ *  artículo puntual -- el código en sí determina el (único) módulo
+ *  candidato, así que solo se busca ahí, no en todos los módulos. */
+export function buscarVinculosArticulo(
+  academicoModulos: Record<string, DatosAcademicosModulo>,
+  codigo: CodigoTipo,
+  articulo: string
+): VinculoArticulo[] {
+  const modulo = MODULOS.find((m) => m.codigoRelacionado === codigo)
+  if (!modulo) return []
+  const datos = academicoModulos[modulo.id]
+  if (!datos) return []
+  const vinculos: VinculoArticulo[] = []
+  for (const a of datos.apuntes) {
+    if (a.articuloRelacionado === articulo) vinculos.push({ tipo: 'apunte', moduloId: modulo.id, titulo: a.titulo })
+  }
+  for (const t of datos.textos) {
+    if (t.articuloRelacionado === articulo) vinculos.push({ tipo: 'texto', moduloId: modulo.id, titulo: t.titulo })
+  }
+  for (const b of datos.briefs) {
+    if (b.articuloRelacionado === articulo) vinculos.push({ tipo: 'caso', moduloId: modulo.id, titulo: b.caratula })
+  }
+  return vinculos
 }

@@ -1,9 +1,26 @@
 import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
-import type { ConsultaHistorial, VistaId } from '../../types'
+import type { ConsultaHistorial, Modulo, VistaId } from '../../types'
+import { MODULOS } from '../../data/modulos'
+import { moduloDeCodigo } from '../../services/progresoModulos'
 
 const VERDE = 'var(--accent-base)'
+
+/** Áreas jurídicas (Módulo['id']) citadas a lo largo de toda una consulta,
+ *  inferidas de Cita.tipo en cada mensaje -- permite filtrar/enlazar el
+ *  Historial por área sin depender de VistaId (que solo dice desde qué
+ *  sección de la app se preguntó, no de qué trata la respuesta). */
+function areasCitadasDe(consulta: ConsultaHistorial): string[] {
+  const areas = new Set<string>()
+  for (const m of consulta.mensajes) {
+    for (const c of m.citas ?? []) {
+      if (!c.tipo) continue
+      for (const areaId of moduloDeCodigo(c.tipo)) areas.add(areaId)
+    }
+  }
+  return [...areas]
+}
 
 const moduloLabel: Record<VistaId, string> = {
   consultar: 'Consultar',
@@ -44,18 +61,35 @@ export function HistorialView() {
 
   const [busqueda, setBusqueda] = useState('')
   const [moduloFiltro, setModuloFiltro] = useState<VistaId | 'todos'>('todos')
+  const [areaFiltro, setAreaFiltro] = useState<string | 'todos'>('todos')
+  const setModuloActivo = useStore((s) => s.setModuloActivo)
+  const setVistaActiva = useStore((s) => s.setVistaActiva)
 
   const filtrados = useMemo(() => {
     const q = busqueda.trim().toLowerCase()
     return historial
       .map((h) => ({ ...h, fecha: new Date(h.fecha) }))
       .filter((h) => moduloFiltro === 'todos' || h.modulo === moduloFiltro)
+      .filter((h) => areaFiltro === 'todos' || areasCitadasDe(h).includes(areaFiltro))
       .filter((h) => {
         if (!q) return true
         if (h.titulo.toLowerCase().includes(q)) return true
         return h.mensajes.some((m) => m.contenido.toLowerCase().includes(q))
       })
-  }, [historial, busqueda, moduloFiltro])
+  }, [historial, busqueda, moduloFiltro, areaFiltro])
+
+  const areasUsadas = useMemo(() => {
+    const conteo = new Map<string, number>()
+    for (const h of historial) {
+      for (const areaId of areasCitadasDe(h)) conteo.set(areaId, (conteo.get(areaId) ?? 0) + 1)
+    }
+    return MODULOS.filter((m) => conteo.has(m.id)).map((m) => ({ modulo: m, cantidad: conteo.get(m.id)! }))
+  }, [historial])
+
+  const abrirArea = (areaId: string) => {
+    setModuloActivo(areaId)
+    setVistaActiva('modulos')
+  }
 
   const stats = useMemo(() => {
     let util = 0
@@ -167,6 +201,29 @@ export function HistorialView() {
           </div>
         )}
 
+        {areasUsadas.length > 1 && (
+          <div className="flex flex-wrap gap-1.5">
+            <ChipFiltro
+              activo={areaFiltro === 'todos'}
+              onClick={() => setAreaFiltro('todos')}
+              modoOscuro={modoOscuro}
+            >
+              Todas las áreas
+            </ChipFiltro>
+            {areasUsadas.map(({ modulo, cantidad }) => (
+              <ChipFiltro
+                key={modulo.id}
+                activo={areaFiltro === modulo.id}
+                onClick={() => setAreaFiltro(modulo.id)}
+                modoOscuro={modoOscuro}
+              >
+                <i className={`ti ${modulo.icono} text-xs mr-1`} />
+                {modulo.nombre} ({cantidad})
+              </ChipFiltro>
+            ))}
+          </div>
+        )}
+
         {stats.total > 0 && (
           <div className="flex items-center gap-3 flex-wrap text-[11px]">
             <span className={modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}>Feedback de respuestas:</span>
@@ -223,6 +280,7 @@ export function HistorialView() {
                         activa={consultaActivaId === h.id}
                         onCargar={() => cargarConsulta(h.id)}
                         onEliminar={() => eliminarConsulta(h.id)}
+                        onAbrirArea={abrirArea}
                         modoOscuro={modoOscuro}
                       />
                     ))}
@@ -270,16 +328,20 @@ function ConsultaCard({
   activa,
   onCargar,
   onEliminar,
+  onAbrirArea,
   modoOscuro,
 }: {
   consulta: ConsultaHistorial
   activa: boolean
   onCargar: () => void
   onEliminar: () => void
+  onAbrirArea: (areaId: string) => void
   modoOscuro: boolean
 }) {
   const ultimaRespuesta = [...consulta.mensajes].reverse().find((m) => m.rol === 'assistant')
   const numMensajes = consulta.mensajes.length
+  const areas = useMemo(() => areasCitadasDe(consulta), [consulta])
+  const modulosCitados = areas.map((id) => MODULOS.find((m) => m.id === id)).filter((m): m is Modulo => !!m)
 
   return (
     <motion.div
@@ -363,6 +425,26 @@ function ConsultaCard({
                 </>
               )}
             </div>
+            {modulosCitados.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {modulosCitados.map((m) => (
+                  <span
+                    key={m.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => { e.stopPropagation(); onAbrirArea(m.id) }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onAbrirArea(m.id) } }}
+                    title={`Ir al módulo ${m.nombre}`}
+                    className={`inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-md cursor-pointer transition-colors ${
+                      modoOscuro ? 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200' : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-700'
+                    }`}
+                  >
+                    <i className={`ti ${m.icono} text-xs`} />
+                    {m.nombre}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </button>

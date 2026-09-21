@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useStore } from '../../store/useStore'
 import { calcularPlazo, calcularPlazoPorRegimen, REGIMENES_INFO, type TipoConteo, type UnidadPlazo } from '../../services/plazos'
 import { buscarNormasPlazo, type NormaPlazo } from '../../data/catalogoPlazos'
@@ -40,7 +40,15 @@ function fechaAInput(f: Date): string {
 
 export function PlazosView() {
   const modoOscuro = useStore((s) => s.modoOscuro)
+  const busquedaPlazoPendiente = useStore((s) => s.busquedaPlazoPendiente)
   const [modo, setModo] = useState<ModoCalculadora>('rapido')
+
+  // Si Situación dejó una búsqueda pendiente (botón "Calcular este plazo"),
+  // cambia automáticamente al modo "Buscar por norma" -- ModoBuscarNorma
+  // consume el texto y limpia el pendiente.
+  useEffect(() => {
+    if (busquedaPlazoPendiente) setModo('norma')
+  }, [busquedaPlazoPendiente])
   const [fechaInicioStr, setFechaInicioStr] = useState(() => fechaAInput(new Date()))
   const [cantidad, setCantidad] = useState(30)
   const [unidad, setUnidad] = useState<UnidadPlazo>('dias')
@@ -363,9 +371,18 @@ function primerArticulo(articulo: string): string | null {
 
 function ModoBuscarNorma({ modoOscuro }: { modoOscuro: boolean }) {
   const abrirArticuloEnExplorador = useStore((s) => s.abrirArticuloEnExplorador)
+  const busquedaPendiente = useStore((s) => s.busquedaPlazoPendiente)
+  const limpiarBusquedaPendiente = useStore((s) => s.limpiarBusquedaPlazoPendiente)
   const [query, setQuery] = useState('')
   const [seleccionada, setSeleccionada] = useState<NormaPlazo | null>(null)
   const [fechaInicioStr, setFechaInicioStr] = useState(() => fechaAInput(new Date()))
+
+  useEffect(() => {
+    if (!busquedaPendiente) return
+    setQuery(busquedaPendiente)
+    limpiarBusquedaPendiente()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [busquedaPendiente])
 
   const resultados = useMemo(() => buscarNormasPlazo(query).slice(0, 40), [query])
   const fechaInicio = useMemo(() => parsearFechaInput(fechaInicioStr), [fechaInicioStr])

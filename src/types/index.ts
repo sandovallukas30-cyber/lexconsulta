@@ -195,6 +195,9 @@ export interface Canvas {
   conexiones: ConexionCanvas[]
   fechaCreacion: Date
   fechaModificacion: Date
+  /** Módulo al que se vinculó este Canvas (ver Modulo['id']), asignado
+   *  desde la ficha del Módulo -- ausente = sin vincular. */
+  moduloId?: string
 }
 
 // ============ MAPAS MENTALES (diagramas libres por tema) ============
@@ -253,6 +256,9 @@ export interface MapaMental {
   conexiones: ConexionMapaMental[]
   fechaCreacion: number
   fechaModificacion: number
+  /** Módulo al que se vinculó este Mapa mental (ver Modulo['id']), asignado
+   *  desde la ficha del Módulo -- ausente = sin vincular. */
+  moduloId?: string
 }
 
 // ============ COLECCIONES (fichas de estudio por tema) ============
@@ -580,7 +586,9 @@ export interface TextoObligatorio {
   autor?: string
   leido: boolean
   enlace?: string
-  codigoRelacionado?: CodigoTipo
+  /** Artículo del código del propio Módulo al que se refiere este texto (ej.
+   *  "Art. 1545") -- el código en sí es el `codigoRelacionado` del Módulo
+   *  contenedor, no hace falta repetirlo acá. */
   articuloRelacionado?: string
   /** Sesión de clase (SesionClase['id']) para la que es lectura asignada. */
   claseId?: string
@@ -597,6 +605,9 @@ export interface ApunteModulo {
   /** Cuaderno (CuadernoApuntes['id']) que agrupa este apunte -- ausente =
    *  apunte suelto, sin cuaderno asignado. */
   cuadernoId?: string
+  /** Artículo del código del Módulo sobre el que es este apunte (ver la
+   *  misma nota en TextoObligatorio.articuloRelacionado). */
+  articuloRelacionado?: string
 }
 
 /** Agrupador de Apuntes dentro de un Módulo (ej. "Cuaderno de audiencias"),
@@ -620,6 +631,9 @@ export interface BriefCaso {
   analisis: string
   conclusion: string
   claseId?: string
+  /** Artículo del código del Módulo del que trata este caso (ver la misma
+   *  nota en TextoObligatorio.articuloRelacionado). */
+  articuloRelacionado?: string
   fechaCreacion: number
   fechaModificacion: number
 }

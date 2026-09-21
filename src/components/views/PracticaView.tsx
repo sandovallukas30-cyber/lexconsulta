@@ -1491,6 +1491,7 @@ function QuizJuridicoWrapper({
           errores={flujo.errores}
           puntos={flujo.puntos}
           racha={flujo.racha}
+          codigo={flujo.codigoElegido}
           codigoMeta={codigos.find((c) => c.tipo === flujo.codigoElegido)}
           modoOscuro={modoOscuro}
           onJugarDeNuevo={() => {
@@ -1818,6 +1819,7 @@ function PantallaResultadoQuiz({
   errores,
   puntos,
   racha,
+  codigo,
   codigoMeta,
   modoOscuro,
   onJugarDeNuevo,
@@ -1826,10 +1828,18 @@ function PantallaResultadoQuiz({
   errores: number
   puntos: number
   racha: number
+  codigo: CodigoTipo | null
   codigoMeta: any
   modoOscuro: boolean
   onJugarDeNuevo: () => void
 }) {
+  const registrarProgresoQuiz = useStore((s) => s.registrarProgresoQuiz)
+
+  useEffect(() => {
+    if (codigo) registrarProgresoQuiz(codigo, aciertos, errores)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const total = aciertos + errores
   const tasaAcierto = total > 0 ? Math.round((aciertos / total) * 100) : 0
   const rendimiento =
