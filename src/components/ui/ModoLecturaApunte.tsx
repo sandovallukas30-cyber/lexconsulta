@@ -12,7 +12,10 @@ const PALABRAS_POR_MINUTO = 180
 /** Misma idea que la convención liviana de los nodos de Mapas Mentales
  *  (`*negrita*`, `_subrayado_`), pero más tolerante -- pensada para texto
  *  PEGADO desde otro lado (ej. un apunte que ya tenías en Notion), no solo
- *  para texto escrito a mano con la barra de esta app.
+ *  para texto escrito a mano con la barra de esta app. Se suma `==rojo==`
+ *  (sin equivalente en Notion/Markdown estándar, es propio de esta app)
+ *  para destacar lo importante -- el equivalente al destacador rojo que
+ *  se usa a mano al repasar apuntes de derecho.
  *
  *  Por qué el doble asterisco importa: Notion (y Markdown en general)
  *  marca negrita con **doble** asterisco, no uno solo. El primer intento
@@ -24,7 +27,7 @@ const PALABRAS_POR_MINUTO = 180
  *  doble (`\*\*...\*\*`, `__..._ _`) y recién si no hay, el simple -- para
  *  que ninguno de los dos deje sobras. */
 function renderEnriquecidoInline(texto: string): ReactNode[] {
-  const partes = texto.split(/(\*\*[^*\n]+\*\*|\*[^*\n]+\*|__[^_\n]+__|_[^_\n]+_)/g)
+  const partes = texto.split(/(\*\*[^*\n]+\*\*|\*[^*\n]+\*|__[^_\n]+__|_[^_\n]+_|==[^=\n]+==)/g)
   return partes.map((parte, i) => {
     if (parte.startsWith('**') && parte.endsWith('**') && parte.length > 4) {
       return <strong key={i}>{parte.slice(2, -2)}</strong>
@@ -37,6 +40,13 @@ function renderEnriquecidoInline(texto: string): ReactNode[] {
     }
     if (parte.startsWith('_') && parte.endsWith('_') && parte.length > 2) {
       return <u key={i}>{parte.slice(1, -1)}</u>
+    }
+    if (parte.startsWith('==') && parte.endsWith('==') && parte.length > 4) {
+      return (
+        <mark key={i} className="bg-transparent text-red-600 font-semibold">
+          {parte.slice(2, -2)}
+        </mark>
+      )
     }
     return parte
   })
@@ -133,7 +143,12 @@ function renderBloqueApunte(bloque: string, keyBase: string): ReactNode[] {
   return salida
 }
 
-function renderContenidoApunte(texto: string): ReactNode[] {
+/** Exportada porque el formulario de edición (TabApuntes en
+ *  ModuloDetalle.tsx) la reusa para la Vista previa -- mismo render que
+ *  Modo Lectura, para que lo que el usuario ve al previsualizar sea
+ *  exactamente lo que va a ver después al repasar, sin mantener dos
+ *  implementaciones del mismo parser en paralelo. */
+export function renderContenidoApunte(texto: string): ReactNode[] {
   return texto
     .split(/\n{2,}/)
     .map((b) => b.trim())

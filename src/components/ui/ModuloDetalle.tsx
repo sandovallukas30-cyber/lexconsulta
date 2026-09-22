@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { useStore } from '../../store/useStore'
-import { ModoLecturaApunte } from './ModoLecturaApunte'
+import { ModoLecturaApunte, renderContenidoApunte } from './ModoLecturaApunte'
 import type { Modulo, SesionClase, EvaluacionModulo, TextoObligatorio, ApunteModulo, CuadernoApuntes, BriefCaso, Coleccion, Canvas, MapaMental } from '../../types'
 import { diasHasta, formatearCountdown, urgenciaDe, calcularPonderacionTotal, coleccionesDeModulo, type Urgencia } from '../../services/modulosAcademico'
 
@@ -987,6 +987,7 @@ function TabApuntes({
   // entra acá. "Editar" desde adentro del Modo Lectura es lo que lleva al
   // formulario.
   const [apunteLeyendo, setApunteLeyendo] = useState<ApunteModulo | null>(null)
+  const [vistaPrevia, setVistaPrevia] = useState(false)
   const refContenido = useRef<HTMLTextAreaElement>(null)
 
   const ordenados = [...apuntes].sort((a, b) => b.fechaModificacion - a.fechaModificacion)
@@ -1003,6 +1004,7 @@ function TabApuntes({
     setClaseId('')
     setCuadernoId(filtro !== 'todos' && filtro !== 'sin-cuaderno' ? filtro : '')
     setArticuloRelacionado('')
+    setVistaPrevia(false)
     setMostrarForm(true)
   }
 
@@ -1014,6 +1016,7 @@ function TabApuntes({
     setClaseId(a.claseId ?? '')
     setCuadernoId(a.cuadernoId ?? '')
     setArticuloRelacionado(a.articuloRelacionado ?? '')
+    setVistaPrevia(false)
     setMostrarForm(true)
   }
 
@@ -1145,45 +1148,87 @@ function TabApuntes({
             <div className="flex items-center justify-between mb-1">
               <span className={`block text-xs font-medium ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>Contenido</span>
               <div className="flex items-center gap-1">
+                {!vistaPrevia && (
+                  <>
+                    <button
+                      type="button"
+                      title="Negrita — seleccioná texto y hacé clic"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => envolverSeleccion('*')}
+                      className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors ${modoOscuro ? 'text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800'}`}
+                    >
+                      <i className="ti ti-bold text-sm" />
+                    </button>
+                    <button
+                      type="button"
+                      title="Subrayado — seleccioná texto y hacé clic"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => envolverSeleccion('_')}
+                      className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors ${modoOscuro ? 'text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800'}`}
+                    >
+                      <i className="ti ti-underline text-sm" />
+                    </button>
+                    <button
+                      type="button"
+                      title="Viñeta — convierte la línea (o líneas seleccionadas) en lista"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={alternarVineta}
+                      className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors ${modoOscuro ? 'text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800'}`}
+                    >
+                      <i className="ti ti-list text-sm" />
+                    </button>
+                    <button
+                      type="button"
+                      title="Resaltar en rojo — seleccioná texto y hacé clic"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => envolverSeleccion('==')}
+                      className="w-7 h-7 rounded-md flex items-center justify-center text-red-500 transition-colors hover:bg-red-500/10"
+                    >
+                      <i className="ti ti-highlight text-sm" />
+                    </button>
+                    <div className={`w-px h-5 mx-0.5 ${modoOscuro ? 'bg-zinc-700' : 'bg-zinc-200'}`} />
+                  </>
+                )}
                 <button
                   type="button"
-                  title="Negrita — seleccioná texto y hacé clic"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => envolverSeleccion('*')}
-                  className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors ${modoOscuro ? 'text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800'}`}
+                  onClick={() => setVistaPrevia((v) => !v)}
+                  className={`flex items-center gap-1 px-2 h-7 rounded-md text-xs font-medium transition-colors ${
+                    vistaPrevia
+                      ? 'text-white'
+                      : modoOscuro ? 'text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800'
+                  }`}
+                  style={vistaPrevia ? { background: VERDE } : undefined}
                 >
-                  <i className="ti ti-bold text-sm" />
-                </button>
-                <button
-                  type="button"
-                  title="Subrayado — seleccioná texto y hacé clic"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => envolverSeleccion('_')}
-                  className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors ${modoOscuro ? 'text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800'}`}
-                >
-                  <i className="ti ti-underline text-sm" />
-                </button>
-                <button
-                  type="button"
-                  title="Viñeta — convierte la línea (o líneas seleccionadas) en lista"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={alternarVineta}
-                  className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors ${modoOscuro ? 'text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800'}`}
-                >
-                  <i className="ti ti-list text-sm" />
+                  <i className={`ti ${vistaPrevia ? 'ti-pencil' : 'ti-eye'} text-sm`} />
+                  {vistaPrevia ? 'Editar' : 'Vista previa'}
                 </button>
               </div>
             </div>
-            <textarea
-              ref={refContenido}
-              value={contenido}
-              onChange={(e) => setContenido(e.target.value)}
-              rows={16}
-              className={`w-full rounded-lg px-3 py-2 text-sm outline-none border resize-y ${
-                modoOscuro ? 'bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-600' : 'bg-white border-zinc-200 text-zinc-900 placeholder:text-zinc-400'
-              }`}
-              placeholder={'Escribe tu apunte... *negrita*, _subrayado_, y una línea que empieza con "- " se ve como viñeta.'}
-            />
+            {vistaPrevia ? (
+              <div
+                className={`w-full rounded-lg px-3 py-2 text-sm border overflow-y-auto ${
+                  modoOscuro ? 'bg-zinc-800 border-zinc-700 text-zinc-200' : 'bg-white border-zinc-200 text-zinc-800'
+                }`}
+                style={{ minHeight: 380, maxHeight: 480 }}
+              >
+                {contenido.trim() ? (
+                  renderContenidoApunte(contenido)
+                ) : (
+                  <p className={`italic ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>Nada que previsualizar todavía.</p>
+                )}
+              </div>
+            ) : (
+              <textarea
+                ref={refContenido}
+                value={contenido}
+                onChange={(e) => setContenido(e.target.value)}
+                rows={16}
+                className={`w-full rounded-lg px-3 py-2 text-sm outline-none border resize-y ${
+                  modoOscuro ? 'bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-600' : 'bg-white border-zinc-200 text-zinc-900 placeholder:text-zinc-400'
+                }`}
+                placeholder={'Escribe tu apunte... *negrita*, _subrayado_, ==rojo==, y una línea que empieza con "- " se ve como viñeta.'}
+              />
+            )}
           </label>
           {clases.length > 0 && (
             <CampoSelectClase label="Clase a la que pertenece (opcional)" valor={claseId} onChange={setClaseId} clases={clases} modoOscuro={modoOscuro} />
