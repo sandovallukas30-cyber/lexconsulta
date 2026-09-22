@@ -9,29 +9,90 @@ import type { ApunteModulo, SesionClase, CuadernoApuntes } from '../../types'
 const VERDE = 'var(--accent-base)'
 const PALABRAS_POR_MINUTO = 180
 
-/** Misma convención liviana que los nodos de Mapas Mentales (`*negrita*`,
- *  `_subrayado_`), pero acá además una línea que empieza con "- " se
- *  agrupa con las líneas vecinas que también empiezan así en una lista con
- *  viñetas -- lo que le faltaba a un apunte para leerse como una página
- *  real y no como un bloque de texto plano. No se tocó la convención de
- *  Mapas Mentales (renderTextoEnriquecido en MapasMentalesView.tsx): son
- *  dos lugares distintos, cada uno con su propia copia mínima, antes que
- *  acoplar dos features que no tienen por qué depender una de la otra. */
+/** Misma idea que la convención liviana de los nodos de Mapas Mentales
+ *  (`*negrita*`, `_subrayado_`), pero más tolerante -- pensada para texto
+ *  PEGADO desde otro lado (ej. un apunte que ya tenías en Notion), no solo
+ *  para texto escrito a mano con la barra de esta app.
+ *
+ *  Por qué el doble asterisco importa: Notion (y Markdown en general)
+ *  marca negrita con **doble** asterisco, no uno solo. El primer intento
+ *  de esta función solo reconocía un asterisco, así que "**no hay
+ *  libertad**" quedaba mal partido: el regex de un solo `*` igual
+ *  encontraba ALGO que hacer negrita (el texto entre el segundo y el
+ *  tercer asterisco), pero dejaba el primer y el cuarto asterisco sueltos
+ *  como texto literal -- *así* quedaba. Ahora se prueba primero el par
+ *  doble (`\*\*...\*\*`, `__..._ _`) y recién si no hay, el simple -- para
+ *  que ninguno de los dos deje sobras. */
 function renderEnriquecidoInline(texto: string): ReactNode[] {
-  const partes = texto.split(/(\*[^*\n]+\*|_[^_\n]+_)/g)
+  const partes = texto.split(/(\*\*[^*\n]+\*\*|\*[^*\n]+\*|__[^_\n]+__|_[^_\n]+_)/g)
   return partes.map((parte, i) => {
-    if (parte.length > 2 && parte.startsWith('*') && parte.endsWith('*')) {
+    if (parte.startsWith('**') && parte.endsWith('**') && parte.length > 4) {
+      return <strong key={i}>{parte.slice(2, -2)}</strong>
+    }
+    if (parte.startsWith('*') && parte.endsWith('*') && parte.length > 2) {
       return <strong key={i}>{parte.slice(1, -1)}</strong>
     }
-    if (parte.length > 2 && parte.startsWith('_') && parte.endsWith('_')) {
+    if (parte.startsWith('__') && parte.endsWith('__') && parte.length > 4) {
+      return <u key={i}>{parte.slice(2, -2)}</u>
+    }
+    if (parte.startsWith('_') && parte.endsWith('_') && parte.length > 2) {
       return <u key={i}>{parte.slice(1, -1)}</u>
     }
     return parte
   })
 }
 
+/** Una línea cuenta como viñeta con o sin espacio después del guion --
+ *  "- Texto" y "-Texto" son el mismo caso real (apuntes tipeados rápido en
+ *  clase mezclan los dos todo el tiempo, el propio ejemplo que copiaste
+ *  tenía "-Teorias" sin espacio). "--" (un separador, no una viñeta) queda
+ *  afuera a propósito. */
 function esLineaVineta(l: string): boolean {
-  return /^\s*-\s+/.test(l)
+  const t = l.replace(/^[\t ]+/, '')
+  return t.startsWith('-') && t.length > 1 && t[1] !== '-'
+}
+
+function textoDeVineta(l: string): string {
+  return l.replace(/^[\t ]*-\s?/, '')
+}
+
+/** Cuántos tabs de indentación tiene la línea -- para distinguir viñeta de
+ *  primer nivel ("- Elementos") de sub-viñeta ("\t- Competencia"). Un
+ *  apunte real casi nunca pasa de 2 niveles, así que todo lo que tenga 1+
+ *  tab de indentación se junta en un único sub-nivel (no se intenta
+ *  reconstruir 3 o más niveles reales) -- mejor un sub-nivel correcto que
+ *  una jerarquía profunda a medias. */
+function indentDeLinea(l: string): number {
+  const m = l.match(/^\t*/)
+  return m ? m[0].length : 0
+}
+
+function renderListaVinetas(lineas: string[], key: string): ReactNode {
+  const items: { texto: string; hijos: string[] }[] = []
+  for (const l of lineas) {
+    const texto = textoDeVineta(l)
+    if (indentDeLinea(l) === 0 || items.length === 0) {
+      items.push({ texto, hijos: [] })
+    } else {
+      items[items.length - 1].hijos.push(texto)
+    }
+  }
+  return (
+    <ul key={key} className="list-disc pl-5 space-y-1.5 mb-5">
+      {items.map((it, i) => (
+        <li key={i}>
+          {renderEnriquecidoInline(it.texto)}
+          {it.hijos.length > 0 && (
+            <ul className="list-[circle] pl-5 mt-1.5 space-y-1.5">
+              {it.hijos.map((h, j) => (
+                <li key={j}>{renderEnriquecidoInline(h)}</li>
+              ))}
+            </ul>
+          )}
+        </li>
+      ))}
+    </ul>
+  )
 }
 
 /** Un "bloque" es un grupo de líneas separado del resto por una línea en
@@ -51,13 +112,7 @@ function renderBloqueApunte(bloque: string, keyBase: string): ReactNode[] {
   const cerrarGrupo = () => {
     if (grupo.length === 0) return
     if (modo === 'vineta') {
-      salida.push(
-        <ul key={`${keyBase}-${salida.length}`} className="list-disc pl-5 space-y-1.5 mb-5">
-          {grupo.map((l, i) => (
-            <li key={i}>{renderEnriquecidoInline(l.replace(/^\s*-\s+/, ''))}</li>
-          ))}
-        </ul>
-      )
+      salida.push(renderListaVinetas(grupo, `${keyBase}-${salida.length}`))
     } else {
       salida.push(
         <p key={`${keyBase}-${salida.length}`} className="whitespace-pre-wrap mb-5 leading-relaxed">
