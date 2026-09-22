@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useStore } from '../../store/useStore'
+import { ModoLecturaApunte } from './ModoLecturaApunte'
 import type { Modulo, SesionClase, EvaluacionModulo, TextoObligatorio, ApunteModulo, CuadernoApuntes, BriefCaso, Coleccion, Canvas, MapaMental } from '../../types'
 import { diasHasta, formatearCountdown, urgenciaDe, calcularPonderacionTotal, coleccionesDeModulo, type Urgencia } from '../../services/modulosAcademico'
 
@@ -980,6 +981,13 @@ function TabApuntes({
   const [filtro, setFiltro] = useState<string>('todos')
   const [mostrarNuevoCuaderno, setMostrarNuevoCuaderno] = useState(false)
   const [nombreNuevoCuaderno, setNombreNuevoCuaderno] = useState('')
+  // Apunte que se está leyendo (Modo Lectura) -- separado de `editandoId`:
+  // abrir un apunte de la lista ya no entra directo al formulario de
+  // edición (era el reclamo -- "para repasar tengo que abrir el editor"),
+  // entra acá. "Editar" desde adentro del Modo Lectura es lo que lleva al
+  // formulario.
+  const [apunteLeyendo, setApunteLeyendo] = useState<ApunteModulo | null>(null)
+  const refContenido = useRef<HTMLTextAreaElement>(null)
 
   const ordenados = [...apuntes].sort((a, b) => b.fechaModificacion - a.fechaModificacion)
   const filtrados = ordenados.filter((a) => {
@@ -999,6 +1007,7 @@ function TabApuntes({
   }
 
   const iniciarEdicion = (a: ApunteModulo) => {
+    setApunteLeyendo(null)
     setEditandoId(a.id)
     setTitulo(a.titulo)
     setContenido(a.contenido)
@@ -1008,21 +1017,90 @@ function TabApuntes({
     setMostrarForm(true)
   }
 
+  // Envuelve la SELECCIÓN actual del textarea con el marcador (o, sin
+  // selección, inserta el par en el cursor) -- mismo patrón que los nodos
+  // de Mapas Mentales (ver envolverSeleccion en MapasMentalesView.tsx).
+  const envolverSeleccion = (marcador: string) => {
+    const ta = refContenido.current
+    if (!ta) return
+    const inicio = ta.selectionStart ?? 0
+    const fin = ta.selectionEnd ?? 0
+    const nuevo = contenido.slice(0, inicio) + marcador + contenido.slice(inicio, fin) + marcador + contenido.slice(fin)
+    setContenido(nuevo)
+    requestAnimationFrame(() => {
+      ta.focus()
+      if (inicio === fin) ta.setSelectionRange(inicio + marcador.length, inicio + marcador.length)
+      else ta.setSelectionRange(inicio + marcador.length, fin + marcador.length)
+    })
+  }
+
+  // Viñeta: por línea, no por selección de caracteres -- toma todas las
+  // líneas que toca la selección (o solo la línea del cursor, si no hay
+  // selección) y les agrega "- " al principio; si TODAS ya la tenían, se
+  // la saca (toggle), como en cualquier editor de listas.
+  const alternarVineta = () => {
+    const ta = refContenido.current
+    if (!ta) return
+    const inicio = ta.selectionStart ?? 0
+    const fin = ta.selectionEnd ?? 0
+    const inicioLinea = contenido.lastIndexOf('\n', inicio - 1) + 1
+    const finLinea = contenido.indexOf('\n', fin) === -1 ? contenido.length : contenido.indexOf('\n', fin)
+    const bloque = contenido.slice(inicioLinea, finLinea)
+    const lineas = bloque.split('\n')
+    const todasConVineta = lineas.every((l) => l.trim() === '' || /^\s*-\s+/.test(l))
+    const nuevasLineas = lineas.map((l) => {
+      if (l.trim() === '') return l
+      if (todasConVineta) return l.replace(/^\s*-\s+/, '')
+      return /^\s*-\s+/.test(l) ? l : `- ${l}`
+    })
+    const nuevoBloque = nuevasLineas.join('\n')
+    const nuevo = contenido.slice(0, inicioLinea) + nuevoBloque + contenido.slice(finLinea)
+    setContenido(nuevo)
+    requestAnimationFrame(() => {
+      ta.focus()
+      ta.setSelectionRange(inicioLinea, inicioLinea + nuevoBloque.length)
+    })
+  }
+
   const guardar = () => {
     if (!titulo.trim()) return
     const ahora = Date.now()
+    let guardado: ApunteModulo
     if (editandoId) {
-      setApuntesModulo(moduloId, apuntes.map((a) => (a.id === editandoId ? { ...a, titulo: titulo.trim(), contenido, claseId: claseId || undefined, cuadernoId: cuadernoId || undefined, articuloRelacionado: articuloRelacionado.trim() || undefined, fechaModificacion: ahora } : a)))
+      guardado = {
+        ...(apuntes.find((a) => a.id === editandoId) as ApunteModulo),
+        titulo: titulo.trim(),
+        contenido,
+        claseId: claseId || undefined,
+        cuadernoId: cuadernoId || undefined,
+        articuloRelacionado: articuloRelacionado.trim() || undefined,
+        fechaModificacion: ahora,
+      }
+      setApuntesModulo(moduloId, apuntes.map((a) => (a.id === editandoId ? guardado : a)))
     } else {
-      const nuevo: ApunteModulo = { id: crypto.randomUUID(), titulo: titulo.trim(), contenido, claseId: claseId || undefined, cuadernoId: cuadernoId || undefined, articuloRelacionado: articuloRelacionado.trim() || undefined, fechaCreacion: ahora, fechaModificacion: ahora }
-      setApuntesModulo(moduloId, [...apuntes, nuevo])
+      guardado = {
+        id: crypto.randomUUID(),
+        titulo: titulo.trim(),
+        contenido,
+        claseId: claseId || undefined,
+        cuadernoId: cuadernoId || undefined,
+        articuloRelacionado: articuloRelacionado.trim() || undefined,
+        fechaCreacion: ahora,
+        fechaModificacion: ahora,
+      }
+      setApuntesModulo(moduloId, [...apuntes, guardado])
     }
     setMostrarForm(false)
     setEditandoId(null)
+    // Guardar ya deja leyendo lo que se acaba de escribir -- antes cerraba
+    // el formulario y volvía a la lista sin más, y para repasar había que
+    // volver a entrar (al editor, encima, que es lo que se quería evitar).
+    setApunteLeyendo(guardado)
   }
 
   const eliminar = (id: string) => {
     setApuntesModulo(moduloId, apuntes.filter((a) => a.id !== id))
+    if (apunteLeyendo?.id === id) setApunteLeyendo(null)
   }
 
   const crearCuaderno = () => {
@@ -1064,15 +1142,47 @@ function TabApuntes({
         <div className={`p-4 rounded-xl border mb-4 space-y-3 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
           <CampoTexto label="Título" valor={titulo} onChange={setTitulo} modoOscuro={modoOscuro} placeholder="Ej: Clase 3 — Modos de extinguir" />
           <label className="block">
-            <span className={`block text-xs font-medium mb-1 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>Contenido</span>
+            <div className="flex items-center justify-between mb-1">
+              <span className={`block text-xs font-medium ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>Contenido</span>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  title="Negrita — seleccioná texto y hacé clic"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => envolverSeleccion('*')}
+                  className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors ${modoOscuro ? 'text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800'}`}
+                >
+                  <i className="ti ti-bold text-sm" />
+                </button>
+                <button
+                  type="button"
+                  title="Subrayado — seleccioná texto y hacé clic"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => envolverSeleccion('_')}
+                  className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors ${modoOscuro ? 'text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800'}`}
+                >
+                  <i className="ti ti-underline text-sm" />
+                </button>
+                <button
+                  type="button"
+                  title="Viñeta — convierte la línea (o líneas seleccionadas) en lista"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={alternarVineta}
+                  className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors ${modoOscuro ? 'text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800'}`}
+                >
+                  <i className="ti ti-list text-sm" />
+                </button>
+              </div>
+            </div>
             <textarea
+              ref={refContenido}
               value={contenido}
               onChange={(e) => setContenido(e.target.value)}
-              rows={6}
+              rows={16}
               className={`w-full rounded-lg px-3 py-2 text-sm outline-none border resize-y ${
                 modoOscuro ? 'bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-600' : 'bg-white border-zinc-200 text-zinc-900 placeholder:text-zinc-400'
               }`}
-              placeholder="Escribe tu apunte..."
+              placeholder={'Escribe tu apunte... *negrita*, _subrayado_, y una línea que empieza con "- " se ve como viñeta.'}
             />
           </label>
           {clases.length > 0 && (
@@ -1128,7 +1238,7 @@ function TabApuntes({
               <div key={a.id} className={`p-3 rounded-xl border ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
                 <div className="flex items-start justify-between gap-2 mb-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <button onClick={() => iniciarEdicion(a)} className={`text-sm font-medium text-left hover:underline ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>
+                    <button onClick={() => setApunteLeyendo(a)} className={`text-sm font-medium text-left hover:underline ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>
                       {a.titulo}
                     </button>
                     {cuaderno && (
@@ -1140,7 +1250,16 @@ function TabApuntes({
                     <EtiquetaArticulo articulo={a.articuloRelacionado} modoOscuro={modoOscuro} />
                     <EtiquetaClase clase={clases.find((c) => c.id === a.claseId)} modoOscuro={modoOscuro} />
                   </div>
-                  <BotonEliminar onClick={() => eliminar(a.id)} modoOscuro={modoOscuro} />
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button
+                      onClick={() => iniciarEdicion(a)}
+                      title="Editar"
+                      className={`w-7 h-7 rounded-md flex items-center justify-center ${modoOscuro ? 'text-zinc-500 hover:bg-zinc-700 hover:text-zinc-200' : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700'}`}
+                    >
+                      <i className="ti ti-pencil text-sm" />
+                    </button>
+                    <BotonEliminar onClick={() => eliminar(a.id)} modoOscuro={modoOscuro} />
+                  </div>
                 </div>
                 {a.contenido && (
                   <p className={`text-xs whitespace-pre-wrap line-clamp-3 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>{a.contenido}</p>
@@ -1150,6 +1269,15 @@ function TabApuntes({
           })}
         </div>
       )}
+
+      <ModoLecturaApunte
+        abierto={!!apunteLeyendo}
+        apunte={apunteLeyendo}
+        clase={apunteLeyendo?.claseId ? clases.find((c) => c.id === apunteLeyendo.claseId) : undefined}
+        cuaderno={apunteLeyendo?.cuadernoId ? cuadernos.find((c) => c.id === apunteLeyendo.cuadernoId) : undefined}
+        onCerrar={() => setApunteLeyendo(null)}
+        onEditar={() => apunteLeyendo && iniciarEdicion(apunteLeyendo)}
+      />
     </div>
   )
 }

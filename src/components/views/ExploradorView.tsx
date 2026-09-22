@@ -8,11 +8,13 @@ import { SelectorCodigo } from '../ui/SelectorCodigo'
 import { EsquemaCodigo } from '../ui/EsquemaCodigo'
 import { ContenedorResaltable, ParrafoResaltado } from '../ui/TextoResaltable'
 import { useLecturaVoz } from '../../hooks/useLecturaVoz'
+import { useWakeLock } from '../../hooks/useWakeLock'
 import { modernizar, necesitaModernizacion } from '../../services/moderniza'
 import { obtenerMetadata, formatearFechaIndexacion, nombreCortoMetadata } from '../../data/codigosMetadata'
 import { construirEsquema, ETIQUETAS_NIVEL, type NodoEsquema } from '../../services/esquema'
 import { buscarVinculosArticulo } from '../../services/modulosAcademico'
-import type { Articulo, CodigoData, CodigoTipo, TemaLectura } from '../../types'
+import { TAMANOS_FUENTE, TEMAS_LECTURA } from '../../services/lecturaTema'
+import type { Articulo, CodigoData, CodigoTipo } from '../../types'
 
 const VERDE = 'var(--accent-base)'
 
@@ -1261,64 +1263,9 @@ function PantallaCargandoCodigo({ modoOscuro }: { modoOscuro: boolean }) {
   )
 }
 
-const TAMANOS_FUENTE = [17, 19, 21, 24, 27]
-
 /** Ritmo de lectura asumido para estimar "~N min" -- más lento que el
  *  promedio de prosa general porque el texto es denso y técnico. */
 const PALABRAS_POR_MINUTO = 180
-
-const TEMAS_LECTURA: Record<
-  TemaLectura,
-  {
-    bg: string
-    border: string
-    text: string
-    textSoft: string
-    chipBg: string
-    hoverSuave: string
-    chipHover: string
-    icono: string
-    siguienteTema: TemaLectura
-    tituloBoton: string
-  }
-> = {
-  claro: {
-    bg: 'bg-white',
-    border: 'border-zinc-200',
-    text: 'text-zinc-900',
-    textSoft: 'text-zinc-500',
-    chipBg: 'bg-zinc-100',
-    hoverSuave: 'hover:bg-zinc-100',
-    chipHover: 'hover:bg-zinc-200',
-    icono: 'ti-sun',
-    siguienteTema: 'oscuro',
-    tituloBoton: 'Cambiar a tema oscuro',
-  },
-  oscuro: {
-    bg: 'bg-zinc-900',
-    border: 'border-zinc-800',
-    text: 'text-white',
-    textSoft: 'text-zinc-400',
-    chipBg: 'bg-zinc-800',
-    hoverSuave: 'hover:bg-zinc-800',
-    chipHover: 'hover:bg-zinc-700',
-    icono: 'ti-moon',
-    siguienteTema: 'papel',
-    tituloBoton: 'Cambiar a tema papel',
-  },
-  papel: {
-    bg: 'bg-[#f4ecd8]',
-    border: 'border-[#e2d0a4]',
-    text: 'text-[#3a2c1a]',
-    textSoft: 'text-[#8a7550]',
-    chipBg: 'bg-[#ecdfc0]',
-    hoverSuave: 'hover:bg-[#ecdfc0]',
-    chipHover: 'hover:bg-[#e2d3a8]',
-    icono: 'ti-coffee',
-    siguienteTema: 'claro',
-    tituloBoton: 'Cambiar a tema claro',
-  },
-}
 
 /**
  * Pantalla completa sin sidebar/topbar para leer un artículo largo sin
@@ -1406,35 +1353,9 @@ function ModoLecturaOverlay({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [abierto, seleccionado?.a])
 
-  // Mientras se lee, evitar que la pantalla se apague sola (típico dejando
-  // la tablet apoyada en la mesa). El sistema libera el lock solo al
-  // cambiar de pestaña/app; si se sigue en modo lectura al volver, se pide
-  // de nuevo.
-  useEffect(() => {
-    if (!abierto || typeof navigator === 'undefined' || !('wakeLock' in navigator)) return
-    let sentinel: WakeLockSentinel | null = null
-    let vigente = true
-    const pedir = async () => {
-      try {
-        const s = await navigator.wakeLock.request('screen')
-        if (vigente) sentinel = s
-        else s.release().catch(() => {})
-      } catch {
-        // Sin permiso, o documento no visible en ese instante -- no es
-        // crítico, simplemente no se evita que la pantalla se apague.
-      }
-    }
-    pedir()
-    const alVolverVisible = () => {
-      if (document.visibilityState === 'visible' && !sentinel) pedir()
-    }
-    document.addEventListener('visibilitychange', alVolverVisible)
-    return () => {
-      vigente = false
-      document.removeEventListener('visibilitychange', alVolverVisible)
-      sentinel?.release().catch(() => {})
-    }
-  }, [abierto])
+  // Mientras se lee, evitar que la pantalla se apague sola (ver
+  // useWakeLock, compartido con ModoLecturaApunte).
+  useWakeLock(abierto)
 
   // Deslizar izquierda/derecha para cambiar de artículo. No se llama
   // preventDefault -- el scroll vertical normal sigue intacto -- y se
