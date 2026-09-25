@@ -1,6 +1,8 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, type ChangeEvent } from 'react'
 import { useStore } from '../../store/useStore'
-import { ModoLecturaApunte, renderContenidoApunte } from './ModoLecturaApunte'
+import { ModoLecturaApunte } from './ModoLecturaApunte'
+import { CampoContenidoApunte } from './CampoContenidoApunte'
+import { resumenDe, separarTitulo } from '../../services/apunteFormato'
 import type { Modulo, SesionClase, EvaluacionModulo, TextoObligatorio, ApunteModulo, CuadernoApuntes, BriefCaso, Coleccion, Canvas, MapaMental } from '../../types'
 import { diasHasta, formatearCountdown, urgenciaDe, calcularPonderacionTotal, coleccionesDeModulo, type Urgencia } from '../../services/modulosAcademico'
 
@@ -987,8 +989,8 @@ function TabApuntes({
   // entra acá. "Editar" desde adentro del Modo Lectura es lo que lleva al
   // formulario.
   const [apunteLeyendo, setApunteLeyendo] = useState<ApunteModulo | null>(null)
-  const [vistaPrevia, setVistaPrevia] = useState(false)
-  const refContenido = useRef<HTMLTextAreaElement>(null)
+  const refArchivo = useRef<HTMLInputElement>(null)
+  const [errorImportar, setErrorImportar] = useState<string | null>(null)
 
   const ordenados = [...apuntes].sort((a, b) => b.fechaModificacion - a.fechaModificacion)
   const filtrados = ordenados.filter((a) => {
@@ -1004,7 +1006,6 @@ function TabApuntes({
     setClaseId('')
     setCuadernoId(filtro !== 'todos' && filtro !== 'sin-cuaderno' ? filtro : '')
     setArticuloRelacionado('')
-    setVistaPrevia(false)
     setMostrarForm(true)
   }
 
@@ -1016,53 +1017,35 @@ function TabApuntes({
     setClaseId(a.claseId ?? '')
     setCuadernoId(a.cuadernoId ?? '')
     setArticuloRelacionado(a.articuloRelacionado ?? '')
-    setVistaPrevia(false)
     setMostrarForm(true)
   }
 
-  // Envuelve la SELECCIÓN actual del textarea con el marcador (o, sin
-  // selección, inserta el par en el cursor) -- mismo patrón que los nodos
-  // de Mapas Mentales (ver envolverSeleccion en MapasMentalesView.tsx).
-  const envolverSeleccion = (marcador: string) => {
-    const ta = refContenido.current
-    if (!ta) return
-    const inicio = ta.selectionStart ?? 0
-    const fin = ta.selectionEnd ?? 0
-    const nuevo = contenido.slice(0, inicio) + marcador + contenido.slice(inicio, fin) + marcador + contenido.slice(fin)
-    setContenido(nuevo)
-    requestAnimationFrame(() => {
-      ta.focus()
-      if (inicio === fin) ta.setSelectionRange(inicio + marcador.length, inicio + marcador.length)
-      else ta.setSelectionRange(inicio + marcador.length, fin + marcador.length)
-    })
-  }
-
-  // Viñeta: por línea, no por selección de caracteres -- toma todas las
-  // líneas que toca la selección (o solo la línea del cursor, si no hay
-  // selección) y les agrega "- " al principio; si TODAS ya la tenían, se
-  // la saca (toggle), como en cualquier editor de listas.
-  const alternarVineta = () => {
-    const ta = refContenido.current
-    if (!ta) return
-    const inicio = ta.selectionStart ?? 0
-    const fin = ta.selectionEnd ?? 0
-    const inicioLinea = contenido.lastIndexOf('\n', inicio - 1) + 1
-    const finLinea = contenido.indexOf('\n', fin) === -1 ? contenido.length : contenido.indexOf('\n', fin)
-    const bloque = contenido.slice(inicioLinea, finLinea)
-    const lineas = bloque.split('\n')
-    const todasConVineta = lineas.every((l) => l.trim() === '' || /^\s*-\s+/.test(l))
-    const nuevasLineas = lineas.map((l) => {
-      if (l.trim() === '') return l
-      if (todasConVineta) return l.replace(/^\s*-\s+/, '')
-      return /^\s*-\s+/.test(l) ? l : `- ${l}`
-    })
-    const nuevoBloque = nuevasLineas.join('\n')
-    const nuevo = contenido.slice(0, inicioLinea) + nuevoBloque + contenido.slice(finLinea)
-    setContenido(nuevo)
-    requestAnimationFrame(() => {
-      ta.focus()
-      ta.setSelectionRange(inicioLinea, inicioLinea + nuevoBloque.length)
-    })
+  const importarArchivo = async (e: ChangeEvent<HTMLInputElement>) => {
+    const archivo = e.target.files?.[0]
+    e.target.value = ''
+    if (!archivo) return
+    setErrorImportar(null)
+    if (/\.(pdf|docx?|pptx?|xlsx?)$/i.test(archivo.name)) {
+      setErrorImportar('Se importan archivos de texto (.md o .txt). De un PDF o Word, copiá el texto y pegalo en un apunte nuevo.')
+      return
+    }
+    if (archivo.size > 3 * 1024 * 1024) {
+      setErrorImportar('El archivo pesa más de 3 MB, es demasiado para un solo apunte.')
+      return
+    }
+    const texto = (await archivo.text()).replace(/^\uFEFF/, '')
+    const { titulo: tituloArchivo, cuerpo } = separarTitulo(texto)
+    const ahora = Date.now()
+    const nuevo: ApunteModulo = {
+      id: crypto.randomUUID(),
+      titulo: (tituloArchivo ?? archivo.name.replace(/\.[^.]+$/, '')).trim() || 'Apunte importado',
+      contenido: cuerpo.trimEnd(),
+      cuadernoId: filtro !== 'todos' && filtro !== 'sin-cuaderno' ? filtro : undefined,
+      fechaCreacion: ahora,
+      fechaModificacion: ahora,
+    }
+    setApuntesModulo(moduloId, [...apuntes, nuevo])
+    setApunteLeyendo(nuevo)
   }
 
   const guardar = () => {
@@ -1119,8 +1102,27 @@ function TabApuntes({
     <div>
       <div className="flex justify-between items-center mb-3">
         <h2 className={`text-sm font-semibold ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>Apuntes propios</h2>
-        <BotonAgregar label="Nuevo apunte" onClick={iniciarNuevo} modoOscuro={modoOscuro} />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => refArchivo.current?.click()}
+            title="Importar un archivo .md o .txt como apunte"
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+              modoOscuro ? 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700' : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50'
+            }`}
+          >
+            <i className="ti ti-file-import text-sm" />
+            Importar
+          </button>
+          <input ref={refArchivo} type="file" accept=".md,.markdown,.txt,text/plain,text/markdown" className="hidden" onChange={importarArchivo} />
+          <BotonAgregar label="Nuevo apunte" onClick={iniciarNuevo} modoOscuro={modoOscuro} />
+        </div>
       </div>
+
+      {errorImportar && (
+        <p role="alert" className="mb-3 text-xs text-red-600">
+          {errorImportar}
+        </p>
+      )}
 
       {cuadernos.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-3">
@@ -1144,92 +1146,7 @@ function TabApuntes({
       {mostrarForm && (
         <div className={`p-4 rounded-xl border mb-4 space-y-3 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
           <CampoTexto label="Título" valor={titulo} onChange={setTitulo} modoOscuro={modoOscuro} placeholder="Ej: Clase 3 — Modos de extinguir" />
-          <label className="block">
-            <div className="flex items-center justify-between mb-1">
-              <span className={`block text-xs font-medium ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>Contenido</span>
-              <div className="flex items-center gap-1">
-                {!vistaPrevia && (
-                  <>
-                    <button
-                      type="button"
-                      title="Negrita — seleccioná texto y hacé clic"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => envolverSeleccion('*')}
-                      className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors ${modoOscuro ? 'text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800'}`}
-                    >
-                      <i className="ti ti-bold text-sm" />
-                    </button>
-                    <button
-                      type="button"
-                      title="Subrayado — seleccioná texto y hacé clic"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => envolverSeleccion('_')}
-                      className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors ${modoOscuro ? 'text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800'}`}
-                    >
-                      <i className="ti ti-underline text-sm" />
-                    </button>
-                    <button
-                      type="button"
-                      title="Viñeta — convierte la línea (o líneas seleccionadas) en lista"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={alternarVineta}
-                      className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors ${modoOscuro ? 'text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800'}`}
-                    >
-                      <i className="ti ti-list text-sm" />
-                    </button>
-                    <button
-                      type="button"
-                      title="Resaltar en rojo — seleccioná texto y hacé clic"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => envolverSeleccion('==')}
-                      className="w-7 h-7 rounded-md flex items-center justify-center text-red-500 transition-colors hover:bg-red-500/10"
-                    >
-                      <i className="ti ti-highlight text-sm" />
-                    </button>
-                    <div className={`w-px h-5 mx-0.5 ${modoOscuro ? 'bg-zinc-700' : 'bg-zinc-200'}`} />
-                  </>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setVistaPrevia((v) => !v)}
-                  className={`flex items-center gap-1 px-2 h-7 rounded-md text-xs font-medium transition-colors ${
-                    vistaPrevia
-                      ? 'text-white'
-                      : modoOscuro ? 'text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800'
-                  }`}
-                  style={vistaPrevia ? { background: VERDE } : undefined}
-                >
-                  <i className={`ti ${vistaPrevia ? 'ti-pencil' : 'ti-eye'} text-sm`} />
-                  {vistaPrevia ? 'Editar' : 'Vista previa'}
-                </button>
-              </div>
-            </div>
-            {vistaPrevia ? (
-              <div
-                className={`w-full rounded-lg px-3 py-2 text-sm border overflow-y-auto ${
-                  modoOscuro ? 'bg-zinc-800 border-zinc-700 text-zinc-200' : 'bg-white border-zinc-200 text-zinc-800'
-                }`}
-                style={{ minHeight: 380, maxHeight: 480 }}
-              >
-                {contenido.trim() ? (
-                  renderContenidoApunte(contenido)
-                ) : (
-                  <p className={`italic ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>Nada que previsualizar todavía.</p>
-                )}
-              </div>
-            ) : (
-              <textarea
-                ref={refContenido}
-                value={contenido}
-                onChange={(e) => setContenido(e.target.value)}
-                rows={16}
-                className={`w-full rounded-lg px-3 py-2 text-sm outline-none border resize-y ${
-                  modoOscuro ? 'bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-600' : 'bg-white border-zinc-200 text-zinc-900 placeholder:text-zinc-400'
-                }`}
-                placeholder={'Escribe tu apunte... *negrita*, _subrayado_, ==rojo==, y una línea que empieza con "- " se ve como viñeta.'}
-              />
-            )}
-          </label>
+          <CampoContenidoApunte valor={contenido} onChange={setContenido} modoOscuro={modoOscuro} />
           {clases.length > 0 && (
             <CampoSelectClase label="Clase a la que pertenece (opcional)" valor={claseId} onChange={setClaseId} clases={clases} modoOscuro={modoOscuro} />
           )}
@@ -1307,7 +1224,7 @@ function TabApuntes({
                   </div>
                 </div>
                 {a.contenido && (
-                  <p className={`text-xs whitespace-pre-wrap line-clamp-3 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>{a.contenido}</p>
+                  <p className={`text-xs line-clamp-3 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>{resumenDe(a.contenido)}</p>
                 )}
               </div>
             )
