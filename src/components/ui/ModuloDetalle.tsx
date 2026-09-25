@@ -3,6 +3,7 @@ import { useStore } from '../../store/useStore'
 import { ModoLecturaApunte } from './ModoLecturaApunte'
 import { CampoContenidoApunte } from './CampoContenidoApunte'
 import { resumenDe, separarTitulo } from '../../services/apunteFormato'
+import { convertirPdfNotion } from '../../services/notionPdf/importarPdfNotion'
 import type { Modulo, SesionClase, EvaluacionModulo, TextoObligatorio, ApunteModulo, CuadernoApuntes, BriefCaso, Coleccion, Canvas, MapaMental } from '../../types'
 import { diasHasta, formatearCountdown, urgenciaDe, calcularPonderacionTotal, coleccionesDeModulo, type Urgencia } from '../../services/modulosAcademico'
 
@@ -991,6 +992,8 @@ function TabApuntes({
   const [apunteLeyendo, setApunteLeyendo] = useState<ApunteModulo | null>(null)
   const refArchivo = useRef<HTMLInputElement>(null)
   const [errorImportar, setErrorImportar] = useState<string | null>(null)
+  const [avisoImportar, setAvisoImportar] = useState<string | null>(null)
+  const [importando, setImportando] = useState<string | null>(null)
 
   const ordenados = [...apuntes].sort((a, b) => b.fechaModificacion - a.fechaModificacion)
   const filtrados = ordenados.filter((a) => {
@@ -1023,18 +1026,39 @@ function TabApuntes({
   const importarArchivo = async (e: ChangeEvent<HTMLInputElement>) => {
     const archivo = e.target.files?.[0]
     e.target.value = ''
-    if (!archivo) return
+    if (!archivo || importando) return
     setErrorImportar(null)
-    if (/\.(pdf|docx?|pptx?|xlsx?)$/i.test(archivo.name)) {
-      setErrorImportar('Se importan archivos de texto (.md o .txt). De un PDF o Word, copiá el texto y pegalo en un apunte nuevo.')
+    setAvisoImportar(null)
+    const esPdf = /\.pdf$/i.test(archivo.name) || archivo.type === 'application/pdf'
+    if (!esPdf && /\.(docx?|pptx?|xlsx?)$/i.test(archivo.name)) {
+      setErrorImportar('Se importan archivos .md, .txt o un PDF exportado de Notion. De un Word, copiá el texto y pegalo en un apunte nuevo.')
       return
     }
-    if (archivo.size > 3 * 1024 * 1024) {
-      setErrorImportar('El archivo pesa más de 3 MB, es demasiado para un solo apunte.')
-      return
+    let tituloArchivo: string | null
+    let cuerpo: string
+    if (esPdf) {
+      try {
+        setImportando('Preparando…')
+        const res = await convertirPdfNotion(archivo, setImportando)
+        tituloArchivo = res.titulo
+        cuerpo = res.md
+        if (res.avisos.length > 0) setAvisoImportar(`Se importó, pero revisá: ${res.avisos.join(' ')}`)
+      } catch (err) {
+        setErrorImportar(err instanceof Error ? err.message : 'No se pudo convertir el PDF.')
+        return
+      } finally {
+        setImportando(null)
+      }
+    } else {
+      if (archivo.size > 3 * 1024 * 1024) {
+        setErrorImportar('El archivo pesa más de 3 MB, es demasiado para un solo apunte.')
+        return
+      }
+      const texto = (await archivo.text()).replace(/^\uFEFF/, '')
+      const separado = separarTitulo(texto)
+      tituloArchivo = separado.titulo
+      cuerpo = separado.cuerpo
     }
-    const texto = (await archivo.text()).replace(/^\uFEFF/, '')
-    const { titulo: tituloArchivo, cuerpo } = separarTitulo(texto)
     const ahora = Date.now()
     const nuevo: ApunteModulo = {
       id: crypto.randomUUID(),
@@ -1105,18 +1129,31 @@ function TabApuntes({
         <div className="flex items-center gap-2">
           <button
             onClick={() => refArchivo.current?.click()}
-            title="Importar un archivo .md o .txt como apunte"
+            disabled={!!importando}
+            title="Importar un archivo .md, .txt o un PDF de Notion como apunte"
             className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
               modoOscuro ? 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700' : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50'
             }`}
           >
-            <i className="ti ti-file-import text-sm" />
+            <i className={`ti ${importando ? 'ti-loader-2 animate-spin' : 'ti-file-import'} text-sm`} />
             Importar
           </button>
-          <input ref={refArchivo} type="file" accept=".md,.markdown,.txt,text/plain,text/markdown" className="hidden" onChange={importarArchivo} />
+          <input ref={refArchivo} type="file" accept=".md,.markdown,.txt,.pdf,text/plain,text/markdown,application/pdf" className="hidden" onChange={importarArchivo} />
           <BotonAgregar label="Nuevo apunte" onClick={iniciarNuevo} modoOscuro={modoOscuro} />
         </div>
       </div>
+
+      {importando && (
+        <p role="status" className={`mb-3 text-xs ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
+          {importando}
+        </p>
+      )}
+
+      {avisoImportar && (
+        <p role="status" className="mb-3 text-xs text-amber-600">
+          {avisoImportar}
+        </p>
+      )}
 
       {errorImportar && (
         <p role="alert" className="mb-3 text-xs text-red-600">

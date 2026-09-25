@@ -1,38 +1,29 @@
 # Notion (PDF) a Apunte
 
-Convierte una página de Notion exportada a PDF en un archivo `.md` que se
-importa directo en **Módulos > Apuntes > Importar** (sintaxis en
-`src/services/apunteFormato.ts`).
+El conversor vive en `src/services/notionPdf/convertir_notion.py` y lo usan
+dos cosas con el mismo código:
+
+- **La app**: el botón **Importar** de Apuntes acepta un PDF exportado desde
+  Notion (Imprimir > Guardar como PDF en Chrome) y lo convierte en el navegador
+  (Web Worker + Pyodide + PyMuPDF; la primera vez descarga ~30 MB del CDN).
+- **La línea de comandos**, para revisar o depurar un PDF:
 
 ```bash
 pip install pymupdf
-python tools/notion-pdf-a-apunte/convertir.py entrada.pdf salida.md \
-  --asignatura "NOMBRE DEL CURSO" --ignorar "Course" --ignorar "NOMBRE DEL CURSO"
+python src/services/notionPdf/convertir_notion.py entrada.pdf salida.md
 ```
-
-`--ignorar` descarta líneas exactas de la primera página (las propiedades de
-la página de Notion, como "Course" y su valor). `--asignatura` agrega una
-primera línea `**Asignatura:** ...`.
 
 ## Qué reconoce
 
-- Títulos por tamaño de letra (`#`, `##`, `###`).
-- Negrita, cursiva, subrayado, texto rojo (`==`) y marcador amarillo (`++`)
-  por fuente/color del PDF.
-- Listas con viñetas y numeradas, con su nivel de anidación.
-- Recuadros (callouts) de Notion como `> 📝 ...`.
-- Columnas de Notion como `:::columnas ... :::col ... :::` (cuando arrancan y
-  terminan en la misma página).
+Títulos, negrita/cursiva/subrayado, texto rojo (`==`), marcador amarillo
+(`++`), listas con su anidación, recuadros (`> 📝`), columnas
+(`:::columnas`, también las que siguen en la página siguiente) y tablas.
 
-## Qué hay que revisar a mano
+## Límites
 
-- **Tablas**: no se detectan; salen como líneas sueltas. Reescribirlas con
-  `| a | b |` y `|---|---|`.
-- **Columnas que cruzan un salto de página**: el script avisa
-  ("no se pudieron cerrar solos") y deja marcas `@@COLBREAK`. Hay que mover el
-  contenido de cada columna a su lugar.
-- El mapeo de fuentes (negrita/cursiva) depende de cómo Chrome guarda las
-  fuentes del PDF de Notion; si un PDF viene de otra herramienta, la negrita
-  puede no detectarse.
-- Comparar el resultado con el PDF (ver el apunte en Modo Lectura al lado del
-  PDF) antes de darlo por bueno.
+- El estilo (negrita/cursiva) sale de cómo Chrome guarda las fuentes del PDF de
+  Notion; en un PDF de otra herramienta el texto se convierte igual pero sin
+  esos estilos.
+- Los PDF escaneados (solo imágenes) no tienen texto que convertir.
+- Si la app avisa "revisá", quedaron columnas que no se pudieron armar solas:
+  buscar `@@COLBREAK` en el apunte y corregirlo a mano.
