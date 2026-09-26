@@ -990,6 +990,7 @@ function TabApuntes({
   // entra acá. "Editar" desde adentro del Modo Lectura es lo que lleva al
   // formulario.
   const [apunteLeyendo, setApunteLeyendo] = useState<ApunteModulo | null>(null)
+  const [editarAlAbrir, setEditarAlAbrir] = useState(false)
   const refArchivo = useRef<HTMLInputElement>(null)
   const [errorImportar, setErrorImportar] = useState<string | null>(null)
   const [avisoImportar, setAvisoImportar] = useState<string | null>(null)
@@ -1013,6 +1014,7 @@ function TabApuntes({
   }
 
   const iniciarEdicion = (a: ApunteModulo) => {
+    setEditarAlAbrir(false)
     setApunteLeyendo(null)
     setEditandoId(a.id)
     setTitulo(a.titulo)
@@ -1069,6 +1071,7 @@ function TabApuntes({
       fechaModificacion: ahora,
     }
     setApuntesModulo(moduloId, [...apuntes, nuevo])
+    setEditarAlAbrir(false)
     setApunteLeyendo(nuevo)
   }
 
@@ -1105,12 +1108,22 @@ function TabApuntes({
     // Guardar ya deja leyendo lo que se acaba de escribir -- antes cerraba
     // el formulario y volvía a la lista sin más, y para repasar había que
     // volver a entrar (al editor, encima, que es lo que se quería evitar).
+    setEditarAlAbrir(false)
     setApunteLeyendo(guardado)
   }
 
   const eliminar = (id: string) => {
     setApuntesModulo(moduloId, apuntes.filter((a) => a.id !== id))
     if (apunteLeyendo?.id === id) setApunteLeyendo(null)
+  }
+
+  // Cambios hechos desde el editor visual del Modo Lectura: se guardan solos.
+  // Se lee la lista más reciente del store (no la de este render) porque el
+  // título y el contenido pueden guardarse casi a la vez.
+  const actualizarApunte = (id: string, cambios: { titulo?: string; contenido?: string }) => {
+    const actuales = useStore.getState().academicoModulos[moduloId]?.apuntes ?? []
+    setApuntesModulo(moduloId, actuales.map((a) => (a.id === id ? { ...a, ...cambios, fechaModificacion: Date.now() } : a)))
+    setApunteLeyendo((prev) => (prev && prev.id === id ? { ...prev, ...cambios } : prev))
   }
 
   const crearCuaderno = () => {
@@ -1237,7 +1250,7 @@ function TabApuntes({
               <div key={a.id} className={`p-3 rounded-xl border ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
                 <div className="flex items-start justify-between gap-2 mb-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <button onClick={() => setApunteLeyendo(a)} className={`text-sm font-medium text-left hover:underline ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>
+                    <button onClick={() => { setEditarAlAbrir(false); setApunteLeyendo(a) }} className={`text-sm font-medium text-left hover:underline ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>
                       {a.titulo}
                     </button>
                     {cuaderno && (
@@ -1251,7 +1264,10 @@ function TabApuntes({
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
                     <button
-                      onClick={() => iniciarEdicion(a)}
+                      onClick={() => {
+                        setEditarAlAbrir(true)
+                        setApunteLeyendo(a)
+                      }}
                       title="Editar"
                       className={`w-7 h-7 rounded-md flex items-center justify-center ${modoOscuro ? 'text-zinc-500 hover:bg-zinc-700 hover:text-zinc-200' : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700'}`}
                     >
@@ -1274,8 +1290,10 @@ function TabApuntes({
         apunte={apunteLeyendo}
         clase={apunteLeyendo?.claseId ? clases.find((c) => c.id === apunteLeyendo.claseId) : undefined}
         cuaderno={apunteLeyendo?.cuadernoId ? cuadernos.find((c) => c.id === apunteLeyendo.cuadernoId) : undefined}
+        editarAlAbrir={editarAlAbrir}
         onCerrar={() => setApunteLeyendo(null)}
         onEditar={() => apunteLeyendo && iniciarEdicion(apunteLeyendo)}
+        onCambiar={(cambios) => apunteLeyendo && actualizarApunte(apunteLeyendo.id, cambios)}
       />
     </div>
   )

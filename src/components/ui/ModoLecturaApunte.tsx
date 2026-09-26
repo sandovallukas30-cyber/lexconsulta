@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { useLecturaVoz } from '../../hooks/useLecturaVoz'
@@ -6,7 +6,12 @@ import { useWakeLock } from '../../hooks/useWakeLock'
 import { TAMANOS_FUENTE, TEMAS_LECTURA } from '../../services/lecturaTema'
 import { encabezadosDe, parsearApunte, textoPlanoDe, tieneEstructuraAncha } from '../../services/apunteFormato'
 import { ApunteContenido } from './ApunteContenido'
+import { NotasMargen } from './NotasMargen'
 import type { ApunteModulo, SesionClase, CuadernoApuntes } from '../../types'
+
+const EditorApunte = lazy(() => import('./editorApunte/EditorApunte'))
+
+export type CambiosApunte = Partial<Pick<ApunteModulo, 'titulo' | 'contenido'>>
 
 const VERDE = 'var(--accent-base)'
 const PALABRAS_POR_MINUTO = 180
@@ -41,6 +46,9 @@ interface Props {
   cuaderno?: CuadernoApuntes
   onCerrar: () => void
   onEditar: () => void
+  onCambiar: (cambios: CambiosApunte) => void
+  /** Abrir directo en el editor visual (el lápiz de la lista) en vez de en lectura. */
+  editarAlAbrir?: boolean
 }
 
 /**
@@ -58,10 +66,12 @@ interface Props {
  * Notion): índice de títulos para saltar de sección, barra de progreso, y
  * recuerda por apunte hasta dónde llegaste y qué tamaño de letra usás.
  */
-export function ModoLecturaApunte({ abierto, apunte, clase, cuaderno, onCerrar, onEditar }: Props) {
+export function ModoLecturaApunte({ abierto, apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, editarAlAbrir = false }: Props) {
   return (
     <AnimatePresence>
-      {abierto && apunte && <LectorApunte key={apunte.id} apunte={apunte} clase={clase} cuaderno={cuaderno} onCerrar={onCerrar} onEditar={onEditar} />}
+      {abierto && apunte && (
+        <LectorApunte key={apunte.id} apunte={apunte} clase={clase} cuaderno={cuaderno} onCerrar={onCerrar} onEditar={onEditar} onCambiar={onCambiar} editarAlAbrir={editarAlAbrir} />
+      )}
     </AnimatePresence>
   )
 }
@@ -72,12 +82,17 @@ interface PropsLector {
   cuaderno?: CuadernoApuntes
   onCerrar: () => void
   onEditar: () => void
+  onCambiar: (cambios: CambiosApunte) => void
+  editarAlAbrir: boolean
 }
 
 // Se monta al abrir y se desmonta al cerrar: así el índice, el progreso y la
 // voz arrancan limpios en cada apunte sin tener que resetear estado a mano.
-function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar }: PropsLector) {
+function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, editarAlAbrir }: PropsLector) {
   const [indiceTamano, setIndiceTamano] = useState(tamanoInicial)
+  const [editando, setEditando] = useState(editarAlAbrir)
+  const [columna, setColumna] = useState<HTMLElement | null>(null)
+  const [raiz, setRaiz] = useState<HTMLElement | null>(null)
   const [indiceAbierto, setIndiceAbierto] = useState(false)
   const [progreso, setProgreso] = useState(0)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -97,13 +112,13 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar }: PropsLect
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return
+      if (e.key !== 'Escape' || editando) return
       if (indiceAbierto) setIndiceAbierto(false)
       else onCerrar()
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [onCerrar, indiceAbierto])
+  }, [onCerrar, indiceAbierto, editando])
 
   // Al abrir un apunte: volver a donde se había quedado leyendo.
   const id = apunte.id
@@ -168,20 +183,22 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar }: PropsLect
       className={`fixed inset-0 z-[80] flex flex-col ${tema.bg}`}
     >
       <div className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-3 border-b flex-shrink-0 ${tema.border}`}>
-        <button
-          onClick={onCerrar}
-          aria-label="Cerrar modo lectura"
-          className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${tema.textSoft} ${tema.hoverSuave}`}
-        >
-          <i className="ti ti-x text-lg" />
-        </button>
+        {!editando && (
+          <button
+            onClick={onCerrar}
+            aria-label="Cerrar modo lectura"
+            className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${tema.textSoft} ${tema.hoverSuave}`}
+          >
+            <i className="ti ti-x text-lg" />
+          </button>
+        )}
 
         <div className="flex-1 min-w-0">
-          <p className={`text-sm font-semibold truncate ${tema.text}`}>{apunte.titulo}</p>
-          {metaPartes.length > 0 && <p className={`text-[11px] truncate ${tema.textSoft}`}>{metaPartes.join(' · ')}</p>}
+          <p className={`text-sm font-semibold truncate ${tema.text}`}>{editando ? `Editando · ${apunte.titulo}` : apunte.titulo}</p>
+          {!editando && metaPartes.length > 0 && <p className={`text-[11px] truncate ${tema.textSoft}`}>{metaPartes.join(' · ')}</p>}
         </div>
 
-        {hayIndice && (
+        {hayIndice && !editando && (
           <button
             onClick={() => setIndiceAbierto((v) => !v)}
             title="Índice de títulos"
@@ -193,14 +210,31 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar }: PropsLect
           </button>
         )}
 
-        <button
-          onClick={onEditar}
-          title="Editar este apunte"
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-shrink-0 ${tema.chipBg} ${tema.text} ${tema.chipHover}`}
-        >
-          <i className="ti ti-pencil text-sm" />
-          <span className="hidden sm:inline">Editar</span>
-        </button>
+        {!editando && (
+          <>
+            <button
+              onClick={() => {
+                voz.detener()
+                setIndiceAbierto(false)
+                setEditando(true)
+              }}
+              title="Editar aquí mismo: escribir, resaltar, agrandar, notas al margen…"
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-shrink-0 ${tema.chipBg} ${tema.text} ${tema.chipHover}`}
+            >
+              <i className="ti ti-pencil text-sm" />
+              <span className="hidden sm:inline">Editar</span>
+            </button>
+
+            <button
+              onClick={onEditar}
+              title="Propiedades: título, clase, cuaderno, artículo, editor de texto"
+              aria-label="Propiedades del apunte"
+              className={`hidden sm:flex w-9 h-9 rounded-lg items-center justify-center transition-colors flex-shrink-0 ${tema.textSoft} ${tema.hoverSuave}`}
+            >
+              <i className="ti ti-adjustments-horizontal text-lg" />
+            </button>
+          </>
+        )}
 
         <button
           onClick={descargar}
@@ -242,7 +276,7 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar }: PropsLect
         </div>
 
         {/* Voz */}
-        {voz.soportado && (
+        {voz.soportado && !editando && (
           <div className={`flex items-center gap-0.5 rounded-lg p-1 flex-shrink-0 ${tema.chipBg}`}>
             {voz.estado === 'inactivo' && (
               <button
@@ -276,52 +310,69 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar }: PropsLect
         )}
       </div>
 
-      <div className="h-0.5 flex-shrink-0" aria-hidden>
-        <div className="h-full transition-[width] duration-150" style={{ width: `${progreso * 100}%`, background: VERDE }} />
-      </div>
-
-      <div className="relative flex-1 min-h-0">
-        <div ref={scrollRef} onScroll={alHacerScroll} className="h-full overflow-y-auto">
-          <div className={`${ancho ? 'max-w-4xl' : 'max-w-2xl'} mx-auto px-5 sm:px-8 py-10`}>
-            <h1 className={`text-3xl font-serif font-bold mb-6 ${tema.text}`}>{apunte.titulo}</h1>
-            <div className={colorTexto} style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontSize: TAMANOS_FUENTE[indiceTamano] }}>
-              {contenido.trim() ? (
-                <ApunteContenido bloques={bloques} tema={temaLectura} idBase={`lec-${apunte.id}`} />
-              ) : (
-                <p className={`italic ${tema.textSoft}`}>Este apunte todavía no tiene contenido.</p>
-              )}
-            </div>
+      {editando ? (
+        <Suspense fallback={<div className={`flex-1 flex items-center justify-center text-sm ${tema.textSoft}`}>Cargando el editor…</div>}>
+          <EditorApunte
+            titulo={apunte.titulo}
+            contenido={apunte.contenido}
+            tema={temaLectura}
+            tamanoPx={TAMANOS_FUENTE[indiceTamano]}
+            onTitulo={(t) => onCambiar({ titulo: t })}
+            onContenido={(c) => onCambiar({ contenido: c })}
+            onTerminar={() => setEditando(false)}
+          />
+        </Suspense>
+      ) : (
+        <>
+          <div className="h-0.5 flex-shrink-0" aria-hidden>
+            <div className="h-full transition-[width] duration-150" style={{ width: `${progreso * 100}%`, background: VERDE }} />
           </div>
-        </div>
 
-        <AnimatePresence>
-          {indiceAbierto && (
-            <motion.nav
-              aria-label="Índice de títulos"
-              initial={{ x: 40, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: 40, opacity: 0 }}
-              transition={{ duration: 0.16 }}
-              className={`absolute inset-y-0 right-0 w-72 max-w-[85%] overflow-y-auto border-l shadow-xl ${tema.bg} ${tema.border}`}
-            >
-              <p className={`px-4 pt-4 pb-2 text-[11px] font-semibold uppercase tracking-wide ${tema.textSoft}`}>Índice</p>
-              <ul className="pb-4">
-                {encabezados.map((e) => (
-                  <li key={e.id}>
-                    <button
-                      onClick={() => irA(e.id)}
-                      className={`w-full text-left py-1.5 pr-4 text-sm transition-colors ${tema.hoverSuave} ${e.n - nivelMin >= 2 ? `${tema.textSoft} text-[13px]` : tema.text} ${e.n === nivelMin ? 'font-semibold' : ''}`}
-                      style={{ paddingLeft: 16 + (e.n - nivelMin) * 14 }}
-                    >
-                      {e.texto}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </motion.nav>
-          )}
-        </AnimatePresence>
-      </div>
+          <div className="relative flex-1 min-h-0">
+            <div ref={scrollRef} onScroll={alHacerScroll} className="h-full overflow-y-auto">
+              <div ref={setColumna} className={`relative ${ancho ? 'max-w-4xl' : 'max-w-2xl'} mx-auto px-5 sm:px-8 py-10`}>
+                <h1 className={`text-3xl font-serif font-bold mb-6 ${tema.text}`}>{apunte.titulo}</h1>
+                <div ref={setRaiz} className={colorTexto} style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontSize: TAMANOS_FUENTE[indiceTamano] }}>
+                  {contenido.trim() ? (
+                    <ApunteContenido bloques={bloques} tema={temaLectura} idBase={`lec-${apunte.id}`} />
+                  ) : (
+                    <p className={`italic ${tema.textSoft}`}>Este apunte todavía no tiene contenido.</p>
+                  )}
+                </div>
+                <NotasMargen columna={columna} raiz={raiz} version={`${contenido.length}-${indiceTamano}`} tema={temaLectura} />
+              </div>
+            </div>
+
+            <AnimatePresence>
+              {indiceAbierto && (
+                <motion.nav
+                  aria-label="Índice de títulos"
+                  initial={{ x: 40, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: 40, opacity: 0 }}
+                  transition={{ duration: 0.16 }}
+                  className={`absolute inset-y-0 right-0 w-72 max-w-[85%] overflow-y-auto border-l shadow-xl ${tema.bg} ${tema.border}`}
+                >
+                  <p className={`px-4 pt-4 pb-2 text-[11px] font-semibold uppercase tracking-wide ${tema.textSoft}`}>Índice</p>
+                  <ul className="pb-4">
+                    {encabezados.map((e) => (
+                      <li key={e.id}>
+                        <button
+                          onClick={() => irA(e.id)}
+                          className={`w-full text-left py-1.5 pr-4 text-sm transition-colors ${tema.hoverSuave} ${e.n - nivelMin >= 2 ? `${tema.textSoft} text-[13px]` : tema.text} ${e.n === nivelMin ? 'font-semibold' : ''}`}
+                          style={{ paddingLeft: 16 + (e.n - nivelMin) * 14 }}
+                        >
+                          {e.texto}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </motion.nav>
+              )}
+            </AnimatePresence>
+          </div>
+        </>
+      )}
     </motion.div>
   )
 }

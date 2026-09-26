@@ -70,6 +70,15 @@ function esEstructural(linea: string): boolean {
   return /^#{1,3}\s/.test(t) || /^(-{3,}|\*{3,}|_{3,})$/.test(t) || t.startsWith('>') || t.startsWith('|') || /^:::/.test(t) || matchItem(linea) !== null
 }
 
+/** Parte una fila `| a | b |` en celdas, sin cortar el `|` de una nota `{{a|nota}}`. */
+export function dividirCeldas(fila: string): string[] {
+  return fila
+    .replace(/^\|/, '')
+    .replace(/\|$/, '')
+    .split(/\|(?![^{}]*\}\})/)
+    .map((c) => c.trim())
+}
+
 function proximaNoBlanca(lineas: string[], desde: number): number {
   let i = desde
   while (i < lineas.length && esBlanca(lineas[i])) i++
@@ -178,13 +187,7 @@ function parsearBloques(lineas: string[], contador: { h: number }): Bloque[] {
         if (RE_SEPARADOR_TABLA.test(fila)) {
           if (filas.length === 1) encabezado = true
         } else {
-          filas.push(
-            fila
-              .replace(/^\|/, '')
-              .replace(/\|$/, '')
-              .split('|')
-              .map((c) => c.trim()),
-          )
+          filas.push(dividirCeldas(fila))
         }
         j++
       }
@@ -273,27 +276,43 @@ function esOtroBloque(linea: string): boolean {
 
 /** Un solo regex para todas las marcas: el orden importa cuando dos empiezan
  *  en el mismo lugar (los pares dobles primero, para que "**a**" no se lea
- *  como "*" + "*a*" + "*"). */
-export const RE_MARCAS = /(\+\+[^+\n]+\+\+|==[^=\n]+==|\*\*[^*\n]+\*\*|\*[^*\n]+\*|__[^_\n]+__|_[^_\n]+_|~(?=\S)[^~\n]*?\S~|~\S~)/
+ *  como "*" + "*a*" + "*"). La nota al margen es `{{texto anclado|nota}}`. */
+export const RE_MARCAS =
+  /(\{\{[^{}\n|]+\|[^{}\n]+\}\}|\+\+[^+\n]+\+\+|==[^=\n]+==|\*\*[^*\n]+\*\*|\*[^*\n]+\*|__[^_\n]+__|_[^_\n]+_|\^\^\^[^^\n]+\^\^\^|\^\^[^^\n]+\^\^|,,[^,\n]+,,|~(?=\S)[^~\n]*?\S~|~\S~)/
 
-export type TipoMarca = 'amarillo' | 'rojo' | 'negrita' | 'subrayado' | 'cursiva'
+export type TipoMarca = 'amarillo' | 'rojo' | 'negrita' | 'subrayado' | 'cursiva' | 'grande' | 'enorme' | 'chico' | 'nota'
 
 export interface TrozoInline {
   tipo: TipoMarca | null
   texto: string
+  /** Solo para tipo 'nota': el texto de la nota al margen (`texto` es el ancla). */
+  nota?: string
+}
+
+/** Un carácter que sería sintaxis se puede escribir como `&#42;` (código
+ *  numérico) para que salga literal -- lo usa el editor visual al guardar. */
+export function decodificarEntidades(texto: string): string {
+  return texto.includes('&#') ? texto.replace(/&#(\d{1,6});/g, (_, n) => String.fromCodePoint(Number(n))) : texto
 }
 
 export function partirInline(texto: string): TrozoInline[] {
   return texto.split(RE_MARCAS).flatMap((parte): TrozoInline[] => {
     if (!parte) return []
+    if (parte.startsWith('{{') && parte.endsWith('}}')) {
+      const m = /^\{\{([^{}\n|]+)\|([^{}\n]+)\}\}$/.exec(parte)
+      if (m) return [{ tipo: 'nota', texto: m[1], nota: decodificarEntidades(m[2]) }]
+    }
     if (parte.length > 4 && parte.startsWith('++') && parte.endsWith('++')) return [{ tipo: 'amarillo', texto: parte.slice(2, -2) }]
     if (parte.length > 4 && parte.startsWith('==') && parte.endsWith('==')) return [{ tipo: 'rojo', texto: parte.slice(2, -2) }]
     if (parte.length > 4 && parte.startsWith('**') && parte.endsWith('**')) return [{ tipo: 'negrita', texto: parte.slice(2, -2) }]
     if (parte.length > 2 && parte.startsWith('*') && parte.endsWith('*')) return [{ tipo: 'negrita', texto: parte.slice(1, -1) }]
     if (parte.length > 4 && parte.startsWith('__') && parte.endsWith('__')) return [{ tipo: 'subrayado', texto: parte.slice(2, -2) }]
     if (parte.length > 2 && parte.startsWith('_') && parte.endsWith('_')) return [{ tipo: 'subrayado', texto: parte.slice(1, -1) }]
+    if (parte.length > 6 && parte.startsWith('^^^') && parte.endsWith('^^^')) return [{ tipo: 'enorme', texto: parte.slice(3, -3) }]
+    if (parte.length > 4 && parte.startsWith('^^') && parte.endsWith('^^')) return [{ tipo: 'grande', texto: parte.slice(2, -2) }]
+    if (parte.length > 4 && parte.startsWith(',,') && parte.endsWith(',,')) return [{ tipo: 'chico', texto: parte.slice(2, -2) }]
     if (parte.length > 2 && parte.startsWith('~') && parte.endsWith('~')) return [{ tipo: 'cursiva', texto: parte.slice(1, -1) }]
-    return [{ tipo: null, texto: parte }]
+    return [{ tipo: null, texto: decodificarEntidades(parte) }]
   })
 }
 
@@ -341,14 +360,7 @@ export function textoPlanoDe(texto: string): string {
     let l = cruda.trim()
     if (!l || /^:::/.test(l) || /^(-{3,}|\*{3,}|_{3,})$/.test(l) || RE_SEPARADOR_TABLA.test(l)) continue
     l = l.replace(/^#{1,3}\s+/, '').replace(/^>\s?/, '')
-    if (l.startsWith('|'))
-      l = l
-        .replace(/^\|/, '')
-        .replace(/\|$/, '')
-        .split('|')
-        .map((c) => c.trim())
-        .filter(Boolean)
-        .join(', ')
+    if (l.startsWith('|')) l = dividirCeldas(l).filter(Boolean).join(', ')
     l = l.replace(/^(?:-(?![-\s])\s?|-\s+)/, '').replace(/^(\d{1,3})[.)]\s+/, '$1. ')
     l = quitarMarcas(l).trim()
     if (l) salida.push(l)

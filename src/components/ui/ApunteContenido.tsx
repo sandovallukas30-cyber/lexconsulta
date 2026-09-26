@@ -6,6 +6,7 @@ export type TemaApunte = 'claro' | 'oscuro' | 'papel'
 type VarianteCita = 'amber' | 'rose' | 'orange' | 'zinc'
 
 interface Paleta {
+  nota: string
   rojo: string
   amarillo: string
   borde: string
@@ -15,6 +16,7 @@ interface Paleta {
 
 const PALETAS: Record<TemaApunte, Paleta> = {
   claro: {
+    nota: 'bg-sky-100/70 border-b-2 border-dotted border-sky-500',
     rojo: 'text-red-600',
     amarillo: 'bg-yellow-200/80',
     borde: 'border-zinc-300',
@@ -27,6 +29,7 @@ const PALETAS: Record<TemaApunte, Paleta> = {
     },
   },
   oscuro: {
+    nota: 'bg-sky-400/15 border-b-2 border-dotted border-sky-400',
     rojo: 'text-red-400',
     amarillo: 'bg-yellow-400/25',
     borde: 'border-zinc-700',
@@ -39,6 +42,7 @@ const PALETAS: Record<TemaApunte, Paleta> = {
     },
   },
   papel: {
+    nota: 'bg-[#e6dbb4] border-b-2 border-dotted border-[#8a7550]',
     rojo: 'text-red-700',
     amarillo: 'bg-yellow-300/60',
     borde: 'border-[#d9c79a]',
@@ -76,6 +80,30 @@ function renderInline(texto: string, paleta: Paleta, clave = ''): ReactNode[] {
       case 'rojo':
         return (
           <span key={k} className={`${paleta.rojo} font-semibold`}>
+            {hijos}
+          </span>
+        )
+      case 'grande':
+        return (
+          <span key={k} style={{ fontSize: '1.3em', lineHeight: 1.3 }}>
+            {hijos}
+          </span>
+        )
+      case 'enorme':
+        return (
+          <span key={k} style={{ fontSize: '1.7em', lineHeight: 1.25 }}>
+            {hijos}
+          </span>
+        )
+      case 'chico':
+        return (
+          <span key={k} style={{ fontSize: '0.82em' }}>
+            {hijos}
+          </span>
+        )
+      case 'nota':
+        return (
+          <span key={k} data-nota={tr.nota} tabIndex={0} title={tr.nota} className={`${paleta.nota} rounded-sm cursor-help`}>
             {hijos}
           </span>
         )

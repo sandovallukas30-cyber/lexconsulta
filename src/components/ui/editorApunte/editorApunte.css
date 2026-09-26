@@ -1,0 +1,112 @@
+/* Estilos del editor visual de Apuntes. Copian lo que dibuja ApunteContenido
+   al leer (títulos, listas, recuadros, columnas, tablas, colores) para que
+   editar se vea igual que leer. Los colores salen de variables por tema. */
+
+.ap-tema-claro {
+  --ap-borde: #d4d4d8;
+  --ap-rojo: #dc2626;
+  --ap-amarillo: rgba(254, 240, 138, 0.85);
+  --ap-nota-bg: rgba(224, 242, 254, 0.75);
+  --ap-nota-borde: #0ea5e9;
+  --ap-cabecera: #f4f4f5;
+  --ap-amber-bg: #fffbeb; --ap-amber-bd: #fde68a;
+  --ap-rose-bg: #fff1f2; --ap-rose-bd: #fecdd3;
+  --ap-orange-bg: #fff7ed; --ap-orange-bd: #fed7aa;
+  --ap-zinc-bg: #f4f4f5; --ap-zinc-bd: #e4e4e7;
+  --ap-seleccion: rgba(15, 110, 86, 0.18);
+}
+.ap-tema-oscuro {
+  --ap-borde: #3f3f46;
+  --ap-rojo: #f87171;
+  --ap-amarillo: rgba(250, 204, 21, 0.28);
+  --ap-nota-bg: rgba(56, 189, 248, 0.16);
+  --ap-nota-borde: #38bdf8;
+  --ap-cabecera: #27272a;
+  --ap-amber-bg: rgba(251, 191, 36, 0.1); --ap-amber-bd: rgba(251, 191, 36, 0.25);
+  --ap-rose-bg: rgba(251, 113, 133, 0.1); --ap-rose-bd: rgba(251, 113, 133, 0.25);
+  --ap-orange-bg: rgba(251, 146, 60, 0.1); --ap-orange-bd: rgba(251, 146, 60, 0.25);
+  --ap-zinc-bg: #27272a; --ap-zinc-bd: #3f3f46;
+  --ap-seleccion: rgba(52, 211, 153, 0.25);
+}
+.ap-tema-papel {
+  --ap-borde: #d9c79a;
+  --ap-rojo: #b91c1c;
+  --ap-amarillo: rgba(253, 224, 71, 0.6);
+  --ap-nota-bg: #e6dbb4;
+  --ap-nota-borde: #8a7550;
+  --ap-cabecera: #ecdfc0;
+  --ap-amber-bg: #efe1bb; --ap-amber-bd: #dcc891;
+  --ap-rose-bg: #f1d9cc; --ap-rose-bd: #e2bfae;
+  --ap-orange-bg: #f0dcc0; --ap-orange-bd: #e0c39a;
+  --ap-zinc-bg: #ecdfc0; --ap-zinc-bd: #d9c79a;
+  --ap-seleccion: rgba(15, 110, 86, 0.2);
+}
+
+.ap-editor {
+  outline: none;
+  min-height: 55vh;
+  line-height: 1.625;
+  caret-color: currentColor;
+}
+.ap-editor ::selection { background: var(--ap-seleccion); }
+
+.ap-editor p { margin: 0 0 1rem; }
+.ap-editor h1 { font-size: 1.6em; font-weight: 700; line-height: 1.2; margin: 1.6em 0 0.6em; }
+.ap-editor h2 { font-size: 1.35em; font-weight: 700; line-height: 1.3; margin: 1.5em 0 0.5em; padding-bottom: 0.25rem; border-bottom: 1px solid var(--ap-borde); }
+.ap-editor h3 { font-size: 1.12em; font-weight: 700; line-height: 1.3; margin: 1.2em 0 0.4em; }
+.ap-editor > :first-child { margin-top: 0; }
+
+.ap-editor ul, .ap-editor ol { margin: 0 0 1rem; padding-left: 1.6em; }
+.ap-editor ul { list-style: disc; }
+.ap-editor ul ul { list-style: circle; }
+.ap-editor ul ul ul { list-style: square; }
+.ap-editor ol { list-style: decimal; }
+.ap-editor li { margin-top: 0.375rem; }
+.ap-editor li > p { margin: 0; }
+.ap-editor li > ul, .ap-editor li > ol { margin: 0.375rem 0 0; }
+.ap-editor li > p + p { margin-top: 0.375rem; }
+
+.ap-editor hr { border: 0; border-top: 1px solid var(--ap-borde); margin: 1.5rem 0; }
+
+.ap-rojo { color: var(--ap-rojo); font-weight: 600; }
+.ap-amarillo { background: var(--ap-amarillo); color: inherit; border-radius: 3px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.ap-t1 { font-size: 1.3em; line-height: 1.3; }
+.ap-t2 { font-size: 1.7em; line-height: 1.25; }
+.ap-tm { font-size: 0.82em; }
+.ap-nota { background: var(--ap-nota-bg); border-bottom: 2px dotted var(--ap-nota-borde); border-radius: 2px; cursor: help; }
+
+.ap-callout {
+  display: flex;
+  gap: 0.75rem;
+  border: 1px solid var(--ap-zinc-bd);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  margin: 0 0 1rem;
+  background: var(--ap-zinc-bg);
+}
+.ap-callout-amber { background: var(--ap-amber-bg); border-color: var(--ap-amber-bd); }
+.ap-callout-rose { background: var(--ap-rose-bg); border-color: var(--ap-rose-bd); }
+.ap-callout-orange { background: var(--ap-orange-bg); border-color: var(--ap-orange-bd); }
+.ap-callout-zinc { background: var(--ap-zinc-bg); border-color: var(--ap-zinc-bd); }
+.ap-callout-icono { flex-shrink: 0; font-size: 1.2em; line-height: 1.4; user-select: none; font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif; }
+.ap-callout-cuerpo { min-width: 0; flex: 1; }
+.ap-callout-cuerpo > :last-child { margin-bottom: 0; }
+
+.ap-columnas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  gap: 1rem 2rem;
+  margin: 0 0 1rem;
+}
+.ap-columna { min-width: 0; padding: 0.25rem 0.5rem; border-radius: 0.5rem; outline: 1px dashed var(--ap-borde); outline-offset: 0; }
+.ap-columna > :first-child { margin-top: 0; }
+.ap-columna > :last-child { margin-bottom: 0; }
+
+.ap-editor table { width: 100%; border-collapse: collapse; margin: 0 0 1rem; font-size: 0.92em; table-layout: fixed; }
+.ap-editor th, .ap-editor td { border: 1px solid var(--ap-borde); padding: 0.5rem 0.75rem; vertical-align: top; text-align: left; position: relative; }
+.ap-editor th { background: var(--ap-cabecera); font-weight: 600; }
+.ap-editor td p, .ap-editor th p { margin: 0; }
+.ap-editor .selectedCell::after { content: ''; position: absolute; inset: 0; background: var(--ap-seleccion); pointer-events: none; }
+.ap-editor .tableWrapper { overflow-x: auto; }
+
+.ap-editor .ProseMirror-gapcursor:after { border-top-color: currentColor; }

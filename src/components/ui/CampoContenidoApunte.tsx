@@ -41,6 +41,8 @@ const AYUDA: { sintaxis: string; efecto: string }[] = [
   { sintaxis: '__texto__', efecto: 'subrayado' },
   { sintaxis: '==texto==', efecto: 'texto rojo (lo importante)' },
   { sintaxis: '++texto++', efecto: 'marcador amarillo (ejemplos)' },
+  { sintaxis: '^^texto^^  ^^^texto^^^  ,,texto,,', efecto: 'letra grande, enorme, chica' },
+  { sintaxis: '{{texto|nota}}', efecto: 'nota al margen del texto' },
   { sintaxis: '## Título   ### Sección', efecto: 'títulos (arman el índice al leer)' },
   { sintaxis: '- punto   1. punto', efecto: 'viñetas y numeradas (Tab = sub-nivel)' },
   { sintaxis: '> 📝 texto', efecto: 'recuadro destacado' },
