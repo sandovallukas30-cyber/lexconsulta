@@ -990,7 +990,7 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'prima-lex-storage-v3',
-      version: 26,
+      version: 27,
       partialize: (s) => ({
         perfil: s.perfil,
         codigos: s.codigos,
@@ -1068,6 +1068,22 @@ export const useStore = create<AppState>()(
               migrados[id] = { ...datos, cuadernos: datos.cuadernos ?? [], briefs: datos.briefs ?? [] }
             }
             return { ...state, academicoModulos: migrados }
+          }
+        }
+        if (version < 27) {
+          // v27: incorpora Historia Legal Chilena (ensayos constitucionales
+          // c23/c26/c28/c33 de 1823-1833) como nueva categoría del Explorador.
+          const state = persisted as { codigos?: CodigoActivo[] }
+          const prefs = new Map<string, boolean>()
+          if (Array.isArray(state.codigos)) {
+            for (const c of state.codigos) prefs.set(c.tipo, c.activo)
+          }
+          return {
+            ...state,
+            codigos: codigosIniciales.map((c) => ({
+              ...c,
+              activo: c.bloqueado ? true : prefs.get(c.tipo) ?? c.activo,
+            })),
           }
         }
         return persisted as never
