@@ -26,7 +26,7 @@ export function ExploradorView() {
     return (
       <SelectorCodigo
         titulo="Explorador de códigos"
-        descripcion="Elige el código que quieres explorar. Incluye Historia Legal Chilena 1823-1833."
+        descripcion="Elige el código que quieres explorar artículo por artículo"
         icono="ti-book-2"
         onElegir={(tipo) => setCodigoElegido(tipo)}
       />

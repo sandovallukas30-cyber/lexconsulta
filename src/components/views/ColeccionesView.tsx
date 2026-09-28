@@ -1382,10 +1382,6 @@ const COLOR_POR_CODIGO: Record<CodigoTipo, FamiliaColor> = {
   san: 'emerald', // Sanitario (sin área fija en la lista, verde por salud)
   fam: 'fuchsia', // Familia
   aap: 'red', // Auto Acordado del recurso de protección → familia Constitucional (implementa el art. 20)
-  c23: 'red', // Constitución 1823 → Historia
-  c26: 'red', // Leyes Federales 1826 → Historia
-  c28: 'red', // Constitución 1828 → Historia
-  c33: 'red', // Constitución 1833 → Historia
 }
 
 const HEX_POR_FAMILIA: Record<FamiliaColor, string> = {
