@@ -37,13 +37,14 @@ export function SelectorCodigo({ titulo, descripcion, icono, onElegir }: Props) 
 
   const disponibles = lista.filter((c) => c.cargado)
   const pendientes = lista.filter((c) => !c.cargado)
-  // Tres secciones: Códigos (fundamentales + sustantivos + procedimentales),
-  // Leyes especiales, y Tratados internacionales.
+  // Cuatro secciones: Códigos (fundamentales + sustantivos + procedimentales),
+  // Leyes especiales, Tratados internacionales, e Historia legal chilena.
   const codigosDisponibles = disponibles.filter(
-    (c) => c.categoria !== 'especiales' && c.categoria !== 'tratados'
+    (c) => c.categoria !== 'especiales' && c.categoria !== 'tratados' && c.categoria !== 'historia'
   )
   const leyesEspeciales = disponibles.filter((c) => c.categoria === 'especiales')
   const tratadosDisponibles = disponibles.filter((c) => c.categoria === 'tratados')
+  const historiaDisponibles = disponibles.filter((c) => c.categoria === 'historia')
 
   return (
     <div className={`h-full overflow-y-auto ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
@@ -194,6 +195,34 @@ export function SelectorCodigo({ titulo, descripcion, icono, onElegir }: Props) 
                 </motion.div>
               )}
             </AnimatePresence>
+          </section>
+        )}
+
+        {historiaDisponibles.length > 0 && (
+          <section className="mb-8">
+            <div className="flex items-baseline gap-2 mb-3">
+              <h2
+                className={`text-[11px] uppercase tracking-wider font-semibold ${
+                  modoOscuro ? 'text-zinc-500' : 'text-zinc-400'
+                }`}
+              >
+                Historia legal chilena ({historiaDisponibles.length})
+              </h2>
+              <span className={`text-[10px] ${modoOscuro ? 'text-zinc-600' : 'text-zinc-400'}`}>
+                ensayos constitucionales (1823-1833)
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {historiaDisponibles.map((c, i) => (
+                <CodigoCard
+                  key={c.tipo}
+                  codigo={c}
+                  onClick={() => onElegir(c.tipo)}
+                  modoOscuro={modoOscuro}
+                  delay={i * 0.03}
+                />
+              ))}
+            </div>
           </section>
         )}
 

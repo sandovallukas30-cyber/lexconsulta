@@ -1,6 +1,10 @@
 export type PerfilUsuario = 'ciudadano' | 'profesional' | null
 
 export type CodigoTipo =
+  | 'c23'
+  | 'c26'
+  | 'c28'
+  | 'c33'
   | 'con'
   | 'tra'
   | 'civ'
@@ -33,6 +37,7 @@ export type CategoriaCodigo =
   | 'procedimentales'
   | 'especiales'
   | 'tratados'
+  | 'historia'
 
 export type VistaId =
   | 'consultar'

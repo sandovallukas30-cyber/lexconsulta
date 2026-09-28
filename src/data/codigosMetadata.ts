@@ -42,6 +42,46 @@ export interface CodigoMetadata {
 }
 
 export const CODIGOS_METADATA: Record<string, CodigoMetadata> = {
+  c23: {
+    tipo: 'c23',
+    nombreOficial: 'Constitución Política del Estado de Chile (1823)',
+    norma: 'Promulgada el 29 de diciembre de 1823',
+    fuenteUrl: 'https://www.bcn.cl/historiapolitica/constituciones/detalle_constitucion?handle=10221.1/17631',
+    fechaIndexacion: '2026-09-28',
+    historia:
+      'Primer ensayo constitucional republicano tras la Independencia, promulgada durante el gobierno del Director Supremo Ramón Freire. Consta de 277 artículos distribuidos en 24 títulos, estableciendo un gobierno republicano con división de poderes. Fue suspendida poco después de su promulgación por su complejidad institucional. Refleja influencias de las ideas liberales francesas y norteamericanas.',
+    relacionadas: ['c26', 'c28', 'c33', 'con'],
+  },
+  c26: {
+    tipo: 'c26',
+    nombreOficial: 'Leyes Federales de Chile (1826)',
+    norma: 'Promulgadas el 31 de enero de 1826',
+    fuenteUrl: 'https://www.bcn.cl/historiapolitica/constituciones/detalle_constitucion?handle=10221.1/63088',
+    fechaIndexacion: '2026-09-28',
+    historia:
+      'Breve ensayo de adopción del sistema federal de gobierno durante la administración del Director Supremo Ramón Freire. Buscaba descentralizar el poder dividiendo el país en varios estados autónomos. Su vigencia fue limitada, demostrando que el modelo federal no se adaptaba bien a la realidad político-institucional chilena de la época.',
+    relacionadas: ['c23', 'c28', 'c33'],
+  },
+  c28: {
+    tipo: 'c28',
+    nombreOficial: 'Constitución Política de la República de Chile (1828)',
+    norma: 'Promulgada el 8 de agosto de 1828',
+    fuenteUrl: 'https://www.bcn.cl/historiapolitica/constituciones/detalle_constitucion?handle=10221.1/18432',
+    fechaIndexacion: '2026-09-28',
+    historia:
+      'Constitución de corte liberal bajo el gobierno de Francisco Antonio Pinto. Simplificaba la estructura anterior, era más práctica y consagraba un sistema presidencial con garantías de libertad individual. Considerada el primer texto formal completo de Constitución Política de Chile. Su vigencia se extendió hasta 1830.',
+    relacionadas: ['c23', 'c26', 'c33', 'con'],
+  },
+  c33: {
+    tipo: 'c33',
+    nombreOficial: 'Constitución de la República Chilena (1833)',
+    norma: 'Promulgada el 25 de mayo de 1833',
+    fuenteUrl: 'https://www.bcn.cl/historiapolitica/constituciones/detalle_constitucion?handle=10221.1/17685',
+    fechaIndexacion: '2026-09-28',
+    historia:
+      'Constitución que finalmente logró establecer un orden institucional duradero en Chile, resultado de la victoria de la "Restauración Conservadora" bajo el gobierno de José Joaquín Prieto. Consagraba un sistema presidencial fuerte, reconocía la soberanía del pueblo y establecía división de poderes. Permaneció vigente casi un siglo, hasta 1925, y fue el fundamento institucional de la República durante el siglo XIX.',
+    relacionadas: ['c23', 'c26', 'c28', 'con'],
+  },
   con: {
     tipo: 'con',
     nombreOficial: 'Constitución Política de la República de Chile',
@@ -50,7 +90,7 @@ export const CODIGOS_METADATA: Record<string, CodigoMetadata> = {
     fechaIndexacion: '2026-05-22',
     historia:
       'Aprobada en el plebiscito de 1980 bajo el régimen militar de Augusto Pinochet y en vigencia desde 1981. Ha tenido numerosas reformas; la de 2005 (gobierno de Ricardo Lagos) fue la más profunda, eliminando senadores designados y vitalicios, la inamovilidad de los comandantes en jefe y otros llamados "enclaves autoritarios". El DTO 100 es el texto refundido tras esa reforma.',
-    relacionadas: ['cot', 'pad', 'trn', 'pdc'],
+    relacionadas: ['cot', 'pad', 'trn', 'pdc', 'c23', 'c26', 'c28', 'c33'],
   },
   civ: {
     tipo: 'civ',
@@ -308,6 +348,10 @@ export const CODIGOS_METADATA: Record<string, CodigoMetadata> = {
 /** Devuelve el nombre corto (3-4 palabras) usado en enlaces de la ficha. */
 export function nombreCortoMetadata(tipo: CodigoTipo): string {
   const nombres: Partial<Record<CodigoTipo, string>> = {
+    c23: 'Const. 1823',
+    c26: 'L.F. 1826',
+    c28: 'Const. 1828',
+    c33: 'Const. 1833',
     con: 'Constitución',
     civ: 'Código Civil',
     lab: 'Código del Trabajo',

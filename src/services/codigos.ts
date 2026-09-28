@@ -27,6 +27,10 @@ const LOADERS: Partial<Record<CodigoTipo, () => Promise<{ default: CodigoData }>
   pdc: () => import('../data/pactoDerechosCiviles.json') as Promise<{ default: CodigoData }>,
   pde: () => import('../data/pactoDerechosESC.json') as Promise<{ default: CodigoData }>,
   aap: () => import('../data/autoAcordadoProteccion.json') as Promise<{ default: CodigoData }>,
+  c23: () => import('../data/constitucion1823.json') as Promise<{ default: CodigoData }>,
+  c26: () => import('../data/leyesFederales1826.json') as Promise<{ default: CodigoData }>,
+  c28: () => import('../data/constitucion1828.json') as Promise<{ default: CodigoData }>,
+  c33: () => import('../data/constitucion1833.json') as Promise<{ default: CodigoData }>,
 }
 
 const cache = new Map<CodigoTipo, CodigoData>()
