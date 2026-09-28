@@ -6,6 +6,7 @@ import type { CodigoTipo } from '../../types'
 
 const VERDE = 'var(--accent-base)'
 
+// Selector for exploring codes by category, including new Historia Legal Chilena section
 interface Props {
   titulo: string
   descripcion: string
