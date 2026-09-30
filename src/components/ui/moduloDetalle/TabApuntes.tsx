@@ -103,6 +103,63 @@ export function TabApuntes({
     return registrarGuardia(() => 'Tienes cambios sin guardar en el apunte. ¿Salir y descartarlos?')
   }, [sucio])
 
+  // Borrador de respaldo del formulario: si la pestaña se cierra o el
+  // navegador se cae con cambios sin guardar, se ofrece recuperarlos al
+  // volver (el formulario, a diferencia del editor visual, no autoguarda).
+  const claveBorrador = `prima-lex-borrador-apunte:${moduloId}`
+  useEffect(() => {
+    if (!sucio) return
+    const t = window.setTimeout(() => {
+      try {
+        localStorage.setItem(claveBorrador, JSON.stringify({ editandoId, titulo, contenido, claseId, cuadernoId, articuloRelacionado, fecha: Date.now() }))
+      } catch {
+        // sin espacio: el aviso de cambios sin guardar sigue protegiendo
+      }
+    }, 800)
+    return () => window.clearTimeout(t)
+  }, [sucio, claveBorrador, editandoId, titulo, contenido, claseId, cuadernoId, articuloRelacionado])
+  const [borrador, setBorrador] = useState<null | {
+    editandoId: string | null
+    titulo: string
+    contenido: string
+    claseId: string
+    cuadernoId: string
+    articuloRelacionado: string
+    fecha: number
+  }>(() => {
+    try {
+      const crudo = localStorage.getItem(`prima-lex-borrador-apunte:${moduloId}`)
+      return crudo ? JSON.parse(crudo) : null
+    } catch {
+      return null
+    }
+  })
+  const descartarBorrador = () => {
+    try {
+      localStorage.removeItem(claveBorrador)
+    } catch {
+      // nada
+    }
+    setBorrador(null)
+  }
+  const recuperarBorrador = () => {
+    if (!borrador) return
+    const base = borrador.editandoId ? apuntes.find((a) => a.id === borrador.editandoId) : undefined
+    setEditandoId(base ? base.id : null)
+    setTitulo(borrador.titulo)
+    setContenido(borrador.contenido)
+    setClaseId(borrador.claseId)
+    setCuadernoId(borrador.cuadernoId)
+    setArticuloRelacionado(borrador.articuloRelacionado)
+    setOriginal(
+      base
+        ? { titulo: base.titulo, contenido: base.contenido, claseId: base.claseId ?? '', cuadernoId: base.cuadernoId ?? '', articuloRelacionado: base.articuloRelacionado ?? '' }
+        : { titulo: '', contenido: '', claseId: '', cuadernoId: '', articuloRelacionado: '' }
+    )
+    setMostrarForm(true)
+    setBorrador(null)
+  }
+
   const iniciarNuevo = () => {
     if (sucio && !confirmarSalida()) return
     const cuaderno = filtro !== 'todos' && filtro !== 'sin-cuaderno' ? filtro : ''
@@ -118,6 +175,7 @@ export function TabApuntes({
 
   const cancelarFormulario = () => {
     if (sucio && !confirmarSalida()) return
+    descartarBorrador()
     setMostrarForm(false)
     setEditandoId(null)
   }
@@ -196,6 +254,7 @@ export function TabApuntes({
 
   const guardar = () => {
     if (!titulo.trim()) return
+    descartarBorrador()
     const ahora = Date.now()
     let guardado: ApunteModulo
     if (editandoId) {
@@ -294,6 +353,26 @@ export function TabApuntes({
           <BotonAgregar label="Nuevo apunte" onClick={iniciarNuevo} modoOscuro={modoOscuro} />
         </div>
       </div>
+
+      {borrador && !mostrarForm && (
+        <div
+          role="status"
+          className={`mb-3 flex flex-wrap items-center gap-2 p-3 rounded-xl border text-sm ${
+            modoOscuro ? 'bg-amber-950/30 border-amber-900/60 text-amber-200' : 'bg-amber-50 border-amber-200 text-amber-900'
+          }`}
+        >
+          <i className="ti ti-file-alert text-base" aria-hidden />
+          <span className="flex-1 min-w-0">
+            Tienes un borrador sin guardar{borrador.titulo ? ` de "${borrador.titulo}"` : ''}.
+          </span>
+          <button onClick={recuperarBorrador} className="px-3 min-h-[36px] rounded-lg text-xs font-semibold text-white" style={{ background: VERDE }}>
+            Recuperar
+          </button>
+          <button onClick={descartarBorrador} className="px-3 min-h-[36px] rounded-lg text-xs font-medium">
+            Descartar
+          </button>
+        </div>
+      )}
 
       {importando && (
         <p role="status" className={`mb-3 text-xs ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>

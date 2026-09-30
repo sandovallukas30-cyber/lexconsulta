@@ -398,10 +398,13 @@ export default function EditorApunte({ titulo, contenido, tema: temaLectura, tam
             role="status"
             aria-live="polite"
             title={errorGuardado ?? 'Se guarda solo mientras escribes (Ctrl+S para forzar)'}
-            className={`hidden sm:inline-flex items-center gap-1 text-[11px] whitespace-nowrap flex-shrink-0 ${errorGuardado ? 'text-red-500' : tema.textSoft}`}
+            className={`inline-flex items-center gap-1 text-[11px] whitespace-nowrap flex-shrink-0 ${errorGuardado ? 'text-red-500' : tema.textSoft}`}
           >
-            <i className={`ti ${errorGuardado ? 'ti-alert-triangle' : sinVolcar || escrituraPendiente ? 'ti-loader-2 animate-spin' : 'ti-cloud-check'} text-sm`} />
-            {errorGuardado ? 'No se pudo guardar' : sinVolcar || escrituraPendiente ? 'Guardando…' : 'Guardado'}
+            <i className={`ti ${errorGuardado ? 'ti-alert-triangle' : sinVolcar || escrituraPendiente ? 'ti-loader-2 animate-spin' : 'ti-cloud-check'} text-sm`} aria-hidden />
+            {/* en móvil solo el ícono: el texto queda para lectores de pantalla */}
+            <span className="sr-only sm:not-sr-only">
+              {errorGuardado ? 'No se pudo guardar' : sinVolcar || escrituraPendiente ? 'Guardando…' : 'Guardado'}
+            </span>
           </span>
           <button
             type="button"
