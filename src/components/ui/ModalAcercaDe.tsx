@@ -63,7 +63,7 @@ export function ModalAcercaDe({ abierto, onCerrar, pestanaInicial = 'acerca' }: 
               </button>
             </div>
 
-            <div className={`flex items-center gap-1 px-4 border-b ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
+            <div className={`flex items-center gap-1 px-4 border-b overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
               <Tab id="acerca" actual={pestana} onClick={setPestana} modoOscuro={modoOscuro}>
                 Acerca de
               </Tab>
@@ -112,7 +112,7 @@ function Tab({
   return (
     <button
       onClick={() => onClick(id)}
-      className={`px-4 py-2.5 text-xs font-medium border-b-2 transition-colors -mb-px ${
+      className={`px-4 py-2.5 text-xs font-medium border-b-2 transition-colors -mb-px whitespace-nowrap flex-shrink-0 ${
         activo
           ? modoOscuro
             ? 'text-white'

@@ -786,12 +786,13 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
   return (
     <div className={`h-full flex flex-col ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
       <div
-        className={`flex items-center gap-3 px-6 py-3 border-b ${
+        className={`flex flex-wrap items-center gap-2 sm:gap-3 px-3 sm:px-6 py-2 sm:py-3 border-b ${
           modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
         }`}
       >
         <button
           onClick={() => setColeccionActiva(null)}
+          aria-label="Volver a Colecciones"
           title="Volver a Colecciones"
           className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
             modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'
