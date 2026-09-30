@@ -140,13 +140,30 @@ className="boton boton-fantasma boton-chico -ml-2.5 mb-4"
           role="tablist"
           className={`flex gap-1 mb-6 border-b overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden -mx-4 px-4 sm:mx-0 sm:px-0 ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}
         >
-          {TABS.map((t) => (
+          {TABS.map((t, i) => (
             <button
               key={t.id}
               onClick={() => {
                 if (t.id !== tab && !confirmarSalida()) return
                 setTab(t.id)
               }}
+              // patrón ARIA de pestañas: una sola parada de Tab en la fila y
+              // las flechas (e Inicio/Fin) cambian de pestaña
+              onKeyDown={(e) => {
+                const destino =
+                  e.key === 'ArrowRight' ? (i + 1) % TABS.length
+                  : e.key === 'ArrowLeft' ? (i - 1 + TABS.length) % TABS.length
+                  : e.key === 'Home' ? 0
+                  : e.key === 'End' ? TABS.length - 1
+                  : -1
+                if (destino < 0) return
+                e.preventDefault()
+                if (!confirmarSalida()) return
+                setTab(TABS[destino].id)
+                const fila = e.currentTarget.parentElement
+                ;(fila?.children[destino] as HTMLElement | undefined)?.focus()
+              }}
+              tabIndex={tab === t.id ? 0 : -1}
               role="tab"
               aria-selected={tab === t.id}
               className={`flex items-center gap-1.5 px-3 py-2.5 min-h-[44px] text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap flex-shrink-0 ${
