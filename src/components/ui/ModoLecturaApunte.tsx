@@ -93,18 +93,22 @@ interface PropsLector {
 /** Primera aparición de `consulta` (sin tildes ni mayúsculas) dentro de
  *  `raiz`, como Range del DOM -- busca nodo de texto por nodo de texto. */
 function rangoDeCoincidencia(raiz: HTMLElement, consulta: string): Range | null {
-  const palabra = normalizarConsulta(consulta)[0]
-  if (!palabra) return null
-  const walker = document.createTreeWalker(raiz, NodeFilter.SHOW_TEXT)
-  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
-    const texto = n.textContent ?? ''
-    const { norm, mapa } = normalizarConMapa(texto)
-    const i = norm.indexOf(palabra)
-    if (i < 0) continue
-    const rango = document.createRange()
-    rango.setStart(n, mapa[i])
-    rango.setEnd(n, mapa[i + palabra.length - 1] + 1)
-    return rango
+  const palabras = normalizarConsulta(consulta)
+  if (palabras.length === 0) return null
+  // primero la frase completa; si no está en un mismo nodo, la primera palabra
+  const candidatos = palabras.length > 1 ? [palabras.join(' '), palabras[0]] : [palabras[0]]
+  for (const buscado of candidatos) {
+    const walker = document.createTreeWalker(raiz, NodeFilter.SHOW_TEXT)
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      const texto = n.textContent ?? ''
+      const { norm, mapa } = normalizarConMapa(texto)
+      const i = norm.indexOf(buscado)
+      if (i < 0) continue
+      const rango = document.createRange()
+      rango.setStart(n, mapa[i])
+      rango.setEnd(n, mapa[i + buscado.length - 1] + 1)
+      return rango
+    }
   }
   return null
 }

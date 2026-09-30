@@ -73,6 +73,14 @@ function fragmentoEn(texto: string, palabras: string[]): { fragmento: FragmentoC
     if (!hallada) return null
   }
   if (primera < 0) return null
+  // Si la consulta completa aparece como frase ("idea clave 37"), el
+  // fragmento se centra ahí y no en la primera aparición de su primera palabra.
+  const frase = palabras.join(' ')
+  const iFrase = palabras.length > 1 ? norm.indexOf(frase) : -1
+  if (iFrase >= 0) {
+    primera = iFrase
+    largoPrimera = frase.length
+  }
   const ini = mapa[primera]
   const fin = mapa[primera + largoPrimera - 1] + 1
   const desdeCtx = Math.max(0, ini - CONTEXTO)

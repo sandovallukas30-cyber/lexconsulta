@@ -39,6 +39,14 @@ export function Omnibar({ onClose }: Props) {
   const agregarVisitado = useStore((s) => s.agregarVisitado)
 
   const [busqueda, setBusqueda] = useState('')
+  // La búsqueda recorre artículos y TODOS los apuntes: se espera a que el
+  // usuario deje de teclear 120 ms en vez de buscar en cada tecla.
+  const [consulta, setConsulta] = useState('')
+  useEffect(() => {
+    const t = window.setTimeout(() => setConsulta(busqueda), busqueda ? 120 : 0)
+    return () => window.clearTimeout(t)
+  }, [busqueda])
+  const listaRef = useRef<HTMLDivElement>(null)
   const [resultados, setResultados] = useState<ResultadoBusqueda[]>([])
   const [indiceSeleccionado, setIndiceSeleccionado] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -50,12 +58,13 @@ export function Omnibar({ onClose }: Props) {
 
   // Lógica de búsqueda
   useEffect(() => {
-    if (!busqueda.trim()) {
+    if (!consulta.trim()) {
       setResultados([])
       setIndiceSeleccionado(0)
       return
     }
 
+    const busqueda = consulta
     const q = busqueda.toLowerCase()
     const nuevoResultados: ResultadoBusqueda[] = []
 
@@ -118,7 +127,12 @@ export function Omnibar({ onClose }: Props) {
 
     setResultados(nuevoResultados)
     setIndiceSeleccionado(0)
-  }, [busqueda, codigos, historial, favoritos, academicoModulos, ramos])
+  }, [consulta, codigos, historial, favoritos, academicoModulos, ramos])
+
+  // El resultado elegido con las flechas siempre visible dentro de la lista
+  useEffect(() => {
+    listaRef.current?.querySelectorAll('button')[indiceSeleccionado]?.scrollIntoView({ block: 'nearest' })
+  }, [indiceSeleccionado])
 
   // Manejo de teclado
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -171,7 +185,7 @@ export function Omnibar({ onClose }: Props) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
-      className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh]"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-[12vh] sm:pt-[20vh] px-4"
       onClick={() => onClose()}
     >
       {/* Backdrop */}
@@ -225,10 +239,11 @@ export function Omnibar({ onClose }: Props) {
         <AnimatePresence>
           {resultados.length > 0 ? (
             <motion.div
+              ref={listaRef}
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className={`max-h-96 overflow-y-auto ${
+              className={`max-h-[60vh] sm:max-h-96 overflow-y-auto ${
                 modoOscuro ? 'bg-zinc-800/50' : 'bg-zinc-50'
               }`}
             >
@@ -298,7 +313,7 @@ export function Omnibar({ onClose }: Props) {
                 </button>
               ))}
             </motion.div>
-          ) : busqueda.trim() ? (
+          ) : consulta.trim() && consulta === busqueda ? (
             <div className={`px-4 py-8 text-center text-sm ${
               modoOscuro ? 'text-zinc-500' : 'text-zinc-500'
             }`}>
