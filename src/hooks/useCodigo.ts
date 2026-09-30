@@ -47,6 +47,14 @@ export function useCodigo(tipo: CodigoTipo | null): EstadoCodigo {
     }
   }, [tipo, intento])
 
+  // si la carga falló por red, reintentar solo cuando vuelve la conexión
+  const fallo = !!estado.error
+  useEffect(() => {
+    if (!fallo) return
+    window.addEventListener('online', reintentar)
+    return () => window.removeEventListener('online', reintentar)
+  }, [fallo, reintentar])
+
   return { ...estado, reintentar }
 }
 

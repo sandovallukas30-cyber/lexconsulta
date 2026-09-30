@@ -14,7 +14,11 @@ function desde(archivo: string): () => Promise<{ default: CodigoData }> {
   return async () => {
     const url = URLS[`../data/${archivo}.json`]
     if (!url) throw new Error(`No existe el archivo ${archivo}.json`)
-    const r = await fetch(url)
+    // fetch rechaza con un TypeError en inglés ("Failed to fetch") que
+    // Consultar mostraría tal cual
+    const r = await fetch(url).catch(() => {
+      throw new Error('Sin conexión: no se pudieron descargar los códigos. Revisa tu internet y reintenta.')
+    })
     if (!r.ok) throw new Error(`No se pudo descargar ${archivo}.json (HTTP ${r.status})`)
     return { default: (await r.json()) as CodigoData }
   }
