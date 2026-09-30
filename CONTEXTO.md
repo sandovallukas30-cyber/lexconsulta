@@ -3,9 +3,73 @@
 > Memoria técnica del proyecto. Léeme antes de continuar trabajando en cualquier feature.
 > Fuente de verdad para retomar contexto cuando la ventana de conversación se llene.
 
-**Última actualización:** 2026-05-21
+**Última actualización:** 2026-09-30 (lote 1 en la nube; ver la sección 0 y `docs/INFORME_NUBE_LOTE1.md`)
 **Working directory:** `C:\Users\sando\lexconsulta`
 **Servidor dev:** http://localhost:5173/
+
+---
+
+## 0. Estado al 30-09-2026 (lote 1 en la nube) — LEER PRIMERO
+
+> Las secciones 1–11 de abajo son de mayo de 2026 y varias quedaron desactualizadas: donde choquen, manda esta sección.
+
+### Normas cargadas
+- **54 normas** en `src/data/*.json`: los códigos, la Constitución, pactos, el auto acordado y **44 leyes especiales**. De esas, **30 son del lote 1** (3.038 artículos, desde el XML oficial de la BCN); la tabla con número, idNorma y fecha de versión está en `docs/INFORME_NUBE_LOTE1.md` §2.
+- Tipos nuevos (`CodigoTipo`): `cns mat ali vif fil soc mvl pvp rpj dec pns dsc mas soa trt amb tam bga est emu mun arr cop pin pid dis fel tde ind cng`. Categoría `especiales`; metadatos en `src/data/codigosMetadata.ts`, que ahora incluye `abreviaturaCita()` (CC, CPR, "Ley 19.496"…).
+- **Pipeline de leyes**:
+  - `scripts/bcn_xml_a_json.mjs`: XML de la BCN → JSON.
+  - `scripts/leyes_lote1.mjs`: regenera las 30 a partir de los XML descargados.
+  - `scripts/verificar_leyes.mjs [carpeta] [--estricto]`: control de calidad. Hoy da 54 normas, 0 errores y 9 avisos antiguos.
+- **Carga**: `services/codigos.ts` hace `fetch` de la URL del JSON (`import.meta.glob('../data/*.json', { query: '?url', eager: true })`), no `import()`. Motivo: un `import()` fallido queda en caché del navegador y "Reintentar" no servía.
+
+### Store (`prima-lex-storage-v3`, **versión 32**)
+- `migrate` ahora **encadena** los bloques `if (version < N)` (antes hacía `return` temprano). Para agregar una migración: sumar un bloque al final y subir `version`.
+- v29 leyes · v30 `repasoApuntes` · v31 `posicionLectura` · v32 vista, módulo y código activos + `ultimoArticuloExplorador`.
+- Almacenamiento propio (`store/almacenamiento.ts`):
+  - Agrupa las escrituras en 400 ms y escribe de inmediato en `pagehide`, al ocultar la página o con Ctrl+S.
+  - Si la cuota se llena, avisa en vez de fallar en silencio.
+  - `useEstadoGuardado` alimenta el indicador "Guardando… / Guardado".
+- Persisten además: `vistaActiva`, `moduloActivoId`, `codigoExploradorActivo` (C7).
+
+### Servicios y piezas nuevas
+| Archivo | Qué hace |
+|---|---|
+| `services/respaldo.ts` | Exportar/importar todos los datos (combinar/reemplazar, revierte si no cabe) |
+| `services/buscarApuntes.ts` | Búsqueda sin tildes en apuntes (Omnibar), con fragmento |
+| `services/buscarEnCodigo.ts` | Buscador del Explorador: ids tolerantes (`183a`, `4 bis`, `1o`) y texto sin tildes |
+| `services/apunteArchivo.ts` / `accionesApunte.ts` | .md reversible; duplicar y mover con deshacer |
+| `services/tarjetasApunte.ts` | Tarjetas de repaso **por reglas** (`**Término:** def`, recuadros 🎯/💡) + Leitner |
+| `services/deshacer.ts` + `store/useAvisos.ts` + `ui/Avisos.tsx` | Avisos y "Deshacer" (8 s) |
+| `services/guardiaCambios.ts` | "Tienes cambios sin guardar" al salir de un formulario |
+| `services/navegacion.ts` + `ui/BotonVolver.tsx` | Historial para "Volver" y scroll por vista (sessionStorage) |
+| `services/citas.ts` | "Art. 1545 CC" + texto + fuente al portapapeles |
+| `services/resaltado.ts` | Marca una coincidencia en el DOM (CSS Custom Highlight API) |
+| `services/impresion.ts` + `ui/VistasImprimibles.tsx` | Imprimir un apunte o un artículo (`body[data-imprimir]`) |
+| `src/vistas.ts` | Vistas con `React.lazy` + `precargarVista()` (hover/foco en el menú) |
+| `ui/LimiteError.tsx` | Límite de error por vista (recarga una vez si falta un chunk tras un deploy) |
+| `ui/PanelAtajos.tsx` | Panel de atajos con `?` |
+| `hooks/useEsMovil.ts`, `hooks/useProgresoScroll.ts` | Diseño móvil (< 768 px) y progreso de lectura |
+| `ui/moduloDetalle/*` | `ModuloDetalle` dividido por pestañas (antes 1.499 líneas) |
+
+### Convenciones visuales nuevas (reemplazan parte de la sección 10)
+- **Tokens** en `src/index.css` (`@theme`):
+  - Radios: `rounded-control`, `rounded-tarjeta`, `rounded-panel`.
+  - Sombras: `shadow-tarjeta`, `shadow-flotante`.
+  - Alturas: `h-control` (40 px) y `control-sm` (32 px).
+  - Duraciones: `--dur-rapida`, `--dur-media` y `--dur-lenta` (150, 200 y 250 ms). Framer usa 200 ms por defecto y 250 ms como máximo.
+- **Botones**:
+  - Base `.boton` con variantes `.boton-suave`, `.boton-fantasma`, `.boton-borde` o `.boton-primario`.
+  - Tamaños: `.boton-chico` y `boton-icono`; este último es una utilidad, así que admite `max-sm:boton-icono`.
+  - En táctil los chicos suben a 40 px.
+- **Tema**: `App.tsx` pone `data-tema="claro|oscuro"` en `<html>`; los tokens lo leen desde ahí. `--accent-texto` es el acento para TEXTO (legible en oscuro); `--accent-base` es para fondos. Evitar `style={{ color: VERDE }}` en código nuevo.
+- **Foco**: anillo común `:focus-visible`; los campos con `outline-none` llevan `campo-foco`.
+- **Móvil**: sidebar como menú deslizable (`menuMovilAbierto`), sin scroll horizontal a 375 px. Detector en `docs/mejoras/C6-movil.md`.
+
+### Estado de la calidad
+- Lighthouse (móvil): rendimiento 93, accesibilidad 100 (antes 79 y 95). JS inicial 208 KB comprimido (antes 434).
+- axe-core: 2 problemas de contraste en claro y 5 en oscuro, en contadores decorativos.
+- Auditorías: `docs/AUDITORIA_ACADEMICA.md`, `docs/AUDITORIA_UIUX.md`. Auto-revisión por ítem: `docs/mejoras/`.
+- Siguientes pasos y prompt listo para pegar: `docs/SIGUIENTES_PASOS.md`.
 
 ---
 
@@ -130,14 +194,14 @@ Tipos clave: `PerfilUsuario`, `CodigoTipo` (14 códigos), `VistaId` (8 vistas), 
 
 **`src/store/useStore.ts`** — Estado global Zustand con persist.
 - Persistencia: storage key `prima-lex-storage-v3` (bumpear version+key si cambia schema)
-- **Persisted:** perfil, codigos, jurisprudencia, historial, favoritos, canvases, modoOscuro
-- **No persisted:** vistaActiva, consultaActivaId, canvasActivoId, modalPerfilAbierto
+- **Persisted:** ver `partialize` en `useStore.ts` (desde v32 incluye vistaActiva, moduloActivoId y codigoExploradorActivo; ver sección 0)
+- **No persisted:** consultaActivaId, canvasActivoId, modalPerfilAbierto, menuMovilAbierto
 
 **`src/App.tsx`** — Layout: Sidebar + Topbar + `<main>` con la vista activa. Modal de perfil global. Agrega clase `dark` al root cuando modoOscuro está activo (afecta scrollbars).
 
 ### Servicios
 
-**`src/services/codigos.ts`** — Carga estática del JSON. Solo `lab` (Trabajo) está cargado. Agregar nuevos códigos significa importar el JSON aquí.
+**`src/services/codigos.ts`** — Loaders por tipo que hacen `fetch` del JSON (URLs vía `import.meta.glob ?url`), con caché en memoria. Hay 54 normas (sección 0). Para agregar una: poner el JSON en `src/data/` y sumar `tipo: desde('archivo')` en `LOADERS`.
 
 **`src/services/busqueda.ts`** — Función `buscar(query, codigosActivos, limit=8)`:
 - Tokeniza sin tildes ni stopwords jurídicas
@@ -307,7 +371,7 @@ Estructura jerárquica capturada: Libros I-V detectados, Títulos, Capítulos, P
 
 ### Conocidos
 - 🟡 **Jurisprudencia no se inyecta en Consultar.** El módulo Admin guarda entradas pero la IA no las usa todavía. **Próximo paso natural.**
-- 🟡 **Solo Código del Trabajo cargado.** Los otros 13 códigos están en el sidebar pero pendientes. Hay que descargar el PDF oficial de BCN y correr `scripts/extract_pdf.mjs` + `scripts/procesar_codigo.mjs`.
+- ✅ ~~Solo Código del Trabajo cargado~~ → 54 normas cargadas (sección 0). Pendiente: Ley 19.913 (la BCN devuelve HTML en `obtxml`).
 - 🟡 **Cache de Canvas puede llenar localStorage.** No hay límite ni TTL. ~5MB de quota total.
 - 🟡 **`History stack` del Canvas no se persiste.** Recargar pierde el undo.
 
@@ -315,7 +379,7 @@ Estructura jerárquica capturada: Libros I-V detectados, Títulos, Capítulos, P
 - Algunos artículos pueden tener saltos de inciso imperfectos (heurística de indentación no es 100%).
 - Modelo `claude-sonnet-4-5` puede no estar disponible si la API key tiene perfil restringido; alternativa: `claude-sonnet-4-6`.
 - README.md sigue siendo el default de Vite (no se ha actualizado).
-- Bundle pesa ~2.1 MB (564 KB gzip). Se puede mejorar con code-splitting por vista; por ahora aceptable.
+- ~~Bundle de ~2,1 MB~~ → desde C8 las vistas se cargan bajo demanda (JS inicial ~208 KB gzip).
 
 ### Build vs typecheck
 - `npx tsc --noEmit` (que usamos durante desarrollo) es **menos estricto** que `npm run build` (que usa `tsc -b`).
@@ -401,7 +465,7 @@ git push
 ## 10. Convenciones del proyecto
 
 - **Idioma del código:** español para nombres de variables/funciones de dominio (`agregarConsulta`, `vistaActiva`, `nodoLibre`), inglés para genéricos React (`children`, `onClick`).
-- **Colores:** verde primario `#0F6E56` (`VERDE` constante en cada vista).
+- **Colores:** verde primario `#0F6E56` = `var(--accent-base)` (tema configurable). Para texto usar `var(--accent-texto)`; ver sección 0.
 - **Modo oscuro:** patrón `modoOscuro ? 'bg-zinc-900' : 'bg-white'` en cada componente. Toggle persiste.
 - **Tailwind:** v4, sin `@apply`, sin variantes custom. `@import "tailwindcss"` en `index.css`.
 - **Tipografía:** sans-serif default (system-ui), `font-serif` (Georgia/Times) para títulos y texto de artículos.
