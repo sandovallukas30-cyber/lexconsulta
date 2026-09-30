@@ -108,7 +108,7 @@ export function TabCasos({ moduloId, briefs, clases, modoOscuro }: { moduloId: s
       </div>
 
       {mostrarForm && (
-        <div className={`p-4 rounded-xl border mb-4 space-y-3 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+        <div className={`p-4 rounded-tarjeta border mb-4 space-y-3 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <CampoTexto label="Carátula / rol" valor={campos.caratula} onChange={set('caratula')} modoOscuro={modoOscuro} placeholder="Ej: Rol 12.345-2023, Corte Suprema" />
             <CampoTexto label="Tribunal (opcional)" valor={campos.tribunal} onChange={set('tribunal')} modoOscuro={modoOscuro} />
@@ -140,7 +140,7 @@ export function TabCasos({ moduloId, briefs, clases, modoOscuro }: { moduloId: s
           {ordenados.map((b) => {
             const expandido = expandidoId === b.id
             return (
-              <div key={b.id} className={`rounded-xl border ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+              <div key={b.id} className={`rounded-tarjeta border ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
                 <div className="flex items-start justify-between gap-2 p-3">
                   <button onClick={() => setExpandidoId(expandido ? null : b.id)} className="flex-1 min-w-0 text-left">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -155,7 +155,7 @@ export function TabCasos({ moduloId, briefs, clases, modoOscuro }: { moduloId: s
                     )}
                   </button>
                   <div className="flex items-center gap-1 flex-shrink-0">
-                    <button onClick={() => iniciarEdicion(b)} className={`w-7 h-7 rounded-md flex items-center justify-center ${modoOscuro ? 'text-zinc-500 hover:bg-zinc-700 hover:text-zinc-200' : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700'}`}>
+                    <button onClick={() => iniciarEdicion(b)} aria-label={`Editar "${b.caratula}"`} className="boton boton-fantasma boton-chico boton-icono">
                       <i className="ti ti-pencil text-sm" />
                     </button>
                     <BotonEliminar onClick={() => eliminar(b.id)} modoOscuro={modoOscuro} />

@@ -22,6 +22,125 @@
   --accent-base: #0F6E56;
 }
 
+/* === Tokens de diseño (C5) ===
+   Una sola fuente para radios, sombras, alturas y duraciones. Con @theme,
+   Tailwind además genera las utilidades: rounded-control, rounded-tarjeta,
+   rounded-panel, shadow-tarjeta, shadow-flotante, h-control, min-h-control,
+   px-gutter, ease-estandar. */
+@theme {
+  --radius-control: 0.5rem;   /* botones, campos, chips */
+  --radius-tarjeta: 0.75rem;  /* tarjetas y filas de listas */
+  --radius-panel: 1rem;       /* modales, paneles, tarjeta del artículo */
+  --shadow-tarjeta: 0 1px 2px rgb(0 0 0 / 0.05), 0 1px 3px rgb(0 0 0 / 0.04);
+  --shadow-flotante: 0 12px 32px -12px rgb(0 0 0 / 0.28), 0 4px 12px -4px rgb(0 0 0 / 0.12);
+  --spacing-control: 2.5rem;    /* alto de botones de barra: 40 px */
+  --spacing-control-sm: 2rem;   /* botones de ícono dentro de filas */
+  --spacing-gutter: 1rem;       /* margen lateral en móvil */
+  --spacing-gutter-lg: 1.5rem;  /* margen lateral desde sm */
+  --ease-estandar: cubic-bezier(0.2, 0, 0, 1);
+  /* transition-colors / transition-opacity sin duración explícita */
+  --default-transition-duration: 180ms;
+}
+:root {
+  --dur-rapida: 150ms;  /* hover, foco, active */
+  --dur-media: 200ms;   /* aparecer/desaparecer paneles pequeños */
+  --dur-lenta: 250ms;   /* drawers y modales */
+  --anillo-foco: var(--accent-base);
+}
+/* App.tsx pone data-tema en <html> (y no solo la clase .dark en su div):
+   los modales y avisos se montan con portales fuera de ese div. */
+:root[data-tema='oscuro'] {
+  --anillo-foco: var(--accent-400);
+}
+
+/* Foco de teclado: el MISMO anillo en todos los controles. Sin @layer a
+   propósito: así gana a cualquier `outline-none` de las utilidades. Solo con
+   :focus-visible (teclado), no al hacer clic. */
+button:focus-visible, a:focus-visible, summary:focus-visible,
+[role='button']:focus-visible, [role='tab']:focus-visible, [role='menuitem']:focus-visible,
+[role='option']:focus-visible, [role='switch']:focus-visible, [tabindex]:not([tabindex='-1']):focus-visible,
+input[type='checkbox']:focus-visible, input[type='radio']:focus-visible, input[type='range']:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 2px;
+}
+
+/* === Botones comunes (C5) ===
+   .boton + una variante (.boton-suave | .boton-fantasma | .boton-borde |
+   .boton-primario) y, si es solo ícono, .boton-icono. Mismo alto, radio,
+   hover, active y deshabilitado en toda la app; el modo oscuro sale de
+   data-tema. En @layer components: una utilidad puntual (p. ej. `hidden`,
+   `sm:min-w-[220px]`) todavía puede ajustarlo. */
+@layer components {
+  .boton {
+    --alto-boton: var(--spacing-control);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    flex-shrink: 0;
+    min-height: var(--alto-boton);
+    padding: 0 0.75rem;
+    border-radius: var(--radius-control);
+    border: 1px solid transparent;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition-property: background-color, color, border-color, opacity, transform, filter;
+    transition-duration: var(--dur-rapida);
+    transition-timing-function: var(--ease-estandar);
+  }
+  .boton:active:not(:disabled) { transform: scale(0.97); }
+  .boton:disabled { opacity: 0.4; cursor: not-allowed; }
+  .boton-chico { --alto-boton: var(--spacing-control-sm); font-size: 0.75rem; padding: 0 0.625rem; }
+
+  .boton-suave { background: var(--color-zinc-100); color: var(--color-zinc-700); }
+  .boton-fantasma { background: transparent; color: var(--color-zinc-500); }
+  .boton-borde { background: transparent; color: var(--color-zinc-700); border-color: var(--color-zinc-200); }
+  .boton-primario, .boton[aria-pressed='true'] { background: var(--accent-base); color: #fff; }
+  @media (hover: hover) {
+    .boton-suave:hover:not(:disabled) { background: var(--color-zinc-200); color: var(--color-zinc-900); }
+    .boton-fantasma:hover:not(:disabled) { background: var(--color-zinc-100); color: var(--color-zinc-900); }
+    .boton-borde:hover:not(:disabled) { background: var(--color-zinc-50); color: var(--color-zinc-900); }
+    .boton-primario:hover:not(:disabled), .boton[aria-pressed='true']:hover:not(:disabled) { filter: brightness(1.1); }
+  }
+
+  :root[data-tema='oscuro'] .boton-suave { background: var(--color-zinc-800); color: var(--color-zinc-300); }
+  :root[data-tema='oscuro'] .boton-fantasma { color: var(--color-zinc-400); }
+  :root[data-tema='oscuro'] .boton-borde { color: var(--color-zinc-200); border-color: var(--color-zinc-700); }
+  :root[data-tema='oscuro'] .boton[aria-pressed='true'] { background: var(--accent-base); color: #fff; }
+  @media (hover: hover) {
+    :root[data-tema='oscuro'] .boton-suave:hover:not(:disabled) { background: var(--color-zinc-700); color: #fff; }
+    :root[data-tema='oscuro'] .boton-fantasma:hover:not(:disabled) { background: var(--color-zinc-800); color: var(--color-zinc-100); }
+    :root[data-tema='oscuro'] .boton-borde:hover:not(:disabled) { background: var(--color-zinc-800); color: #fff; }
+  }
+}
+
+/* Botón cuadrado de solo ícono. Como @utility (no en components) para poder
+   usarlo con variantes: `max-sm:boton-icono` = ícono solo en móvil. */
+@utility boton-icono {
+  width: var(--alto-boton, var(--spacing-control));
+  padding-inline: 0;
+}
+
+/* Foco de campos de texto con borde (los que llevan `outline-none`): el
+   borde toma el color del anillo y se suma un halo suave. Utilidad para que
+   gane a las clases de borde de color de cada campo. */
+@utility campo-foco {
+  transition: border-color var(--dur-rapida) var(--ease-estandar), box-shadow var(--dur-rapida) var(--ease-estandar);
+  &:focus {
+    border-color: var(--anillo-foco);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--anillo-foco) 22%, transparent);
+  }
+}
+
+/* Pantallas táctiles: los botones chicos también a 40 px (ver regla de
+   pointer: coarse más abajo para el resto de los botones). */
+@media (pointer: coarse) {
+  .boton-chico { --alto-boton: var(--spacing-control); }
+}
+
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; width: 100%; overflow: hidden; }
 

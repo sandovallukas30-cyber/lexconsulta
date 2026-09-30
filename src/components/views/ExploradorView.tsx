@@ -151,13 +151,13 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
           </p>
           <div className="flex justify-center gap-2">
             {errorCodigo && (
-              <button onClick={reintentar} className="px-4 min-h-[40px] rounded-lg text-sm font-semibold text-white" style={{ background: VERDE }}>
+              <button onClick={reintentar} className="boton boton-primario px-4">
                 Reintentar
               </button>
             )}
             <button
               onClick={onCambiarCodigo}
-              className={`px-4 min-h-[40px] rounded-lg text-sm font-medium border ${modoOscuro ? 'border-zinc-700 text-zinc-200' : 'border-zinc-200 text-zinc-700'}`}
+              className="boton boton-borde px-4"
             >
               Elegir otro código
             </button>
@@ -176,9 +176,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
       >
         <button
           onClick={onCambiarCodigo}
-          className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-colors group ${
-            modoOscuro ? 'hover:bg-zinc-800' : 'hover:bg-zinc-100'
-          }`}
+          className="boton boton-fantasma group px-2 gap-2 min-w-0 flex-shrink"
           title="Cambiar código"
           aria-label="Cambiar código"
         >
@@ -211,11 +209,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
         <button
           onClick={() => setIndiceAbierto(true)}
           aria-label="Índice del código"
-          className={`px-3 min-h-[40px] rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 flex-shrink-0 ${
-            modoOscuro
-              ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-              : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
-          }`}
+          className="boton boton-suave max-sm:boton-icono"
         >
           <i className="ti ti-list-tree text-base" />
           <span className="hidden sm:inline">Índice</span>
@@ -225,11 +219,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
           onClick={() => setModoLecturaAbierto(true)}
           title="Modo lectura: pantalla completa, letra ajustable y lectura en voz alta"
           aria-label="Modo lectura"
-          className={`px-3 min-h-[40px] rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 flex-shrink-0 ${
-            modoOscuro
-              ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-              : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
-          }`}
+          className="boton boton-suave max-md:boton-icono"
         >
           <i className="ti ti-book text-base" />
           <span className="hidden md:inline">Modo lectura</span>
@@ -241,14 +231,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
             title={modernizarLenguaje ? 'Mostrar texto original (siglo XIX)' : 'Modernizar lenguaje antiguo'}
             aria-label={modernizarLenguaje ? 'Mostrar texto original' : 'Modernizar lenguaje antiguo'}
             aria-pressed={modernizarLenguaje}
-            className={`px-3 min-h-[40px] rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 flex-shrink-0 ${
-              modernizarLenguaje
-                ? 'text-white'
-                : modoOscuro
-                ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-                : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
-            }`}
-            style={modernizarLenguaje ? { background: VERDE } : undefined}
+            className="boton boton-suave max-lg:boton-icono"
           >
             <i className={`ti ${modernizarLenguaje ? 'ti-language' : 'ti-language-off'} text-base`} />
             <span className="hidden lg:inline">Lenguaje moderno</span>
@@ -259,11 +242,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
         <button
           onClick={() => setBusquedaAbierta(true)}
           aria-label="Buscar o ir a un artículo (Ctrl+K)"
-          className={`flex items-center gap-2 px-3 min-h-[40px] rounded-lg text-sm transition-colors flex-shrink-0 sm:min-w-[220px] ${
-            modoOscuro
-              ? 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
-              : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'
-          }`}
+          className="boton boton-suave max-sm:boton-icono font-normal sm:min-w-[220px]"
         >
           <i className="ti ti-search text-base" />
           <span className="hidden sm:inline flex-1 text-left">Buscar o ir a artículo…</span>
@@ -280,9 +259,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
           onClick={() => window.print()}
           title="Exportar el código completo a PDF: abre el diálogo de impresión, elegí 'Guardar como PDF'"
           aria-label="Imprimir o guardar el código como PDF"
-          className={`hidden sm:flex w-10 h-10 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
-            modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'
-          }`}
+          className="boton boton-fantasma boton-icono max-sm:hidden"
         >
           <i className="ti ti-printer text-base" />
         </button>
@@ -334,8 +311,8 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.25 }}
-              className={`max-w-3xl mx-3 sm:mx-auto my-4 sm:my-8 rounded-2xl p-5 sm:p-10 ${
-                modoOscuro ? 'bg-zinc-800/40 border border-zinc-800' : 'bg-white shadow-sm border border-zinc-200/60'
+              className={`max-w-3xl mx-3 sm:mx-auto my-4 sm:my-8 rounded-panel p-5 sm:p-10 ${
+                modoOscuro ? 'bg-zinc-800/40 border border-zinc-800' : 'bg-white shadow-tarjeta border border-zinc-200/60'
               }`}
             >
               <div className="flex items-baseline justify-between gap-3 mb-6">
@@ -381,7 +358,6 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
             arts={cercanos}
             actualId={seleccionado?.a}
             onSelect={(a) => setSeleccionadoId(a)}
-            modoOscuro={modoOscuro}
           />
 
           <NavBtn
@@ -584,13 +560,7 @@ function NavBtn({
       disabled={disabled}
       onClick={onClick}
       aria-label={`${label}${sub ? `: ${sub}` : ''}`}
-      className={`flex items-center gap-2 px-2 sm:px-3 min-h-[44px] rounded-lg text-sm transition-colors flex-shrink-0 ${
-        disabled
-          ? 'opacity-30 cursor-not-allowed'
-          : modoOscuro
-          ? 'hover:bg-zinc-800 text-zinc-300'
-          : 'hover:bg-zinc-100 text-zinc-700'
-      }`}
+      className={`boton boton-fantasma gap-2 px-2 sm:px-3 min-h-[44px] ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}
     >
       {align === 'left' && <i className={`ti ${icono} text-lg`} />}
       <div className={align === 'right' ? 'text-right' : 'text-left'}>
@@ -608,12 +578,10 @@ function Carrusel({
   arts,
   actualId,
   onSelect,
-  modoOscuro,
 }: {
   arts: Articulo[]
   actualId?: string
   onSelect: (a: string) => void
-  modoOscuro: boolean
 }) {
   return (
     <div className="flex-1 flex items-center gap-1 overflow-x-auto justify-center min-w-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -624,14 +592,8 @@ function Carrusel({
             key={a.a}
             onClick={() => onSelect(a.a)}
             // en móvil solo el artículo actual: los vecinos ya están en Anterior/Siguiente
-            className={`px-3 py-1.5 rounded-lg text-xs font-mono whitespace-nowrap transition-colors flex-shrink-0 ${activo ? '' : 'max-sm:hidden'} ${
-              activo
-                ? 'text-white font-semibold'
-                : modoOscuro
-                ? 'text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800'
-                : 'text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100'
-            }`}
-            style={activo ? { background: VERDE } : undefined}
+            aria-current={activo ? 'true' : undefined}
+            className={`boton boton-chico font-mono ${activo ? 'boton-primario font-semibold' : 'boton-fantasma max-sm:hidden'}`}
             title={primerasPalabras(a.t, 10)}
           >
             {a.a}
@@ -693,9 +655,7 @@ function ModalIndice({
               <button
                 onClick={onCerrar}
                 aria-label="Cerrar índice"
-                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
-                  modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'
-                }`}
+                className="boton boton-fantasma boton-chico boton-icono"
               >
                 <i className="ti ti-x text-lg" />
               </button>
@@ -704,8 +664,7 @@ function ModalIndice({
             <div className={`px-3 pt-3 border-b pb-3 ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
               <button
                 onClick={onAbrirEsquema}
-                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90"
-                style={{ background: VERDE }}
+                className="boton boton-primario w-full justify-start gap-2.5"
               >
                 <i className="ti ti-sitemap text-base" />
                 <span className="flex-1 text-left">Ver esquema de estudio</span>
@@ -1061,7 +1020,7 @@ function ModalBusqueda({
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.96, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}
-            className={`w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[70vh] ${
+            className={`w-full max-w-2xl rounded-panel shadow-flotante overflow-hidden flex flex-col max-h-[70vh] ${
               modoOscuro ? 'bg-zinc-900' : 'bg-white'
             }`}
           >
@@ -1163,14 +1122,10 @@ function FichaCodigo({ tipo, modoOscuro }: { tipo: CodigoTipo; modoOscuro: boole
       <button
         onClick={() => setAbierto((v) => !v)}
         title="Ver fuente, decreto y fecha de indexación"
-        className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
-          abierto
-            ? modoOscuro
-              ? 'bg-zinc-800 text-[var(--accent-400)]'
-              : 'bg-[var(--accent-50)] text-[var(--accent-700)]'
-            : modoOscuro
-            ? 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
-            : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800'
+        aria-label="Ficha del código: fuente, decreto y fecha de indexación"
+        aria-expanded={abierto}
+        className={`boton boton-fantasma boton-chico boton-icono ${
+          abierto ? (modoOscuro ? 'bg-zinc-800 text-[var(--accent-400)]' : 'bg-[var(--accent-50)] text-[var(--accent-700)]') : ''
         }`}
       >
         <i className="ti ti-info-circle text-base" />
@@ -1321,7 +1276,7 @@ function PantallaCargandoCodigo({ modoOscuro }: { modoOscuro: boolean }) {
       </div>
       <div className="h-[3px]" />
       <div className="flex-1 overflow-hidden">
-        <div className={`max-w-3xl mx-3 sm:mx-auto my-4 sm:my-8 rounded-2xl p-5 sm:p-10 ${modoOscuro ? 'bg-zinc-800/40 border border-zinc-800' : 'bg-white shadow-sm border border-zinc-200/60'}`}>
+        <div className={`max-w-3xl mx-3 sm:mx-auto my-4 sm:my-8 rounded-panel p-5 sm:p-10 ${modoOscuro ? 'bg-zinc-800/40 border border-zinc-800' : 'bg-white shadow-tarjeta border border-zinc-200/60'}`}>
           <div className={`h-7 w-28 rounded animate-pulse mb-6 ${bloque}`} />
           {[100, 96, 92, 98, 60].map((w, i) => (
             <div key={i} className={`h-3.5 rounded animate-pulse mb-3 ${bloque}`} style={{ width: `${w}%` }} />

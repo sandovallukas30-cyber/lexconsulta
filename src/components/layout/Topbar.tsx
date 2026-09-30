@@ -56,9 +56,7 @@ export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
         <button
           onClick={() => setMenuMovilAbierto(true)}
           aria-label="Abrir menú"
-          className={`md:hidden w-10 h-10 -ml-1 rounded-lg flex items-center justify-center flex-shrink-0 ${
-            modoOscuro ? 'text-zinc-300 hover:bg-zinc-800' : 'text-zinc-700 hover:bg-zinc-100'
-          }`}
+          className="boton boton-fantasma boton-icono -ml-1 md:hidden"
         >
           <i className="ti ti-menu-2 text-xl" />
         </button>
@@ -82,11 +80,7 @@ export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
       <div className="flex items-center gap-2">
         <button
           onClick={toggleModoOscuro}
-          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
-            modoOscuro
-              ? 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
-              : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
-          }`}
+          className="boton boton-fantasma boton-icono"
           title={modoOscuro ? 'Modo claro' : 'Modo oscuro'}
           aria-label={modoOscuro ? 'Activar modo claro' : 'Activar modo oscuro'}
         >
@@ -96,7 +90,7 @@ export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
         {MOSTRAR_CONTADOR_CONSULTAS && onAbrirRegistro && (
           <button
             onClick={onAbrirRegistro}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+            className={`boton gap-2 ${
               sinConsultas
                 ? modoOscuro
                   ? 'bg-red-950/40 text-red-400 hover:bg-red-950/60'
@@ -137,11 +131,7 @@ export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
         <button
           onClick={abrirModalPerfil}
           aria-label={`Perfil: ${perfil ?? 'sin elegir'}`}
-          className={`flex items-center gap-2 px-3 min-h-[40px] rounded-lg text-sm transition-colors flex-shrink-0 ${
-            modoOscuro
-              ? 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700'
-              : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
-          }`}
+          className="boton boton-suave gap-2 font-normal"
         >
           <i className={`ti ${perfil === 'profesional' ? 'ti-briefcase' : 'ti-user'} text-base`} />
           <span className="capitalize hidden sm:inline">{perfil ?? 'Seleccionar perfil'}</span>

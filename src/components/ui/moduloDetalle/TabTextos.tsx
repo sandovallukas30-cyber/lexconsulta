@@ -78,7 +78,7 @@ export function TabTextos({ moduloId, textos, clases, modoOscuro }: { moduloId: 
       </div>
 
       {mostrarForm && (
-        <div className={`p-4 rounded-xl border mb-4 space-y-3 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+        <div className={`p-4 rounded-tarjeta border mb-4 space-y-3 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
           <CampoTexto label="Título" valor={titulo} onChange={setTitulo} modoOscuro={modoOscuro} placeholder="Ej: Tratado de las obligaciones, T. I" />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <CampoTexto label="Autor (opcional)" valor={autor} onChange={setAutor} modoOscuro={modoOscuro} placeholder="Ej: René Abeliuk" />
@@ -102,7 +102,7 @@ export function TabTextos({ moduloId, textos, clases, modoOscuro }: { moduloId: 
       ) : (
         <div className="space-y-2">
           {textos.map((t) => (
-            <div key={t.id} className={`flex items-start gap-3 p-3 rounded-xl border ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+            <div key={t.id} className={`flex items-start gap-3 p-3 rounded-tarjeta border ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
               <button onClick={() => toggleLeido(t.id)} className="mt-0.5 flex-shrink-0">
                 <i
                   className={`ti ${t.leido ? 'ti-square-rounded-check' : 'ti-square-rounded'} text-lg`}

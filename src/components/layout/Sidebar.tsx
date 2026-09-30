@@ -162,11 +162,7 @@ export function Sidebar() {
                 onClick={toggleSidebar}
                 title={esMovil ? 'Cerrar menú' : 'Colapsar (Ctrl+B)'}
                 aria-label={esMovil ? 'Cerrar menú' : 'Colapsar menú lateral'}
-                className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${
-                  modoOscuro
-                    ? 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
-                    : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900'
-                }`}
+                className="boton boton-fantasma boton-chico boton-icono"
               >
                 <i className={`ti ${esMovil ? 'ti-x' : 'ti-layout-sidebar-left-collapse'} text-lg`} />
               </button>
@@ -208,10 +204,10 @@ export function Sidebar() {
           <button
             onClick={() => setModalCodigos(true)}
             title={colapsado ? `Códigos · ${activos} de ${total} activos (incluye leyes especiales)` : undefined}
-            className={`w-full rounded-lg text-sm font-medium transition-colors text-left flex items-center ${
-              colapsado ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2.5'
+            className={`w-full min-h-control rounded-control text-sm font-medium transition-colors text-left flex items-center ${
+              colapsado ? 'justify-center px-0 py-1' : 'gap-3 px-3 py-1'
             } ${
-              modoOscuro ? 'text-zinc-300 hover:bg-zinc-800' : 'text-zinc-700 hover:bg-zinc-50'
+              modoOscuro ? 'text-zinc-300 hover:bg-zinc-800' : 'text-zinc-700 hover:bg-zinc-100'
             }`}
           >
             <span
@@ -252,10 +248,10 @@ export function Sidebar() {
           <button
             onClick={() => abrirAcerca('acerca')}
             title={colapsado ? 'Configuración · Apariencia, aviso legal, privacidad' : undefined}
-            className={`w-full mt-1 rounded-lg text-xs transition-colors flex items-center ${
-              colapsado ? 'justify-center px-0 py-2' : 'gap-2 px-3 py-2'
+            className={`w-full mt-1 min-h-control rounded-control text-xs transition-colors flex items-center ${
+              colapsado ? 'justify-center px-0' : 'gap-3 px-3'
             } ${
-              modoOscuro ? 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200' : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700'
+              modoOscuro ? 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'
             }`}
           >
             <i className="ti ti-settings text-base flex-shrink-0" />
@@ -299,8 +295,9 @@ function BotonNav({
     <button
       onClick={onClick}
       title={colapsado ? item.label : undefined}
-      className={`w-full rounded-lg text-sm font-medium transition-colors text-left relative flex items-center ${
-        colapsado ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2.5'
+      aria-current={activo ? 'page' : undefined}
+      className={`w-full min-h-control rounded-control text-sm font-medium transition-colors text-left relative flex items-center ${
+        colapsado ? 'justify-center px-0' : 'gap-3 px-3'
       } ${
         activo
           ? modoOscuro
@@ -308,7 +305,7 @@ function BotonNav({
             : 'bg-[var(--accent-50)] text-[var(--accent-900)]'
           : modoOscuro
           ? 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
-          : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900'
+          : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
       }`}
     >
       {activo && (

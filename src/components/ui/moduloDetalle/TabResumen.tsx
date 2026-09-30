@@ -64,7 +64,7 @@ export function TabResumen({
           <button
             key={t.tab}
             onClick={() => onIrA(t.tab)}
-            className={`text-left p-4 rounded-xl border transition-colors ${
+            className={`text-left p-4 rounded-tarjeta border transition-colors ${
               modoOscuro ? 'bg-zinc-800/60 border-zinc-800 hover:bg-zinc-800' : 'bg-white border-zinc-200 hover:bg-zinc-50'
             }`}
           >
@@ -88,7 +88,7 @@ export function TabResumen({
               <button
                 key={c.id}
                 onClick={() => onAbrirColeccion(c.id)}
-                className={`w-full flex items-center justify-between gap-2 p-3 rounded-xl border text-left transition-colors ${
+                className={`w-full flex items-center justify-between gap-2 p-3 rounded-tarjeta border text-left transition-colors ${
                   modoOscuro ? 'bg-zinc-800/60 border-zinc-800 hover:bg-zinc-800' : 'bg-white border-zinc-200 hover:bg-zinc-50'
                 }`}
               >
@@ -154,7 +154,7 @@ function VinculoModuloSeccion({
             <button
               key={v.id}
               onClick={() => onAbrir(v.id)}
-              className={`w-full flex items-center gap-2 p-3 rounded-xl border text-left transition-colors ${
+              className={`w-full flex items-center gap-2 p-3 rounded-tarjeta border text-left transition-colors ${
                 modoOscuro ? 'bg-zinc-800/60 border-zinc-800 hover:bg-zinc-800' : 'bg-white border-zinc-200 hover:bg-zinc-50'
               }`}
             >
@@ -168,7 +168,7 @@ function VinculoModuloSeccion({
         <select
           value=""
           onChange={(e) => { if (e.target.value) onVincular(e.target.value) }}
-          className={`w-full rounded-lg px-3 py-2 text-xs outline-none border ${
+          className={`w-full rounded-control px-3 py-2 text-xs outline-none border campo-foco ${
             modoOscuro ? 'bg-zinc-800 border-zinc-700 text-zinc-400' : 'bg-white border-zinc-200 text-zinc-500'
           }`}
         >

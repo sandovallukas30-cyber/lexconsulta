@@ -91,9 +91,7 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEdit
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <button
           onClick={onVolver}
-          className={`flex items-center gap-1.5 text-xs font-medium mb-5 transition-colors ${
-            modoOscuro ? 'text-zinc-400 hover:text-white' : 'text-zinc-500 hover:text-zinc-900'
-          }`}
+className="boton boton-fantasma boton-chico -ml-2.5 mb-4"
         >
           <i className="ti ti-arrow-left text-sm" />
           Todos los módulos
@@ -102,7 +100,7 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEdit
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <div className="flex items-center gap-3 min-w-0">
             <div
-              className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+              className="w-11 h-11 rounded-tarjeta flex items-center justify-center flex-shrink-0"
               style={{ background: modulo.color + '20' }}
             >
               <i className={`ti ${modulo.icono} text-xl`} style={{ color: modulo.color }} />
@@ -120,9 +118,7 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEdit
             {onEditar && (
               <button
                 onClick={onEditar}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                  modoOscuro ? 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700' : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50'
-                }`}
+                className="boton boton-borde boton-chico"
               >
                 <i className="ti ti-pencil text-sm" />
                 Editar ramo
@@ -131,9 +127,7 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEdit
             {modulo.codigoRelacionado && (
               <button
                 onClick={abrirCodigo}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                  modoOscuro ? 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700' : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50'
-                }`}
+                className="boton boton-borde boton-chico"
               >
                 <i className="ti ti-book-2 text-sm" />
                 Ver código

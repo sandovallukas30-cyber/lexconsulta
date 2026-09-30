@@ -342,9 +342,7 @@ export function TabApuntes({
             onClick={() => refArchivo.current?.click()}
             disabled={!!importando}
             title="Importar un archivo .md, .txt o un PDF de Notion como apunte"
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-              modoOscuro ? 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700' : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50'
-            }`}
+            className="boton boton-borde boton-chico"
           >
             <i className={`ti ${importando ? 'ti-loader-2 animate-spin' : 'ti-file-import'} text-sm`} />
             Importar
@@ -357,7 +355,7 @@ export function TabApuntes({
       {borrador && !mostrarForm && (
         <div
           role="status"
-          className={`mb-3 flex flex-wrap items-center gap-2 p-3 rounded-xl border text-sm ${
+          className={`mb-3 flex flex-wrap items-center gap-2 p-3 rounded-tarjeta border text-sm ${
             modoOscuro ? 'bg-amber-950/30 border-amber-900/60 text-amber-200' : 'bg-amber-50 border-amber-200 text-amber-900'
           }`}
         >
@@ -365,10 +363,10 @@ export function TabApuntes({
           <span className="flex-1 min-w-0">
             Tienes un borrador sin guardar{borrador.titulo ? ` de "${borrador.titulo}"` : ''}.
           </span>
-          <button onClick={recuperarBorrador} className="px-3 min-h-[36px] rounded-lg text-xs font-semibold text-white" style={{ background: VERDE }}>
+          <button onClick={recuperarBorrador} className="boton boton-primario boton-chico">
             Recuperar
           </button>
-          <button onClick={descartarBorrador} className="px-3 min-h-[36px] rounded-lg text-xs font-medium">
+          <button onClick={descartarBorrador} className="boton boton-chico text-inherit hover:bg-black/5">
             Descartar
           </button>
         </div>
@@ -420,7 +418,7 @@ export function TabApuntes({
               guardar()
             }
           }}
-          className={`p-4 rounded-xl border mb-4 space-y-3 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+          className={`p-4 rounded-tarjeta border mb-4 space-y-3 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
           <CampoTexto label="Título" valor={titulo} onChange={setTitulo} modoOscuro={modoOscuro} placeholder="Ej: Clase 3 — Modos de extinguir" />
           <CampoContenidoApunte valor={contenido} onChange={setContenido} modoOscuro={modoOscuro} />
           {clases.length > 0 && (
@@ -437,26 +435,26 @@ export function TabApuntes({
                   onChange={(e) => setNombreNuevoCuaderno(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') crearCuaderno() }}
                   placeholder="Ej: Cuaderno de audiencias"
-                  className={`flex-1 rounded-lg px-3 py-2 text-sm outline-none border ${
+                  className={`flex-1 rounded-control px-3 py-2 text-sm outline-none border campo-foco ${
                     modoOscuro ? 'bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-600' : 'bg-white border-zinc-200 text-zinc-900 placeholder:text-zinc-400'
                   }`}
                 />
-                <button onClick={crearCuaderno} className="px-3 py-1.5 rounded-lg text-xs font-medium text-white" style={{ background: VERDE }}>Crear</button>
-                <button onClick={() => setMostrarNuevoCuaderno(false)} className={`px-3 py-1.5 rounded-lg text-xs ${modoOscuro ? 'text-zinc-400 hover:bg-zinc-700' : 'text-zinc-500 hover:bg-zinc-100'}`}>Cancelar</button>
+                <button onClick={crearCuaderno} className="boton boton-primario boton-chico">Crear</button>
+                <button onClick={() => setMostrarNuevoCuaderno(false)} className="boton boton-fantasma boton-chico">Cancelar</button>
               </div>
             ) : (
               <div className="flex gap-2">
                 <select
                   value={cuadernoId}
                   onChange={(e) => setCuadernoId(e.target.value)}
-                  className={`flex-1 rounded-lg px-3 py-2 text-sm outline-none border ${
+                  className={`flex-1 rounded-control px-3 py-2 text-sm outline-none border campo-foco ${
                     modoOscuro ? 'bg-zinc-800 border-zinc-700 text-white' : 'bg-white border-zinc-200 text-zinc-900'
                   }`}
                 >
                   <option value="">Sin cuaderno</option>
                   {cuadernos.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
                 </select>
-                <button onClick={() => setMostrarNuevoCuaderno(true)} className={`px-3 py-1.5 rounded-lg text-xs whitespace-nowrap ${modoOscuro ? 'bg-zinc-700 text-zinc-200 hover:bg-zinc-600' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'}`}>
+                <button onClick={() => setMostrarNuevoCuaderno(true)} className="boton boton-suave boton-chico">
                   + Nuevo
                 </button>
               </div>

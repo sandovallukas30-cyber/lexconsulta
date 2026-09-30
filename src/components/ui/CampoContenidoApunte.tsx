@@ -333,7 +333,7 @@ export function CampoContenidoApunte({ valor, onChange, modoOscuro }: Props) {
           onKeyDown={alPulsar}
           rows={16}
           spellCheck
-          className={`w-full rounded-lg px-3 py-2 text-sm outline-none border resize-y font-[inherit] ${
+          className={`w-full rounded-lg px-3 py-2 text-sm outline-none border campo-foco resize-y font-[inherit] ${
             modoOscuro ? 'bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-600' : 'bg-white border-zinc-200 text-zinc-900 placeholder:text-zinc-400'
           }`}
           placeholder={'Escribe tu apunte… ## Título, **negrita**, ==rojo==, ++amarillo++, "- " para viñetas. El botón ? explica todo el formato.'}

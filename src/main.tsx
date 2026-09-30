@@ -14,7 +14,9 @@ const esVerificacion = window.location.pathname.startsWith('/verify')
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <MotionConfig reducedMotion="user">
+    {/* Duración por defecto de toda animación sin transición propia: 200 ms
+        (token --dur-media de index.css; el rango de la app es 150-250 ms). */}
+    <MotionConfig reducedMotion="user" transition={{ duration: 0.2, ease: [0.2, 0, 0, 1] }}>
       {esVerificacion ? <VerificarView /> : <App />}
     </MotionConfig>
   </StrictMode>,

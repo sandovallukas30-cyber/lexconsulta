@@ -125,7 +125,7 @@ function PantallaJuego({
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${progreso}%` }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.25 }}
             className="h-full rounded-full"
             style={{ background: VERDE }}
           />
@@ -362,7 +362,7 @@ function PantallaResultado({
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: 0.25 }}
         className={`rounded-2xl p-8 mb-8 border ${modoOscuro ? 'bg-zinc-800 border-zinc-700' : 'bg-white border-zinc-200'}`}
       >
         <div className="grid grid-cols-3 gap-4 text-center">

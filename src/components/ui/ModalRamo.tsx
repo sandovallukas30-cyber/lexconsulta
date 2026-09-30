@@ -122,7 +122,7 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
     onCerrar()
   }
 
-  const inputClase = `w-full rounded-lg px-3 py-2 text-sm outline-none border ${
+  const inputClase = `w-full rounded-lg px-3 py-2 text-sm outline-none border campo-foco ${
     modoOscuro ? 'bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-600' : 'bg-white border-zinc-200 text-zinc-900 placeholder:text-zinc-400'
   }`
   const labelClase = `block text-xs font-medium mb-1 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`

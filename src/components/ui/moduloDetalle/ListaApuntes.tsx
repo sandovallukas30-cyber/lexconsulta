@@ -64,7 +64,7 @@ const FilaApunte = memo(function FilaApunte({
 }) {
   const resumen = useMemo(() => (a.contenido ? resumenDe(a.contenido) : ''), [a.contenido])
   return (
-    <div className={`p-3 rounded-xl border ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+    <div className={`p-3 rounded-tarjeta border ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
       <div className="flex items-start justify-between gap-2 mb-1">
         <div className="flex items-center gap-2 flex-wrap min-w-0">
           <button
@@ -87,7 +87,7 @@ const FilaApunte = memo(function FilaApunte({
             onClick={() => acciones.abrir(a, true)}
             title="Editar"
             aria-label={`Editar "${a.titulo}"`}
-            className={`w-10 h-10 sm:w-7 sm:h-7 rounded-md flex items-center justify-center ${modoOscuro ? 'text-zinc-500 hover:bg-zinc-700 hover:text-zinc-200' : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700'}`}
+            className="boton boton-fantasma boton-chico boton-icono"
           >
             <i className="ti ti-pencil text-sm" />
           </button>
@@ -96,9 +96,7 @@ const FilaApunte = memo(function FilaApunte({
               onClick={() => acciones.repasar(a)}
               title={`Repasar ${nTarjetas} tarjeta${nTarjetas === 1 ? '' : 's'} (${pendientes} para hoy)`}
               aria-label={`Repasar "${a.titulo}": ${nTarjetas} tarjetas, ${pendientes} para hoy`}
-              className={`inline-flex items-center gap-1 px-2 min-h-[40px] sm:min-h-[28px] rounded-md text-xs font-medium ${
-                modoOscuro ? 'text-zinc-300 hover:bg-zinc-700' : 'text-zinc-600 hover:bg-zinc-100'
-              }`}
+              className="boton boton-fantasma boton-chico gap-1 px-2"
             >
               <i className="ti ti-cards text-sm" style={{ color: pendientes > 0 ? VERDE : undefined }} />
               {pendientes > 0 ? pendientes : nTarjetas}

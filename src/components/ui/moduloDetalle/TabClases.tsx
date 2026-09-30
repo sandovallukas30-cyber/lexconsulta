@@ -64,7 +64,7 @@ export function TabClases({ moduloId, clases, modoOscuro }: { moduloId: string; 
       </div>
 
       {mostrarForm && (
-        <div className={`p-4 rounded-xl border mb-4 space-y-3 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+        <div className={`p-4 rounded-tarjeta border mb-4 space-y-3 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <CampoTexto label="Fecha" tipo="date" valor={fecha} onChange={setFecha} modoOscuro={modoOscuro} />
             <CampoTexto label="Tema" valor={tema} onChange={setTema} modoOscuro={modoOscuro} placeholder="Ej: Teoría del acto jurídico" />
@@ -85,7 +85,7 @@ export function TabClases({ moduloId, clases, modoOscuro }: { moduloId: string; 
       ) : (
         <div className="space-y-2">
           {ordenadas.map((c) => (
-            <div key={c.id} className={`flex items-start gap-3 p-3 rounded-xl border ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+            <div key={c.id} className={`flex items-start gap-3 p-3 rounded-tarjeta border ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
               <button onClick={() => toggleCompletada(c.id)} className="mt-0.5 flex-shrink-0">
                 <i
                   className={`ti ${c.completada ? 'ti-square-rounded-check' : 'ti-square-rounded'} text-lg`}

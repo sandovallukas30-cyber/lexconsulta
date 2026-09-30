@@ -134,7 +134,7 @@ export function TabExamenes({
       </div>
 
       {mostrarForm && (
-        <div ref={refForm} className={`p-4 rounded-xl border mb-4 space-y-3 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+        <div ref={refForm} className={`p-4 rounded-tarjeta border mb-4 space-y-3 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <CampoTexto label="Nombre" valor={nombre} onChange={setNombre} modoOscuro={modoOscuro} placeholder="Ej: Solemne 1" />
             <CampoTexto label="Fecha" tipo="date" valor={fecha} onChange={setFecha} modoOscuro={modoOscuro} />
@@ -157,7 +157,7 @@ export function TabExamenes({
         <>
           <div className="space-y-2 mb-4">
             {ordenadas.map((e) => (
-              <div key={e.id} className={`flex items-center gap-3 p-3 rounded-xl border ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+              <div key={e.id} className={`flex items-center gap-3 p-3 rounded-tarjeta border ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-baseline gap-2 flex-wrap">
                     {e.nota === null ? (
@@ -187,7 +187,7 @@ export function TabExamenes({
             ))}
           </div>
 
-          <div className={`p-4 rounded-xl border ${modoOscuro ? 'bg-zinc-800/40 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+          <div className={`p-4 rounded-tarjeta border ${modoOscuro ? 'bg-zinc-800/40 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
             <div className="flex items-center justify-between gap-3 mb-3">
               <span className={`text-xs font-semibold ${modoOscuro ? 'text-zinc-300' : 'text-zinc-600'}`}>Calculadora de nota necesaria</span>
               <div className="flex items-center gap-1.5">

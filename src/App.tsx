@@ -85,6 +85,12 @@ function App() {
     aplicarTema(temaColor)
   }, [temaColor])
 
+  // El tema también en <html>: los modales y avisos van por portal fuera
+  // del div .dark de abajo y los tokens de index.css lo leen de acá.
+  useEffect(() => {
+    document.documentElement.dataset.tema = modoOscuro ? 'oscuro' : 'claro'
+  }, [modoOscuro])
+
   // Atajo global: Cmd/Ctrl+K para abrir Omnibar
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {

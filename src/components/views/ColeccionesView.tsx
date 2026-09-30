@@ -303,7 +303,7 @@ function EmptyState({ onCrear, modoOscuro }: { onCrear: () => void; modoOscuro: 
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.25 }}
       className="text-center py-20"
     >
       <div
@@ -816,7 +816,7 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
                 setEditandoTitulo(false)
               }
             }}
-            className={`flex-1 min-w-0 bg-transparent outline-none border-b-2 text-lg font-serif font-semibold px-0.5 ${
+            className={`flex-1 min-w-0 bg-transparent outline-none border campo-foco-b-2 text-lg font-serif font-semibold px-0.5 ${
               modoOscuro ? 'text-white' : 'text-zinc-900'
             }`}
             style={{ borderColor: VERDE }}

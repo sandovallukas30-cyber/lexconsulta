@@ -67,7 +67,7 @@ export function SelectorCodigo({ titulo, descripcion, icono, onElegir }: Props) 
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
+          transition={{ duration: 0.25 }}
           className="text-center mb-10"
         >
           <div
@@ -90,7 +90,7 @@ export function SelectorCodigo({ titulo, descripcion, icono, onElegir }: Props) 
               onChange={(e) => setFiltro(e.target.value)}
               placeholder="Filtrar por nombre o número (ej. consumidor, 18.290)"
               aria-label="Filtrar códigos y leyes"
-              className={`w-full rounded-xl pl-9 pr-3 min-h-[44px] text-sm outline-none border transition-colors focus:border-[var(--accent-base)] ${
+              className={`w-full rounded-xl pl-9 pr-3 min-h-[44px] text-sm outline-none border campo-foco transition-colors focus:border-[var(--accent-base)] ${
                 modoOscuro ? 'bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500' : 'bg-white border-zinc-200 text-zinc-900 placeholder:text-zinc-400'
               }`}
             />

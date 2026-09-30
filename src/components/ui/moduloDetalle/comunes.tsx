@@ -1,6 +1,6 @@
 import type { SesionClase } from '../../../types'
 import { diasHasta, formatearCountdown, urgenciaDe } from '../../../services/modulosAcademico'
-import { VERDE, colorUrgencia, formatearFechaCorta } from './utilidades'
+import { colorUrgencia, formatearFechaCorta } from './utilidades'
 
 /** Fecha + countdown lado a lado, con color según urgencia -- se usa en
  *  Clases y Exámenes para no repetirlo dos veces. */
@@ -34,7 +34,7 @@ export function EstadoVacio({
   modoOscuro: boolean
 }) {
   return (
-    <div data-estado-vacio className={`flex flex-col items-center justify-center text-center py-12 px-4 rounded-xl border border-dashed ${
+    <div data-estado-vacio className={`flex flex-col items-center justify-center text-center py-12 px-4 rounded-tarjeta border border-dashed ${
       modoOscuro ? 'border-zinc-800 text-zinc-500' : 'border-zinc-300 text-zinc-400'
     }`}>
       <i className={`ti ${icono} text-3xl mb-2 opacity-60`} aria-hidden />
@@ -46,14 +46,7 @@ export function EstadoVacio({
             <button
               key={a.label}
               onClick={a.onClick}
-              className={`inline-flex items-center gap-1.5 px-3 min-h-[40px] rounded-lg text-sm font-medium transition-colors ${
-                i === 0
-                  ? 'text-white'
-                  : modoOscuro
-                  ? 'border border-zinc-700 text-zinc-200 hover:bg-zinc-800'
-                  : 'border border-zinc-200 text-zinc-700 hover:bg-white'
-              }`}
-              style={i === 0 ? { background: VERDE } : undefined}
+              className={`boton ${i === 0 ? 'boton-primario' : 'boton-borde'}`}
             >
               <i className={`ti ${a.icono} text-base`} aria-hidden />
               {a.label}
@@ -65,13 +58,13 @@ export function EstadoVacio({
   )
 }
 
-export function BotonAgregar({ label, onClick, modoOscuro }: { label: string; onClick: () => void; modoOscuro: boolean }) {
+/** El tema sale de data-tema (clases .boton); `modoOscuro` queda por
+ *  compatibilidad con quienes lo pasan. */
+export function BotonAgregar({ label, onClick }: { label: string; onClick: () => void; modoOscuro?: boolean }) {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-        modoOscuro ? 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700' : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50'
-      }`}
+      className="boton boton-borde boton-chico"
     >
       <i className="ti ti-plus text-sm" />
       {label}
@@ -97,7 +90,7 @@ export function CampoTexto({
         value={valor}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className={`w-full rounded-lg px-3 py-2 text-sm outline-none border ${
+        className={`w-full rounded-control px-3 py-2 text-sm outline-none border campo-foco ${
           modoOscuro
             ? 'bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-600'
             : 'bg-white border-zinc-200 text-zinc-900 placeholder:text-zinc-400'
@@ -124,7 +117,7 @@ export function CampoSelectClase({
       <select
         value={valor}
         onChange={(e) => onChange(e.target.value)}
-        className={`w-full rounded-lg px-3 py-2 text-sm outline-none border ${
+        className={`w-full rounded-control px-3 py-2 text-sm outline-none border campo-foco ${
           modoOscuro ? 'bg-zinc-800 border-zinc-700 text-white' : 'bg-white border-zinc-200 text-zinc-900'
         }`}
       >
@@ -167,9 +160,7 @@ export function BotonEliminar({ onClick, modoOscuro }: { onClick: () => void; mo
       onClick={onClick}
       title="Eliminar"
       aria-label="Eliminar"
-      className={`w-10 h-10 sm:w-7 sm:h-7 rounded-md flex items-center justify-center flex-shrink-0 transition-colors ${
-        modoOscuro ? 'text-zinc-500 hover:bg-zinc-700 hover:text-red-400' : 'text-zinc-400 hover:bg-zinc-100 hover:text-red-600'
-      }`}
+      className={`boton boton-fantasma boton-chico boton-icono ${modoOscuro ? 'hover:text-red-400' : 'hover:text-red-600'}`}
     >
       <i className="ti ti-trash text-sm" />
     </button>
@@ -177,19 +168,19 @@ export function BotonEliminar({ onClick, modoOscuro }: { onClick: () => void; mo
 }
 
 export function BotonesFormulario({
-  onCancelar, onGuardar, modoOscuro, error,
+  onCancelar, onGuardar, error,
 }: {
   onCancelar: () => void
   onGuardar: () => void
-  modoOscuro: boolean
+  modoOscuro?: boolean
   error?: string | null
 }) {
   return (
     <div className="flex items-center justify-between gap-2">
       {error ? <span className="text-xs text-red-600">{error}</span> : <span />}
       <div className="flex justify-end gap-2">
-        <button onClick={onCancelar} className={`px-3 py-1.5 rounded-lg text-xs ${modoOscuro ? 'text-zinc-400 hover:bg-zinc-700' : 'text-zinc-500 hover:bg-zinc-100'}`}>Cancelar</button>
-        <button onClick={onGuardar} className="px-3 py-1.5 rounded-lg text-xs font-medium text-white" style={{ background: VERDE }}>Guardar</button>
+        <button onClick={onCancelar} className="boton boton-fantasma boton-chico">Cancelar</button>
+        <button onClick={onGuardar} className="boton boton-primario boton-chico">Guardar</button>
       </div>
     </div>
   )
@@ -212,7 +203,7 @@ export function CampoArea({
         onChange={(e) => onChange(e.target.value)}
         rows={3}
         placeholder={placeholder}
-        className={`w-full rounded-lg px-3 py-2 text-sm outline-none border resize-y ${
+        className={`w-full rounded-control px-3 py-2 text-sm outline-none border campo-foco resize-y ${
           modoOscuro ? 'bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-600' : 'bg-white border-zinc-200 text-zinc-900 placeholder:text-zinc-400'
         }`}
       />

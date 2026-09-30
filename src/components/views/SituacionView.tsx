@@ -255,7 +255,7 @@ function PantallaCuestionario({
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${progreso}%` }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.25 }}
             className="h-full rounded-full"
             style={{ background: VERDE }}
           />

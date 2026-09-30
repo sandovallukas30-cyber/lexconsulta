@@ -126,7 +126,7 @@ export function AdminView() {
       })
   }, [jurisprudencia, busqueda])
 
-  const inputClass = `w-full px-3 py-2 rounded-lg text-sm outline-none border transition-colors ${
+  const inputClass = `w-full px-3 py-2 rounded-lg text-sm outline-none border campo-foco transition-colors ${
     modoOscuro
       ? 'bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-[var(--accent-600)]'
       : 'bg-white border-zinc-300 text-zinc-900 placeholder:text-zinc-400 focus:border-[var(--accent-500)]'

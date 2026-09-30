@@ -1299,7 +1299,7 @@ function EdgeEditable(props: EdgeProps<EdgeWithData>) {
               }}
               maxLength={40}
               placeholder="etiqueta..."
-              className={`text-[11px] px-2 py-0.5 rounded outline-none border ${
+              className={`text-[11px] px-2 py-0.5 rounded outline-none border campo-foco ${
                 modoOscuro
                   ? 'bg-zinc-800 border-zinc-600 text-white'
                   : 'bg-white border-zinc-300 text-zinc-900'

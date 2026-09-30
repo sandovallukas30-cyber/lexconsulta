@@ -1496,7 +1496,7 @@ function MapaMentalDetalle({
                 setEditandoTitulo(false)
               }
             }}
-            className={`flex-1 min-w-0 bg-transparent outline-none border-b-2 text-lg font-serif font-semibold px-0.5 ${
+            className={`flex-1 min-w-0 bg-transparent outline-none border campo-foco-b-2 text-lg font-serif font-semibold px-0.5 ${
               modoOscuro ? 'text-white' : 'text-zinc-900'
             }`}
             style={{ borderColor: VERDE }}
@@ -2263,7 +2263,7 @@ function EdgeEditable(props: EdgeProps<EdgeWithData>) {
               }}
               maxLength={40}
               placeholder="etiqueta..."
-              className={`text-[11px] px-2 py-0.5 rounded outline-none border ${
+              className={`text-[11px] px-2 py-0.5 rounded outline-none border campo-foco ${
                 modoOscuro ? 'bg-zinc-800 border-zinc-600 text-white' : 'bg-white border-zinc-300 text-zinc-900'
               }`}
               style={{ width: 110 }}

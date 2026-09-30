@@ -61,7 +61,7 @@ export function ModuloCard({ modulo, progreso, modoOscuro, onClick }: ModuloCard
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${porcentaje}%` }}
-              transition={{ duration: 0.6, ease: 'easeOut' }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
               className="h-full rounded-full"
               style={{ background: modulo.color }}
             />

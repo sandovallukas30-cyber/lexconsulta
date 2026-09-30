@@ -433,7 +433,7 @@ export default function EditorApunte({ titulo, contenido, tema: temaLectura, tam
                   autoFocus
                   defaultValue={panelNota.texto}
                   placeholder="Escribe la nota para el margen…"
-                  className={`flex-1 min-w-0 rounded-md px-2 py-1 outline-none border ${tema.border} bg-transparent`}
+                  className={`flex-1 min-w-0 rounded-md px-2 py-1 outline-none border campo-foco ${tema.border} bg-transparent`}
                 />
                 <button type="submit" className="px-2.5 py-1 rounded-md text-white font-medium" style={{ background: VERDE }}>
                   Guardar nota

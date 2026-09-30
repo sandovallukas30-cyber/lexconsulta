@@ -6,7 +6,6 @@ import { MODULOS } from '../../../data/modulos'
 import { descargarApunteMd } from '../../../services/apunteArchivo'
 import { moverApunte } from '../../../services/accionesApunte'
 import type { ApunteModulo, CuadernoApuntes } from '../../../types'
-import { VERDE } from './utilidades'
 
 /** Menú "⋯" de cada apunte de la lista. */
 export function MenuAccionesApunte({
@@ -75,7 +74,7 @@ export function MenuAccionesApunte({
         aria-label={`Más acciones para "${apunte.titulo}"`}
         aria-haspopup="menu"
         aria-expanded={abierto}
-        className={`w-10 h-10 sm:w-9 sm:h-9 rounded-md flex items-center justify-center ${modoOscuro ? 'text-zinc-500 hover:bg-zinc-700 hover:text-zinc-200' : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700'}`}
+        className="boton boton-fantasma boton-chico boton-icono"
       >
         <i className="ti ti-dots text-base" />
       </button>
@@ -84,7 +83,7 @@ export function MenuAccionesApunte({
           ref={refMenu}
           role="menu"
           onKeyDown={alTeclear}
-          className={`absolute right-0 ${haciaArriba ? 'bottom-full mb-1' : 'top-full mt-1'} z-20 w-52 py-1 rounded-xl border shadow-lg ${
+          className={`absolute right-0 ${haciaArriba ? 'bottom-full mb-1' : 'top-full mt-1'} z-20 w-52 py-1 rounded-tarjeta border shadow-lg ${
             modoOscuro ? 'bg-zinc-800 border-zinc-700' : 'bg-white border-zinc-200'
           }`}
         >
@@ -160,7 +159,7 @@ export function ModalMoverApunte({
     onCerrar()
   }
 
-  const campo = `w-full rounded-lg px-3 min-h-[44px] text-sm outline-none border ${
+  const campo = `w-full rounded-control px-3 min-h-[44px] text-sm outline-none border campo-foco ${
     modoOscuro ? 'bg-zinc-800 border-zinc-700 text-white' : 'bg-white border-zinc-200 text-zinc-900'
   }`
   const etiqueta = `block text-xs font-medium mb-1 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`
@@ -242,10 +241,10 @@ export function ModalMoverApunte({
           <p className="text-xs text-amber-600">La clase vinculada es de este ramo: al moverlo el apunte queda sin clase.</p>
         )}
         <div className="flex justify-end gap-2">
-          <button onClick={onCerrar} className={`px-3 min-h-[40px] rounded-lg text-sm ${modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'}`}>
+          <button onClick={onCerrar} className="boton boton-fantasma">
             Cancelar
           </button>
-          <button onClick={confirmar} className="px-4 min-h-[40px] rounded-lg text-sm font-medium text-white" style={{ background: VERDE }}>
+          <button onClick={confirmar} className="boton boton-primario px-4">
             Mover
           </button>
         </div>
