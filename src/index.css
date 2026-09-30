@@ -71,6 +71,14 @@ html, body, #root { height: 100%; width: 100%; overflow: hidden; }
   .imprimir-coleccion, .imprimir-codigo, .imprimir-mapa-mental-svg { display: block; width: 100%; }
 }
 
+/* Acciones que solo aparecen al pasar el mouse (eliminar colección, mapa,
+   consulta...): en pantallas táctiles no hay hover y quedaban invisibles
+   para siempre; con teclado, invisibles aunque tuvieran el foco. */
+@media (hover: none) {
+  .group-hover\:opacity-100 { opacity: 1 !important; }
+}
+.group:focus-within .group-hover\:opacity-100 { opacity: 1; }
+
 /* Coincidencia del buscador de apuntes (Omnibar → Modo Lectura) */
 ::highlight(prima-busqueda) { background-color: #fde047; color: #1c1917; }
 

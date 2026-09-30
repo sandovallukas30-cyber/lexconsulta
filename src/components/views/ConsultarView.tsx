@@ -95,7 +95,7 @@ export function ConsultarView() {
             modoOscuro={modoOscuro}
           />
         ) : (
-          <div className="max-w-3xl mx-auto px-6 py-6 space-y-6">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6">
             {mensajes.map((m) => (
               <MensajeBubble key={m.id} mensaje={m} modoOscuro={modoOscuro} />
             ))}
@@ -105,12 +105,12 @@ export function ConsultarView() {
       </div>
 
       <div
-        className={`px-6 py-4 border-t ${
+        className={`px-4 sm:px-6 py-3 sm:py-4 border-t ${
           modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
         }`}
       >
         <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
-          <div className="flex items-center justify-between mb-2 gap-4">
+          <div className="flex items-center justify-between mb-2 gap-2 sm:gap-4">
             <div className="flex items-center gap-2">
               <ToggleModo modoOscuro={modoOscuro} />
               <div className={`w-px h-6 ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-200'}`} />
@@ -120,7 +120,7 @@ export function ConsultarView() {
                 disabled={cargando}
               />
             </div>
-            <span className={`text-[10px] ${modoOscuro ? 'text-zinc-600' : 'text-zinc-400'}`}>
+            <span className={`hidden sm:inline text-[10px] ${modoOscuro ? 'text-zinc-600' : 'text-zinc-400'}`}>
               {codigosActivos} código{codigosActivos !== 1 ? 's' : ''} activo{codigosActivos !== 1 ? 's' : ''}
             </span>
           </div>

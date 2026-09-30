@@ -135,7 +135,7 @@ export function TabExamenes({
 
       {mostrarForm && (
         <div ref={refForm} className={`p-4 rounded-xl border mb-4 space-y-3 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <CampoTexto label="Nombre" valor={nombre} onChange={setNombre} modoOscuro={modoOscuro} placeholder="Ej: Solemne 1" />
             <CampoTexto label="Fecha" tipo="date" valor={fecha} onChange={setFecha} modoOscuro={modoOscuro} />
             <CampoTexto label="Ponderación (%)" tipo="number" valor={ponderacion} onChange={setPonderacion} modoOscuro={modoOscuro} placeholder="Ej: 30" />

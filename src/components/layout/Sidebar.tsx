@@ -4,6 +4,7 @@ import { useStore } from '../../store/useStore'
 import { ModalCodigos } from '../ui/ModalCodigos'
 import { ModalAcercaDe } from '../ui/ModalAcercaDe'
 import { esAdmin } from '../../config/admin'
+import { useEsMovil } from '../../hooks/useEsMovil'
 import type { VistaId } from '../../types'
 
 interface ItemMenu {
@@ -43,8 +44,20 @@ export function Sidebar() {
   const codigos = useStore((s) => s.codigos)
   const usuarioEmail = useStore((s) => s.usuarioEmail)
   const modoOscuro = useStore((s) => s.modoOscuro)
-  const colapsado = useStore((s) => s.sidebarColapsado)
-  const toggleSidebar = useStore((s) => s.toggleSidebar)
+  const colapsadoEscritorio = useStore((s) => s.sidebarColapsado)
+  const toggleSidebarEscritorio = useStore((s) => s.toggleSidebar)
+  const menuMovilAbierto = useStore((s) => s.menuMovilAbierto)
+  const setMenuMovilAbierto = useStore((s) => s.setMenuMovilAbierto)
+  // En móvil el sidebar es un panel que se superpone al contenido (antes
+  // medía siempre 256 px y dejaba 118 px de contenido a 375 px): nunca
+  // colapsado, y "colapsar" = cerrarlo.
+  const esMovil = useEsMovil()
+  const colapsado = esMovil ? false : colapsadoEscritorio
+  const toggleSidebar = esMovil ? () => setMenuMovilAbierto(false) : toggleSidebarEscritorio
+  const irA = (id: VistaId) => {
+    setVistaActiva(id)
+    if (esMovil) setMenuMovilAbierto(false)
+  }
   const [modalCodigos, setModalCodigos] = useState(false)
   const acercaAbierto = useStore((s) => s.acercaAbierto)
   const acercaPestana = useStore((s) => s.acercaPestana)
@@ -63,19 +76,46 @@ export function Sidebar() {
     return () => window.removeEventListener('keydown', handler)
   }, [toggleSidebar])
 
+  // Esc cierra el panel móvil
+  useEffect(() => {
+    if (!esMovil || !menuMovilAbierto) return
+    const h = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuMovilAbierto(false)
+    }
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [esMovil, menuMovilAbierto, setMenuMovilAbierto])
+
   const activos = codigos.filter((c) => c.activo).length
   const total = codigos.length
   const grupoAcademico = esAdmin(usuarioEmail) ? [...itemsAcademicos, itemAdmin] : itemsAcademicos
 
   return (
     <>
+      <AnimatePresence>
+        {esMovil && menuMovilAbierto && (
+          <motion.div
+            key="fondo-menu"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[65] bg-black/40"
+            onClick={() => setMenuMovilAbierto(false)}
+            aria-hidden
+          />
+        )}
+      </AnimatePresence>
       <motion.aside
         initial={false}
-        animate={{ width: colapsado ? 68 : 256 }}
+        animate={esMovil ? { x: menuMovilAbierto ? 0 : -300, width: 280 } : { x: 0, width: colapsado ? 68 : 256 }}
         transition={{ duration: 0.22, ease: 'easeOut' }}
+        aria-label="Menú principal"
+        // en móvil, cerrado = fuera de la pantalla e inerte (no se puede tabular a él)
+        inert={esMovil && !menuMovilAbierto ? true : undefined}
         className={`flex flex-col border-r overflow-hidden ${
-          modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
-        }`}
+          esMovil ? 'fixed inset-y-0 left-0 z-[70] shadow-2xl' : 'relative flex-shrink-0'
+        } ${modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}
       >
         <div
           className={`flex items-center border-b ${
@@ -112,15 +152,15 @@ export function Sidebar() {
               </div>
               <button
                 onClick={toggleSidebar}
-                title="Colapsar (Ctrl+B)"
-                aria-label="Colapsar menú lateral"
+                title={esMovil ? 'Cerrar menú' : 'Colapsar (Ctrl+B)'}
+                aria-label={esMovil ? 'Cerrar menú' : 'Colapsar menú lateral'}
                 className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${
                   modoOscuro
                     ? 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
                     : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900'
                 }`}
               >
-                <i className="ti ti-layout-sidebar-left-collapse text-lg" />
+                <i className={`ti ${esMovil ? 'ti-x' : 'ti-layout-sidebar-left-collapse'} text-lg`} />
               </button>
             </>
           )}
@@ -135,7 +175,7 @@ export function Sidebar() {
                 activo={vistaActiva === item.id}
                 colapsado={colapsado}
                 modoOscuro={modoOscuro}
-                onClick={() => setVistaActiva(item.id)}
+                onClick={() => irA(item.id)}
               />
             ))}
           </div>
@@ -150,7 +190,7 @@ export function Sidebar() {
                 activo={vistaActiva === item.id}
                 colapsado={colapsado}
                 modoOscuro={modoOscuro}
-                onClick={() => setVistaActiva(item.id)}
+                onClick={() => irA(item.id)}
               />
             ))}
           </div>
@@ -190,8 +230,8 @@ export function Sidebar() {
                   className="flex-1 overflow-hidden whitespace-nowrap"
                 >
                   <span className="block">Códigos</span>
-                  <span className={`block text-[11px] font-normal ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                    {activos} de {total} activos · incl. leyes
+                  <span className={`block text-[11px] font-normal truncate ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                    {activos} de {total} activos
                   </span>
                 </motion.span>
               )}

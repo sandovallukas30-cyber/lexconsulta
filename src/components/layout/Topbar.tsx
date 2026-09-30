@@ -7,6 +7,8 @@ interface TopbarProps {
 const titulos: Record<string, string> = {
   consultar: 'Consultar',
   situacion: 'Situación concreta',
+  modulos: 'Módulos',
+  mapasmentales: 'Mapas mentales',
   canvas: 'Canvas jurídico',
   mapa: 'Mapa de normas',
   explorador: 'Explorador de códigos',
@@ -34,6 +36,7 @@ export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
   const usuarioRegistrado = useStore((s) => s.usuarioRegistrado)
   const consultasRestantesStore = useStore((s) => s.consultasRestantes)
   const fechaConsultas = useStore((s) => s.fechaConsultas)
+  const setMenuMovilAbierto = useStore((s) => s.setMenuMovilAbierto)
 
   // Resetear contador si es un nuevo día
   const hoy = new Date().toISOString().slice(0, 10)
@@ -45,12 +48,21 @@ export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
 
   return (
     <header
-      className={`h-16 px-6 flex items-center justify-between border-b ${
+      className={`h-14 sm:h-16 px-3 sm:px-6 flex items-center justify-between gap-2 border-b flex-shrink-0 ${
         modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
       }`}
     >
-      <div className="flex items-center gap-4 min-w-0">
-        <h2 className={`text-lg font-semibold flex-shrink-0 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+      <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+        <button
+          onClick={() => setMenuMovilAbierto(true)}
+          aria-label="Abrir menú"
+          className={`md:hidden w-10 h-10 -ml-1 rounded-lg flex items-center justify-center flex-shrink-0 ${
+            modoOscuro ? 'text-zinc-300 hover:bg-zinc-800' : 'text-zinc-700 hover:bg-zinc-100'
+          }`}
+        >
+          <i className="ti ti-menu-2 text-xl" />
+        </button>
+        <h2 className={`text-base sm:text-lg font-semibold truncate ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
           {titulos[vistaActiva]}
         </h2>
         <div
@@ -62,14 +74,15 @@ export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
           title="Esta plataforma no constituye asesoría legal. Consulta siempre con un profesional para decisiones jurídicas."
         >
           <i className="ti ti-alert-triangle text-xs flex-shrink-0" />
-          <span className="truncate">Orientación educativa · No reemplaza asesoría legal profesional</span>
+          <span className="truncate lg:hidden">Orientación educativa</span>
+          <span className="truncate hidden lg:inline">Orientación educativa · No reemplaza asesoría legal profesional</span>
         </div>
       </div>
 
       <div className="flex items-center gap-2">
         <button
           onClick={toggleModoOscuro}
-          className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
+          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
             modoOscuro
               ? 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
               : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
@@ -123,14 +136,15 @@ export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
 
         <button
           onClick={abrirModalPerfil}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+          aria-label={`Perfil: ${perfil ?? 'sin elegir'}`}
+          className={`flex items-center gap-2 px-3 min-h-[40px] rounded-lg text-sm transition-colors flex-shrink-0 ${
             modoOscuro
               ? 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700'
               : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
           }`}
         >
           <i className={`ti ${perfil === 'profesional' ? 'ti-briefcase' : 'ti-user'} text-base`} />
-          <span className="capitalize">{perfil ?? 'Seleccionar perfil'}</span>
+          <span className="capitalize hidden sm:inline">{perfil ?? 'Seleccionar perfil'}</span>
         </button>
       </div>
     </header>

@@ -80,7 +80,7 @@ export function TabTextos({ moduloId, textos, clases, modoOscuro }: { moduloId: 
       {mostrarForm && (
         <div className={`p-4 rounded-xl border mb-4 space-y-3 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
           <CampoTexto label="Título" valor={titulo} onChange={setTitulo} modoOscuro={modoOscuro} placeholder="Ej: Tratado de las obligaciones, T. I" />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <CampoTexto label="Autor (opcional)" valor={autor} onChange={setAutor} modoOscuro={modoOscuro} placeholder="Ej: René Abeliuk" />
             <CampoTexto label="Enlace (opcional)" valor={enlace} onChange={setEnlace} modoOscuro={modoOscuro} placeholder="https://..." />
           </div>

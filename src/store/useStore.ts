@@ -81,6 +81,9 @@ interface AppState {
    * cambiar solo porque se prefiere leer en papel. */
   modoLecturaTema: TemaLectura
   sidebarColapsado: boolean
+  /** Solo en móvil (< 768 px): el sidebar es un panel deslizable. No persistido. */
+  menuMovilAbierto: boolean
+  setMenuMovilAbierto: (abierto: boolean) => void
   modernizarLenguaje: boolean
   modalPerfilAbierto: boolean
   consultaActivaId: string | null
@@ -360,6 +363,7 @@ export const useStore = create<AppState>()(
       modoOscuro: false,
       modoLecturaTema: 'claro',
       sidebarColapsado: false,
+      menuMovilAbierto: false,
       modernizarLenguaje: false,
       modalPerfilAbierto: false,
       acercaAbierto: false,
@@ -753,6 +757,7 @@ export const useStore = create<AppState>()(
       toggleModoOscuro: () => set((s) => ({ modoOscuro: !s.modoOscuro })),
       setModoLecturaTema: (tema) => set({ modoLecturaTema: tema }),
       toggleSidebar: () => set((s) => ({ sidebarColapsado: !s.sidebarColapsado })),
+      setMenuMovilAbierto: (abierto) => set({ menuMovilAbierto: abierto }),
       toggleModernizar: () => set((s) => ({ modernizarLenguaje: !s.modernizarLenguaje })),
       setCodigoExplorador: (tipo) => set({ codigoExploradorActivo: tipo }),
       abrirArticuloEnExplorador: (codigo, articulo) =>

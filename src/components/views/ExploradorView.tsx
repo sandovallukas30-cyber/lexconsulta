@@ -141,7 +141,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
   return (
     <div className={`h-full flex flex-col ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
       <div
-        className={`flex items-center gap-3 px-6 py-3 border-b ${
+        className={`flex items-center gap-1.5 sm:gap-3 px-3 sm:px-6 py-2 sm:py-3 border-b ${
           modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
         }`}
       >
@@ -181,20 +181,22 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
 
         <button
           onClick={() => setIndiceAbierto(true)}
-          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
+          aria-label="Índice del código"
+          className={`px-3 min-h-[40px] rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 flex-shrink-0 ${
             modoOscuro
               ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
               : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
           }`}
         >
           <i className="ti ti-list-tree text-base" />
-          Índice
+          <span className="hidden sm:inline">Índice</span>
         </button>
 
         <button
           onClick={() => setModoLecturaAbierto(true)}
           title="Modo lectura: pantalla completa, letra ajustable y lectura en voz alta"
-          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
+          aria-label="Modo lectura"
+          className={`px-3 min-h-[40px] rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 flex-shrink-0 ${
             modoOscuro
               ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
               : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
@@ -208,7 +210,9 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
           <button
             onClick={toggleModernizar}
             title={modernizarLenguaje ? 'Mostrar texto original (siglo XIX)' : 'Modernizar lenguaje antiguo'}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
+            aria-label={modernizarLenguaje ? 'Mostrar texto original' : 'Modernizar lenguaje antiguo'}
+            aria-pressed={modernizarLenguaje}
+            className={`px-3 min-h-[40px] rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 flex-shrink-0 ${
               modernizarLenguaje
                 ? 'text-white'
                 : modoOscuro
@@ -218,23 +222,24 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
             style={modernizarLenguaje ? { background: VERDE } : undefined}
           >
             <i className={`ti ${modernizarLenguaje ? 'ti-language' : 'ti-language-off'} text-base`} />
-            Lenguaje moderno
+            <span className="hidden lg:inline">Lenguaje moderno</span>
           </button>
         )}
 
 
         <button
           onClick={() => setBusquedaAbierta(true)}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors min-w-[220px] ${
+          aria-label="Buscar o ir a un artículo (Ctrl+K)"
+          className={`flex items-center gap-2 px-3 min-h-[40px] rounded-lg text-sm transition-colors flex-shrink-0 sm:min-w-[220px] ${
             modoOscuro
               ? 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
               : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'
           }`}
         >
           <i className="ti ti-search text-base" />
-          <span className="flex-1 text-left">Buscar artículo...</span>
+          <span className="hidden sm:inline flex-1 text-left">Buscar o ir a artículo…</span>
           <kbd
-            className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${
+            className={`hidden sm:inline text-[10px] px-1.5 py-0.5 rounded font-mono ${
               modoOscuro ? 'bg-zinc-900 text-zinc-500' : 'bg-white text-zinc-400 border border-zinc-200'
             }`}
           >
@@ -245,7 +250,8 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
         <button
           onClick={() => window.print()}
           title="Exportar el código completo a PDF: abre el diálogo de impresión, elegí 'Guardar como PDF'"
-          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
+          aria-label="Imprimir o guardar el código como PDF"
+          className={`hidden sm:flex w-10 h-10 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
             modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'
           }`}
         >
@@ -257,7 +263,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
 
       {seleccionado && (
         <div
-          className={`px-6 py-2.5 border-b text-xs flex items-center gap-1.5 overflow-x-auto ${
+          className={`px-4 sm:px-6 py-2.5 border-b text-xs flex items-center gap-1.5 overflow-x-auto ${
             modoOscuro ? 'bg-zinc-900 border-zinc-800 text-zinc-400' : 'bg-white border-zinc-200 text-zinc-500'
           }`}
         >
@@ -282,13 +288,13 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.25 }}
-              className={`max-w-3xl mx-auto my-8 rounded-2xl p-10 ${
+              className={`max-w-3xl mx-3 sm:mx-auto my-4 sm:my-8 rounded-2xl p-5 sm:p-10 ${
                 modoOscuro ? 'bg-zinc-800/40 border border-zinc-800' : 'bg-white shadow-sm border border-zinc-200/60'
               }`}
             >
               <div className="flex items-baseline justify-between gap-3 mb-6">
                 <h1
-                  className={`text-3xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}
+                  className={`text-2xl sm:text-3xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}
                   style={{ color: undefined }}
                 >
                   <span style={{ color: VERDE }}>{seleccionado.a}</span>
@@ -310,7 +316,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
       </div>
 
       <div
-        className={`border-t px-4 py-3 ${
+        className={`border-t px-2 sm:px-4 py-2 sm:py-3 ${
           modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
         }`}
       >
@@ -531,7 +537,8 @@ function NavBtn({
     <button
       disabled={disabled}
       onClick={onClick}
-      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors flex-shrink-0 ${
+      aria-label={`${label}${sub ? `: ${sub}` : ''}`}
+      className={`flex items-center gap-2 px-2 sm:px-3 min-h-[44px] rounded-lg text-sm transition-colors flex-shrink-0 ${
         disabled
           ? 'opacity-30 cursor-not-allowed'
           : modoOscuro
@@ -563,14 +570,15 @@ function Carrusel({
   modoOscuro: boolean
 }) {
   return (
-    <div className="flex-1 flex items-center gap-1 overflow-x-auto justify-center min-w-0">
+    <div className="flex-1 flex items-center gap-1 overflow-x-auto justify-center min-w-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {arts.map((a) => {
         const activo = a.a === actualId
         return (
           <button
             key={a.a}
             onClick={() => onSelect(a.a)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-mono whitespace-nowrap transition-colors flex-shrink-0 ${
+            // en móvil solo el artículo actual: los vecinos ya están en Anterior/Siguiente
+            className={`px-3 py-1.5 rounded-lg text-xs font-mono whitespace-nowrap transition-colors flex-shrink-0 ${activo ? '' : 'max-sm:hidden'} ${
               activo
                 ? 'text-white font-semibold'
                 : modoOscuro
@@ -1386,7 +1394,7 @@ function ModoLecturaOverlay({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.18 }}
-          className={`fixed inset-0 z-[80] flex flex-col ${tema.bg}`}
+          className={`fixed inset-0 h-[100dvh] z-[80] flex flex-col ${tema.bg}`}
         >
           <div className={`flex items-center gap-3 px-5 py-3 border-b flex-shrink-0 ${tema.border}`}>
             <button

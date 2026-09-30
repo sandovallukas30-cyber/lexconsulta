@@ -231,7 +231,7 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.18 }}
-      className={`fixed inset-0 z-[80] flex flex-col ${tema.bg}`}
+      className={`fixed inset-0 h-[100dvh] z-[80] flex flex-col ${tema.bg}`}
     >
       <div className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-3 border-b flex-shrink-0 ${tema.border}`}>
         {!editando && (

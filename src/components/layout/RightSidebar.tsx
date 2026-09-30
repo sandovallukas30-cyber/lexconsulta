@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { useStore } from '../../store/useStore'
+import { useEsMovil } from '../../hooks/useEsMovil'
 
 const VERDE = 'var(--accent-base)'
 
@@ -17,6 +18,7 @@ export function RightSidebar() {
   const setCanvasActivo = useStore((s) => s.setCanvasActivo)
 
   const MOBILE_BREAKPOINT = 768
+  const esMovil = useEsMovil()
 
   const cerrarEnMobile = () => {
     if (window.innerWidth < MOBILE_BREAKPOINT && rightSidebarAbierto) {
@@ -36,7 +38,9 @@ export function RightSidebar() {
       initial={false}
       animate={{ width: rightSidebarAbierto ? 280 : 0 }}
       transition={{ duration: 0.22, ease: 'easeOut' }}
-      className={`flex flex-col border-l overflow-hidden ${
+      // en móvil se superpone (no empuja) al contenido; cerrado = inerte
+      inert={!rightSidebarAbierto ? true : undefined}
+      className={`flex flex-col border-l overflow-hidden ${esMovil ? 'fixed inset-y-0 right-0 z-[60] shadow-2xl' : ''} ${
         modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
       }`}
     >

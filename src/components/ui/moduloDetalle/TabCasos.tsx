@@ -109,7 +109,7 @@ export function TabCasos({ moduloId, briefs, clases, modoOscuro }: { moduloId: s
 
       {mostrarForm && (
         <div className={`p-4 rounded-xl border mb-4 space-y-3 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <CampoTexto label="Carátula / rol" valor={campos.caratula} onChange={set('caratula')} modoOscuro={modoOscuro} placeholder="Ej: Rol 12.345-2023, Corte Suprema" />
             <CampoTexto label="Tribunal (opcional)" valor={campos.tribunal} onChange={set('tribunal')} modoOscuro={modoOscuro} />
           </div>
