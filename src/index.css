@@ -1,7 +1,6 @@
-@import url('https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css');
-/* Solo para Mapas mentales (.fuente-mapa-mental) — el resto de la app sigue
-   con la fuente del sistema, esto no es un cambio de tipografía global. */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+/* Íconos: <link> en index.html. La fuente Inter (solo Mapas mentales) la
+   pide MapasMentalesView al abrirse -- antes eran @import que bloqueaban el
+   primer pintado de TODA la app (C8). */
 @import "tailwindcss";
 
 /* === Paleta de acento (tema esmeralda por defecto) ===

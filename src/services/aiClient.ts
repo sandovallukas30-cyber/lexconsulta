@@ -10,7 +10,9 @@
 //
 // Todos los servicios (anthropic.ts, canvas.ts, situacion.ts) llaman a callMessages().
 
-import Anthropic from '@anthropic-ai/sdk'
+// El SDK solo se usa en desarrollo: se importa dinámicamente para que no
+// viaje (~144 KB) en el build de producción, que habla con /api/anthropic (C8).
+import type Anthropic from '@anthropic-ai/sdk'
 
 export interface MensajeMessages {
   role: 'user' | 'assistant'
@@ -31,7 +33,7 @@ export interface RespuestaMessages {
 
 let clienteDev: Anthropic | null = null
 
-function getClienteDev(): Anthropic {
+async function getClienteDev(): Promise<Anthropic> {
   if (clienteDev) return clienteDev
   const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY
   if (!apiKey) {
@@ -39,7 +41,8 @@ function getClienteDev(): Anthropic {
       'Falta VITE_ANTHROPIC_API_KEY en .env (solo necesaria en desarrollo local).'
     )
   }
-  clienteDev = new Anthropic({ apiKey, dangerouslyAllowBrowser: true })
+  const { default: SDK } = await import('@anthropic-ai/sdk')
+  clienteDev = new SDK({ apiKey, dangerouslyAllowBrowser: true })
   return clienteDev
 }
 
@@ -90,6 +93,6 @@ export async function callMessages(
   }
 
   // Desarrollo: SDK directo
-  const res = await getClienteDev().messages.create(payload)
+  const res = await (await getClienteDev()).messages.create(payload)
   return res as unknown as RespuestaMessages
 }

@@ -172,8 +172,9 @@ export function ConsultarView() {
           </div>
           {!cargando && (
             <div
-              className={`text-[10px] mt-2 text-center space-x-2 ${
-                modoOscuro ? 'text-zinc-600' : 'text-zinc-400'
+              // contraste AA (antes zinc-400/600: 2,6:1, lo marcaba Lighthouse)
+              className={`text-[11px] mt-2 text-center space-x-2 ${
+                modoOscuro ? 'text-zinc-400' : 'text-zinc-500'
               }`}
             >
               <span>Prima Lex es orientación jurídica, no reemplaza el asesoramiento profesional ·</span>
@@ -283,8 +284,8 @@ function EnlaceLegal({
     <button
       type="button"
       onClick={() => abrirAcerca(pestana)}
-      className={`underline-offset-2 hover:underline ${
-        modoOscuro ? 'hover:text-zinc-300' : 'hover:text-zinc-700'
+      className={`underline underline-offset-2 sin-tactil ${
+        modoOscuro ? 'hover:text-zinc-200' : 'hover:text-zinc-800'
       }`}
     >
       {children}

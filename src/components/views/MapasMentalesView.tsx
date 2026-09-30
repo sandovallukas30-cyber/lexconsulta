@@ -31,6 +31,16 @@ import { eliminarMapaMentalConDeshacer } from '../../services/deshacer'
 import type { MapaMental, NodoMapaMental, ConexionMapaMental, FormaNodoMental, TamanoTextoMental } from '../../types'
 import { MAPAS_MENTALES_PLANTILLA } from '../../data/mapasMentalesPlantilla'
 
+// Inter solo para Mapas mentales (.fuente-mapa-mental): se pide al cargar
+// esta vista, no en el arranque de la app (C8).
+if (typeof document !== 'undefined' && !document.getElementById('fuente-inter')) {
+  const link = document.createElement('link')
+  link.id = 'fuente-inter'
+  link.rel = 'stylesheet'
+  link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
+  document.head.appendChild(link)
+}
+
 const VERDE = 'var(--accent-base)'
 /** Paleta CON significado fijo, no un selector de color libre: la idea es
  * que el color en sí diga algo al repasar el mapa de un vistazo, igual que

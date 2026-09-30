@@ -2,21 +2,9 @@ import { Sidebar } from './components/layout/Sidebar'
 import { Topbar } from './components/layout/Topbar'
 import { ModalPerfil } from './components/ui/ModalPerfil'
 import { ModalRegistro } from './components/ui/ModalRegistro'
-import { ConsultarView } from './components/views/ConsultarView'
-import { SituacionView } from './components/views/SituacionView'
-import { ModulosView } from './components/views/ModulosView'
-import { CanvasView } from './components/views/CanvasView'
-import { MapaView } from './components/views/MapaView'
-import { ExploradorView } from './components/views/ExploradorView'
-import { ColeccionesView, ModalConfirmarImportacion } from './components/views/ColeccionesView'
 import { PARAM_IMPORTAR, decodificarColeccion } from './services/compartirColeccion'
 import type { ColeccionCompartida } from './types'
-import { MapasMentalesView } from './components/views/MapasMentalesView'
-import { HistorialView } from './components/views/HistorialView'
-import { AdminView } from './components/views/AdminView'
-import { PracticaView } from './components/views/PracticaView'
-import { PlazosView } from './components/views/PlazosView'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { useStore } from './store/useStore'
 import { avisar } from './store/useAvisos'
@@ -26,21 +14,17 @@ import { PanelAtajos } from './components/ui/PanelAtajos'
 import { Avisos } from './components/ui/Avisos'
 import { RightSidebar } from './components/layout/RightSidebar'
 import { esAdmin } from './config/admin'
-import type { VistaId } from './types'
+import { vistas } from './vistas'
+import { LimiteError } from './components/ui/LimiteError'
 
-const vistas: Record<VistaId, React.ComponentType> = {
-  consultar: ConsultarView,
-  situacion: SituacionView,
-  modulos: ModulosView,
-  canvas: CanvasView,
-  mapa: MapaView,
-  explorador: ExploradorView,
-  colecciones: ColeccionesView,
-  mapasmentales: MapasMentalesView,
-  historial: HistorialView,
-  admin: AdminView,
-  practica: PracticaView,
-  plazos: PlazosView,
+// solo se descarga si alguien abre un enlace para importar una colección
+const ModalConfirmarImportacion = lazy(() =>
+  import('./components/views/ColeccionesView').then((m) => ({ default: m.ModalConfirmarImportacion }))
+)
+
+/** Mientras baja el chunk de la vista: el mismo fondo, sin saltos. */
+function CargandoVista({ modoOscuro }: { modoOscuro: boolean }) {
+  return <div className={`h-full ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`} aria-busy="true" aria-label="Cargando" />
 }
 
 function App() {
@@ -115,7 +99,11 @@ function App() {
         <Topbar onAbrirRegistro={() => setModalRegistroAbierto(true)} />
         <div className="flex-1 flex overflow-hidden">
           <main className="flex-1 overflow-y-auto">
-            <VistaComponente />
+            <LimiteError key={vistaActiva} modoOscuro={modoOscuro}>
+              <Suspense fallback={<CargandoVista modoOscuro={modoOscuro} />}>
+                <VistaComponente />
+              </Suspense>
+            </LimiteError>
           </main>
           <RightSidebar />
         </div>
@@ -128,6 +116,7 @@ function App() {
         {omnibarAbierto && <Omnibar onClose={() => setOmnibarAbierto(false)} />}
       </AnimatePresence>
       {coleccionParaImportar && (
+        <Suspense fallback={null}>
         <ModalConfirmarImportacion
           compartida={coleccionParaImportar}
           onCancelar={() => setColeccionParaImportar(null)}
@@ -139,6 +128,7 @@ function App() {
             setVistaActiva('colecciones')
           }}
         />
+        </Suspense>
       )}
     </div>
   )

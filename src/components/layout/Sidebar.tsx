@@ -1,3 +1,4 @@
+import { precargarVista } from '../../vistas'
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
@@ -299,6 +300,9 @@ function BotonNav({
       onClick={onClick}
       title={colapsado ? item.label : undefined}
       aria-current={activo ? 'page' : undefined}
+      // C8: bajar el código de la vista antes del clic (~100-300 ms antes)
+      onPointerEnter={() => precargarVista(item.id)}
+      onFocus={() => precargarVista(item.id)}
       className={`w-full min-h-control rounded-control text-sm font-medium transition-colors text-left relative flex items-center ${
         colapsado ? 'justify-center px-0' : 'gap-3 px-3'
       } ${
