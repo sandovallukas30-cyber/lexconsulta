@@ -1,5 +1,5 @@
 import { useStore } from '../store/useStore'
-import { silenciarAvisoGuardado, useEstadoGuardado } from '../store/almacenamiento'
+import { silenciarAvisoGuardado, useEstadoGuardado, vaciarEscrituraPendiente } from '../store/almacenamiento'
 import type {
   ApunteModulo,
   Coleccion,
@@ -281,8 +281,10 @@ export function aplicarRespaldo(respaldo: ArchivoRespaldo, modo: ModoImportacion
   useEstadoGuardado.setState({ error: null })
   silenciarAvisoGuardado()
   aplicarSinVerificar(respaldo, modo)
-  if (useEstadoGuardado.getState().error) {
+  // la escritura normal va agrupada (400 ms): acá hay que saber YA si cupo
+  if (vaciarEscrituraPendiente()) {
     useStore.setState(previo)
+    vaciarEscrituraPendiente()
     throw new Error('almacenamiento lleno')
   }
 }

@@ -43,7 +43,7 @@ Script: escribir 31 caracteres con 30 ms entre teclas y medir `PerformanceObserv
 |---|---|---|
 | Memo de la lista y caché de tarjetas | bajo | Implementada |
 | No analizar el lector oculto durante la edición | bajo | Implementada |
-| Escribir en `localStorage` con *debounce* (y *flush* en `pagehide`): hoy cada autoguardado serializa TODO el estado persistido | medio | Propuesta |
+| Escribir en `localStorage` agrupado (400 ms) y serializar solo al escribir, con escritura inmediata en `pagehide`/`visibilitychange` | medio | Implementada (commit "Mejora: B6") — verificado: un cambio hecho justo antes de recargar se conserva |
 | Guardar los apuntes en IndexedDB en vez de `localStorage` (sin límite de ~5 MB) | alto | Propuesta |
 
 Segunda pasada (4 hallazgos): se repitió la medición tras los cambios (tabla de arriba) y se probaron de nuevo Deshacer, mover, duplicar, repasar y abrir desde el buscador (scripts `t_b4`, `t_b5`, `t_buscar`): sin regresiones.
