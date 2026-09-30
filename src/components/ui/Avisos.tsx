@@ -17,7 +17,9 @@ export function Avisos() {
   return (
     <div
       aria-live="polite"
-      className="fixed bottom-4 inset-x-4 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 z-[120] flex flex-col items-center gap-2 pointer-events-none print:hidden"
+      // En móvil arriba: abajo están los botones de acción de modales y la
+      // barra del editor, y un aviso ahí los tapa justo cuando hacen falta.
+      className="fixed top-3 sm:top-auto sm:bottom-4 inset-x-4 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 z-[120] flex flex-col items-center gap-2 pointer-events-none print:hidden"
     >
       <AnimatePresence initial={false}>
         {avisos.map((a) => (

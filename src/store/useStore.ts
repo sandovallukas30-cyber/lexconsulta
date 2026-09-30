@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { almacenamientoPersistente } from './almacenamiento'
 import type { TemaColorId } from '../theme'
 import { JURISPRUDENCIA_SEED } from '../data/jurisprudenciaSeed'
 
@@ -1019,6 +1020,7 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'prima-lex-storage-v3',
+      storage: almacenamientoPersistente,
       version: 28,
       partialize: (s) => ({
         perfil: s.perfil,

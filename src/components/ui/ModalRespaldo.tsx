@@ -5,6 +5,7 @@ import { avisar } from '../../store/useAvisos'
 import {
   aplicarRespaldo,
   descargarRespaldo,
+  fechaUltimoRespaldo,
   resumenActual,
   validarRespaldo,
   type ArchivoRespaldo,
@@ -19,9 +20,10 @@ interface Props {
   onCerrar: () => void
 }
 
-function lineasResumen(r: ResumenRespaldo): string[] {
-  const n = (v: number, uno: string, varios: string) => `${v} ${v === 1 ? uno : varios}`
-  return [
+/** Solo los contadores > 0: "0 casos · 0 subrayados" es ruido. */
+function textoResumen(r: ResumenRespaldo): string {
+  const n = (v: number, uno: string, varios: string) => (v > 0 ? `${v} ${v === 1 ? uno : varios}` : '')
+  const partes = [
     n(r.ramos, 'ramo', 'ramos'),
     n(r.apuntes, 'apunte', 'apuntes'),
     n(r.clases, 'clase', 'clases'),
@@ -30,7 +32,15 @@ function lineasResumen(r: ResumenRespaldo): string[] {
     n(r.colecciones, 'colección', 'colecciones'),
     n(r.mapasMentales, 'mapa mental', 'mapas mentales'),
     n(r.subrayados, 'subrayado', 'subrayados'),
-  ]
+  ].filter(Boolean)
+  return partes.length > 0 ? partes.join(' · ') : 'nada todavía'
+}
+
+function haceCuanto(ms: number): string {
+  const dias = Math.floor((Date.now() - ms) / 86_400_000)
+  if (dias <= 0) return 'hoy'
+  if (dias === 1) return 'ayer'
+  return `hace ${dias} días`
 }
 
 /** Exportar / importar respaldo (B1). Nunca aplica nada sin que el usuario
@@ -43,6 +53,8 @@ export function ModalRespaldo({ onCerrar }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [modo, setModo] = useState<ModoImportacion>('combinar')
   const [copiaPrevia, setCopiaPrevia] = useState(true)
+  const [ultimo, setUltimo] = useState(fechaUltimoRespaldo)
+  const [arrastrando, setArrastrando] = useState(false)
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
@@ -55,15 +67,20 @@ export function ModalRespaldo({ onCerrar }: Props) {
   const exportar = () => {
     try {
       descargarRespaldo()
+      setUltimo(Date.now())
       avisar.exito('Respaldo descargado')
     } catch {
       avisar.error('No se pudo generar el respaldo.')
     }
   }
 
-  const elegirArchivo = async (e: ChangeEvent<HTMLInputElement>) => {
+  const elegirArchivo = (e: ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]
     e.target.value = ''
+    void leerArchivo(f)
+  }
+
+  const leerArchivo = async (f: File | undefined) => {
     setArchivo(null)
     setError(null)
     if (!f) return
@@ -88,7 +105,7 @@ export function ModalRespaldo({ onCerrar }: Props) {
       avisar.exito(modo === 'reemplazar' ? 'Datos reemplazados por el respaldo' : 'Respaldo combinado con tus datos')
       onCerrar()
     } catch {
-      avisar.error('No se pudo importar el respaldo. Tus datos no cambiaron.')
+      avisar.error('No se pudo importar: no hay espacio suficiente en el navegador. Tus datos no cambiaron.')
     }
   }
 
@@ -115,7 +132,19 @@ export function ModalRespaldo({ onCerrar }: Props) {
         exit={{ scale: 0.96, opacity: 0 }}
         transition={{ duration: 0.2 }}
         onClick={(e) => e.stopPropagation()}
-        className={`max-w-lg w-full max-h-[88vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col ${modoOscuro ? 'bg-zinc-900' : 'bg-white'}`}
+        onDragOver={(e) => {
+          e.preventDefault()
+          setArrastrando(true)
+        }}
+        onDragLeave={() => setArrastrando(false)}
+        onDrop={(e) => {
+          e.preventDefault()
+          setArrastrando(false)
+          void leerArchivo(e.dataTransfer.files?.[0])
+        }}
+        className={`max-w-lg w-full max-h-[88vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col ${modoOscuro ? 'bg-zinc-900' : 'bg-white'} ${
+          arrastrando ? 'ring-2 ring-[var(--accent-base)]' : ''
+        }`}
       >
         <div className={`px-5 sm:px-6 py-4 border-b flex items-center justify-between ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
           <h2 id="titulo-respaldo" className={`text-lg font-serif font-bold ${texto}`}>
@@ -139,7 +168,10 @@ export function ModalRespaldo({ onCerrar }: Props) {
           <section>
             <h3 className={`text-sm font-semibold mb-2 ${texto}`}>Exportar</h3>
             <div className={`rounded-xl border p-3 ${tarjeta}`}>
-              <p className={`text-xs ${suave}`}>Tienes ahora: {lineasResumen(actual).join(' · ')}.</p>
+              <p className={`text-xs ${suave}`}>Tienes ahora: {textoResumen(actual)}.</p>
+              <p className={`text-xs mt-1 ${ultimo && Date.now() - ultimo < 14 * 86_400_000 ? suave : 'text-amber-600'}`}>
+                {ultimo ? `Último respaldo desde este navegador: ${haceCuanto(ultimo)}.` : 'Nunca has descargado un respaldo desde este navegador.'}
+              </p>
               <button
                 onClick={exportar}
                 className="mt-3 inline-flex items-center gap-1.5 px-3 min-h-[40px] rounded-lg text-sm font-medium text-white"
@@ -153,6 +185,7 @@ export function ModalRespaldo({ onCerrar }: Props) {
 
           <section>
             <h3 className={`text-sm font-semibold mb-2 ${texto}`}>Importar</h3>
+            <p className={`text-xs mb-2 ${suave}`}>Elige el archivo .json o arrástralo a esta ventana.</p>
             <input ref={refArchivo} type="file" accept=".json,application/json" className="hidden" onChange={elegirArchivo} />
             <button
               onClick={() => refArchivo.current?.click()}
@@ -178,7 +211,7 @@ export function ModalRespaldo({ onCerrar }: Props) {
                     {fechaArchivo && !isNaN(fechaArchivo.getTime())
                       ? `Creado el ${fechaArchivo.toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' })}. `
                       : ''}
-                    Contiene: {lineasResumen(archivo.resumen).join(' · ')}.
+                    Contiene: {textoResumen(archivo.resumen)}.
                   </p>
                 </div>
 

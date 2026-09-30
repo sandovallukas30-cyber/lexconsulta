@@ -1,4 +1,5 @@
 import { useStore } from '../store/useStore'
+import { silenciarAvisoGuardado, useEstadoGuardado } from '../store/almacenamiento'
 import type {
   ApunteModulo,
   Coleccion,
@@ -91,6 +92,7 @@ export function descargarRespaldo(): ResumenRespaldo {
   // revocar en el siguiente tick: algunos navegadores cancelan la descarga
   // si la URL se revoca en el mismo ciclo del click
   window.setTimeout(() => URL.revokeObjectURL(url), 0)
+  registrarRespaldo()
   return resumirRespaldo(respaldo.datos)
 }
 
@@ -234,7 +236,50 @@ function combinarAcademicos(
   return out
 }
 
+const CLAVE_ULTIMO_RESPALDO = 'prima-lex-ultimo-respaldo'
+
+/** Fecha (epoch ms) de la última descarga de respaldo en este navegador. */
+export function fechaUltimoRespaldo(): number | null {
+  try {
+    const n = Number(localStorage.getItem(CLAVE_ULTIMO_RESPALDO))
+    return Number.isFinite(n) && n > 0 ? n : null
+  } catch {
+    return null
+  }
+}
+
+function registrarRespaldo() {
+  try {
+    localStorage.setItem(CLAVE_ULTIMO_RESPALDO, String(Date.now()))
+  } catch {
+    // sin almacenamiento: solo se pierde el recordatorio
+  }
+}
+
+/** Aplica el respaldo. Si la escritura en localStorage falla (cuota llena),
+ *  restaura lo que había en memoria y lanza: así "no cambió nada" es verdad
+ *  y no queda una versión en pantalla que se perdería al recargar. */
 export function aplicarRespaldo(respaldo: ArchivoRespaldo, modo: ModoImportacion) {
+  const s = useStore.getState()
+  const previo = {
+    ramos: s.ramos,
+    academicoModulos: s.academicoModulos,
+    progresoModulos: s.progresoModulos,
+    diasActividadEstudio: s.diasActividadEstudio,
+    colecciones: s.colecciones,
+    subrayados: s.subrayados,
+    mapasMentales: s.mapasMentales,
+  }
+  useEstadoGuardado.setState({ error: null })
+  silenciarAvisoGuardado()
+  aplicarSinVerificar(respaldo, modo)
+  if (useEstadoGuardado.getState().error) {
+    useStore.setState(previo)
+    throw new Error('almacenamiento lleno')
+  }
+}
+
+function aplicarSinVerificar(respaldo: ArchivoRespaldo, modo: ModoImportacion) {
   const d = respaldo.datos
   if (modo === 'reemplazar') {
     useStore.setState({
