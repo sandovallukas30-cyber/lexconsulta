@@ -234,6 +234,13 @@ interface AppState {
   moduloActivoId: string | null
   setModuloActivo: (id: string | null) => void
 
+  /** Apunte a abrir en Modo Lectura la próxima vez que se monte su pestaña
+   *  (desde el buscador del Omnibar). No persistido; se consume y se limpia.
+   *  `resaltar` = texto buscado, para saltar a la primera coincidencia. */
+  apuntePendiente: { moduloId: string; apunteId: string; resaltar?: string } | null
+  abrirApunte: (moduloId: string, apunteId: string, resaltar?: string) => void
+  limpiarApuntePendiente: () => void
+
   /** Espacio de estudio personal por Módulo: clases, evaluaciones,
    * bibliografía y apuntes propios del usuario -- vacío por defecto, sin
    * datos de fábrica. Cada setter reemplaza la lista completa; el
@@ -370,6 +377,7 @@ export const useStore = create<AppState>()(
       fechaConsultas: null,
       progresoModulos: {},
       moduloActivoId: null,
+      apuntePendiente: null,
       academicoModulos: {},
       ramos: [],
       diasActividadEstudio: [],
@@ -966,6 +974,9 @@ export const useStore = create<AppState>()(
           }
         }),
       setModuloActivo: (id) => set({ moduloActivoId: id }),
+      abrirApunte: (moduloId, apunteId, resaltar) =>
+        set({ vistaActiva: 'modulos', moduloActivoId: moduloId, apuntePendiente: { moduloId, apunteId, resaltar } }),
+      limpiarApuntePendiente: () => set({ apuntePendiente: null }),
       setClasesModulo: (moduloId, clases) =>
         set((s) => ({
           academicoModulos: {

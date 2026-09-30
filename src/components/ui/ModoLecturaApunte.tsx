@@ -6,6 +6,7 @@ import { useWakeLock } from '../../hooks/useWakeLock'
 import { TAMANOS_FUENTE, TEMAS_LECTURA } from '../../services/lecturaTema'
 import { encabezadosDe, parsearApunte, textoPlanoDe, tieneEstructuraAncha } from '../../services/apunteFormato'
 import { ApunteContenido } from './ApunteContenido'
+import { normalizarConMapa, normalizarConsulta } from '../../services/buscarApuntes'
 import { NotasMargen } from './NotasMargen'
 import type { ApunteModulo, SesionClase, CuadernoApuntes } from '../../types'
 
@@ -49,6 +50,8 @@ interface Props {
   onCambiar: (cambios: CambiosApunte) => void
   /** Abrir directo en el editor visual (el lápiz de la lista) en vez de en lectura. */
   editarAlAbrir?: boolean
+  /** Texto buscado en el Omnibar: al abrir, saltar a su primera aparición. */
+  resaltarAlAbrir?: string
 }
 
 /**
@@ -66,11 +69,11 @@ interface Props {
  * Notion): índice de títulos para saltar de sección, barra de progreso, y
  * recuerda por apunte hasta dónde llegaste y qué tamaño de letra usás.
  */
-export function ModoLecturaApunte({ abierto, apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, editarAlAbrir = false }: Props) {
+export function ModoLecturaApunte({ abierto, apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, editarAlAbrir = false, resaltarAlAbrir }: Props) {
   return (
     <AnimatePresence>
       {abierto && apunte && (
-        <LectorApunte key={apunte.id} apunte={apunte} clase={clase} cuaderno={cuaderno} onCerrar={onCerrar} onEditar={onEditar} onCambiar={onCambiar} editarAlAbrir={editarAlAbrir} />
+        <LectorApunte key={apunte.id} apunte={apunte} clase={clase} cuaderno={cuaderno} onCerrar={onCerrar} onEditar={onEditar} onCambiar={onCambiar} editarAlAbrir={editarAlAbrir} resaltar={resaltarAlAbrir} />
       )}
     </AnimatePresence>
   )
@@ -84,11 +87,31 @@ interface PropsLector {
   onEditar: () => void
   onCambiar: (cambios: CambiosApunte) => void
   editarAlAbrir: boolean
+  resaltar?: string
+}
+
+/** Primera aparición de `consulta` (sin tildes ni mayúsculas) dentro de
+ *  `raiz`, como Range del DOM -- busca nodo de texto por nodo de texto. */
+function rangoDeCoincidencia(raiz: HTMLElement, consulta: string): Range | null {
+  const palabra = normalizarConsulta(consulta)[0]
+  if (!palabra) return null
+  const walker = document.createTreeWalker(raiz, NodeFilter.SHOW_TEXT)
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    const texto = n.textContent ?? ''
+    const { norm, mapa } = normalizarConMapa(texto)
+    const i = norm.indexOf(palabra)
+    if (i < 0) continue
+    const rango = document.createRange()
+    rango.setStart(n, mapa[i])
+    rango.setEnd(n, mapa[i + palabra.length - 1] + 1)
+    return rango
+  }
+  return null
 }
 
 // Se monta al abrir y se desmonta al cerrar: así el índice, el progreso y la
 // voz arrancan limpios en cada apunte sin tener que resetear estado a mano.
-function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, editarAlAbrir }: PropsLector) {
+function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, editarAlAbrir, resaltar }: PropsLector) {
   const [indiceTamano, setIndiceTamano] = useState(tamanoInicial)
   const [editando, setEditando] = useState(editarAlAbrir)
   const [columna, setColumna] = useState<HTMLElement | null>(null)
@@ -123,6 +146,7 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
   // Al abrir un apunte: volver a donde se había quedado leyendo.
   const id = apunte.id
   useEffect(() => {
+    if (resaltar) return // viene del buscador: manda la coincidencia, no la última posición
     const guardado = Number(leerLocal(CLAVE_SCROLL + id))
     const raf = requestAnimationFrame(() => {
       const el = scrollRef.current
@@ -130,7 +154,30 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
       el.scrollTop = guardado * (el.scrollHeight - el.clientHeight)
     })
     return () => cancelAnimationFrame(raf)
-  }, [id])
+  }, [id, resaltar])
+
+  // Saltar a la primera coincidencia del texto buscado y marcarla (CSS
+  // Custom Highlight API; si el navegador no la tiene, queda seleccionada).
+  useEffect(() => {
+    if (!resaltar || !raiz) return
+    const raf = requestAnimationFrame(() => {
+      const rango = rangoDeCoincidencia(raiz, resaltar)
+      if (!rango) return
+      ;(rango.startContainer.parentElement ?? raiz).scrollIntoView({ block: 'center' })
+      const api = (globalThis as { CSS?: { highlights?: Map<string, unknown> } }).CSS?.highlights
+      const Resaltado = (globalThis as { Highlight?: new (r: Range) => unknown }).Highlight
+      if (api && Resaltado) api.set('prima-busqueda', new Resaltado(rango))
+      else {
+        const sel = window.getSelection()
+        sel?.removeAllRanges()
+        sel?.addRange(rango)
+      }
+    })
+    return () => {
+      cancelAnimationFrame(raf)
+      ;(globalThis as { CSS?: { highlights?: Map<string, unknown> } }).CSS?.highlights?.delete('prima-busqueda')
+    }
+  }, [resaltar, raiz])
 
   const alHacerScroll = useCallback(() => {
     const el = scrollRef.current

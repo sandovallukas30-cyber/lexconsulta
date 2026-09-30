@@ -1,4 +1,4 @@
-import { useRef, useState, type ChangeEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { useStore } from '../../../store/useStore'
 import { eliminarDeListaConDeshacer } from '../../../services/deshacer'
 import { ModoLecturaApunte } from '../ModoLecturaApunte'
@@ -41,6 +41,20 @@ export function TabApuntes({
   const [errorImportar, setErrorImportar] = useState<string | null>(null)
   const [avisoImportar, setAvisoImportar] = useState<string | null>(null)
   const [importando, setImportando] = useState<string | null>(null)
+  const [resaltarAlAbrir, setResaltarAlAbrir] = useState<string | undefined>(undefined)
+  const apuntePendiente = useStore((s) => s.apuntePendiente)
+  const limpiarApuntePendiente = useStore((s) => s.limpiarApuntePendiente)
+
+  // Apunte pedido desde el buscador (Omnibar): abrirlo en Modo Lectura.
+  useEffect(() => {
+    if (!apuntePendiente || apuntePendiente.moduloId !== moduloId) return
+    const a = apuntes.find((x) => x.id === apuntePendiente.apunteId)
+    limpiarApuntePendiente()
+    if (!a) return
+    setEditarAlAbrir(false)
+    setResaltarAlAbrir(apuntePendiente.resaltar)
+    setApunteLeyendo(a)
+  }, [apuntePendiente, moduloId, apuntes, limpiarApuntePendiente])
 
   const ordenados = [...apuntes].sort((a, b) => b.fechaModificacion - a.fechaModificacion)
   const filtrados = ordenados.filter((a) => {
@@ -342,7 +356,11 @@ export function TabApuntes({
         clase={apunteLeyendo?.claseId ? clases.find((c) => c.id === apunteLeyendo.claseId) : undefined}
         cuaderno={apunteLeyendo?.cuadernoId ? cuadernos.find((c) => c.id === apunteLeyendo.cuadernoId) : undefined}
         editarAlAbrir={editarAlAbrir}
-        onCerrar={() => setApunteLeyendo(null)}
+        resaltarAlAbrir={resaltarAlAbrir}
+        onCerrar={() => {
+          setApunteLeyendo(null)
+          setResaltarAlAbrir(undefined)
+        }}
         onEditar={() => apunteLeyendo && iniciarEdicion(apunteLeyendo)}
         onCambiar={(cambios) => apunteLeyendo && actualizarApunte(apunteLeyendo.id, cambios)}
       />

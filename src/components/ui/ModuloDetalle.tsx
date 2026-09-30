@@ -8,7 +8,7 @@ import { TabExamenes } from './moduloDetalle/TabExamenes'
 import { TabTextos } from './moduloDetalle/TabTextos'
 import { TabApuntes } from './moduloDetalle/TabApuntes'
 import { TabCasos } from './moduloDetalle/TabCasos'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export type { Tab }
 
@@ -35,7 +35,12 @@ interface Props {
 }
 
 export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEditar }: Props) {
-  const [tab, setTab] = useState<Tab>(tabInicial ?? 'resumen')
+  const apuntePendiente = useStore((s) => s.apuntePendiente)
+  const [tab, setTab] = useState<Tab>(apuntePendiente?.moduloId === modulo.id ? 'apuntes' : tabInicial ?? 'resumen')
+  // Abrir un apunte desde el buscador con este módulo ya montado en otra pestaña
+  useEffect(() => {
+    if (apuntePendiente?.moduloId === modulo.id) setTab('apuntes')
+  }, [apuntePendiente, modulo.id])
   const setCodigoExplorador = useStore((s) => s.setCodigoExplorador)
   const setVistaActiva = useStore((s) => s.setVistaActiva)
   const setColeccionActiva = useStore((s) => s.setColeccionActiva)

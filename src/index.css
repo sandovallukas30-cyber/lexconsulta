@@ -71,6 +71,9 @@ html, body, #root { height: 100%; width: 100%; overflow: hidden; }
   .imprimir-coleccion, .imprimir-codigo, .imprimir-mapa-mental-svg { display: block; width: 100%; }
 }
 
+/* Coincidencia del buscador de apuntes (Omnibar → Modo Lectura) */
+::highlight(prima-busqueda) { background-color: #fde047; color: #1c1917; }
+
 /* Scrollbar custom — claro */
 *::-webkit-scrollbar { width: 10px; height: 10px; }
 *::-webkit-scrollbar-track { background: transparent; }
