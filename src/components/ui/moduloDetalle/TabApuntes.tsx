@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { useStore } from '../../../store/useStore'
 import { eliminarDeListaConDeshacer } from '../../../services/deshacer'
 import { ModoLecturaApunte } from '../ModoLecturaApunte'
@@ -7,6 +7,8 @@ import { resumenDe } from '../../../services/apunteFormato'
 import { markdownAApunte } from '../../../services/apunteArchivo'
 import { duplicarApunte } from '../../../services/accionesApunte'
 import { MenuAccionesApunte, ModalMoverApunte } from './AccionesApunte'
+import { RepasoApunte } from '../RepasoApunte'
+import { estaPendiente, generarTarjetas } from '../../../services/tarjetasApunte'
 import { AnimatePresence } from 'framer-motion'
 import { convertirPdfNotion } from '../../../services/notionPdf/importarPdfNotion'
 import type { ApunteModulo, CuadernoApuntes, SesionClase } from '../../../types'
@@ -47,6 +49,10 @@ export function TabApuntes({
   const [importando, setImportando] = useState<string | null>(null)
   const [resaltarAlAbrir, setResaltarAlAbrir] = useState<string | undefined>(undefined)
   const [moviendo, setMoviendo] = useState<ApunteModulo | null>(null)
+  const [repasando, setRepasando] = useState<ApunteModulo | null>(null)
+  const repasoApuntes = useStore((s) => s.repasoApuntes)
+  // Tarjetas por apunte (se recalcula solo cuando cambian los apuntes)
+  const tarjetasPorApunte = useMemo(() => new Map(apuntes.map((a) => [a.id, generarTarjetas(a)])), [apuntes])
   const apuntePendiente = useStore((s) => s.apuntePendiente)
   const limpiarApuntePendiente = useStore((s) => s.limpiarApuntePendiente)
 
@@ -351,6 +357,24 @@ export function TabApuntes({
                     >
                       <i className="ti ti-pencil text-sm" />
                     </button>
+                    {(() => {
+                      const ts = tarjetasPorApunte.get(a.id) ?? []
+                      if (ts.length === 0) return null
+                      const pendientes = ts.filter((t) => estaPendiente(repasoApuntes[t.id])).length
+                      return (
+                        <button
+                          onClick={() => setRepasando(a)}
+                          title={`Repasar ${ts.length} tarjeta${ts.length === 1 ? '' : 's'} (${pendientes} para hoy)`}
+                          aria-label={`Repasar "${a.titulo}": ${ts.length} tarjetas, ${pendientes} para hoy`}
+                          className={`inline-flex items-center gap-1 px-2 min-h-[40px] sm:min-h-[28px] rounded-md text-xs font-medium ${
+                            modoOscuro ? 'text-zinc-300 hover:bg-zinc-700' : 'text-zinc-600 hover:bg-zinc-100'
+                          }`}
+                        >
+                          <i className="ti ti-cards text-sm" style={{ color: pendientes > 0 ? VERDE : undefined }} />
+                          {pendientes > 0 ? pendientes : ts.length}
+                        </button>
+                      )
+                    })()}
                     <MenuAccionesApunte
                       apunte={a}
                       onDuplicar={() => duplicarApunte(moduloId, a)}
@@ -369,6 +393,9 @@ export function TabApuntes({
         </div>
       )}
 
+      <AnimatePresence>
+        {repasando && <RepasoApunte apunte={repasando} onCerrar={() => setRepasando(null)} />}
+      </AnimatePresence>
       <AnimatePresence>
         {moviendo && <ModalMoverApunte moduloId={moduloId} apunte={moviendo} onCerrar={() => setMoviendo(null)} modoOscuro={modoOscuro} />}
       </AnimatePresence>

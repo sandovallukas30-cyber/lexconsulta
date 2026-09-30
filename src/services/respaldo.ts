@@ -4,6 +4,7 @@ import type {
   ApunteModulo,
   Coleccion,
   DatosAcademicosModulo,
+  EstadoTarjetaRepaso,
   MapaMental,
   ProgresoModulo,
   Ramo,
@@ -28,6 +29,8 @@ export interface DatosRespaldo {
   colecciones: Coleccion[]
   subrayados: Record<string, string[]>
   mapasMentales: MapaMental[]
+  /** Progreso del repaso de tarjetas de apuntes (desde persist v30). */
+  repasoApuntes: Record<string, EstadoTarjetaRepaso>
 }
 
 export interface ArchivoRespaldo {
@@ -70,6 +73,7 @@ export function crearRespaldo(): ArchivoRespaldo {
       colecciones: s.colecciones,
       subrayados: s.subrayados,
       mapasMentales: s.mapasMentales,
+      repasoApuntes: s.repasoApuntes,
     },
   }
 }
@@ -154,6 +158,8 @@ export function validarRespaldo(texto: string): ResultadoValidacion {
   if (d.subrayados !== undefined && !(esObjeto(d.subrayados) && Object.values(d.subrayados).every((v) => listaValida(v, esTexto))))
     problemas.push('subrayados')
   if (d.mapasMentales !== undefined && !listaValida(d.mapasMentales, mapaValido)) problemas.push('mapas mentales')
+  if (d.repasoApuntes !== undefined && !(esObjeto(d.repasoApuntes) && Object.values(d.repasoApuntes).every((e) => esObjeto(e) && typeof e.caja === 'number' && typeof e.proximo === 'number')))
+    problemas.push('repaso de tarjetas')
   if (problemas.length > 0) {
     return { ok: false, error: `El respaldo está dañado o incompleto (${problemas.join(', ')}). No se importó nada.` }
   }
@@ -177,6 +183,7 @@ export function validarRespaldo(texto: string): ResultadoValidacion {
     colecciones: (d.colecciones as Coleccion[]) ?? [],
     subrayados: (d.subrayados as Record<string, string[]>) ?? {},
     mapasMentales: (d.mapasMentales as MapaMental[]) ?? [],
+    repasoApuntes: (d.repasoApuntes as Record<string, EstadoTarjetaRepaso>) ?? {},
   }
   const respaldo: ArchivoRespaldo = { app: MARCA_APP, version: crudo.version, fecha: esTexto(crudo.fecha) ? crudo.fecha : '', datos }
   return { ok: true, respaldo, resumen: resumirRespaldo(datos) }
@@ -269,6 +276,7 @@ export function aplicarRespaldo(respaldo: ArchivoRespaldo, modo: ModoImportacion
     colecciones: s.colecciones,
     subrayados: s.subrayados,
     mapasMentales: s.mapasMentales,
+    repasoApuntes: s.repasoApuntes,
   }
   useEstadoGuardado.setState({ error: null })
   silenciarAvisoGuardado()
@@ -290,6 +298,7 @@ function aplicarSinVerificar(respaldo: ArchivoRespaldo, modo: ModoImportacion) {
       colecciones: d.colecciones,
       subrayados: d.subrayados,
       mapasMentales: d.mapasMentales,
+      repasoApuntes: d.repasoApuntes,
       moduloActivoId: null,
       coleccionActivaId: null,
       mapaMentalActivoId: null,
@@ -310,5 +319,6 @@ function aplicarSinVerificar(respaldo: ArchivoRespaldo, modo: ModoImportacion) {
     colecciones: unirPorId(s.colecciones, d.colecciones),
     subrayados,
     mapasMentales: unirPorId(s.mapasMentales, d.mapasMentales),
+    repasoApuntes: { ...d.repasoApuntes, ...s.repasoApuntes },
   })
 }

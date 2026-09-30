@@ -48,7 +48,9 @@ import type {
   Ramo,
   BriefCaso,
   CodigoTipo,
+  EstadoTarjetaRepaso,
 } from '../types'
+import { siguienteEstado } from '../services/tarjetasApunte'
 import { agregarActividadHoy } from '../services/actividadEstudio'
 import { aplicarResultadoPracticaATodos, aplicarResultadoQuizATodos } from '../services/progresoModulos'
 
@@ -274,6 +276,10 @@ interface AppState {
    *  "Hoy" (ver services/actividadEstudio.ts); no es un registro fino de
    *  qué se hizo, solo de qué días hubo actividad. */
   diasActividadEstudio: string[]
+
+  /** Progreso del repaso de tarjetas de apuntes (B5), por id de tarjeta. */
+  repasoApuntes: Record<string, EstadoTarjetaRepaso>
+  registrarRepasoTarjeta: (id: string, resultado: 'sabia' | 'no_sabia') => void
 }
 
 const datosAcademicosVacios: DatosAcademicosModulo = { clases: [], evaluaciones: [], textos: [], apuntes: [], cuadernos: [], briefs: [] }
@@ -381,6 +387,7 @@ export const useStore = create<AppState>()(
       academicoModulos: {},
       ramos: [],
       diasActividadEstudio: [],
+      repasoApuntes: {},
 
       setPerfil: (perfil) => set({ perfil, modalPerfilAbierto: false }),
       setVistaActiva: (vistaActiva) =>
@@ -1050,6 +1057,11 @@ export const useStore = create<AppState>()(
           ramos: s.ramos.some((r) => r.id === ramo.id) ? s.ramos : [...s.ramos, ramo],
           academicoModulos: datos ? { ...s.academicoModulos, [ramo.id]: datos } : s.academicoModulos,
         })),
+      registrarRepasoTarjeta: (id, resultado) =>
+        set((s) => ({
+          repasoApuntes: { ...s.repasoApuntes, [id]: siguienteEstado(s.repasoApuntes[id], resultado) },
+          diasActividadEstudio: agregarActividadHoy(s.diasActividadEstudio),
+        })),
       restaurarColeccion: (coleccion) =>
         set((s) => ({
           colecciones: s.colecciones.some((c) => c.id === coleccion.id) ? s.colecciones : [coleccion, ...s.colecciones],
@@ -1062,7 +1074,7 @@ export const useStore = create<AppState>()(
     {
       name: 'prima-lex-storage-v3',
       storage: almacenamientoPersistente,
-      version: 29,
+      version: 30,
       partialize: (s) => ({
         perfil: s.perfil,
         codigos: s.codigos,
@@ -1092,6 +1104,7 @@ export const useStore = create<AppState>()(
         academicoModulos: s.academicoModulos,
         ramos: s.ramos,
         diasActividadEstudio: s.diasActividadEstudio,
+        repasoApuntes: s.repasoApuntes,
       }),
       migrate: (persisted: unknown, version: number) => {
         // Las migraciones se ENCADENAN: cada bloque transforma `state` y el
@@ -1172,6 +1185,11 @@ export const useStore = create<AppState>()(
           // Sin esto, un usuario existente no las ve: su `codigos` persistido
           // no las trae y el merge de persist no agrega elementos a un array.
           resincronizarCodigos()
+        }
+        if (version < 30) {
+          // v30: repaso de tarjetas generadas desde los apuntes (B5).
+          const previo = state.repasoApuntes
+          state = { ...state, repasoApuntes: previo && typeof previo === 'object' && !Array.isArray(previo) ? previo : {} }
         }
         return state as never
       },

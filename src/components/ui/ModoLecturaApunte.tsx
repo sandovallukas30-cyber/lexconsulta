@@ -8,6 +8,8 @@ import { encabezadosDe, parsearApunte, textoPlanoDe, tieneEstructuraAncha } from
 import { ApunteContenido } from './ApunteContenido'
 import { normalizarConMapa, normalizarConsulta } from '../../services/buscarApuntes'
 import { descargarApunteMd } from '../../services/apunteArchivo'
+import { generarTarjetas } from '../../services/tarjetasApunte'
+import { RepasoApunte } from './RepasoApunte'
 import { NotasMargen } from './NotasMargen'
 import type { ApunteModulo, SesionClase, CuadernoApuntes } from '../../types'
 
@@ -123,6 +125,7 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
   const [raiz, setRaiz] = useState<HTMLElement | null>(null)
   const [indiceAbierto, setIndiceAbierto] = useState(false)
   const [progreso, setProgreso] = useState(0)
+  const [repasando, setRepasando] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const temporizadorScroll = useRef<number | undefined>(undefined)
   const temaLectura = useStore((s) => s.modoLecturaTema)
@@ -217,6 +220,7 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
 
   const colorTexto = temaLectura === 'oscuro' ? 'text-zinc-200' : temaLectura === 'papel' ? 'text-[#3a2c1a]' : 'text-zinc-800'
   const hayIndice = encabezados.length >= 3
+  const nTarjetas = useMemo(() => (editando ? 0 : generarTarjetas(apunte).length), [apunte, editando])
 
   return (
     <motion.div
@@ -268,6 +272,20 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
               <i className="ti ti-pencil text-sm" />
               <span className="hidden sm:inline">Editar</span>
             </button>
+
+            {nTarjetas > 0 && (
+              <button
+                onClick={() => {
+                  voz.detener()
+                  setRepasando(true)
+                }}
+                title={`Repasar ${nTarjetas} tarjetas generadas desde este apunte`}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-shrink-0 ${tema.chipBg} ${tema.text} ${tema.chipHover}`}
+              >
+                <i className="ti ti-cards text-sm" />
+                <span className="hidden sm:inline">Repasar</span>
+              </button>
+            )}
 
             <button
               onClick={onEditar}
@@ -417,6 +435,7 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
           </div>
         </>
       )}
+      <AnimatePresence>{repasando && <RepasoApunte apunte={apunte} onCerrar={() => setRepasando(false)} />}</AnimatePresence>
     </motion.div>
   )
 }
