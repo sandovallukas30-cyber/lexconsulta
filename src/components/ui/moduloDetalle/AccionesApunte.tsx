@@ -18,7 +18,31 @@ export function MenuAccionesApunte({
   modoOscuro: boolean
 }) {
   const [abierto, setAbierto] = useState(false)
+  // Abrir hacia arriba si el menú no cabe bajo el botón (último apunte de la
+  // lista en un celular).
+  const [haciaArriba, setHaciaArriba] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const refMenu = useRef<HTMLDivElement>(null)
+
+  const alternar = () => {
+    if (!abierto) {
+      const r = ref.current?.getBoundingClientRect()
+      setHaciaArriba(!!r && window.innerHeight - r.bottom < 170)
+    }
+    setAbierto((v) => !v)
+  }
+
+  // Teclado: foco al primer ítem al abrir, flechas para moverse
+  useEffect(() => {
+    if (abierto) refMenu.current?.querySelector<HTMLButtonElement>('[role=menuitem]')?.focus()
+  }, [abierto])
+  const alTeclear = (e: React.KeyboardEvent) => {
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
+    e.preventDefault()
+    const items = [...(refMenu.current?.querySelectorAll<HTMLButtonElement>('[role=menuitem]') ?? [])]
+    const i = items.indexOf(document.activeElement as HTMLButtonElement)
+    items[(i + (e.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length]?.focus()
+  }
 
   useEffect(() => {
     if (!abierto) return
@@ -47,18 +71,20 @@ export function MenuAccionesApunte({
   return (
     <div ref={ref} className="relative">
       <button
-        onClick={() => setAbierto((v) => !v)}
+        onClick={alternar}
         aria-label={`Más acciones para "${apunte.titulo}"`}
         aria-haspopup="menu"
         aria-expanded={abierto}
-        className={`w-9 h-9 rounded-md flex items-center justify-center ${modoOscuro ? 'text-zinc-500 hover:bg-zinc-700 hover:text-zinc-200' : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700'}`}
+        className={`w-10 h-10 sm:w-9 sm:h-9 rounded-md flex items-center justify-center ${modoOscuro ? 'text-zinc-500 hover:bg-zinc-700 hover:text-zinc-200' : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700'}`}
       >
         <i className="ti ti-dots text-base" />
       </button>
       {abierto && (
         <div
+          ref={refMenu}
           role="menu"
-          className={`absolute right-0 top-full mt-1 z-20 w-52 py-1 rounded-xl border shadow-lg ${
+          onKeyDown={alTeclear}
+          className={`absolute right-0 ${haciaArriba ? 'bottom-full mb-1' : 'top-full mt-1'} z-20 w-52 py-1 rounded-xl border shadow-lg ${
             modoOscuro ? 'bg-zinc-800 border-zinc-700' : 'bg-white border-zinc-200'
           }`}
         >

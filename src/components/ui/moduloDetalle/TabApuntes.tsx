@@ -346,7 +346,8 @@ export function TabApuntes({
                         setApunteLeyendo(a)
                       }}
                       title="Editar"
-                      className={`w-7 h-7 rounded-md flex items-center justify-center ${modoOscuro ? 'text-zinc-500 hover:bg-zinc-700 hover:text-zinc-200' : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700'}`}
+                      aria-label={`Editar "${a.titulo}"`}
+                      className={`w-10 h-10 sm:w-7 sm:h-7 rounded-md flex items-center justify-center ${modoOscuro ? 'text-zinc-500 hover:bg-zinc-700 hover:text-zinc-200' : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700'}`}
                     >
                       <i className="ti ti-pencil text-sm" />
                     </button>

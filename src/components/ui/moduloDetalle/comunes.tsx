@@ -127,7 +127,8 @@ export function BotonEliminar({ onClick, modoOscuro }: { onClick: () => void; mo
     <button
       onClick={onClick}
       title="Eliminar"
-      className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 transition-colors ${
+      aria-label="Eliminar"
+      className={`w-10 h-10 sm:w-7 sm:h-7 rounded-md flex items-center justify-center flex-shrink-0 transition-colors ${
         modoOscuro ? 'text-zinc-500 hover:bg-zinc-700 hover:text-red-400' : 'text-zinc-400 hover:bg-zinc-100 hover:text-red-600'
       }`}
     >
