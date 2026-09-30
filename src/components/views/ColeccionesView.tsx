@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
+import { eliminarColeccionConDeshacer } from '../../services/deshacer'
 import { useCodigo } from '../../hooks/useCodigo'
 import { precargar, obtenerCodigo } from '../../services/codigos'
 import { COLECCIONES_PLANTILLA } from '../../data/coleccionesPlantilla'
@@ -120,7 +121,6 @@ function ListaColecciones() {
   const modoOscuro = useStore((s) => s.modoOscuro)
   const colecciones = useStore((s) => s.colecciones)
   const setColeccionActiva = useStore((s) => s.setColeccionActiva)
-  const eliminarColeccion = useStore((s) => s.eliminarColeccion)
   const importarColeccion = useStore((s) => s.importarColeccion)
   const [modalNueva, setModalNueva] = useState(false)
   const inputArchivoRef = useRef<HTMLInputElement>(null)
@@ -201,11 +201,7 @@ function ListaColecciones() {
                 coleccion={c}
                 delay={i * 0.03}
                 onAbrir={() => setColeccionActiva(c.id)}
-                onEliminar={() => {
-                  if (confirm(`¿Eliminar la colección "${c.titulo}"? Los artículos no se borran, solo esta agrupación.`)) {
-                    eliminarColeccion(c.id)
-                  }
-                }}
+                onEliminar={() => eliminarColeccionConDeshacer(c.id)}
                 modoOscuro={modoOscuro}
               />
             ))}
@@ -693,7 +689,6 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
   const modoOscuro = useStore((s) => s.modoOscuro)
   const setColeccionActiva = useStore((s) => s.setColeccionActiva)
   const renombrarColeccion = useStore((s) => s.renombrarColeccion)
-  const eliminarColeccion = useStore((s) => s.eliminarColeccion)
   const quitarArticulo = useStore((s) => s.quitarArticuloDeColeccion)
   const moverArticulo = useStore((s) => s.moverArticuloColeccion)
   const marcarEstado = useStore((s) => s.marcarEstadoArticulo)
@@ -958,11 +953,7 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
         )}
 
         <button
-          onClick={() => {
-            if (confirm(`¿Eliminar la colección "${coleccion.titulo}"?`)) {
-              eliminarColeccion(coleccion.id)
-            }
-          }}
+          onClick={() => eliminarColeccionConDeshacer(coleccion.id)}
           title="Eliminar colección"
           className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
             modoOscuro ? 'text-zinc-500 hover:bg-zinc-800 hover:text-red-400' : 'text-zinc-400 hover:bg-zinc-100 hover:text-red-500'

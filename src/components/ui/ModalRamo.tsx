@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
+import { eliminarRamoConDeshacer } from '../../services/deshacer'
 import { MODULOS } from '../../data/modulos'
 import { ICONO_RAMO_DEFECTO } from '../../services/modulosAcademico'
 import type { Ramo } from '../../types'
@@ -59,7 +60,6 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
   const modoOscuro = useStore((s) => s.modoOscuro)
   const crearRamo = useStore((s) => s.crearRamo)
   const actualizarRamo = useStore((s) => s.actualizarRamo)
-  const eliminarRamo = useStore((s) => s.eliminarRamo)
 
   const [campos, setCampos] = useState(() => estadoDesdeRamo(ramoEditando))
   const [modulosVinculados, setModulosVinculados] = useState<string[]>(ramoEditando?.modulosVinculados ?? [])
@@ -112,7 +112,7 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
   }
 
   const eliminar = () => {
-    if (ramoEditando) eliminarRamo(ramoEditando.id)
+    if (ramoEditando) eliminarRamoConDeshacer(ramoEditando.id)
     onCerrar()
   }
 

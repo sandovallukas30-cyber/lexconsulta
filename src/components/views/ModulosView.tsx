@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { AnimatePresence } from 'framer-motion'
+import { ModalRespaldo } from '../ui/ModalRespaldo'
 import { useStore } from '../../store/useStore'
 import { MODULOS } from '../../data/modulos'
 import { ModuloCard } from '../ui/ModuloCard'
@@ -175,6 +177,7 @@ export function ModulosView() {
   const [tabInicial, setTabInicial] = useState<Tab | undefined>(undefined)
   const [modalAbierto, setModalAbierto] = useState(false)
   const [ramoEditando, setRamoEditando] = useState<Ramo | null>(null)
+  const [respaldoAbierto, setRespaldoAbierto] = useState(false)
 
   const modulosOrdenados = [...MODULOS].sort((a, b) => a.orden - b.orden)
   const moduloDeCatalogo = moduloActivoId ? MODULOS.find((m) => m.id === moduloActivoId) : undefined
@@ -234,7 +237,7 @@ export function ModulosView() {
           >
             <i className="ti ti-layout-grid text-xl" style={{ color: VERDE }} />
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <h1 className={`text-2xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
               Módulos
             </h1>
@@ -242,6 +245,16 @@ export function ModulosView() {
               Selecciona un área del derecho para explorar sus contenidos y ver tu progreso
             </p>
           </div>
+          <button
+            onClick={() => setRespaldoAbierto(true)}
+            title="Exportar o importar un respaldo de tus ramos, apuntes, colecciones y mapas"
+            className={`flex-shrink-0 flex items-center gap-1.5 px-3 min-h-[40px] rounded-lg text-xs font-medium transition-colors ${
+              modoOscuro ? 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700' : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50'
+            }`}
+          >
+            <i className="ti ti-database-export text-sm" />
+            <span className="hidden sm:inline">Respaldo</span>
+          </button>
         </div>
 
         <div className="mt-8 space-y-8">
@@ -271,6 +284,7 @@ export function ModulosView() {
       </div>
 
       <ModalRamo abierto={modalAbierto} ramoEditando={ramoEditando} onCerrar={() => setModalAbierto(false)} />
+      <AnimatePresence>{respaldoAbierto && <ModalRespaldo onCerrar={() => setRespaldoAbierto(false)} />}</AnimatePresence>
     </div>
   )
 }

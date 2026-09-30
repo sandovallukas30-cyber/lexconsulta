@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useStore } from '../../../store/useStore'
+import { eliminarDeListaConDeshacer } from '../../../services/deshacer'
 import type { SesionClase } from '../../../types'
 import { VERDE, formatearFechaCorta } from './utilidades'
 import { BotonAgregar, BotonEliminar, BotonesFormulario, CampoTexto, EstadoVacio, FechaConCountdown } from './comunes'
@@ -47,7 +48,12 @@ export function TabClases({ moduloId, clases, modoOscuro }: { moduloId: string; 
   }
 
   const eliminar = (id: string) => {
-    setClasesModulo(moduloId, clases.filter((c) => c.id !== id))
+    eliminarDeListaConDeshacer(
+      id,
+      () => useStore.getState().academicoModulos[moduloId]?.clases ?? [],
+      (lista) => setClasesModulo(moduloId, lista),
+      'Clase eliminada'
+    )
   }
 
   return (

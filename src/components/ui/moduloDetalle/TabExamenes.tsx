@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useStore } from '../../../store/useStore'
+import { eliminarDeListaConDeshacer } from '../../../services/deshacer'
 import type { EvaluacionModulo } from '../../../types'
 import { calcularPonderacionTotal } from '../../../services/modulosAcademico'
 import { VERDE, formatearFechaCorta } from './utilidades'
@@ -88,7 +89,12 @@ export function TabExamenes({ moduloId, evaluaciones, modoOscuro }: { moduloId: 
   }
 
   const eliminar = (id: string) => {
-    setEvaluacionesModulo(moduloId, evaluaciones.filter((e) => e.id !== id))
+    eliminarDeListaConDeshacer(
+      id,
+      () => useStore.getState().academicoModulos[moduloId]?.evaluaciones ?? [],
+      (lista) => setEvaluacionesModulo(moduloId, lista),
+      'Evaluación eliminada'
+    )
   }
 
   const { promedioActual, ponderacionEvaluada, ponderacionPendiente, notaNecesaria } = calcularNotaNecesaria(evaluaciones, objetivoNum)

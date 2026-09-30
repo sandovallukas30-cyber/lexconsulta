@@ -21,6 +21,7 @@ import { AnimatePresence } from 'framer-motion'
 import { useStore } from './store/useStore'
 import { aplicarTema } from './theme'
 import { Omnibar } from './components/ui/Omnibar'
+import { Avisos } from './components/ui/Avisos'
 import { RightSidebar } from './components/layout/RightSidebar'
 import { esAdmin } from './config/admin'
 import type { VistaId } from './types'
@@ -112,6 +113,7 @@ function App() {
         </div>
       </div>
       <ModalPerfil />
+      <Avisos />
       <ModalRegistro abierto={modalRegistroAbierto} onCerrar={() => setModalRegistroAbierto(false)} />
       <AnimatePresence>
         {omnibarAbierto && <Omnibar onClose={() => setOmnibarAbierto(false)} />}

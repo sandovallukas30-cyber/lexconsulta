@@ -250,7 +250,15 @@ interface AppState {
   ramos: Ramo[]
   crearRamo: (ramo: Omit<Ramo, 'id'>) => string
   actualizarRamo: (id: string, cambios: Partial<Omit<Ramo, 'id'>>) => void
-  eliminarRamo: (id: string) => void
+  /** Elimina el Ramo Y sus datos académicos (clases, apuntes...) --
+   *  antes quedaban huérfanos en academicoModulos[ramo.id], sin forma de
+   *  llegar a ellos desde la UI. Devuelve lo borrado para poder deshacer. */
+  eliminarRamo: (id: string) => { ramo: Ramo; datos?: DatosAcademicosModulo } | null
+  /** Deshacer de eliminarRamo: vuelve a insertar el Ramo y sus datos. */
+  restaurarRamo: (ramo: Ramo, datos?: DatosAcademicosModulo) => void
+  /** Deshacer de eliminarColeccion / eliminarMapaMental: reinsertar tal cual. */
+  restaurarColeccion: (coleccion: Coleccion) => void
+  restaurarMapaMental: (mapa: MapaMental) => void
 
   /** Días (YYYY-MM-DD, hora local) en que hubo alguna actividad de estudio
    *  -- repasar una tarjeta, tocar el contenido académico de un módulo, o
@@ -291,7 +299,7 @@ const codigosIniciales: CodigoActivo[] = [
 
 export const useStore = create<AppState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       perfil: null,
       vistaActiva: 'consultar',
       codigos: codigosIniciales,
@@ -981,8 +989,33 @@ export const useStore = create<AppState>()(
       },
       actualizarRamo: (id, cambios) =>
         set((s) => ({ ramos: s.ramos.map((r) => (r.id === id ? { ...r, ...cambios } : r)) })),
-      eliminarRamo: (id) =>
-        set((s) => ({ ramos: s.ramos.filter((r) => r.id !== id) })),
+      eliminarRamo: (id) => {
+        const s = get()
+        const ramo = s.ramos.find((r) => r.id === id)
+        if (!ramo) return null
+        const datos = s.academicoModulos[id]
+        const academicoModulos = { ...s.academicoModulos }
+        delete academicoModulos[id]
+        set({
+          ramos: s.ramos.filter((r) => r.id !== id),
+          academicoModulos,
+          moduloActivoId: s.moduloActivoId === id ? null : s.moduloActivoId,
+        })
+        return { ramo, datos }
+      },
+      restaurarRamo: (ramo, datos) =>
+        set((s) => ({
+          ramos: s.ramos.some((r) => r.id === ramo.id) ? s.ramos : [...s.ramos, ramo],
+          academicoModulos: datos ? { ...s.academicoModulos, [ramo.id]: datos } : s.academicoModulos,
+        })),
+      restaurarColeccion: (coleccion) =>
+        set((s) => ({
+          colecciones: s.colecciones.some((c) => c.id === coleccion.id) ? s.colecciones : [coleccion, ...s.colecciones],
+        })),
+      restaurarMapaMental: (mapa) =>
+        set((s) => ({
+          mapasMentales: s.mapasMentales.some((m) => m.id === mapa.id) ? s.mapasMentales : [mapa, ...s.mapasMentales],
+        })),
     }),
     {
       name: 'prima-lex-storage-v3',
@@ -1018,19 +1051,24 @@ export const useStore = create<AppState>()(
         diasActividadEstudio: s.diasActividadEstudio,
       }),
       migrate: (persisted: unknown, version: number) => {
-        if (version < 3) {
-          const state = persisted as { codigos?: unknown }
-          return { ...(state ?? {}), codigos: codigosIniciales }
-        }
-        if (version < 23) {
-          // v11-22: refrescar metadatos. v23: incorporar PIDESC (pde) como
-          // tratado internacional cargado.
-          const state = persisted as { codigos?: CodigoActivo[] }
+        // Las migraciones se ENCADENAN: cada bloque transforma `state` y el
+        // siguiente parte de ese resultado. Antes cada `if` hacía `return`,
+        // así que un usuario que venía de una versión vieja recibía solo la
+        // primera migración aplicable y se saltaba las demás (p. ej. desde
+        // v25 se aplicaba v26 y nunca la resincronización de `codigos`).
+        // Para agregar una: sumar un bloque `if (version < N)` al final que
+        // reasigne `state`, y subir `version` arriba.
+        let state = (persisted ?? {}) as Record<string, unknown>
+
+        /** Reconstruye `codigos` desde codigosIniciales conservando el
+         *  activo/inactivo que el usuario había elegido en cada código. */
+        const resincronizarCodigos = () => {
           const prefs = new Map<string, boolean>()
-          if (Array.isArray(state.codigos)) {
-            for (const c of state.codigos) prefs.set(c.tipo, c.activo)
+          const previos = state.codigos
+          if (Array.isArray(previos)) {
+            for (const c of previos as CodigoActivo[]) prefs.set(c.tipo, c.activo)
           }
-          return {
+          state = {
             ...state,
             codigos: codigosIniciales.map((c) => ({
               ...c,
@@ -1038,15 +1076,23 @@ export const useStore = create<AppState>()(
             })),
           }
         }
+
+        if (version < 3) {
+          state = { ...state, codigos: codigosIniciales }
+        }
+        if (version < 23) {
+          // v11-22: refrescar metadatos. v23: incorporar PIDESC (pde) como
+          // tratado internacional cargado.
+          resincronizarCodigos()
+        }
         if (version < 24) {
           // v24: incorporar el lote inicial de jurisprudencia curada (DT +
           // Tribunal Ambiental). Se deduplica por id para no reinsertar si el
           // usuario ya la tenía (p. ej. tras una migración previa).
-          const state = persisted as { jurisprudencia?: EntradaJurisprudencia[] }
-          const existentes = Array.isArray(state.jurisprudencia) ? state.jurisprudencia : []
+          const existentes = Array.isArray(state.jurisprudencia) ? (state.jurisprudencia as EntradaJurisprudencia[]) : []
           const idsExistentes = new Set(existentes.map((j) => j.id))
           const nuevas = JURISPRUDENCIA_SEED.filter((j) => !idsExistentes.has(j.id))
-          return { ...state, jurisprudencia: [...nuevas, ...existentes] }
+          state = { ...state, jurisprudencia: [...nuevas, ...existentes] }
         }
         if (version < 26) {
           // v25: DatosAcademicosModulo incorpora `cuadernos`. v26: incorpora
@@ -1057,49 +1103,27 @@ export const useStore = create<AppState>()(
             cuadernos?: CuadernoApuntes[]
             briefs?: BriefCaso[]
           }
-          const state = persisted as { academicoModulos?: Record<string, DatosParciales> }
-          if (state.academicoModulos) {
+          const academicos = state.academicoModulos as Record<string, DatosParciales> | undefined
+          if (academicos) {
             const migrados: Record<string, DatosAcademicosModulo> = {}
-            for (const [id, datos] of Object.entries(state.academicoModulos)) {
+            for (const [id, datos] of Object.entries(academicos)) {
               migrados[id] = { ...datos, cuadernos: datos.cuadernos ?? [], briefs: datos.briefs ?? [] }
             }
-            return { ...state, academicoModulos: migrados }
+            state = { ...state, academicoModulos: migrados }
           }
         }
         if (version < 27) {
           // v27: incorpora Historia Legal Chilena (ensayos constitucionales
           // c23/c26/c28/c33 de 1823-1833) como nueva categoría del Explorador.
-          const state = persisted as { codigos?: CodigoActivo[] }
-          const prefs = new Map<string, boolean>()
-          if (Array.isArray(state.codigos)) {
-            for (const c of state.codigos) prefs.set(c.tipo, c.activo)
-          }
-          return {
-            ...state,
-            codigos: codigosIniciales.map((c) => ({
-              ...c,
-              activo: c.bloqueado ? true : prefs.get(c.tipo) ?? c.activo,
-            })),
-          }
+          resincronizarCodigos()
         }
         if (version < 28) {
           // v28: revierte Historia Legal Chilena del Explorador (c23/c26/c28/c33
           // se llevan a Apuntes en su lugar). Resincroniza 'codigos' contra
           // codigosIniciales, que ya no los incluye.
-          const state = persisted as { codigos?: CodigoActivo[] }
-          const prefs = new Map<string, boolean>()
-          if (Array.isArray(state.codigos)) {
-            for (const c of state.codigos) prefs.set(c.tipo, c.activo)
-          }
-          return {
-            ...state,
-            codigos: codigosIniciales.map((c) => ({
-              ...c,
-              activo: c.bloqueado ? true : prefs.get(c.tipo) ?? c.activo,
-            })),
-          }
+          resincronizarCodigos()
         }
-        return persisted as never
+        return state as never
       },
     }
   )

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useStore } from '../../../store/useStore'
+import { eliminarDeListaConDeshacer } from '../../../services/deshacer'
 import type { BriefCaso, SesionClase } from '../../../types'
 import { formatearFechaCorta } from './utilidades'
 import { BotonAgregar, BotonEliminar, BotonesFormulario, CampoArea, CampoSelectClase, CampoTexto, EstadoVacio, EtiquetaArticulo, EtiquetaClase } from './comunes'
@@ -86,7 +87,12 @@ export function TabCasos({ moduloId, briefs, clases, modoOscuro }: { moduloId: s
   }
 
   const eliminar = (id: string) => {
-    setBriefsModulo(moduloId, briefs.filter((b) => b.id !== id))
+    eliminarDeListaConDeshacer(
+      id,
+      () => useStore.getState().academicoModulos[moduloId]?.briefs ?? [],
+      (lista) => setBriefsModulo(moduloId, lista),
+      'Caso eliminado'
+    )
   }
 
   return (

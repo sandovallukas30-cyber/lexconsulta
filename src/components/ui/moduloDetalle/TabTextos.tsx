@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useStore } from '../../../store/useStore'
+import { eliminarDeListaConDeshacer } from '../../../services/deshacer'
 import type { SesionClase, TextoObligatorio } from '../../../types'
 import { VERDE } from './utilidades'
 import { BotonAgregar, BotonEliminar, BotonesFormulario, CampoSelectClase, CampoTexto, EstadoVacio, EtiquetaArticulo, EtiquetaClase } from './comunes'
@@ -61,7 +62,12 @@ export function TabTextos({ moduloId, textos, clases, modoOscuro }: { moduloId: 
   }
 
   const eliminar = (id: string) => {
-    setTextosModulo(moduloId, textos.filter((t) => t.id !== id))
+    eliminarDeListaConDeshacer(
+      id,
+      () => useStore.getState().academicoModulos[moduloId]?.textos ?? [],
+      (lista) => setTextosModulo(moduloId, lista),
+      'Texto eliminado'
+    )
   }
 
   return (

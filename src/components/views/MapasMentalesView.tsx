@@ -27,6 +27,7 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useStore } from '../../store/useStore'
+import { eliminarMapaMentalConDeshacer } from '../../services/deshacer'
 import type { MapaMental, NodoMapaMental, ConexionMapaMental, FormaNodoMental, TamanoTextoMental } from '../../types'
 import { MAPAS_MENTALES_PLANTILLA } from '../../data/mapasMentalesPlantilla'
 
@@ -119,7 +120,6 @@ export function MapasMentalesView() {
   const mapaActivoId = useStore((s) => s.mapaMentalActivoId)
   const crearMapaMental = useStore((s) => s.crearMapaMental)
   const actualizarMapaMental = useStore((s) => s.actualizarMapaMental)
-  const eliminarMapaMental = useStore((s) => s.eliminarMapaMental)
   const setMapaMentalActivo = useStore((s) => s.setMapaMentalActivo)
 
   const mapaActivo = useMemo(() => mapas.find((m) => m.id === mapaActivoId) ?? null, [mapas, mapaActivoId])
@@ -180,7 +180,7 @@ export function MapasMentalesView() {
           setMapaMentalActivo(id)
         }}
         onUsarPlantilla={usarPlantilla}
-        onEliminar={eliminarMapaMental}
+        onEliminar={eliminarMapaMentalConDeshacer}
       />
     )
   }
@@ -270,7 +270,7 @@ function ListaMapas({
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
-                    if (confirm(`¿Eliminar "${m.titulo}"?`)) onEliminar(m.id)
+                    onEliminar(m.id)
                   }}
                   className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ${
                     modoOscuro ? 'text-zinc-500 hover:bg-zinc-700 hover:text-red-400' : 'text-zinc-400 hover:bg-zinc-100 hover:text-red-500'
@@ -990,7 +990,6 @@ function MapaMentalDetalle({
 }) {
   const renombrarMapaMental = useStore((s) => s.renombrarMapaMental)
   const actualizarMapaMental = useStore((s) => s.actualizarMapaMental)
-  const eliminarMapaMental = useStore((s) => s.eliminarMapaMental)
   // Colección vinculada (si alguna) — ver Coleccion.mapaMentalVinculado en
   // types/index.ts: un solo lado guarda el vínculo, acá solo se consulta.
   const coleccionVinculada = useStore((s) => s.colecciones.find((c) => c.mapaMentalVinculado === mapa.id))
@@ -1641,11 +1640,7 @@ function MapaMentalDetalle({
         </button>
 
         <button
-          onClick={() => {
-            if (confirm(`¿Eliminar el mapa "${mapa.titulo}"?`)) {
-              eliminarMapaMental(mapa.id)
-            }
-          }}
+          onClick={() => eliminarMapaMentalConDeshacer(mapa.id)}
           title="Eliminar mapa mental"
           className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
             modoOscuro ? 'text-zinc-500 hover:bg-zinc-800 hover:text-red-400' : 'text-zinc-400 hover:bg-zinc-100 hover:text-red-500'

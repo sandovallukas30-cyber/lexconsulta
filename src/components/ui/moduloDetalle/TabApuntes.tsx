@@ -1,5 +1,6 @@
 import { useRef, useState, type ChangeEvent } from 'react'
 import { useStore } from '../../../store/useStore'
+import { eliminarDeListaConDeshacer } from '../../../services/deshacer'
 import { ModoLecturaApunte } from '../ModoLecturaApunte'
 import { CampoContenidoApunte } from '../CampoContenidoApunte'
 import { resumenDe, separarTitulo } from '../../../services/apunteFormato'
@@ -158,7 +159,12 @@ export function TabApuntes({
   }
 
   const eliminar = (id: string) => {
-    setApuntesModulo(moduloId, apuntes.filter((a) => a.id !== id))
+    eliminarDeListaConDeshacer(
+      id,
+      () => useStore.getState().academicoModulos[moduloId]?.apuntes ?? [],
+      (lista) => setApuntesModulo(moduloId, lista),
+      'Apunte eliminado'
+    )
     if (apunteLeyendo?.id === id) setApunteLeyendo(null)
   }
 
