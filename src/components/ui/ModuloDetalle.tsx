@@ -8,7 +8,7 @@ import { TabExamenes } from './moduloDetalle/TabExamenes'
 import { TabTextos } from './moduloDetalle/TabTextos'
 import { TabApuntes } from './moduloDetalle/TabApuntes'
 import { TabCasos } from './moduloDetalle/TabCasos'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 export type { Tab }
 
@@ -32,15 +32,21 @@ interface Props {
    *  Un Módulo fijo del catálogo no es editable, así que en ese caso este
    *  prop simplemente se omite y el botón no aparece. */
   onEditar?: () => void
+  /** Evaluación a abrir en edición al entrar (desde "Próximas evaluaciones"). */
+  evaluacionEnfocada?: string
 }
 
-export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEditar }: Props) {
+export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEditar, evaluacionEnfocada }: Props) {
   const apuntePendiente = useStore((s) => s.apuntePendiente)
   const [tab, setTab] = useState<Tab>(apuntePendiente?.moduloId === modulo.id ? 'apuntes' : tabInicial ?? 'resumen')
-  // Abrir un apunte desde el buscador con este módulo ya montado en otra pestaña
-  useEffect(() => {
+  // Abrir un apunte desde el buscador con este módulo ya montado en otra
+  // pestaña: ajuste de estado durante el render (patrón recomendado por
+  // React en vez de un efecto que dispara un render extra).
+  const [pendienteVisto, setPendienteVisto] = useState(apuntePendiente)
+  if (apuntePendiente !== pendienteVisto) {
+    setPendienteVisto(apuntePendiente)
     if (apuntePendiente?.moduloId === modulo.id) setTab('apuntes')
-  }, [apuntePendiente, modulo.id])
+  }
   const setCodigoExplorador = useStore((s) => s.setCodigoExplorador)
   const setVistaActiva = useStore((s) => s.setVistaActiva)
   const setColeccionActiva = useStore((s) => s.setColeccionActiva)
@@ -175,7 +181,7 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEdit
           />
         )}
         {tab === 'clases' && <TabClases moduloId={modulo.id} clases={datos.clases} modoOscuro={modoOscuro} />}
-        {tab === 'examenes' && <TabExamenes moduloId={modulo.id} evaluaciones={datos.evaluaciones} modoOscuro={modoOscuro} />}
+        {tab === 'examenes' && <TabExamenes moduloId={modulo.id} evaluaciones={datos.evaluaciones} modoOscuro={modoOscuro} enfocarId={evaluacionEnfocada} />}
         {tab === 'textos' && <TabTextos moduloId={modulo.id} textos={datos.textos} clases={datos.clases} modoOscuro={modoOscuro} />}
         {tab === 'apuntes' && <TabApuntes moduloId={modulo.id} apuntes={datos.apuntes} clases={datos.clases} cuadernos={datos.cuadernos} modoOscuro={modoOscuro} />}
         {tab === 'casos' && <TabCasos moduloId={modulo.id} briefs={datos.briefs} clases={datos.clases} modoOscuro={modoOscuro} />}

@@ -132,7 +132,7 @@ export type ResultadoValidacion =
 export function validarRespaldo(texto: string): ResultadoValidacion {
   let crudo: unknown
   try {
-    crudo = JSON.parse(texto.replace(/^﻿/, ''))
+    crudo = JSON.parse(texto.replace(/^\uFEFF/, ''))
   } catch {
     return { ok: false, error: 'El archivo no es un JSON válido.' }
   }

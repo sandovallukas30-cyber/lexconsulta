@@ -10,9 +10,9 @@ export function formatearFechaCorta(iso: string): string {
   return `${dia}/${mes}/${anio}`
 }
 
-export function colorUrgencia(u: Urgencia): string {
+export function colorUrgencia(u: Urgencia, modoOscuro = false): string {
   if (u === 'vencido') return 'text-zinc-400'
-  if (u === 'urgente') return 'text-red-600'
-  if (u === 'proximo') return 'text-amber-600'
+  if (u === 'urgente') return modoOscuro ? 'text-red-400' : 'text-red-600'
+  if (u === 'proximo') return modoOscuro ? 'text-amber-400' : 'text-amber-600'
   return ''
 }

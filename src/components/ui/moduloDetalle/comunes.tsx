@@ -10,7 +10,7 @@ export function FechaConCountdown({ fecha, modoOscuro }: { fecha: string; modoOs
   return (
     <span className="inline-flex items-baseline gap-1.5">
       <span className={`text-xs font-mono ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>{formatearFechaCorta(fecha)}</span>
-      <span className={`text-xs font-medium ${colorUrgencia(u)}`}>{formatearCountdown(dias)}</span>
+      <span className={`text-xs font-medium ${colorUrgencia(u, modoOscuro)}`}>{formatearCountdown(dias)}</span>
     </span>
   )
 }

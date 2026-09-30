@@ -45,16 +45,22 @@ export function TabApuntes({
   const apuntePendiente = useStore((s) => s.apuntePendiente)
   const limpiarApuntePendiente = useStore((s) => s.limpiarApuntePendiente)
 
-  // Apunte pedido desde el buscador (Omnibar): abrirlo en Modo Lectura.
-  useEffect(() => {
-    if (!apuntePendiente || apuntePendiente.moduloId !== moduloId) return
+  // Apunte pedido desde el buscador (Omnibar): abrirlo en Modo Lectura. El
+  // estado local se ajusta durante el render; el pedido del store se limpia
+  // en un efecto (no se puede tocar otro store mientras se renderiza).
+  const [pendienteVisto, setPendienteVisto] = useState<typeof apuntePendiente>(null)
+  if (apuntePendiente && apuntePendiente !== pendienteVisto && apuntePendiente.moduloId === moduloId) {
+    setPendienteVisto(apuntePendiente)
     const a = apuntes.find((x) => x.id === apuntePendiente.apunteId)
-    limpiarApuntePendiente()
-    if (!a) return
-    setEditarAlAbrir(false)
-    setResaltarAlAbrir(apuntePendiente.resaltar)
-    setApunteLeyendo(a)
-  }, [apuntePendiente, moduloId, apuntes, limpiarApuntePendiente])
+    if (a) {
+      setEditarAlAbrir(false)
+      setResaltarAlAbrir(apuntePendiente.resaltar)
+      setApunteLeyendo(a)
+    }
+  }
+  useEffect(() => {
+    if (apuntePendiente?.moduloId === moduloId) limpiarApuntePendiente()
+  }, [apuntePendiente, moduloId, limpiarApuntePendiente])
 
   const ordenados = [...apuntes].sort((a, b) => b.fechaModificacion - a.fechaModificacion)
   const filtrados = ordenados.filter((a) => {

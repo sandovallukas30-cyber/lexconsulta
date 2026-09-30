@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { buscar } from '../../services/busqueda'
@@ -47,8 +47,13 @@ export function Omnibar({ onClose }: Props) {
     return () => window.clearTimeout(t)
   }, [busqueda])
   const listaRef = useRef<HTMLDivElement>(null)
-  const [resultados, setResultados] = useState<ResultadoBusqueda[]>([])
   const [indiceSeleccionado, setIndiceSeleccionado] = useState(0)
+  // cada búsqueda nueva vuelve a seleccionar el primer resultado
+  const [consultaPrevia, setConsultaPrevia] = useState(consulta)
+  if (consulta !== consultaPrevia) {
+    setConsultaPrevia(consulta)
+    setIndiceSeleccionado(0)
+  }
   const inputRef = useRef<HTMLInputElement>(null)
 
   // Autofocus en apertura
@@ -56,13 +61,9 @@ export function Omnibar({ onClose }: Props) {
     inputRef.current?.focus()
   }, [])
 
-  // Lógica de búsqueda
-  useEffect(() => {
-    if (!consulta.trim()) {
-      setResultados([])
-      setIndiceSeleccionado(0)
-      return
-    }
+  // Lógica de búsqueda (derivada: sin estado propio ni efecto)
+  const resultados = useMemo<ResultadoBusqueda[]>(() => {
+    if (!consulta.trim()) return []
 
     const busqueda = consulta
     const q = busqueda.toLowerCase()
@@ -125,8 +126,7 @@ export function Omnibar({ onClose }: Props) {
       })
     }
 
-    setResultados(nuevoResultados)
-    setIndiceSeleccionado(0)
+    return nuevoResultados
   }, [consulta, codigos, historial, favoritos, academicoModulos, ramos])
 
   // El resultado elegido con las flechas siempre visible dentro de la lista

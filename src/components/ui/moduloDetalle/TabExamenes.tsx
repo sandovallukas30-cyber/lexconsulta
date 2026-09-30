@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../../../store/useStore'
 import { eliminarDeListaConDeshacer } from '../../../services/deshacer'
 import type { EvaluacionModulo } from '../../../types'
@@ -22,14 +22,29 @@ function calcularNotaNecesaria(evaluaciones: EvaluacionModulo[], objetivo: numbe
   return { promedioActual, ponderacionEvaluada, ponderacionPendiente, notaNecesaria }
 }
 
-export function TabExamenes({ moduloId, evaluaciones, modoOscuro }: { moduloId: string; evaluaciones: EvaluacionModulo[]; modoOscuro: boolean }) {
+export function TabExamenes({
+  moduloId, evaluaciones, modoOscuro, enfocarId,
+}: {
+  moduloId: string
+  evaluaciones: EvaluacionModulo[]
+  modoOscuro: boolean
+  /** Abrir esta evaluación en edición al montar (una sola vez). */
+  enfocarId?: string
+}) {
   const setEvaluacionesModulo = useStore((s) => s.setEvaluacionesModulo)
-  const [mostrarForm, setMostrarForm] = useState(false)
-  const [editandoId, setEditandoId] = useState<string | null>(null)
-  const [nombre, setNombre] = useState('')
-  const [fecha, setFecha] = useState('')
-  const [ponderacion, setPonderacion] = useState('')
-  const [nota, setNota] = useState('')
+  // Si se llegó desde "Próximas evaluaciones", el formulario abre ya con esa
+  // evaluación cargada (estado inicial, no un efecto: solo al montar).
+  const [inicial] = useState(() => (enfocarId ? evaluaciones.find((e) => e.id === enfocarId) : undefined))
+  const [mostrarForm, setMostrarForm] = useState(!!inicial)
+  const [editandoId, setEditandoId] = useState<string | null>(inicial?.id ?? null)
+  const [nombre, setNombre] = useState(inicial?.nombre ?? '')
+  const [fecha, setFecha] = useState(inicial?.fecha ?? '')
+  const [ponderacion, setPonderacion] = useState(inicial ? String(inicial.ponderacion) : '')
+  const [nota, setNota] = useState(inicial?.nota != null ? String(inicial.nota) : '')
+  const refForm = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (inicial) refForm.current?.scrollIntoView({ block: 'center' })
+  }, [inicial])
   const [objetivo, setObjetivo] = useState('4')
   const [error, setError] = useState<string | null>(null)
 
@@ -67,7 +82,11 @@ export function TabExamenes({ moduloId, evaluaciones, modoOscuro }: { moduloId: 
       setError(`Con ${pond}% superarías el 100% (ya tienes ${ponderacionCargada}% cargado).`)
       return
     }
-    const notaNum = nota.trim() === '' ? null : Number(nota)
+    const notaNum = nota.trim() === '' ? null : Number(nota.replace(',', '.'))
+    if (notaNum !== null && (!Number.isFinite(notaNum) || notaNum < 1 || notaNum > 7)) {
+      setError('La nota debe estar entre 1,0 y 7,0 (o déjala vacía si aún no la tienes).')
+      return
+    }
     if (editandoId) {
       setEvaluacionesModulo(moduloId, evaluaciones.map((e) => (e.id === editandoId
         ? { ...e, nombre: nombre.trim(), fecha, ponderacion: pond, nota: notaNum !== null && Number.isFinite(notaNum) ? notaNum : null }
@@ -115,7 +134,7 @@ export function TabExamenes({ moduloId, evaluaciones, modoOscuro }: { moduloId: 
       </div>
 
       {mostrarForm && (
-        <div className={`p-4 rounded-xl border mb-4 space-y-3 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+        <div ref={refForm} className={`p-4 rounded-xl border mb-4 space-y-3 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
           <div className="grid grid-cols-2 gap-3">
             <CampoTexto label="Nombre" valor={nombre} onChange={setNombre} modoOscuro={modoOscuro} placeholder="Ej: Solemne 1" />
             <CampoTexto label="Fecha" tipo="date" valor={fecha} onChange={setFecha} modoOscuro={modoOscuro} />

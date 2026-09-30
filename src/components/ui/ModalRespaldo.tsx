@@ -36,8 +36,8 @@ function textoResumen(r: ResumenRespaldo): string {
   return partes.length > 0 ? partes.join(' · ') : 'nada todavía'
 }
 
-function haceCuanto(ms: number): string {
-  const dias = Math.floor((Date.now() - ms) / 86_400_000)
+function haceCuanto(ms: number, ahora: number): string {
+  const dias = Math.floor((ahora - ms) / 86_400_000)
   if (dias <= 0) return 'hoy'
   if (dias === 1) return 'ayer'
   return `hace ${dias} días`
@@ -54,6 +54,7 @@ export function ModalRespaldo({ onCerrar }: Props) {
   const [modo, setModo] = useState<ModoImportacion>('combinar')
   const [copiaPrevia, setCopiaPrevia] = useState(true)
   const [ultimo, setUltimo] = useState(fechaUltimoRespaldo)
+  const [ahora] = useState(() => Date.now())
   const [arrastrando, setArrastrando] = useState(false)
 
   useEffect(() => {
@@ -169,8 +170,8 @@ export function ModalRespaldo({ onCerrar }: Props) {
             <h3 className={`text-sm font-semibold mb-2 ${texto}`}>Exportar</h3>
             <div className={`rounded-xl border p-3 ${tarjeta}`}>
               <p className={`text-xs ${suave}`}>Tienes ahora: {textoResumen(actual)}.</p>
-              <p className={`text-xs mt-1 ${ultimo && Date.now() - ultimo < 14 * 86_400_000 ? suave : 'text-amber-600'}`}>
-                {ultimo ? `Último respaldo desde este navegador: ${haceCuanto(ultimo)}.` : 'Nunca has descargado un respaldo desde este navegador.'}
+              <p className={`text-xs mt-1 ${ultimo && ahora - ultimo < 14 * 86_400_000 ? suave : 'text-amber-600'}`}>
+                {ultimo ? `Último respaldo desde este navegador: ${haceCuanto(ultimo, Math.max(ahora, ultimo))}.` : 'Nunca has descargado un respaldo desde este navegador.'}
               </p>
               <button
                 onClick={exportar}

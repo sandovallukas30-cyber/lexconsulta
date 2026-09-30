@@ -38,7 +38,7 @@ function FilaEvaluacion({
   item: EvaluacionPendiente
   ramos: Ramo[]
   modoOscuro: boolean
-  onAbrir: (moduloId: string, tab: Tab) => void
+  onAbrir: (moduloId: string, tab: Tab, evaluacionId?: string) => void
 }) {
   const modulo = resolverModulo(item.moduloId, ramos)
   if (!modulo) return null
@@ -46,7 +46,9 @@ function FilaEvaluacion({
   const e = item.evaluacion
   return (
     <button
-      onClick={() => onAbrir(item.moduloId, 'examenes')}
+      // abre Exámenes con ESTA evaluación en edición: para una vencida es
+      // justo lo que hay que hacer (anotar la nota o corregir la fecha)
+      onClick={() => onAbrir(item.moduloId, 'examenes', e.id)}
       className={`w-full flex items-center gap-3 p-3 min-h-[56px] rounded-xl border text-left transition-colors ${
         modoOscuro ? 'bg-zinc-800/60 border-zinc-800 hover:bg-zinc-800' : 'bg-white border-zinc-200 hover:bg-zinc-50'
       }`}
@@ -94,6 +96,7 @@ function ProximasClases({ ramos, modoOscuro, onAbrir }: { ramos: Ramo[]; modoOsc
           <button
             key={`${c.moduloId}-${i}`}
             onClick={() => onAbrir(c.moduloId, 'clases')}
+            title={`${m.nombre}: ${c.titulo}`}
             className={`inline-flex items-center gap-1.5 px-2.5 min-h-[36px] rounded-lg text-xs border transition-colors ${
               modoOscuro ? 'border-zinc-800 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-600 hover:bg-white'
             }`}
@@ -110,7 +113,7 @@ function ProximasClases({ ramos, modoOscuro, onAbrir }: { ramos: Ramo[]; modoOsc
 
 /** B3: evaluaciones sin nota ordenadas por cercanía (todas las de módulos
  *  Y ramos), con cuenta regresiva y color por urgencia; vencidas aparte. */
-function ProximasEvaluaciones({ modoOscuro, onAbrir }: { modoOscuro: boolean; onAbrir: (moduloId: string, tab: Tab) => void }) {
+function ProximasEvaluaciones({ modoOscuro, onAbrir }: { modoOscuro: boolean; onAbrir: (moduloId: string, tab: Tab, evaluacionId?: string) => void }) {
   const academicoModulos = useStore((s) => s.academicoModulos)
   const ramos = useStore((s) => s.ramos)
   const [verTodas, setVerTodas] = useState(false)
@@ -283,6 +286,7 @@ export function ModulosView() {
   const setModuloActivo = useStore((s) => s.setModuloActivo)
   const ramos = useStore((s) => s.ramos)
   const [tabInicial, setTabInicial] = useState<Tab | undefined>(undefined)
+  const [evaluacionEnfocada, setEvaluacionEnfocada] = useState<string | undefined>(undefined)
   const [modalAbierto, setModalAbierto] = useState(false)
   const [ramoEditando, setRamoEditando] = useState<Ramo | null>(null)
   const [respaldoAbierto, setRespaldoAbierto] = useState(false)
@@ -295,8 +299,9 @@ export function ModulosView() {
   const ramoActivo = !moduloDeCatalogo && moduloActivoId ? ramos.find((r) => r.id === moduloActivoId) : undefined
   const moduloActivo = moduloDeCatalogo ?? (ramoActivo ? moduloDesdeRamo(ramoActivo, MODULOS.filter((m) => ramoActivo.modulosVinculados.includes(m.id))) : undefined)
 
-  const abrirModulo = (moduloId: string, tab?: Tab) => {
+  const abrirModulo = (moduloId: string, tab?: Tab, evaluacionId?: string) => {
     setTabInicial(tab)
+    setEvaluacionEnfocada(evaluacionId)
     setModuloActivo(moduloId)
   }
 
@@ -323,6 +328,7 @@ export function ModulosView() {
           modulo={moduloActivo}
           modoOscuro={modoOscuro}
           tabInicial={tabInicial}
+          evaluacionEnfocada={evaluacionEnfocada}
           onVolver={() => setModuloActivo(null)}
           onEditar={ramoActivo ? () => abrirEdicionRamo(ramoActivo) : undefined}
         />
