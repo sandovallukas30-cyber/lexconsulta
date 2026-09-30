@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { useStore } from '../../../store/useStore'
 import { eliminarDeListaConDeshacer } from '../../../services/deshacer'
 import { avisar } from '../../../store/useAvisos'
+import { confirmarSalida, registrarGuardia } from '../../../services/guardiaCambios'
 import { ModoLecturaApunte } from '../ModoLecturaApunte'
 import { CampoContenidoApunte } from '../CampoContenidoApunte'
 import { markdownAApunte } from '../../../services/apunteArchivo'
@@ -86,17 +87,43 @@ export function TabApuntes({
     [apuntes, filtro]
   )
 
+  // Valores con que se abrió el formulario: para saber si hay cambios sin
+  // guardar (C3) y preguntar antes de descartarlos.
+  const [original, setOriginal] = useState({ titulo: '', contenido: '', claseId: '', cuadernoId: '', articuloRelacionado: '' })
+  const sucio =
+    mostrarForm &&
+    (titulo !== original.titulo ||
+      contenido !== original.contenido ||
+      claseId !== original.claseId ||
+      cuadernoId !== original.cuadernoId ||
+      articuloRelacionado !== original.articuloRelacionado)
+
+  useEffect(() => {
+    if (!sucio) return
+    return registrarGuardia(() => 'Tienes cambios sin guardar en el apunte. ¿Salir y descartarlos?')
+  }, [sucio])
+
   const iniciarNuevo = () => {
+    if (sucio && !confirmarSalida()) return
+    const cuaderno = filtro !== 'todos' && filtro !== 'sin-cuaderno' ? filtro : ''
     setEditandoId(null)
     setTitulo('')
     setContenido('')
     setClaseId('')
-    setCuadernoId(filtro !== 'todos' && filtro !== 'sin-cuaderno' ? filtro : '')
+    setCuadernoId(cuaderno)
     setArticuloRelacionado('')
+    setOriginal({ titulo: '', contenido: '', claseId: '', cuadernoId: cuaderno, articuloRelacionado: '' })
     setMostrarForm(true)
   }
 
+  const cancelarFormulario = () => {
+    if (sucio && !confirmarSalida()) return
+    setMostrarForm(false)
+    setEditandoId(null)
+  }
+
   const iniciarEdicion = (a: ApunteModulo) => {
+    if (sucio && !confirmarSalida()) return
     setEditarAlAbrir(false)
     setApunteLeyendo(null)
     setEditandoId(a.id)
@@ -105,6 +132,13 @@ export function TabApuntes({
     setClaseId(a.claseId ?? '')
     setCuadernoId(a.cuadernoId ?? '')
     setArticuloRelacionado(a.articuloRelacionado ?? '')
+    setOriginal({
+      titulo: a.titulo,
+      contenido: a.contenido,
+      claseId: a.claseId ?? '',
+      cuadernoId: a.cuadernoId ?? '',
+      articuloRelacionado: a.articuloRelacionado ?? '',
+    })
     setMostrarForm(true)
   }
 
@@ -299,7 +333,15 @@ export function TabApuntes({
       )}
 
       {mostrarForm && (
-        <div className={`p-4 rounded-xl border mb-4 space-y-3 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+        <div
+          // Ctrl/Cmd+S guarda desde cualquier campo del formulario
+          onKeyDown={(e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+              e.preventDefault()
+              guardar()
+            }
+          }}
+          className={`p-4 rounded-xl border mb-4 space-y-3 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
           <CampoTexto label="Título" valor={titulo} onChange={setTitulo} modoOscuro={modoOscuro} placeholder="Ej: Clase 3 — Modos de extinguir" />
           <CampoContenidoApunte valor={contenido} onChange={setContenido} modoOscuro={modoOscuro} />
           {clases.length > 0 && (
@@ -341,7 +383,14 @@ export function TabApuntes({
               </div>
             )}
           </div>
-          <BotonesFormulario onCancelar={() => { setMostrarForm(false); setEditandoId(null) }} onGuardar={guardar} modoOscuro={modoOscuro} />
+          <div>
+            {sucio && (
+              <p className={`text-[11px] mb-2 flex items-center gap-1 ${modoOscuro ? 'text-amber-400' : 'text-amber-700'}`} role="status">
+                <i className="ti ti-point-filled text-xs" /> Cambios sin guardar · Ctrl+S para guardar
+              </p>
+            )}
+            <BotonesFormulario onCancelar={cancelarFormulario} onGuardar={guardar} modoOscuro={modoOscuro} />
+          </div>
         </div>
       )}
 

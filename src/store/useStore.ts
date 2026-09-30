@@ -51,6 +51,7 @@ import type {
   EstadoTarjetaRepaso,
 } from '../types'
 import { siguienteEstado } from '../services/tarjetasApunte'
+import { confirmarSalida } from '../services/guardiaCambios'
 import { agregarActividadHoy } from '../services/actividadEstudio'
 import { aplicarResultadoPracticaATodos, aplicarResultadoQuizATodos } from '../services/progresoModulos'
 
@@ -401,7 +402,9 @@ export const useStore = create<AppState>()(
       posicionLectura: {},
 
       setPerfil: (perfil) => set({ perfil, modalPerfilAbierto: false }),
-      setVistaActiva: (vistaActiva) =>
+      setVistaActiva: (vistaActiva) => {
+        // formulario con cambios sin guardar: preguntar antes de salir
+        if (get().vistaActiva !== vistaActiva && !confirmarSalida()) return
         set((s) => {
           // Si hay una partida de Pasapalabra en curso y el usuario sale de
           // Práctica, pausarla automáticamente para preservar el tiempo restante.
@@ -411,7 +414,8 @@ export const useStore = create<AppState>()(
           return debePausar
             ? { vistaActiva, partidaPasapalabra: { ...p!, pausadaEn: Date.now() } }
             : { vistaActiva }
-        }),
+        })
+      },
       toggleCodigo: (tipo) =>
         set((s) => ({
           codigos: s.codigos.map((c) =>
@@ -992,7 +996,10 @@ export const useStore = create<AppState>()(
             },
           }
         }),
-      setModuloActivo: (id) => set({ moduloActivoId: id }),
+      setModuloActivo: (id) => {
+        if (get().moduloActivoId !== id && !confirmarSalida()) return
+        set({ moduloActivoId: id })
+      },
       abrirApunte: (moduloId, apunteId, resaltar) =>
         set({ vistaActiva: 'modulos', moduloActivoId: moduloId, apuntePendiente: { moduloId, apunteId, resaltar } }),
       limpiarApuntePendiente: () => set({ apuntePendiente: null }),

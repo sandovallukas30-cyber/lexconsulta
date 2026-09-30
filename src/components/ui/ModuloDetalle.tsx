@@ -1,6 +1,7 @@
 import { useStore } from '../../store/useStore'
 import type { Modulo } from '../../types'
 import { coleccionesDeModulo } from '../../services/modulosAcademico'
+import { confirmarSalida } from '../../services/guardiaCambios'
 import { VERDE, type Tab } from './moduloDetalle/utilidades'
 import { TabResumen } from './moduloDetalle/TabResumen'
 import { TabClases } from './moduloDetalle/TabClases'
@@ -148,7 +149,10 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEdit
           {TABS.map((t) => (
             <button
               key={t.id}
-              onClick={() => setTab(t.id)}
+              onClick={() => {
+                if (t.id !== tab && !confirmarSalida()) return
+                setTab(t.id)
+              }}
               role="tab"
               aria-selected={tab === t.id}
               className={`flex items-center gap-1.5 px-3 py-2.5 min-h-[44px] text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap flex-shrink-0 ${

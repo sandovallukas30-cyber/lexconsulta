@@ -4,6 +4,8 @@ import { TEMAS_LECTURA } from '../../../services/lecturaTema'
 import { docATexto, textoADoc, type NodoDoc } from '../../../services/apunteDoc'
 import type { TemaLectura } from '../../../types'
 import { NotasMargen } from '../NotasMargen'
+import { useEstadoGuardado, vaciarEscrituraPendiente } from '../../../store/almacenamiento'
+import { avisar } from '../../../store/useAvisos'
 import { crearExtensiones, ICONOS_RECUADRO } from './extensiones'
 import './editorApunte.css'
 
@@ -104,6 +106,12 @@ export default function EditorApunte({ titulo, contenido, tema: temaLectura, tam
   const [flotante, setFlotante] = useState<{ top: number; left: number } | null>(null)
   const temporizador = useRef<number | undefined>(undefined)
   const pendiente = useRef(false)
+  // Indicador "Guardando… / Guardado" (C3): hay cambios en el editor que aún
+  // no pasaron al store (espera de 700 ms) o el store aún no escribió en
+  // localStorage (espera de 400 ms, ver store/almacenamiento.ts).
+  const [sinVolcar, setSinVolcar] = useState(false)
+  const escrituraPendiente = useEstadoGuardado((s) => s.pendiente)
+  const errorGuardado = useEstadoGuardado((s) => s.error)
   const alContenido = useRef(onContenido)
   useEffect(() => {
     alContenido.current = onContenido
@@ -126,6 +134,7 @@ export default function EditorApunte({ titulo, contenido, tema: temaLectura, tam
     pendiente.current = false
     try {
       alContenido.current(docATexto(editor.getJSON() as NodoDoc))
+      setSinVolcar(false)
     } catch {
       pendiente.current = true
     }
@@ -138,6 +147,7 @@ export default function EditorApunte({ titulo, contenido, tema: temaLectura, tam
     editorProps: { attributes: { class: 'ap-editor', spellcheck: 'true', 'aria-label': 'Contenido del apunte' } },
     onUpdate: ({ editor: ed }) => {
       pendiente.current = true
+      setSinVolcar(true)
       setVersion((v) => v + 1)
       window.clearTimeout(temporizador.current)
       temporizador.current = window.setTimeout(() => guardarAhora(ed), ESPERA_GUARDADO_MS)
@@ -149,10 +159,23 @@ export default function EditorApunte({ titulo, contenido, tema: temaLectura, tam
   // guardar lo pendiente al salir (Listo, Escape o cerrar la pantalla)
   useEffect(() => {
     if (!editor) return
-    const alSalir = () => guardarAhora(editor)
+    // El store agrupa sus escrituras (400 ms): al cerrar la página hay que
+    // escribir YA lo que el editor acaba de volcar, si no se pierde.
+    const alSalir = () => {
+      guardarAhora(editor)
+      vaciarEscrituraPendiente()
+    }
+    // Aviso del navegador si se cierra la pestaña con algo sin escribir
+    const antesDeCerrar = (e: BeforeUnloadEvent) => {
+      if (!pendiente.current && !useEstadoGuardado.getState().pendiente) return
+      alSalir()
+      e.preventDefault()
+    }
     window.addEventListener('pagehide', alSalir)
+    window.addEventListener('beforeunload', antesDeCerrar)
     return () => {
       window.removeEventListener('pagehide', alSalir)
+      window.removeEventListener('beforeunload', antesDeCerrar)
       alSalir()
     }
   }, [editor, guardarAhora])
@@ -164,13 +187,22 @@ export default function EditorApunte({ titulo, contenido, tema: temaLectura, tam
 
   useEffect(() => {
     const alTeclear = (e: KeyboardEvent) => {
+      // Ctrl/Cmd+S: guardar ya (el navegador ofrecería "Guardar página")
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault()
+        guardarAhora(editor)
+        const error = vaciarEscrituraPendiente()
+        if (error) avisar.error(error)
+        else avisar.exito('Apunte guardado')
+        return
+      }
       if (e.key !== 'Escape') return
       if (panelNota) setPanelNota(null)
       else terminar()
     }
     window.addEventListener('keydown', alTeclear)
     return () => window.removeEventListener('keydown', alTeclear)
-  }, [terminar, panelNota])
+  }, [terminar, panelNota, editor, guardarAhora])
 
   // barra flotante sobre el texto seleccionado
   useEffect(() => {
@@ -362,6 +394,15 @@ export default function EditorApunte({ titulo, contenido, tema: temaLectura, tam
               </>
             )}
           </div>
+          <span
+            role="status"
+            aria-live="polite"
+            title={errorGuardado ?? 'Se guarda solo mientras escribes (Ctrl+S para forzar)'}
+            className={`hidden sm:inline-flex items-center gap-1 text-[11px] whitespace-nowrap flex-shrink-0 ${errorGuardado ? 'text-red-500' : tema.textSoft}`}
+          >
+            <i className={`ti ${errorGuardado ? 'ti-alert-triangle' : sinVolcar || escrituraPendiente ? 'ti-loader-2 animate-spin' : 'ti-cloud-check'} text-sm`} />
+            {errorGuardado ? 'No se pudo guardar' : sinVolcar || escrituraPendiente ? 'Guardando…' : 'Guardado'}
+          </span>
           <button
             type="button"
             onClick={terminar}
