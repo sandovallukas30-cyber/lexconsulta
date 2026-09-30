@@ -59,6 +59,15 @@ function ItemAviso({ aviso }: { aviso: Aviso }) {
       role={aviso.tipo === 'error' ? 'alert' : 'status'}
       onMouseEnter={() => setPausado(true)}
       onMouseLeave={() => setPausado(false)}
+      // en táctil no hay hover: se pausa al tocar y se descarta deslizando
+      onTouchStart={() => setPausado(true)}
+      onTouchEnd={() => setPausado(false)}
+      drag="x"
+      dragSnapToOrigin
+      dragElastic={0.6}
+      onDragEnd={(_, info) => {
+        if (Math.abs(info.offset.x) > 90 || Math.abs(info.velocity.x) > 500) cerrar(aviso.id)
+      }}
       className={`pointer-events-auto w-full sm:w-auto sm:min-w-[320px] max-w-md flex items-center gap-3 pl-4 pr-2 py-2 rounded-xl shadow-lg border text-sm ${
         modoOscuro ? 'bg-zinc-800 border-zinc-700 text-zinc-100' : 'bg-white border-zinc-200 text-zinc-800'
       }`}
