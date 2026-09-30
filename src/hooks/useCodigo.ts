@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { cargarCodigo, codigosCargados, obtenerCodigo } from '../services/codigos'
 import type { CodigoData, CodigoTipo } from '../types'
 
@@ -6,12 +6,16 @@ export interface EstadoCodigo {
   codigo: CodigoData | null
   cargando: boolean
   error: string | null
+  /** Vuelve a intentar la carga (tras un error de red). */
+  reintentar: () => void
 }
 
 /** Hook async: carga el JSON del código dinámicamente con loading state. */
 export function useCodigo(tipo: CodigoTipo | null): EstadoCodigo {
   const cacheado = tipo ? obtenerCodigo(tipo) : null
-  const [estado, setEstado] = useState<EstadoCodigo>({
+  const [intento, setIntento] = useState(0)
+  const reintentar = useCallback(() => setIntento((n) => n + 1), [])
+  const [estado, setEstado] = useState<Omit<EstadoCodigo, 'reintentar'>>({
     codigo: cacheado,
     cargando: !cacheado && !!tipo,
     error: null,
@@ -36,14 +40,14 @@ export function useCodigo(tipo: CodigoTipo | null): EstadoCodigo {
       })
       .catch((err) => {
         if (cancelado) return
-        setEstado({ codigo: null, cargando: false, error: err.message ?? 'Error cargando código' })
+        setEstado({ codigo: null, cargando: false, error: err?.message ?? 'Error cargando código' })
       })
     return () => {
       cancelado = true
     }
-  }, [tipo])
+  }, [tipo, intento])
 
-  return estado
+  return { ...estado, reintentar }
 }
 
 export function listarCodigosCargados(): CodigoTipo[] {

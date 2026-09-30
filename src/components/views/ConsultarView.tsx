@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useStore } from '../../store/useStore'
-import { useChat } from '../../hooks/useChat'
+import { esMensajeError, useChat } from '../../hooks/useChat'
 import { CitaBlock } from '../ui/CitaBlock'
 import { JurisprudenciaToggle } from '../ui/JurisprudenciaToggle'
 import type { Mensaje } from '../../types'
@@ -28,7 +28,7 @@ export function ConsultarView() {
   const perfil = useStore((s) => s.perfil)
   const codigos = useStore((s) => s.codigos)
   const modoOscuro = useStore((s) => s.modoOscuro)
-  const { mensajes, cargando, enviar, limpiar } = useChat()
+  const { mensajes, cargando, enviar, reintentar, limpiar } = useChat()
   const [pregunta, setPregunta] = useState('')
   const [incluirJurisprudencia, setIncluirJurisprudencia] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -96,8 +96,14 @@ export function ConsultarView() {
           />
         ) : (
           <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-            {mensajes.map((m) => (
-              <MensajeBubble key={m.id} mensaje={m} modoOscuro={modoOscuro} />
+            {mensajes.map((m, i) => (
+              <MensajeBubble
+                key={m.id}
+                mensaje={m}
+                modoOscuro={modoOscuro}
+                // solo el último error se puede reintentar (los anteriores ya quedaron atrás)
+                onReintentar={i === mensajes.length - 1 && !cargando && esMensajeError(m) ? reintentar : undefined}
+              />
             ))}
             {cargando && <PensandoBubble modoOscuro={modoOscuro} />}
           </div>
@@ -335,7 +341,7 @@ function ToggleModo({ modoOscuro }: { modoOscuro: boolean }) {
   )
 }
 
-function MensajeBubble({ mensaje, modoOscuro }: { mensaje: Mensaje; modoOscuro: boolean }) {
+function MensajeBubble({ mensaje, modoOscuro, onReintentar }: { mensaje: Mensaje; modoOscuro: boolean; onReintentar?: () => void }) {
   if (mensaje.rol === 'user') {
     return (
       <motion.div
@@ -395,7 +401,20 @@ function MensajeBubble({ mensaje, modoOscuro }: { mensaje: Mensaje; modoOscuro: 
           ))}
         </div>
       )}
-      {!mensaje.contenido.startsWith('⚠️') && (
+      {onReintentar && (
+        <div className="ml-11">
+          <button
+            onClick={onReintentar}
+            className={`inline-flex items-center gap-1.5 px-3 min-h-[36px] rounded-lg text-xs font-medium border transition-colors ${
+              modoOscuro ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-300 text-zinc-700 hover:bg-zinc-100'
+            }`}
+          >
+            <i className="ti ti-reload text-sm" />
+            Reintentar
+          </button>
+        </div>
+      )}
+      {!esMensajeError(mensaje) && (
         <div className="ml-11">
           <Feedback mensaje={mensaje} modoOscuro={modoOscuro} />
         </div>

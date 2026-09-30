@@ -146,7 +146,13 @@ export function TabExamenes({
       )}
 
       {ordenadas.length === 0 ? (
-        <EstadoVacio icono="ti-clipboard-check" texto="Aún no has agregado evaluaciones." modoOscuro={modoOscuro} />
+        <EstadoVacio
+          icono="ti-clipboard-check"
+          texto="Aún no has agregado evaluaciones."
+          detalle="Con fecha y ponderación de cada una, te avisamos cuáles se acercan y calculamos la nota que necesitas."
+          acciones={[{ label: 'Agregar evaluación', icono: 'ti-plus', onClick: iniciarNuevo }]}
+          modoOscuro={modoOscuro}
+        />
       ) : (
         <>
           <div className="space-y-2 mb-4">

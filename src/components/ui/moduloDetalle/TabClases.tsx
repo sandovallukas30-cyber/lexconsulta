@@ -75,7 +75,13 @@ export function TabClases({ moduloId, clases, modoOscuro }: { moduloId: string; 
       )}
 
       {ordenadas.length === 0 ? (
-        <EstadoVacio icono="ti-calendar-event" texto="Aún no has agregado sesiones de clase." modoOscuro={modoOscuro} />
+        <EstadoVacio
+          icono="ti-calendar-event"
+          texto="Aún no has agregado sesiones de clase."
+          detalle="Agrega el cronograma del semestre: verás cuánto falta para cada clase y podrás vincular apuntes y lecturas."
+          acciones={[{ label: 'Agregar clase', icono: 'ti-plus', onClick: iniciarNuevo }]}
+          modoOscuro={modoOscuro}
+        />
       ) : (
         <div className="space-y-2">
           {ordenadas.map((c) => (

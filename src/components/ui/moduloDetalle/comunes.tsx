@@ -15,13 +15,52 @@ export function FechaConCountdown({ fecha, modoOscuro }: { fecha: string; modoOs
   )
 }
 
-export function EstadoVacio({ icono, texto, modoOscuro }: { icono: string; texto: string; modoOscuro: boolean }) {
+export interface AccionVacio {
+  label: string
+  icono: string
+  onClick: () => void
+}
+
+/** Estado vacío que explica Y ofrece la acción (C4): antes solo decía "Aún
+ *  no tienes apuntes" y había que buscar el botón arriba. La primera acción
+ *  es la principal. */
+export function EstadoVacio({
+  icono, texto, detalle, acciones = [], modoOscuro,
+}: {
+  icono: string
+  texto: string
+  detalle?: string
+  acciones?: AccionVacio[]
+  modoOscuro: boolean
+}) {
   return (
-    <div className={`flex flex-col items-center justify-center text-center py-14 rounded-xl border border-dashed ${
+    <div data-estado-vacio className={`flex flex-col items-center justify-center text-center py-12 px-4 rounded-xl border border-dashed ${
       modoOscuro ? 'border-zinc-800 text-zinc-500' : 'border-zinc-300 text-zinc-400'
     }`}>
-      <i className={`ti ${icono} text-3xl mb-2 opacity-60`} />
-      <p className="text-sm">{texto}</p>
+      <i className={`ti ${icono} text-3xl mb-2 opacity-60`} aria-hidden />
+      <p className={`text-sm font-medium ${modoOscuro ? 'text-zinc-300' : 'text-zinc-600'}`}>{texto}</p>
+      {detalle && <p className="text-xs mt-1 max-w-sm">{detalle}</p>}
+      {acciones.length > 0 && (
+        <div className="flex flex-wrap justify-center gap-2 mt-4">
+          {acciones.map((a, i) => (
+            <button
+              key={a.label}
+              onClick={a.onClick}
+              className={`inline-flex items-center gap-1.5 px-3 min-h-[40px] rounded-lg text-sm font-medium transition-colors ${
+                i === 0
+                  ? 'text-white'
+                  : modoOscuro
+                  ? 'border border-zinc-700 text-zinc-200 hover:bg-zinc-800'
+                  : 'border border-zinc-200 text-zinc-700 hover:bg-white'
+              }`}
+              style={i === 0 ? { background: VERDE } : undefined}
+            >
+              <i className={`ti ${a.icono} text-base`} aria-hidden />
+              {a.label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

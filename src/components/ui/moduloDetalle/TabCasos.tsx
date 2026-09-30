@@ -128,7 +128,13 @@ export function TabCasos({ moduloId, briefs, clases, modoOscuro }: { moduloId: s
       )}
 
       {ordenados.length === 0 ? (
-        <EstadoVacio icono="ti-gavel" texto="Aún no has analizado ningún caso en este módulo." modoOscuro={modoOscuro} />
+        <EstadoVacio
+          icono="ti-gavel"
+          texto="Aún no has analizado ningún caso en este módulo."
+          detalle="Un brief IRAC por fallo: hechos, cuestión jurídica, norma, análisis y conclusión."
+          acciones={[{ label: 'Agregar caso', icono: 'ti-plus', onClick: iniciarNuevo }]}
+          modoOscuro={modoOscuro}
+        />
       ) : (
         <div className="space-y-2">
           {ordenados.map((b) => {

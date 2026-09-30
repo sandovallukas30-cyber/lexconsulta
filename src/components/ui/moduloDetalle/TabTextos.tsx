@@ -93,7 +93,12 @@ export function TabTextos({ moduloId, textos, clases, modoOscuro }: { moduloId: 
       )}
 
       {textos.length === 0 ? (
-        <EstadoVacio icono="ti-books" texto="Aún no has agregado textos obligatorios." modoOscuro={modoOscuro} />
+        <EstadoVacio
+          icono="ti-books"
+          texto="Aún no has agregado textos obligatorios."
+          acciones={[{ label: 'Agregar texto', icono: 'ti-plus', onClick: iniciarNuevo }]}
+          modoOscuro={modoOscuro}
+        />
       ) : (
         <div className="space-y-2">
           {textos.map((t) => (

@@ -75,7 +75,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
     limpiarArticuloPendiente()
   }, [articuloPendiente, limpiarArticuloPendiente])
 
-  const { codigo, cargando: cargandoCodigo } = useCodigo(tipoActivo)
+  const { codigo, cargando: cargandoCodigo, error: errorCodigo, reintentar } = useCodigo(tipoActivo)
   const refArticulo = useRef<HTMLDivElement>(null)
 
   const arts = codigo?.articulos ?? []
@@ -139,9 +139,30 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
     return <PantallaCargandoCodigo modoOscuro={modoOscuro} />
   }
   if (!codigo) {
+    // Antes: "No hay códigos cargados." sin salida. Casi siempre es un corte
+    // de red al bajar el JSON (se descarga recién al abrir el código).
     return (
-      <div className="h-full flex items-center justify-center p-8">
-        <p className={modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}>No hay códigos cargados.</p>
+      <div className={`h-full flex items-center justify-center p-8 ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
+        <div className="max-w-sm text-center" role="alert">
+          <i className={`ti ti-wifi-off text-3xl mb-3 inline-block ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`} aria-hidden />
+          <p className={`text-base font-semibold mb-1 ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>No se pudo abrir este código</p>
+          <p className={`text-sm mb-5 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
+            {errorCodigo ? 'Revisa tu conexión a internet e inténtalo de nuevo.' : 'El código no está disponible.'}
+          </p>
+          <div className="flex justify-center gap-2">
+            {errorCodigo && (
+              <button onClick={reintentar} className="px-4 min-h-[40px] rounded-lg text-sm font-semibold text-white" style={{ background: VERDE }}>
+                Reintentar
+              </button>
+            )}
+            <button
+              onClick={onCambiarCodigo}
+              className={`px-4 min-h-[40px] rounded-lg text-sm font-medium border ${modoOscuro ? 'border-zinc-700 text-zinc-200' : 'border-zinc-200 text-zinc-700'}`}
+            >
+              Elegir otro código
+            </button>
+          </div>
+        </div>
       </div>
     )
   }
@@ -1278,20 +1299,37 @@ function FichaFila({
   )
 }
 
+/** Skeleton con la forma real del Explorador (barra, miga, tarjeta del
+ *  artículo y navegación): así la pantalla no "salta" cuando aparece el
+ *  artículo (C4/C8). Un código grande (Civil, 1,5 MB) tarda en bajar. */
 function PantallaCargandoCodigo({ modoOscuro }: { modoOscuro: boolean }) {
+  const bloque = modoOscuro ? 'bg-zinc-800' : 'bg-zinc-200/80'
   return (
-    <div className={`h-full flex items-center justify-center ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
-      <div className="text-center">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-          className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3"
-          style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
-        >
-          <i className="ti ti-loader-2 text-2xl" style={{ color: VERDE }} />
-        </motion.div>
-        <p className={`text-sm ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>Cargando código...</p>
+    <div className={`h-full flex flex-col ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`} aria-busy="true" aria-label="Cargando código">
+      <div className={`flex items-center gap-3 px-3 sm:px-6 py-3 border-b ${modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+        <div className={`w-7 h-7 rounded-lg animate-pulse ${bloque}`} />
+        <div className="space-y-1.5">
+          <div className={`h-3 w-40 rounded animate-pulse ${bloque}`} />
+          <div className={`h-2 w-20 rounded animate-pulse ${bloque}`} />
+        </div>
+        <div className="flex-1" />
+        <div className={`h-10 w-10 sm:w-24 rounded-lg animate-pulse ${bloque}`} />
+        <div className={`h-10 w-10 sm:w-56 rounded-lg animate-pulse ${bloque}`} />
       </div>
+      <div className={`px-4 sm:px-6 py-3 border-b ${modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+        <div className={`h-2.5 w-64 max-w-full rounded animate-pulse ${bloque}`} />
+      </div>
+      <div className="h-[3px]" />
+      <div className="flex-1 overflow-hidden">
+        <div className={`max-w-3xl mx-3 sm:mx-auto my-4 sm:my-8 rounded-2xl p-5 sm:p-10 ${modoOscuro ? 'bg-zinc-800/40 border border-zinc-800' : 'bg-white shadow-sm border border-zinc-200/60'}`}>
+          <div className={`h-7 w-28 rounded animate-pulse mb-6 ${bloque}`} />
+          {[100, 96, 92, 98, 60].map((w, i) => (
+            <div key={i} className={`h-3.5 rounded animate-pulse mb-3 ${bloque}`} style={{ width: `${w}%` }} />
+          ))}
+        </div>
+      </div>
+      <div className={`border-t px-4 py-3 h-[62px] ${modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`} />
+      <p className="sr-only">Cargando código…</p>
     </div>
   )
 }
