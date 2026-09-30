@@ -8,7 +8,7 @@ import { encabezadosDe, parsearApunte, textoPlanoDe, tieneEstructuraAncha } from
 import { ApunteContenido } from './ApunteContenido'
 import { normalizarConMapa, normalizarConsulta } from '../../services/buscarApuntes'
 import { descargarApunteMd } from '../../services/apunteArchivo'
-import { generarTarjetas } from '../../services/tarjetasApunte'
+import { tarjetasDe } from '../../services/tarjetasApunte'
 import { RepasoApunte } from './RepasoApunte'
 import { NotasMargen } from './NotasMargen'
 import type { ApunteModulo, SesionClase, CuadernoApuntes } from '../../types'
@@ -133,11 +133,14 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
   const tema = TEMAS_LECTURA[temaLectura]
 
   const contenido = apunte.contenido
-  const bloques = useMemo(() => parsearApunte(contenido), [contenido])
+  // Mientras se edita, el lector está oculto: no re-analizar el apunte en
+  // cada autoguardado (cada ~700 ms) -- en uno de miles de palabras eso era
+  // trabajo inútil en el hilo principal justo mientras se escribe.
+  const bloques = useMemo(() => (editando ? [] : parsearApunte(contenido)), [contenido, editando])
   const encabezados = useMemo(() => encabezadosDe(bloques), [bloques])
   const nivelMin = useMemo(() => Math.min(3, ...encabezados.map((e) => e.n)), [encabezados])
   const ancho = useMemo(() => tieneEstructuraAncha(bloques), [bloques])
-  const textoVoz = useMemo(() => textoPlanoDe(contenido), [contenido])
+  const textoVoz = useMemo(() => (editando ? '' : textoPlanoDe(contenido)), [contenido, editando])
   const voz = useLecturaVoz(textoVoz)
   useWakeLock(true)
 
@@ -220,7 +223,7 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
 
   const colorTexto = temaLectura === 'oscuro' ? 'text-zinc-200' : temaLectura === 'papel' ? 'text-[#3a2c1a]' : 'text-zinc-800'
   const hayIndice = encabezados.length >= 3
-  const nTarjetas = useMemo(() => (editando ? 0 : generarTarjetas(apunte).length), [apunte, editando])
+  const nTarjetas = useMemo(() => (editando ? 0 : tarjetasDe(apunte).length), [apunte, editando])
 
   return (
     <motion.div

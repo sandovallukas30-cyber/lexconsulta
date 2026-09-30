@@ -3,17 +3,17 @@ import { useStore } from '../../../store/useStore'
 import { eliminarDeListaConDeshacer } from '../../../services/deshacer'
 import { ModoLecturaApunte } from '../ModoLecturaApunte'
 import { CampoContenidoApunte } from '../CampoContenidoApunte'
-import { resumenDe } from '../../../services/apunteFormato'
 import { markdownAApunte } from '../../../services/apunteArchivo'
 import { duplicarApunte } from '../../../services/accionesApunte'
-import { MenuAccionesApunte, ModalMoverApunte } from './AccionesApunte'
+import { ModalMoverApunte } from './AccionesApunte'
+import { ListaApuntes, type AccionesListaApuntes } from './ListaApuntes'
 import { RepasoApunte } from '../RepasoApunte'
-import { estaPendiente, generarTarjetas } from '../../../services/tarjetasApunte'
+import { tarjetasDe } from '../../../services/tarjetasApunte'
 import { AnimatePresence } from 'framer-motion'
 import { convertirPdfNotion } from '../../../services/notionPdf/importarPdfNotion'
 import type { ApunteModulo, CuadernoApuntes, SesionClase } from '../../../types'
 import { VERDE } from './utilidades'
-import { BotonAgregar, BotonEliminar, BotonesFormulario, CampoSelectClase, CampoTexto, EstadoVacio, EtiquetaArticulo, EtiquetaClase } from './comunes'
+import { BotonAgregar, BotonesFormulario, CampoSelectClase, CampoTexto, EstadoVacio } from './comunes'
 
 export function TabApuntes({
   moduloId, apuntes, clases, cuadernos, modoOscuro,
@@ -52,7 +52,7 @@ export function TabApuntes({
   const [repasando, setRepasando] = useState<ApunteModulo | null>(null)
   const repasoApuntes = useStore((s) => s.repasoApuntes)
   // Tarjetas por apunte (se recalcula solo cuando cambian los apuntes)
-  const tarjetasPorApunte = useMemo(() => new Map(apuntes.map((a) => [a.id, generarTarjetas(a)])), [apuntes])
+  const tarjetasPorApunte = useMemo(() => new Map(apuntes.map((a) => [a.id, tarjetasDe(a)])), [apuntes])
   const apuntePendiente = useStore((s) => s.apuntePendiente)
   const limpiarApuntePendiente = useStore((s) => s.limpiarApuntePendiente)
 
@@ -73,12 +73,17 @@ export function TabApuntes({
     if (apuntePendiente?.moduloId === moduloId) limpiarApuntePendiente()
   }, [apuntePendiente, moduloId, limpiarApuntePendiente])
 
-  const ordenados = [...apuntes].sort((a, b) => b.fechaModificacion - a.fechaModificacion)
-  const filtrados = ordenados.filter((a) => {
-    if (filtro === 'todos') return true
-    if (filtro === 'sin-cuaderno') return !a.cuadernoId
-    return a.cuadernoId === filtro
-  })
+  const filtrados = useMemo(
+    () =>
+      [...apuntes]
+        .sort((a, b) => b.fechaModificacion - a.fechaModificacion)
+        .filter((a) => {
+          if (filtro === 'todos') return true
+          if (filtro === 'sin-cuaderno') return !a.cuadernoId
+          return a.cuadernoId === filtro
+        }),
+    [apuntes, filtro]
+  )
 
   const iniciarNuevo = () => {
     setEditandoId(null)
@@ -190,15 +195,30 @@ export function TabApuntes({
     setApunteLeyendo(guardado)
   }
 
-  const eliminar = (id: string) => {
-    eliminarDeListaConDeshacer(
-      id,
-      () => useStore.getState().academicoModulos[moduloId]?.apuntes ?? [],
-      (lista) => setApuntesModulo(moduloId, lista),
-      'Apunte eliminado'
-    )
-    if (apunteLeyendo?.id === id) setApunteLeyendo(null)
-  }
+  // Acciones de la lista: identidad estable (solo cambia con el módulo) para
+  // que ListaApuntes, memoizada, no se re-renderice en cada tecla del
+  // formulario. Lo que necesita del estado lo lee con setters funcionales.
+  const acciones = useMemo<AccionesListaApuntes>(
+    () => ({
+      abrir: (a, editar) => {
+        setEditarAlAbrir(editar)
+        setApunteLeyendo(a)
+      },
+      repasar: (a) => setRepasando(a),
+      duplicar: (a) => duplicarApunte(moduloId, a),
+      mover: (a) => setMoviendo(a),
+      eliminar: (id) => {
+        eliminarDeListaConDeshacer(
+          id,
+          () => useStore.getState().academicoModulos[moduloId]?.apuntes ?? [],
+          (lista) => useStore.getState().setApuntesModulo(moduloId, lista),
+          'Apunte eliminado'
+        )
+        setApunteLeyendo((prev) => (prev?.id === id ? null : prev))
+      },
+    }),
+    [moduloId]
+  )
 
   // Cambios hechos desde el editor visual del Modo Lectura: se guardan solos.
   // Se lee la lista más reciente del store (no la de este render) porque el
@@ -326,71 +346,15 @@ export function TabApuntes({
       {filtrados.length === 0 ? (
         <EstadoVacio icono="ti-notes" texto={apuntes.length === 0 ? 'Aún no tienes apuntes en este módulo.' : 'No hay apuntes en este cuaderno.'} modoOscuro={modoOscuro} />
       ) : (
-        <div className="space-y-2">
-          {filtrados.map((a) => {
-            const cuaderno = cuadernos.find((c) => c.id === a.cuadernoId)
-            return (
-              <div key={a.id} className={`p-3 rounded-xl border ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
-                <div className="flex items-start justify-between gap-2 mb-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <button onClick={() => { setEditarAlAbrir(false); setApunteLeyendo(a) }} className={`text-sm font-medium text-left hover:underline ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>
-                      {a.titulo}
-                    </button>
-                    {cuaderno && (
-                      <span className={`inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-md ${modoOscuro ? 'bg-zinc-700 text-zinc-300' : 'bg-zinc-100 text-zinc-600'}`}>
-                        <i className="ti ti-notebook text-xs" />
-                        {cuaderno.nombre}
-                      </span>
-                    )}
-                    <EtiquetaArticulo articulo={a.articuloRelacionado} modoOscuro={modoOscuro} />
-                    <EtiquetaClase clase={clases.find((c) => c.id === a.claseId)} modoOscuro={modoOscuro} />
-                  </div>
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    <button
-                      onClick={() => {
-                        setEditarAlAbrir(true)
-                        setApunteLeyendo(a)
-                      }}
-                      title="Editar"
-                      aria-label={`Editar "${a.titulo}"`}
-                      className={`w-10 h-10 sm:w-7 sm:h-7 rounded-md flex items-center justify-center ${modoOscuro ? 'text-zinc-500 hover:bg-zinc-700 hover:text-zinc-200' : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700'}`}
-                    >
-                      <i className="ti ti-pencil text-sm" />
-                    </button>
-                    {(() => {
-                      const ts = tarjetasPorApunte.get(a.id) ?? []
-                      if (ts.length === 0) return null
-                      const pendientes = ts.filter((t) => estaPendiente(repasoApuntes[t.id])).length
-                      return (
-                        <button
-                          onClick={() => setRepasando(a)}
-                          title={`Repasar ${ts.length} tarjeta${ts.length === 1 ? '' : 's'} (${pendientes} para hoy)`}
-                          aria-label={`Repasar "${a.titulo}": ${ts.length} tarjetas, ${pendientes} para hoy`}
-                          className={`inline-flex items-center gap-1 px-2 min-h-[40px] sm:min-h-[28px] rounded-md text-xs font-medium ${
-                            modoOscuro ? 'text-zinc-300 hover:bg-zinc-700' : 'text-zinc-600 hover:bg-zinc-100'
-                          }`}
-                        >
-                          <i className="ti ti-cards text-sm" style={{ color: pendientes > 0 ? VERDE : undefined }} />
-                          {pendientes > 0 ? pendientes : ts.length}
-                        </button>
-                      )
-                    })()}
-                    <MenuAccionesApunte
-                      apunte={a}
-                      onDuplicar={() => duplicarApunte(moduloId, a)}
-                      onMover={() => setMoviendo(a)}
-                      modoOscuro={modoOscuro}
-                    />
-                    <BotonEliminar onClick={() => eliminar(a.id)} modoOscuro={modoOscuro} />
-                  </div>
-                </div>
-                {a.contenido && (
-                  <p className={`text-xs line-clamp-3 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>{resumenDe(a.contenido)}</p>
-                )}
-              </div>
-            )
-          })}
-        </div>
+        <ListaApuntes
+          apuntes={filtrados}
+          cuadernos={cuadernos}
+          clases={clases}
+          modoOscuro={modoOscuro}
+          tarjetasPorApunte={tarjetasPorApunte}
+          repasoApuntes={repasoApuntes}
+          acciones={acciones}
+        />
       )}
 
       <AnimatePresence>

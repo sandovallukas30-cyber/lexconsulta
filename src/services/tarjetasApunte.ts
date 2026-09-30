@@ -94,6 +94,19 @@ export function generarTarjetas(apunte: Pick<ApunteModulo, 'id' | 'contenido'>):
   return tarjetas
 }
 
+/** generarTarjetas con caché por OBJETO apunte: al guardar un apunte (cada
+ *  ~700 ms mientras se escribe) el store crea un objeto nuevo solo para ese;
+ *  los demás conservan su identidad y no se vuelven a analizar. */
+const cache = new WeakMap<object, TarjetaRepaso[]>()
+export function tarjetasDe(apunte: Pick<ApunteModulo, 'id' | 'contenido'>): TarjetaRepaso[] {
+  let t = cache.get(apunte)
+  if (!t) {
+    t = generarTarjetas(apunte)
+    cache.set(apunte, t)
+  }
+  return t
+}
+
 // ---------------------------------------------------------------------------
 // Programación (Leitner de 5 cajas, igual que el repaso de Colecciones)
 // ---------------------------------------------------------------------------
