@@ -23,6 +23,7 @@ import {
 import '@xyflow/react/dist/style.css'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
+import { avisar } from '../../store/useAvisos'
 import { generarConcepto, generarRelacion, type ResultadoConcepto } from '../../services/canvas'
 import { cargarCodigo } from '../../services/codigos'
 import type { Canvas, NodoCanvas, ArticuloRelevante, CodigoActivo, CodigoTipo } from '../../types'
@@ -289,7 +290,7 @@ export function CanvasView() {
         setNodes((nds) =>
           nds.map((n) => (n.id === id ? { ...n, data: { ...n.data, expandiendo: false } } : n))
         )
-        alert(e instanceof Error ? e.message : 'No se pudo profundizar el nodo. Intenta de nuevo.')
+        avisar.error(e instanceof Error ? e.message : 'No se pudo profundizar el nodo. Intenta de nuevo.')
       }
     },
     [setNodes, pushHistory]
@@ -382,7 +383,7 @@ export function CanvasView() {
         }
 
         if (nuevosNodos.length === 0) {
-          alert('Ya hay un nodo con el texto completo de cada artículo de esta lista.')
+          avisar.info('Ya hay un nodo con el texto completo de cada artículo de esta lista.')
           return
         }
 
@@ -391,7 +392,7 @@ export function CanvasView() {
         setEdges((eds) => [...eds, ...nuevasEdges])
       } catch (e) {
         console.error('Error al crear nodos de artículos:', e)
-        alert(e instanceof Error ? e.message : 'No se pudieron crear los nodos. Intenta de nuevo.')
+        avisar.error(e instanceof Error ? e.message : 'No se pudieron crear los nodos. Intenta de nuevo.')
       } finally {
         setNodes((nds) =>
           nds.map((n) => (n.id === id ? { ...n, data: { ...n.data, creandoArticulos: false } } : n))

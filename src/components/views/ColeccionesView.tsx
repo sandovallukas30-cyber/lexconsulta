@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
+import { avisar } from '../../store/useAvisos'
 import { eliminarColeccionConDeshacer } from '../../services/deshacer'
 import { useCodigo } from '../../hooks/useCodigo'
 import { precargar, obtenerCodigo } from '../../services/codigos'
@@ -137,11 +138,12 @@ function ListaColecciones() {
     const texto = await archivo.text()
     const decodificada = decodificarColeccion(texto)
     if (!decodificada) {
-      alert('Ese archivo no es una colección de Prima Lex válida.')
+      avisar.error('Ese archivo no es una colección de Prima Lex válida.')
       return
     }
     if (!confirm(`¿Importar "${decodificada.titulo}" (${decodificada.articulos.length} artículos) como colección nueva?`)) return
     const id = importarColeccion(decodificada)
+    avisar.exito(`Colección "${decodificada.titulo}" importada`)
     setColeccionActiva(id)
   }
 
@@ -1173,6 +1175,7 @@ function ModalCompartirColeccion({ coleccion, onCerrar }: { coleccion: Coleccion
   const copiarLink = async () => {
     try {
       await navigator.clipboard.writeText(link)
+      avisar.exito('Link copiado')
       setCopiado(true)
       setTimeout(() => setCopiado(false), 2000)
     } catch {

@@ -19,6 +19,7 @@ import { PlazosView } from './components/views/PlazosView'
 import { useState, useEffect } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { useStore } from './store/useStore'
+import { avisar } from './store/useAvisos'
 import { aplicarTema } from './theme'
 import { Omnibar } from './components/ui/Omnibar'
 import { Avisos } from './components/ui/Avisos'
@@ -73,7 +74,7 @@ function App() {
     window.history.replaceState(null, '', window.location.pathname + (nuevaQuery ? `?${nuevaQuery}` : '') + window.location.hash)
     const decodificada = decodificarColeccion(crudo)
     if (decodificada) setColeccionParaImportar(decodificada)
-    else alert('El link de colección compartida no es válido o está dañado.')
+    else avisar.error('El link de colección compartida no es válido o está dañado.')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -124,6 +125,7 @@ function App() {
           onCancelar={() => setColeccionParaImportar(null)}
           onConfirmar={() => {
             const id = importarColeccion(coleccionParaImportar)
+            avisar.exito(`Colección "${coleccionParaImportar.titulo}" importada`)
             setColeccionParaImportar(null)
             setColeccionActiva(id)
             setVistaActiva('colecciones')

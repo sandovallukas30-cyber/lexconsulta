@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { eliminarRamoConDeshacer } from '../../services/deshacer'
+import { avisar } from '../../store/useAvisos'
 import { MODULOS } from '../../data/modulos'
 import { ICONO_RAMO_DEFECTO } from '../../services/modulosAcademico'
 import type { Ramo } from '../../types'
@@ -106,8 +107,13 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
       icono,
       color,
     }
-    if (ramoEditando) actualizarRamo(ramoEditando.id, datos)
-    else crearRamo(datos)
+    if (ramoEditando) {
+      actualizarRamo(ramoEditando.id, datos)
+      avisar.exito('Ramo actualizado')
+    } else {
+      crearRamo(datos)
+      avisar.exito(`Ramo "${datos.nombre}" creado`)
+    }
     onCerrar()
   }
 

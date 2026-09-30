@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { useStore } from '../../../store/useStore'
 import { eliminarDeListaConDeshacer } from '../../../services/deshacer'
+import { avisar } from '../../../store/useAvisos'
 import { ModoLecturaApunte } from '../ModoLecturaApunte'
 import { CampoContenidoApunte } from '../CampoContenidoApunte'
 import { markdownAApunte } from '../../../services/apunteArchivo'
@@ -154,6 +155,7 @@ export function TabApuntes({
       fechaModificacion: ahora,
     }
     setApuntesModulo(moduloId, [...apuntes, nuevo])
+    avisar.exito(`Apunte "${nuevo.titulo}" importado`)
     setEditarAlAbrir(false)
     setApunteLeyendo(nuevo)
   }
