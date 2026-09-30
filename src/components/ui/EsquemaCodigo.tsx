@@ -90,7 +90,7 @@ export function EsquemaCodigo({ abierto, onCerrar, codigo, modoOscuro, onSelecci
                   : 'color-mix(in srgb, var(--accent-base) 6%, transparent)',
               }}
             >
-              <i className="ti ti-sitemap text-lg" style={{ color: VERDE }} />
+              <i className="ti ti-sitemap text-lg" style={{ color: 'var(--accent-texto)' }} />
             </div>
             <div className="flex-1 min-w-0">
               <h1 className={`text-lg md:text-xl font-serif font-semibold leading-tight truncate ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
@@ -221,7 +221,7 @@ function ListaEsquema({
         >
           <span>Código</span>
           <i className="ti ti-chevron-right text-[10px] opacity-50" />
-          <span style={{ color: VERDE }}>Libro</span>
+          <span style={{ color: 'var(--accent-texto)' }}>Libro</span>
           <i className="ti ti-chevron-right text-[10px] opacity-50" />
           <span>Título</span>
           <i className="ti ti-chevron-right text-[10px] opacity-50" />
@@ -329,7 +329,7 @@ function NodoArbolEsquema({
             className="text-[10px] font-sans font-bold px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5 whitespace-nowrap"
             style={{
               background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 16%, transparent)' : 'color-mix(in srgb, var(--accent-base) 7%, transparent)',
-              color: VERDE,
+              color: 'var(--accent-texto)',
             }}
           >
             {nodo.clave === null ? nombre.toUpperCase() : ETIQUETAS_NIVEL[nodo.campo]}
@@ -511,7 +511,7 @@ function DiagramaEsquema({
             borderColor: VERDE,
           }}
         >
-          <p className="font-serif font-bold text-lg md:text-2xl" style={{ color: VERDE }}>
+          <p className="font-serif font-bold text-lg md:text-2xl" style={{ color: 'var(--accent-texto)' }}>
             {codigo.codigo.toUpperCase()}
           </p>
           <p className={`text-xs mt-1 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
@@ -603,7 +603,7 @@ function NodoDiagrama({
             className="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
             style={{
               background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 16%, transparent)' : 'color-mix(in srgb, var(--accent-base) 7%, transparent)',
-              color: VERDE,
+              color: 'var(--accent-texto)',
             }}
           >
             {etiqueta}

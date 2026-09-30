@@ -678,7 +678,7 @@ export function CanvasView() {
               : 'bg-white border-zinc-200 focus-within:border-[var(--accent-500)]'
           }`}
         >
-          <i className="ti ti-bulb text-base" style={{ color: VERDE }} />
+          <i className="ti ti-bulb text-base" style={{ color: 'var(--accent-texto)' }} />
           <input
             type="text"
             value={concepto}
@@ -1222,7 +1222,7 @@ function ProfundizarOpcion({
         modoOscuro ? 'hover:bg-zinc-700 text-zinc-200' : 'hover:bg-zinc-100 text-zinc-800'
       }`}
     >
-      <i className={`ti ${icono} text-sm mt-0.5 flex-shrink-0`} style={{ color: VERDE }} />
+      <i className={`ti ${icono} text-sm mt-0.5 flex-shrink-0`} style={{ color: 'var(--accent-texto)' }} />
       <div className="flex-1 min-w-0">
         <div className="text-xs font-medium leading-tight">{label}</div>
         <div className={`text-[10px] leading-tight mt-0.5 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
@@ -1418,7 +1418,7 @@ function EmptyState({ modoOscuro, onSugerencia }: { modoOscuro: boolean; onSuger
           className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-5"
           style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
         >
-          <i className="ti ti-affiliate text-4xl" style={{ color: VERDE }} />
+          <i className="ti ti-affiliate text-4xl" style={{ color: 'var(--accent-texto)' }} />
         </div>
         <h3 className={`text-2xl font-serif font-semibold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
           Canvas jurídico inteligente

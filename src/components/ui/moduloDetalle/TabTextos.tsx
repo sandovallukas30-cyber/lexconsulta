@@ -119,7 +119,7 @@ export function TabTextos({ moduloId, textos, clases, modoOscuro }: { moduloId: 
                   <EtiquetaClase clase={clases.find((c) => c.id === t.claseId)} modoOscuro={modoOscuro} />
                 </div>
                 {t.enlace && (
-                  <a href={t.enlace} target="_blank" rel="noopener noreferrer" className="text-xs block mt-0.5 hover:underline" style={{ color: VERDE }}>
+                  <a href={t.enlace} target="_blank" rel="noopener noreferrer" className="text-xs block mt-0.5 hover:underline" style={{ color: 'var(--accent-texto)' }}>
                     Ver enlace
                   </a>
                 )}

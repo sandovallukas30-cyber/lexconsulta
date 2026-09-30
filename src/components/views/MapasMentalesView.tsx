@@ -234,7 +234,7 @@ function ListaMapas({
                 : 'color-mix(in srgb, var(--accent-base) 6%, transparent)',
             }}
           >
-            <i className="ti ti-hierarchy-2 text-lg" style={{ color: VERDE }} />
+            <i className="ti ti-hierarchy-2 text-lg" style={{ color: 'var(--accent-texto)' }} />
           </div>
           <h1 className={`text-xl font-serif font-semibold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
             Mapas mentales
@@ -248,7 +248,7 @@ function ListaMapas({
         <button
           onClick={onCrear}
           className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed text-sm font-medium mb-6 transition-colors"
-          style={{ borderColor: modoOscuro ? '#3f3f46' : '#d4d4d8', color: VERDE }}
+          style={{ borderColor: modoOscuro ? '#3f3f46' : '#d4d4d8', color: 'var(--accent-texto)' }}
         >
           <i className="ti ti-plus text-base" />
           Nuevo mapa mental
@@ -282,6 +282,8 @@ function ListaMapas({
                     e.stopPropagation()
                     onEliminar(m.id)
                   }}
+                  aria-label={`Eliminar el mapa "${m.titulo}"`}
+                  title="Eliminar"
                   className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ${
                     modoOscuro ? 'text-zinc-500 hover:bg-zinc-700 hover:text-red-400' : 'text-zinc-400 hover:bg-zinc-100 hover:text-red-500'
                   }`}
@@ -306,7 +308,7 @@ function ListaMapas({
                   modoOscuro ? 'bg-zinc-800/40 border-zinc-800 hover:bg-zinc-800' : 'bg-white border-zinc-200 hover:bg-zinc-50'
                 }`}
               >
-                <i className="ti ti-template text-lg flex-shrink-0" style={{ color: VERDE }} />
+                <i className="ti ti-template text-lg flex-shrink-0" style={{ color: 'var(--accent-texto)' }} />
                 <div className="flex-1 min-w-0">
                   <h3 className={`text-sm font-medium truncate ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
                     {p.titulo}

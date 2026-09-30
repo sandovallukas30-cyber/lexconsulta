@@ -6,7 +6,6 @@ import { codigosCargados } from '../../services/codigos'
 import { buscarEnApuntes, type FragmentoCoincidencia } from '../../services/buscarApuntes'
 import type { CodigoTipo } from '../../types'
 
-const VERDE = 'var(--accent-base)'
 
 interface ResultadoBusqueda {
   tipo: 'articulo' | 'apunte' | 'consulta' | 'favorito'
@@ -206,7 +205,7 @@ export function Omnibar({ onClose }: Props) {
         <div className={`flex items-center gap-3 px-4 py-3 border-b ${
           modoOscuro ? 'border-zinc-800' : 'border-zinc-200'
         }`}>
-          <i className="ti ti-search text-xl" style={{ color: VERDE }} />
+          <i className="ti ti-search text-xl" style={{ color: 'var(--accent-texto)' }} />
           <input
             ref={inputRef}
             type="text"
@@ -264,16 +263,16 @@ export function Omnibar({ onClose }: Props) {
                   {/* Icono por tipo */}
                   <div className="flex-shrink-0">
                     {resultado.tipo === 'articulo' && (
-                      <i className="ti ti-book-2 text-lg" style={{ color: VERDE }} />
+                      <i className="ti ti-book-2 text-lg" style={{ color: 'var(--accent-texto)' }} />
                     )}
                     {resultado.tipo === 'apunte' && (
-                      <i className="ti ti-notes text-lg" style={{ color: VERDE }} />
+                      <i className="ti ti-notes text-lg" style={{ color: 'var(--accent-texto)' }} />
                     )}
                     {resultado.tipo === 'consulta' && (
-                      <i className="ti ti-messages text-lg" style={{ color: VERDE }} />
+                      <i className="ti ti-messages text-lg" style={{ color: 'var(--accent-texto)' }} />
                     )}
                     {resultado.tipo === 'favorito' && (
-                      <i className="ti ti-bookmark text-lg" style={{ color: VERDE }} />
+                      <i className="ti ti-bookmark text-lg" style={{ color: 'var(--accent-texto)' }} />
                     )}
                   </div>
 

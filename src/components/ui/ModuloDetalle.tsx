@@ -177,7 +177,7 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEdit
                   ? modoOscuro ? 'text-white' : 'text-zinc-900'
                   : modoOscuro ? 'text-zinc-500 hover:text-zinc-300' : 'text-zinc-500 hover:text-zinc-700'
               }`}
-              style={tab === t.id ? { color: VERDE, borderColor: VERDE } : undefined}
+              style={tab === t.id ? { color: 'var(--accent-texto)', borderColor: VERDE } : undefined}
             >
               <i className={`ti ${t.icono} text-base`} />
               {t.label}

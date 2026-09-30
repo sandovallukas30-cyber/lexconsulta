@@ -237,7 +237,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
             className="w-7 h-7 rounded-lg flex items-center justify-center"
             style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
           >
-            <i className="ti ti-book-2 text-base" style={{ color: VERDE }} />
+            <i className="ti ti-book-2 text-base" style={{ color: 'var(--accent-texto)' }} />
           </span>
           <div className="hidden md:block text-left">
             <p className={`text-sm font-semibold leading-tight ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
@@ -340,7 +340,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
           {seleccionado.capitulo && <><Sep /><span className="truncate">Cap. {seleccionado.capitulo}</span></>}
           {seleccionado.parrafo && <><Sep /><span className="truncate">Párrafo {seleccionado.parrafo}</span></>}
           <Sep />
-          <span className="font-semibold whitespace-nowrap" style={{ color: VERDE }}>
+          <span className="font-semibold whitespace-nowrap" style={{ color: 'var(--accent-texto)' }}>
             {seleccionado.a}
           </span>
         </div>
@@ -383,7 +383,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
                   className={`text-2xl sm:text-3xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}
                   style={{ color: undefined }}
                 >
-                  <span style={{ color: VERDE }}>{seleccionado.a}</span>
+                  <span style={{ color: 'var(--accent-texto)' }}>{seleccionado.a}</span>
                 </h1>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <span className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
@@ -1091,7 +1091,7 @@ function ModalBusqueda({
                       }`}
                     >
                       <div className="flex items-baseline gap-2 mb-0.5">
-                        <span className="font-mono text-xs font-semibold" style={{ color: VERDE }}>
+                        <span className="font-mono text-xs font-semibold" style={{ color: 'var(--accent-texto)' }}>
                           {a.a}
                         </span>
                         {a.libro && (

@@ -216,7 +216,7 @@ function Bienvenida({
           className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
           style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
         >
-          <i className="ti ti-scale text-2xl" style={{ color: VERDE }} />
+          <i className="ti ti-scale text-2xl" style={{ color: 'var(--accent-texto)' }} />
         </div>
         <h1
           className={`text-3xl font-serif font-bold mb-2 ${
@@ -252,7 +252,7 @@ function Bienvenida({
           }`}
         >
           <span>
-            <span className="font-semibold" style={{ color: VERDE }}>
+            <span className="font-semibold" style={{ color: 'var(--accent-texto)' }}>
               {codigosActivos}
             </span>{' '}
             código{codigosActivos !== 1 ? 's' : ''} activo{codigosActivos !== 1 ? 's' : ''}
@@ -386,7 +386,7 @@ function MensajeBubble({ mensaje, modoOscuro, onReintentar }: { mensaje: Mensaje
           <div className="flex items-center gap-2 mt-1 mb-1">
             <div className="h-px flex-1" style={{ background: modoOscuro ? '#27272a' : '#e4e4e7' }} />
             <div className="flex items-center gap-1.5">
-              <i className="ti ti-book-2 text-xs" style={{ color: VERDE }} />
+              <i className="ti ti-book-2 text-xs" style={{ color: 'var(--accent-texto)' }} />
               <span
                 className={`text-xs font-semibold ${
                   modoOscuro ? 'text-zinc-300' : 'text-zinc-700'

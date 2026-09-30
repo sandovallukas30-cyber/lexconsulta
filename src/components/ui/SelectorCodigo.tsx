@@ -5,7 +5,6 @@ import { cargarCodigo, codigosCargados, obtenerCodigo } from '../../services/cod
 import { obtenerMetadata } from '../../data/codigosMetadata'
 import type { CodigoTipo } from '../../types'
 
-const VERDE = 'var(--accent-base)'
 
 interface Props {
   titulo: string
@@ -74,7 +73,7 @@ export function SelectorCodigo({ titulo, descripcion, icono, onElegir }: Props) 
             className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
             style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
           >
-            <i className={`ti ${icono} text-3xl`} style={{ color: VERDE }} />
+            <i className={`ti ${icono} text-3xl`} style={{ color: 'var(--accent-texto)' }} />
           </div>
           <h1 className={`text-3xl font-serif font-bold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
             {titulo}
@@ -302,7 +301,7 @@ function CodigoCard({ codigo, onClick, modoOscuro, delay }: CodigoCardProps) {
           className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
           style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 19%, transparent)' : 'color-mix(in srgb, var(--accent-base) 8%, transparent)' }}
         >
-          <i className="ti ti-book-2 text-xl" style={{ color: VERDE }} />
+          <i className="ti ti-book-2 text-xl" style={{ color: 'var(--accent-texto)' }} />
         </span>
         <div className="flex-1 min-w-0">
           <h3 className={`text-base font-serif font-semibold leading-tight ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
@@ -333,7 +332,7 @@ function CodigoCard({ codigo, onClick, modoOscuro, delay }: CodigoCardProps) {
         </span>
         <span
           className="flex items-center gap-1 font-semibold transition-colors"
-          style={{ color: VERDE }}
+          style={{ color: 'var(--accent-texto)' }}
         >
           Abrir
           <i className="ti ti-arrow-right text-sm group-hover:translate-x-0.5 transition-transform" />

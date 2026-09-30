@@ -445,6 +445,7 @@ export function TabApuntes({
             ) : (
               <div className="flex gap-2">
                 <select
+                  aria-label="Cuaderno"
                   value={cuadernoId}
                   onChange={(e) => setCuadernoId(e.target.value)}
                   className={`flex-1 rounded-control px-3 py-2 text-sm outline-none border campo-foco ${

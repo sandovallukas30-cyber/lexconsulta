@@ -3,7 +3,7 @@ import { useStore } from '../../../store/useStore'
 import { eliminarDeListaConDeshacer } from '../../../services/deshacer'
 import type { EvaluacionModulo } from '../../../types'
 import { calcularPonderacionTotal } from '../../../services/modulosAcademico'
-import { VERDE, formatearFechaCorta } from './utilidades'
+import { formatearFechaCorta } from './utilidades'
 import { BotonAgregar, BotonEliminar, BotonesFormulario, CampoTexto, EstadoVacio, FechaConCountdown } from './comunes'
 
 function calcularNotaNecesaria(evaluaciones: EvaluacionModulo[], objetivo: number) {
@@ -220,7 +220,7 @@ export function TabExamenes({
               </p>
             ) : (
               <p className={`text-sm font-medium ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
-                Necesitas un promedio de <span style={{ color: VERDE }}>{notaNecesaria?.toFixed(2)}</span> en el {ponderacionPendiente}% que falta para lograr un {objetivoNum}.
+                Necesitas un promedio de <span style={{ color: 'var(--accent-texto)' }}>{notaNecesaria?.toFixed(2)}</span> en el {ponderacionPendiente}% que falta para lograr un {objetivoNum}.
               </p>
             )}
             {ponderacionTotalActual < 100 && (

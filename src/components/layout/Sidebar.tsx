@@ -156,7 +156,7 @@ export function Sidebar() {
                     modoOscuro ? 'text-white' : 'text-zinc-900'
                   }`}
                 >
-                  Prima<span style={{ color: VERDE }}> Lex</span>
+                  Prima<span style={{ color: 'var(--accent-texto)' }}> Lex</span>
                 </h1>
                 <p className={`text-[11px] mt-0.5 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
                   Consultor jurídico con IA
@@ -218,7 +218,7 @@ export function Sidebar() {
               className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 relative"
               style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
             >
-              <i className="ti ti-books text-base" style={{ color: VERDE }} />
+              <i className="ti ti-books text-base" style={{ color: 'var(--accent-texto)' }} />
               {colapsado && (
                 <span
                   className={`absolute -top-1 -right-1 min-w-[16px] h-4 rounded-full text-[9px] font-bold flex items-center justify-center px-1 text-white`}

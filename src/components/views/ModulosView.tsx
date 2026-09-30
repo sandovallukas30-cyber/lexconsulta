@@ -11,7 +11,6 @@ import { diasHasta, evaluacionesPendientes, obtenerProximosEventos, formatearCou
 import { calcularRachaEstudio, contarTarjetasVencidas } from '../../services/actividadEstudio'
 import type { Ramo } from '../../types'
 
-const VERDE = 'var(--accent-base)'
 
 /** Color del chip de cuenta regresiva: ≤3 días rojo, ≤7 ámbar, más gris. */
 function claseUrgencia(u: Urgencia, modoOscuro: boolean): string {
@@ -148,7 +147,7 @@ function ProximasEvaluaciones({ modoOscuro, onAbrir }: { modoOscuro: boolean; on
         </div>
       )}
       {proximas.length > MAX_PROXIMAS && (
-        <button onClick={() => setVerTodas((v) => !v)} className="mt-2 text-xs font-medium min-h-[36px]" style={{ color: VERDE }}>
+        <button onClick={() => setVerTodas((v) => !v)} className="mt-2 text-xs font-medium min-h-[36px]" style={{ color: 'var(--accent-texto)' }}>
           {verTodas ? 'Ver menos' : `Ver todas (${proximas.length})`}
         </button>
       )}
@@ -212,7 +211,7 @@ function DashboardHoy({ modoOscuro }: { modoOscuro: boolean }) {
             className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
             style={{ background: 'color-mix(in srgb, var(--accent-base) 15%, transparent)' }}
           >
-            <i className="ti ti-cards text-lg" style={{ color: VERDE }} />
+            <i className="ti ti-cards text-lg" style={{ color: 'var(--accent-texto)' }} />
           </div>
           <div>
             <div className={`text-xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{tarjetasVencidas}</div>
@@ -349,7 +348,7 @@ export function ModulosView() {
                 : 'color-mix(in srgb, var(--accent-base) 6%, transparent)',
             }}
           >
-            <i className="ti ti-layout-grid text-xl" style={{ color: VERDE }} />
+            <i className="ti ti-layout-grid text-xl" style={{ color: 'var(--accent-texto)' }} />
           </div>
           <div className="flex-1 min-w-0">
             <h1 className={`text-2xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>

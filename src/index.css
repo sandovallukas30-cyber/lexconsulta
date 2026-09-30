@@ -45,12 +45,27 @@
   --dur-media: 200ms;   /* aparecer/desaparecer paneles pequeños */
   --dur-lenta: 250ms;   /* drawers y modales */
   --anillo-foco: var(--accent-base);
+  /* Acento usado como COLOR DE TEXTO o ícono: en oscuro, el verde base
+     (#0F6E56) sobre zinc-900 da 2,85:1; el 400 pasa AA. Los fondos de
+     botones siguen con --accent-base (texto blanco encima: 6:1). */
+  --accent-texto: var(--accent-base);
 }
 /* App.tsx pone data-tema en <html> (y no solo la clase .dark en su div):
    los modales y avisos se montan con portales fuera de ese div. */
 :root[data-tema='oscuro'] {
   --anillo-foco: var(--accent-400);
+  --accent-texto: var(--accent-400);
 }
+@media print {
+  /* el papel es blanco aunque la app esté en oscuro */
+  :root, :root[data-tema='oscuro'] { --accent-texto: var(--accent-base); }
+}
+/* Texto secundario en claro: zinc-400 sobre blanco da 2,6:1 (axe lo marcaba
+   en ~20 lugares); zinc-500 pasa AA (4,8:1). Solo el color de TEXTO y solo
+   en claro: en oscuro zinc-400 sobre zinc-900 ya da 7:1. */
+:root[data-tema='claro'] .text-zinc-400 { color: var(--color-zinc-500); }
+/* y lo simétrico en oscuro: zinc-500 sobre zinc-800/900 da 3,3-3,7:1 */
+:root[data-tema='oscuro'] .text-zinc-500 { color: var(--color-zinc-400); }
 
 /* Foco de teclado: el MISMO anillo en todos los controles. Sin @layer a
    propósito: así gana a cualquier `outline-none` de las utilidades. Solo con

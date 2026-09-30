@@ -14,38 +14,17 @@ interface Props {
 export function RamoCard({ ramo, modulos, modoOscuro, onClick, onEditar }: Props) {
   const color = ramo.color ?? VERDE
   const icono = ramo.icono ?? ICONO_RAMO_DEFECTO
+  // Tarjeta y lápiz son botones HERMANOS: antes el lápiz era un
+  // role="button" dentro del <button> de la tarjeta (interactivo anidado:
+  // los lectores de pantalla no lo anuncian y axe lo marca como grave).
   return (
+    <div className="group relative">
     <button
       onClick={onClick}
-      className={`group relative w-full text-left p-4 rounded-xl border transition-colors ${
+      className={`relative w-full h-full text-left p-4 rounded-xl border transition-colors ${
         modoOscuro ? 'bg-zinc-800/60 border-zinc-800 hover:bg-zinc-800' : 'bg-white border-zinc-200 hover:bg-zinc-50'
       }`}
     >
-      {/* Lápiz de edición rápida -- separado del clic principal (que abre el
-          detalle, igual que un Módulo del catálogo): stopPropagation para
-          que no dispare los dos a la vez. Solo visible al pasar el mouse en
-          desktop; en touch queda igual de clickeable, solo sin el fade-in. */}
-      <span
-        role="button"
-        tabIndex={0}
-        onClick={(e) => {
-          e.stopPropagation()
-          onEditar()
-        }}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.stopPropagation()
-            e.preventDefault()
-            onEditar()
-          }
-        }}
-        title="Editar ramo"
-        className={`absolute top-3 right-3 w-6 h-6 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ${
-          modoOscuro ? 'text-zinc-400 hover:bg-zinc-700 hover:text-white' : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900'
-        }`}
-      >
-        <i className="ti ti-pencil text-xs" />
-      </span>
 
       <div className="flex items-start gap-3 mb-2 pr-6">
         <div
@@ -87,5 +66,14 @@ export function RamoCard({ ramo, modulos, modoOscuro, onClick, onEditar }: Props
         </div>
       )}
     </button>
+    <button
+      onClick={onEditar}
+      title="Editar ramo"
+      aria-label={`Editar ramo ${ramo.nombre}`}
+      className="boton boton-fantasma boton-chico boton-icono absolute top-2 right-2 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+    >
+      <i className="ti ti-pencil text-xs" aria-hidden />
+    </button>
+    </div>
   )
 }

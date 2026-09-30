@@ -79,7 +79,7 @@ export function ModalConfirmarImportacion({
       >
         <div className={`px-5 py-4 border-b ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
           <h2 className={`text-base font-serif font-semibold flex items-center gap-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
-            <i className="ti ti-download text-lg" style={{ color: VERDE }} />
+            <i className="ti ti-download text-lg" style={{ color: 'var(--accent-texto)' }} />
             Importar colección compartida
           </h2>
         </div>
@@ -310,7 +310,7 @@ function EmptyState({ onCrear, modoOscuro }: { onCrear: () => void; modoOscuro: 
         className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
         style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
       >
-        <i className="ti ti-stack-2 text-3xl" style={{ color: VERDE }} />
+        <i className="ti ti-stack-2 text-3xl" style={{ color: 'var(--accent-texto)' }} />
       </div>
       <h2 className={`text-lg font-serif font-semibold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
         Aún no tienes colecciones
@@ -373,7 +373,7 @@ function TarjetaColeccion({
         className="w-10 h-10 rounded-lg flex items-center justify-center mb-3"
         style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 19%, transparent)' : 'color-mix(in srgb, var(--accent-base) 8%, transparent)' }}
       >
-        <i className="ti ti-stack-2 text-xl" style={{ color: VERDE }} />
+        <i className="ti ti-stack-2 text-xl" style={{ color: 'var(--accent-texto)' }} />
       </div>
 
       <h3 className={`text-base font-serif font-semibold leading-tight mb-1 pr-6 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
@@ -1202,7 +1202,7 @@ function ModalCompartirColeccion({ coleccion, onCerrar }: { coleccion: Coleccion
       >
         <div className={`px-5 py-4 border-b ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
           <h2 className={`text-base font-serif font-semibold flex items-center gap-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
-            <i className="ti ti-share-2 text-lg" style={{ color: VERDE }} />
+            <i className="ti ti-share-2 text-lg" style={{ color: 'var(--accent-texto)' }} />
             Compartir "{coleccion.titulo}"
           </h2>
           <p className={`text-xs mt-1 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
@@ -1271,7 +1271,7 @@ function ModalVincularMapaMental({
       >
         <div className={`px-5 py-4 border-b ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
           <h2 className={`text-base font-serif font-semibold flex items-center gap-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
-            <i className="ti ti-hierarchy-2 text-lg" style={{ color: VERDE }} />
+            <i className="ti ti-hierarchy-2 text-lg" style={{ color: 'var(--accent-texto)' }} />
             Vincular con un mapa mental
           </h2>
           <p className={`text-xs mt-1 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
@@ -1281,7 +1281,7 @@ function ModalVincularMapaMental({
 
         {vinculado && (
           <div className={`mx-5 mt-4 flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-100'}`}>
-            <i className="ti ti-hierarchy-2 text-base flex-shrink-0" style={{ color: VERDE }} />
+            <i className="ti ti-hierarchy-2 text-base flex-shrink-0" style={{ color: 'var(--accent-texto)' }} />
             <span className={`flex-1 min-w-0 truncate ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{vinculado.titulo}</span>
             <button
               onClick={() => onIrAlMapa(vinculado.id)}
@@ -2279,7 +2279,7 @@ function VistaPizarra({
               modoOscuro ? 'bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-zinc-800' : 'bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50'
             }`}
           >
-            <i className="ti ti-bulb text-sm" style={{ color: VERDE }} />
+            <i className="ti ti-bulb text-sm" style={{ color: 'var(--accent-texto)' }} />
             {sugerencias.length} sugerencia{sugerencias.length === 1 ? '' : 's'} de conexión
             <i className={`ti ti-chevron-down text-xs transition-transform ${panelSugerenciasAbierto ? 'rotate-180' : ''}`} />
           </button>
@@ -3304,7 +3304,7 @@ function ModalAgregarArticulo({
                                 : 'hover:bg-zinc-50'
                           }`}
                         >
-                          <span className="font-mono text-xs font-semibold flex-shrink-0" style={{ color: VERDE }}>
+                          <span className="font-mono text-xs font-semibold flex-shrink-0" style={{ color: 'var(--accent-texto)' }}>
                             {a.a}
                           </span>
                           <span className={`text-xs line-clamp-1 flex-1 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
@@ -3312,7 +3312,7 @@ function ModalAgregarArticulo({
                           </span>
                           <i
                             className={`ti ${agregado ? 'ti-check' : 'ti-plus'} text-sm flex-shrink-0`}
-                            style={agregado ? { color: VERDE } : undefined}
+                            style={agregado ? { color: 'var(--accent-texto)' } : undefined}
                           />
                         </button>
                       )

@@ -50,7 +50,7 @@ export function ModalAcercaDe({ abierto, onCerrar, pestanaInicial = 'acerca' }: 
               }`}
             >
               <h2 className={`text-xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
-                Prima<span style={{ color: VERDE }}> Lex</span>
+                Prima<span style={{ color: 'var(--accent-texto)' }}> Lex</span>
               </h2>
               <button
                 onClick={onCerrar}
@@ -206,7 +206,7 @@ function Acerca({ modoOscuro }: { modoOscuro: boolean }) {
 function Feat({ icono, titulo, children }: { icono: string; titulo: string; children: React.ReactNode }) {
   return (
     <li className="flex items-start gap-2.5">
-      <i className={`ti ${icono} text-base mt-0.5 flex-shrink-0`} style={{ color: VERDE }} />
+      <i className={`ti ${icono} text-base mt-0.5 flex-shrink-0`} style={{ color: 'var(--accent-texto)' }} />
       <span>
         <strong>{titulo}:</strong> {children}
       </span>
@@ -322,7 +322,7 @@ function Disclaimer({ modoOscuro }: { modoOscuro: boolean }) {
           target="_blank"
           rel="noopener noreferrer"
           className="underline ml-1"
-          style={{ color: VERDE }}
+          style={{ color: 'var(--accent-texto)' }}
         >
           leychile.cl
         </a>

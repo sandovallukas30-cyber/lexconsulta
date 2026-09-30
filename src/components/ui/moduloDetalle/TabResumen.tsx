@@ -1,6 +1,6 @@
 import type { SesionClase, EvaluacionModulo, TextoObligatorio, ApunteModulo, BriefCaso, Coleccion, Canvas, MapaMental } from '../../../types'
 import { diasHasta, formatearCountdown } from '../../../services/modulosAcademico'
-import { VERDE, type Tab } from './utilidades'
+import { type Tab } from './utilidades'
 
 export function TabResumen({
   datos, modoOscuro, onIrA, colecciones, onAbrirColeccion,
@@ -69,7 +69,7 @@ export function TabResumen({
             }`}
           >
             <div className="flex items-center gap-2 mb-2">
-              <i className={`ti ${t.icono} text-base`} style={{ color: VERDE }} />
+              <i className={`ti ${t.icono} text-base`} style={{ color: 'var(--accent-texto)' }} />
               <span className={`text-xs font-medium ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>{t.label}</span>
             </div>
             <div className={`text-xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{t.valor}</div>
@@ -158,7 +158,7 @@ function VinculoModuloSeccion({
                 modoOscuro ? 'bg-zinc-800/60 border-zinc-800 hover:bg-zinc-800' : 'bg-white border-zinc-200 hover:bg-zinc-50'
               }`}
             >
-              <i className={`ti ${icono} text-sm flex-shrink-0`} style={{ color: VERDE }} />
+              <i className={`ti ${icono} text-sm flex-shrink-0`} style={{ color: 'var(--accent-texto)' }} />
               <span className={`text-sm font-medium truncate ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>{v.label}</span>
             </button>
           ))}
@@ -166,6 +166,7 @@ function VinculoModuloSeccion({
       )}
       {disponibles.length > 0 && (
         <select
+          aria-label={placeholder}
           value=""
           onChange={(e) => { if (e.target.value) onVincular(e.target.value) }}
           className={`w-full rounded-control px-3 py-2 text-xs outline-none border campo-foco ${
