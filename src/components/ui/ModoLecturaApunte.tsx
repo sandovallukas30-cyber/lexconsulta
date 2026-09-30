@@ -7,6 +7,7 @@ import { TAMANOS_FUENTE, TEMAS_LECTURA } from '../../services/lecturaTema'
 import { encabezadosDe, parsearApunte, textoPlanoDe, tieneEstructuraAncha } from '../../services/apunteFormato'
 import { ApunteContenido } from './ApunteContenido'
 import { normalizarConMapa, normalizarConsulta } from '../../services/buscarApuntes'
+import { descargarApunteMd } from '../../services/apunteArchivo'
 import { NotasMargen } from './NotasMargen'
 import type { ApunteModulo, SesionClase, CuadernoApuntes } from '../../types'
 
@@ -208,15 +209,7 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
     if (window.matchMedia('(max-width: 1023px)').matches) setIndiceAbierto(false)
   }
 
-  const descargar = () => {
-    const blob = new Blob([`# ${apunte.titulo}\n\n${apunte.contenido}\n`], { type: 'text/markdown;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${apunte.titulo.replace(/[\\/:*?"<>|]+/g, ' ').trim() || 'apunte'}.md`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
+  const descargar = () => descargarApunteMd(apunte)
 
   const palabras = textoVoz.trim() ? textoVoz.trim().split(/\s+/).length : 0
   const minutosLectura = palabras > 0 ? Math.max(1, Math.round(palabras / PALABRAS_POR_MINUTO)) : 0

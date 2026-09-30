@@ -3,7 +3,11 @@ import { useStore } from '../../../store/useStore'
 import { eliminarDeListaConDeshacer } from '../../../services/deshacer'
 import { ModoLecturaApunte } from '../ModoLecturaApunte'
 import { CampoContenidoApunte } from '../CampoContenidoApunte'
-import { resumenDe, separarTitulo } from '../../../services/apunteFormato'
+import { resumenDe } from '../../../services/apunteFormato'
+import { markdownAApunte } from '../../../services/apunteArchivo'
+import { duplicarApunte } from '../../../services/accionesApunte'
+import { MenuAccionesApunte, ModalMoverApunte } from './AccionesApunte'
+import { AnimatePresence } from 'framer-motion'
 import { convertirPdfNotion } from '../../../services/notionPdf/importarPdfNotion'
 import type { ApunteModulo, CuadernoApuntes, SesionClase } from '../../../types'
 import { VERDE } from './utilidades'
@@ -42,6 +46,7 @@ export function TabApuntes({
   const [avisoImportar, setAvisoImportar] = useState<string | null>(null)
   const [importando, setImportando] = useState<string | null>(null)
   const [resaltarAlAbrir, setResaltarAlAbrir] = useState<string | undefined>(undefined)
+  const [moviendo, setMoviendo] = useState<ApunteModulo | null>(null)
   const apuntePendiente = useStore((s) => s.apuntePendiente)
   const limpiarApuntePendiente = useStore((s) => s.limpiarApuntePendiente)
 
@@ -122,10 +127,11 @@ export function TabApuntes({
         setErrorImportar('El archivo pesa más de 3 MB, es demasiado para un solo apunte.')
         return
       }
-      const texto = (await archivo.text()).replace(/^\uFEFF/, '')
-      const separado = separarTitulo(texto)
-      tituloArchivo = separado.titulo
-      cuerpo = separado.cuerpo
+      // mismo algoritmo que la exportación a .md (services/apunteArchivo.ts):
+      // exportar e importar deja el apunte idéntico
+      const importado = markdownAApunte(await archivo.text(), archivo.name)
+      tituloArchivo = importado.titulo
+      cuerpo = importado.contenido
     }
     const ahora = Date.now()
     const nuevo: ApunteModulo = {
@@ -344,6 +350,12 @@ export function TabApuntes({
                     >
                       <i className="ti ti-pencil text-sm" />
                     </button>
+                    <MenuAccionesApunte
+                      apunte={a}
+                      onDuplicar={() => duplicarApunte(moduloId, a)}
+                      onMover={() => setMoviendo(a)}
+                      modoOscuro={modoOscuro}
+                    />
                     <BotonEliminar onClick={() => eliminar(a.id)} modoOscuro={modoOscuro} />
                   </div>
                 </div>
@@ -355,6 +367,10 @@ export function TabApuntes({
           })}
         </div>
       )}
+
+      <AnimatePresence>
+        {moviendo && <ModalMoverApunte moduloId={moduloId} apunte={moviendo} onCerrar={() => setMoviendo(null)} modoOscuro={modoOscuro} />}
+      </AnimatePresence>
 
       <ModoLecturaApunte
         abierto={!!apunteLeyendo}
