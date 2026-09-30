@@ -14,6 +14,21 @@ export class LimiteError extends Component<{ children: ReactNode; modoOscuro: bo
 
   componentDidCatch(error: Error) {
     console.error('Error en la vista:', error)
+    // Tras un deploy nuevo, los chunks con el hash viejo ya no existen: con
+    // conexión, recargar trae el index nuevo y lo arregla. Una sola vez por
+    // minuto (si el problema es otro, no entrar en un bucle de recargas) y
+    // nunca sin conexión (se vería la página de error del navegador).
+    const deChunk = /dynamically imported module|Importing a module script failed|error loading dynamically/i.test(error.message)
+    if (!deChunk || !navigator.onLine) return
+    try {
+      const CLAVE = 'prima-lex-recarga-chunk'
+      const ultima = Number(sessionStorage.getItem(CLAVE) ?? 0)
+      if (Date.now() - ultima < 60_000) return
+      sessionStorage.setItem(CLAVE, String(Date.now()))
+      window.location.reload()
+    } catch {
+      // sin sessionStorage: queda el botón Recargar
+    }
   }
 
   render() {
