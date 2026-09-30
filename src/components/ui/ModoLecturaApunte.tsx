@@ -286,7 +286,9 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
 
         <div className="flex-1 min-w-0">
           <p className={`text-sm font-semibold truncate ${tema.text}`}>{editando ? `Editando · ${apunte.titulo}` : apunte.titulo}</p>
-          {!editando && metaPartes.length > 0 && <p className={`text-[11px] truncate ${tema.textSoft}`}>{metaPartes.join(' · ')}</p>}
+          {!editando && metaPartes.length > 0 && (
+            <p className={`text-[11px] truncate ${tema.textSoft} ${desplazable && progreso > 0.01 ? 'hidden sm:block' : ''}`}>{metaPartes.join(' · ')}</p>
+          )}
         </div>
 
         {hayIndice && !editando && (
@@ -381,8 +383,9 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
         </div>
 
         {/* Voz */}
+        {/* voz: en móvil se oculta para dejarle espacio al título */}
         {voz.soportado && !editando && (
-          <div className={`flex items-center gap-0.5 rounded-lg p-1 flex-shrink-0 ${tema.chipBg}`}>
+          <div className={`hidden sm:flex items-center gap-0.5 rounded-lg p-1 flex-shrink-0 ${tema.chipBg}`}>
             {voz.estado === 'inactivo' && (
               <button
                 onClick={voz.reproducir}
@@ -439,6 +442,13 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
           >
             <div className="h-full transition-[width] duration-150 ease-out" style={{ width: `${progreso * 100}%`, background: VERDE }} />
           </div>
+          {/* En móvil el encabezado no deja lugar para "% · min restantes ·
+              sección": va en una línea propia bajo la barra mientras se lee */}
+          {desplazable && progreso > 0.01 && (
+            <p className={`sm:hidden px-4 py-1 text-[11px] truncate border-b ${tema.border} ${tema.textSoft}`} aria-hidden>
+              {metaPartes.join(' · ')}
+            </p>
+          )}
 
           <div className="relative flex-1 min-h-0">
             <div ref={scrollRef} className="h-full overflow-y-auto">
