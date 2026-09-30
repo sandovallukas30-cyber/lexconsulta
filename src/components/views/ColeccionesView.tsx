@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
+import { avisar } from '../../store/useAvisos'
+import { eliminarColeccionConDeshacer } from '../../services/deshacer'
 import { useCodigo } from '../../hooks/useCodigo'
 import { precargar, obtenerCodigo } from '../../services/codigos'
 import { COLECCIONES_PLANTILLA } from '../../data/coleccionesPlantilla'
@@ -77,7 +79,7 @@ export function ModalConfirmarImportacion({
       >
         <div className={`px-5 py-4 border-b ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
           <h2 className={`text-base font-serif font-semibold flex items-center gap-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
-            <i className="ti ti-download text-lg" style={{ color: VERDE }} />
+            <i className="ti ti-download text-lg" style={{ color: 'var(--accent-texto)' }} />
             Importar colección compartida
           </h2>
         </div>
@@ -120,7 +122,6 @@ function ListaColecciones() {
   const modoOscuro = useStore((s) => s.modoOscuro)
   const colecciones = useStore((s) => s.colecciones)
   const setColeccionActiva = useStore((s) => s.setColeccionActiva)
-  const eliminarColeccion = useStore((s) => s.eliminarColeccion)
   const importarColeccion = useStore((s) => s.importarColeccion)
   const [modalNueva, setModalNueva] = useState(false)
   const inputArchivoRef = useRef<HTMLInputElement>(null)
@@ -137,11 +138,12 @@ function ListaColecciones() {
     const texto = await archivo.text()
     const decodificada = decodificarColeccion(texto)
     if (!decodificada) {
-      alert('Ese archivo no es una colección de Prima Lex válida.')
+      avisar.error('Ese archivo no es una colección de Prima Lex válida.')
       return
     }
     if (!confirm(`¿Importar "${decodificada.titulo}" (${decodificada.articulos.length} artículos) como colección nueva?`)) return
     const id = importarColeccion(decodificada)
+    avisar.exito(`Colección "${decodificada.titulo}" importada`)
     setColeccionActiva(id)
   }
 
@@ -201,11 +203,7 @@ function ListaColecciones() {
                 coleccion={c}
                 delay={i * 0.03}
                 onAbrir={() => setColeccionActiva(c.id)}
-                onEliminar={() => {
-                  if (confirm(`¿Eliminar la colección "${c.titulo}"? Los artículos no se borran, solo esta agrupación.`)) {
-                    eliminarColeccion(c.id)
-                  }
-                }}
+                onEliminar={() => eliminarColeccionConDeshacer(c.id)}
                 modoOscuro={modoOscuro}
               />
             ))}
@@ -305,14 +303,14 @@ function EmptyState({ onCrear, modoOscuro }: { onCrear: () => void; modoOscuro: 
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.25 }}
       className="text-center py-20"
     >
       <div
         className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
         style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
       >
-        <i className="ti ti-stack-2 text-3xl" style={{ color: VERDE }} />
+        <i className="ti ti-stack-2 text-3xl" style={{ color: 'var(--accent-texto)' }} />
       </div>
       <h2 className={`text-lg font-serif font-semibold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
         Aún no tienes colecciones
@@ -375,7 +373,7 @@ function TarjetaColeccion({
         className="w-10 h-10 rounded-lg flex items-center justify-center mb-3"
         style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 19%, transparent)' : 'color-mix(in srgb, var(--accent-base) 8%, transparent)' }}
       >
-        <i className="ti ti-stack-2 text-xl" style={{ color: VERDE }} />
+        <i className="ti ti-stack-2 text-xl" style={{ color: 'var(--accent-texto)' }} />
       </div>
 
       <h3 className={`text-base font-serif font-semibold leading-tight mb-1 pr-6 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
@@ -693,7 +691,6 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
   const modoOscuro = useStore((s) => s.modoOscuro)
   const setColeccionActiva = useStore((s) => s.setColeccionActiva)
   const renombrarColeccion = useStore((s) => s.renombrarColeccion)
-  const eliminarColeccion = useStore((s) => s.eliminarColeccion)
   const quitarArticulo = useStore((s) => s.quitarArticuloDeColeccion)
   const moverArticulo = useStore((s) => s.moverArticuloColeccion)
   const marcarEstado = useStore((s) => s.marcarEstadoArticulo)
@@ -791,12 +788,13 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
   return (
     <div className={`h-full flex flex-col ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
       <div
-        className={`flex items-center gap-3 px-6 py-3 border-b ${
+        className={`flex flex-wrap items-center gap-2 sm:gap-3 px-3 sm:px-6 py-2 sm:py-3 border-b ${
           modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
         }`}
       >
         <button
           onClick={() => setColeccionActiva(null)}
+          aria-label="Volver a Colecciones"
           title="Volver a Colecciones"
           className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
             modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'
@@ -818,7 +816,7 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
                 setEditandoTitulo(false)
               }
             }}
-            className={`flex-1 min-w-0 bg-transparent outline-none border-b-2 text-lg font-serif font-semibold px-0.5 ${
+            className={`flex-1 min-w-0 bg-transparent outline-none border campo-foco-b-2 text-lg font-serif font-semibold px-0.5 ${
               modoOscuro ? 'text-white' : 'text-zinc-900'
             }`}
             style={{ borderColor: VERDE }}
@@ -958,11 +956,7 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
         )}
 
         <button
-          onClick={() => {
-            if (confirm(`¿Eliminar la colección "${coleccion.titulo}"?`)) {
-              eliminarColeccion(coleccion.id)
-            }
-          }}
+          onClick={() => eliminarColeccionConDeshacer(coleccion.id)}
           title="Eliminar colección"
           className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
             modoOscuro ? 'text-zinc-500 hover:bg-zinc-800 hover:text-red-400' : 'text-zinc-400 hover:bg-zinc-100 hover:text-red-500'
@@ -1181,6 +1175,7 @@ function ModalCompartirColeccion({ coleccion, onCerrar }: { coleccion: Coleccion
   const copiarLink = async () => {
     try {
       await navigator.clipboard.writeText(link)
+      avisar.exito('Link copiado')
       setCopiado(true)
       setTimeout(() => setCopiado(false), 2000)
     } catch {
@@ -1207,7 +1202,7 @@ function ModalCompartirColeccion({ coleccion, onCerrar }: { coleccion: Coleccion
       >
         <div className={`px-5 py-4 border-b ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
           <h2 className={`text-base font-serif font-semibold flex items-center gap-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
-            <i className="ti ti-share-2 text-lg" style={{ color: VERDE }} />
+            <i className="ti ti-share-2 text-lg" style={{ color: 'var(--accent-texto)' }} />
             Compartir "{coleccion.titulo}"
           </h2>
           <p className={`text-xs mt-1 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
@@ -1276,7 +1271,7 @@ function ModalVincularMapaMental({
       >
         <div className={`px-5 py-4 border-b ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
           <h2 className={`text-base font-serif font-semibold flex items-center gap-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
-            <i className="ti ti-hierarchy-2 text-lg" style={{ color: VERDE }} />
+            <i className="ti ti-hierarchy-2 text-lg" style={{ color: 'var(--accent-texto)' }} />
             Vincular con un mapa mental
           </h2>
           <p className={`text-xs mt-1 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
@@ -1286,7 +1281,7 @@ function ModalVincularMapaMental({
 
         {vinculado && (
           <div className={`mx-5 mt-4 flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-100'}`}>
-            <i className="ti ti-hierarchy-2 text-base flex-shrink-0" style={{ color: VERDE }} />
+            <i className="ti ti-hierarchy-2 text-base flex-shrink-0" style={{ color: 'var(--accent-texto)' }} />
             <span className={`flex-1 min-w-0 truncate ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{vinculado.titulo}</span>
             <button
               onClick={() => onIrAlMapa(vinculado.id)}
@@ -1382,6 +1377,37 @@ const COLOR_POR_CODIGO: Record<CodigoTipo, FamiliaColor> = {
   san: 'emerald', // Sanitario (sin área fija en la lista, verde por salud)
   fam: 'fuchsia', // Familia
   aap: 'red', // Auto Acordado del recurso de protección → familia Constitucional (implementa el art. 20)
+  // Lote 1 de leyes especiales: cada una con la familia del área a la que pertenece en la práctica
+  cns: 'yellow', // Consumidor
+  mat: 'fuchsia', // Matrimonio Civil
+  ali: 'fuchsia', // Pensiones de Alimentos
+  vif: 'fuchsia', // Violencia Intrafamiliar
+  fil: 'fuchsia', // Filiación
+  soc: 'yellow', // Sociedades Anónimas
+  mvl: 'yellow', // Mercado de Valores
+  pvp: 'red', // Vida Privada
+  rpj: 'zinc', // Resp. Penal P. Jurídicas
+  dec: 'zinc', // Delitos Económicos
+  pns: 'zinc', // Penas Sustitutivas
+  dsc: 'red', // Antidiscriminación
+  mas: 'lime', // Tenencia de Mascotas
+  soa: 'sky', // SOAP
+  trt: 'sky', // Tránsito
+  amb: 'emerald', // Medio Ambiente
+  tam: 'emerald', // Tribunales Ambientales
+  bga: 'sky', // Bases Adm. del Estado
+  est: 'sky', // Estatuto Administrativo
+  emu: 'sky', // Estatuto Municipal
+  mun: 'sky', // Municipalidades
+  arr: 'blue', // Arrendamiento Urbano
+  cop: 'blue', // Copropiedad
+  pin: 'yellow', // Propiedad Intelectual
+  pid: 'yellow', // Propiedad Industrial
+  dis: 'sky', // Inclusión Discapacidad
+  fel: 'slate', // Firma Electrónica
+  tde: 'sky', // Transformación Digital
+  ind: 'red', // Ley Indígena
+  cng: 'red', // Congreso Nacional
 }
 
 const HEX_POR_FAMILIA: Record<FamiliaColor, string> = {
@@ -2253,7 +2279,7 @@ function VistaPizarra({
               modoOscuro ? 'bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-zinc-800' : 'bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50'
             }`}
           >
-            <i className="ti ti-bulb text-sm" style={{ color: VERDE }} />
+            <i className="ti ti-bulb text-sm" style={{ color: 'var(--accent-texto)' }} />
             {sugerencias.length} sugerencia{sugerencias.length === 1 ? '' : 's'} de conexión
             <i className={`ti ti-chevron-down text-xs transition-transform ${panelSugerenciasAbierto ? 'rotate-180' : ''}`} />
           </button>
@@ -3278,7 +3304,7 @@ function ModalAgregarArticulo({
                                 : 'hover:bg-zinc-50'
                           }`}
                         >
-                          <span className="font-mono text-xs font-semibold flex-shrink-0" style={{ color: VERDE }}>
+                          <span className="font-mono text-xs font-semibold flex-shrink-0" style={{ color: 'var(--accent-texto)' }}>
                             {a.a}
                           </span>
                           <span className={`text-xs line-clamp-1 flex-1 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
@@ -3286,7 +3312,7 @@ function ModalAgregarArticulo({
                           </span>
                           <i
                             className={`ti ${agregado ? 'ti-check' : 'ti-plus'} text-sm flex-shrink-0`}
-                            style={agregado ? { color: VERDE } : undefined}
+                            style={agregado ? { color: 'var(--accent-texto)' } : undefined}
                           />
                         </button>
                       )

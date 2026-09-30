@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
+import { eliminarRamoConDeshacer } from '../../services/deshacer'
+import { avisar } from '../../store/useAvisos'
 import { MODULOS } from '../../data/modulos'
 import { ICONO_RAMO_DEFECTO } from '../../services/modulosAcademico'
 import type { Ramo } from '../../types'
@@ -59,7 +61,6 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
   const modoOscuro = useStore((s) => s.modoOscuro)
   const crearRamo = useStore((s) => s.crearRamo)
   const actualizarRamo = useStore((s) => s.actualizarRamo)
-  const eliminarRamo = useStore((s) => s.eliminarRamo)
 
   const [campos, setCampos] = useState(() => estadoDesdeRamo(ramoEditando))
   const [modulosVinculados, setModulosVinculados] = useState<string[]>(ramoEditando?.modulosVinculados ?? [])
@@ -106,17 +107,22 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
       icono,
       color,
     }
-    if (ramoEditando) actualizarRamo(ramoEditando.id, datos)
-    else crearRamo(datos)
+    if (ramoEditando) {
+      actualizarRamo(ramoEditando.id, datos)
+      avisar.exito('Ramo actualizado')
+    } else {
+      crearRamo(datos)
+      avisar.exito(`Ramo "${datos.nombre}" creado`)
+    }
     onCerrar()
   }
 
   const eliminar = () => {
-    if (ramoEditando) eliminarRamo(ramoEditando.id)
+    if (ramoEditando) eliminarRamoConDeshacer(ramoEditando.id)
     onCerrar()
   }
 
-  const inputClase = `w-full rounded-lg px-3 py-2 text-sm outline-none border ${
+  const inputClase = `w-full rounded-lg px-3 py-2 text-sm outline-none border campo-foco ${
     modoOscuro ? 'bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-600' : 'bg-white border-zinc-200 text-zinc-900 placeholder:text-zinc-400'
   }`
   const labelClase = `block text-xs font-medium mb-1 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`

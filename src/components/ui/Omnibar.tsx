@@ -1,19 +1,22 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { buscar } from '../../services/busqueda'
 import { codigosCargados } from '../../services/codigos'
+import { buscarEnApuntes, type FragmentoCoincidencia } from '../../services/buscarApuntes'
 import type { CodigoTipo } from '../../types'
 
-const VERDE = 'var(--accent-base)'
 
 interface ResultadoBusqueda {
-  tipo: 'articulo' | 'consulta' | 'favorito'
+  tipo: 'articulo' | 'apunte' | 'consulta' | 'favorito'
   id: string
   titulo: string
   subtitulo?: string
   codigo?: CodigoTipo
   articulo?: string
+  /** Solo apuntes: dónde está y el trozo de texto con la coincidencia. */
+  moduloId?: string
+  fragmento?: FragmentoCoincidencia | null
 }
 
 interface Props {
@@ -25,15 +28,31 @@ export function Omnibar({ onClose }: Props) {
   const codigos = useStore((s) => s.codigos)
   const historial = useStore((s) => s.historial)
   const favoritos = useStore((s) => s.favoritos)
-  const setCodigoExplorador = useStore((s) => s.setCodigoExplorador)
+  const abrirArticuloEnExplorador = useStore((s) => s.abrirArticuloEnExplorador)
   const setVistaActiva = useStore((s) => s.setVistaActiva)
+  const academicoModulos = useStore((s) => s.academicoModulos)
+  const ramos = useStore((s) => s.ramos)
+  const abrirApunte = useStore((s) => s.abrirApunte)
   const cargarConsulta = useStore((s) => s.cargarConsulta)
   const setOmnibarAbierto = useStore((s) => s.setOmnibarAbierto)
   const agregarVisitado = useStore((s) => s.agregarVisitado)
 
   const [busqueda, setBusqueda] = useState('')
-  const [resultados, setResultados] = useState<ResultadoBusqueda[]>([])
+  // La búsqueda recorre artículos y TODOS los apuntes: se espera a que el
+  // usuario deje de teclear 120 ms en vez de buscar en cada tecla.
+  const [consulta, setConsulta] = useState('')
+  useEffect(() => {
+    const t = window.setTimeout(() => setConsulta(busqueda), busqueda ? 120 : 0)
+    return () => window.clearTimeout(t)
+  }, [busqueda])
+  const listaRef = useRef<HTMLDivElement>(null)
   const [indiceSeleccionado, setIndiceSeleccionado] = useState(0)
+  // cada búsqueda nueva vuelve a seleccionar el primer resultado
+  const [consultaPrevia, setConsultaPrevia] = useState(consulta)
+  if (consulta !== consultaPrevia) {
+    setConsultaPrevia(consulta)
+    setIndiceSeleccionado(0)
+  }
   const inputRef = useRef<HTMLInputElement>(null)
 
   // Autofocus en apertura
@@ -41,14 +60,11 @@ export function Omnibar({ onClose }: Props) {
     inputRef.current?.focus()
   }, [])
 
-  // Lógica de búsqueda
-  useEffect(() => {
-    if (!busqueda.trim()) {
-      setResultados([])
-      setIndiceSeleccionado(0)
-      return
-    }
+  // Lógica de búsqueda (derivada: sin estado propio ni efecto)
+  const resultados = useMemo<ResultadoBusqueda[]>(() => {
+    if (!consulta.trim()) return []
 
+    const busqueda = consulta
     const q = busqueda.toLowerCase()
     const nuevoResultados: ResultadoBusqueda[] = []
 
@@ -61,12 +77,25 @@ export function Omnibar({ onClose }: Props) {
         nuevoResultados.push({
           tipo: 'articulo',
           id: `${r.codigo}-${r.articulo.a}`,
-          titulo: `Art. ${r.articulo.a} — ${r.nombreCodigo}`,
+          titulo: `${r.articulo.a} — ${r.nombreCodigo}`,
           subtitulo: r.articulo.t.slice(0, 80) + (r.articulo.t.length > 80 ? '…' : ''),
           codigo: r.codigo,
           articulo: r.articulo.a,
         })
       }
+    }
+
+    // Apuntes propios (texto completo, sin tildes ni mayúsculas)
+    for (const a of buscarEnApuntes(academicoModulos, ramos, busqueda, 5)) {
+      nuevoResultados.push({
+        tipo: 'apunte',
+        id: `apunte-${a.apunteId}`,
+        titulo: a.titulo,
+        subtitulo: a.ubicacion,
+        moduloId: a.moduloId,
+        articulo: a.apunteId,
+        fragmento: a.fragmento,
+      })
     }
 
     // Buscar en historial de consultas
@@ -96,9 +125,13 @@ export function Omnibar({ onClose }: Props) {
       })
     }
 
-    setResultados(nuevoResultados)
-    setIndiceSeleccionado(0)
-  }, [busqueda, codigos, historial, favoritos])
+    return nuevoResultados
+  }, [consulta, codigos, historial, favoritos, academicoModulos, ramos])
+
+  // El resultado elegido con las flechas siempre visible dentro de la lista
+  useEffect(() => {
+    listaRef.current?.querySelectorAll('button')[indiceSeleccionado]?.scrollIntoView({ block: 'nearest' })
+  }, [indiceSeleccionado])
 
   // Manejo de teclado
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -127,10 +160,13 @@ export function Omnibar({ onClose }: Props) {
     switch (resultado.tipo) {
       case 'articulo':
         if (resultado.codigo) {
-          setCodigoExplorador(resultado.codigo)
-          setVistaActiva('explorador')
+          // abre el artículo elegido, no solo el código
+          abrirArticuloEnExplorador(resultado.codigo, resultado.articulo ?? '')
           agregarVisitado(resultado.articulo || '', resultado.codigo)
         }
+        break
+      case 'apunte':
+        if (resultado.moduloId && resultado.articulo) abrirApunte(resultado.moduloId, resultado.articulo, busqueda)
         break
       case 'consulta':
         cargarConsulta(resultado.id)
@@ -148,7 +184,7 @@ export function Omnibar({ onClose }: Props) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
-      className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh]"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-[12vh] sm:pt-[20vh] px-4"
       onClick={() => onClose()}
     >
       {/* Backdrop */}
@@ -169,14 +205,14 @@ export function Omnibar({ onClose }: Props) {
         <div className={`flex items-center gap-3 px-4 py-3 border-b ${
           modoOscuro ? 'border-zinc-800' : 'border-zinc-200'
         }`}>
-          <i className="ti ti-search text-xl" style={{ color: VERDE }} />
+          <i className="ti ti-search text-xl" style={{ color: 'var(--accent-texto)' }} />
           <input
             ref={inputRef}
             type="text"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Busca artículos, consultas, favoritos... (Esc para cerrar)"
+            placeholder="Busca artículos, apuntes, consultas… (Esc para cerrar)"
             className={`flex-1 outline-none text-sm py-2 ${
               modoOscuro
                 ? 'bg-zinc-900 text-white placeholder-zinc-500'
@@ -202,10 +238,11 @@ export function Omnibar({ onClose }: Props) {
         <AnimatePresence>
           {resultados.length > 0 ? (
             <motion.div
+              ref={listaRef}
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className={`max-h-96 overflow-y-auto ${
+              className={`max-h-[60vh] sm:max-h-96 overflow-y-auto ${
                 modoOscuro ? 'bg-zinc-800/50' : 'bg-zinc-50'
               }`}
             >
@@ -226,13 +263,16 @@ export function Omnibar({ onClose }: Props) {
                   {/* Icono por tipo */}
                   <div className="flex-shrink-0">
                     {resultado.tipo === 'articulo' && (
-                      <i className="ti ti-book-2 text-lg" style={{ color: VERDE }} />
+                      <i className="ti ti-book-2 text-lg" style={{ color: 'var(--accent-texto)' }} />
+                    )}
+                    {resultado.tipo === 'apunte' && (
+                      <i className="ti ti-notes text-lg" style={{ color: 'var(--accent-texto)' }} />
                     )}
                     {resultado.tipo === 'consulta' && (
-                      <i className="ti ti-messages text-lg" style={{ color: VERDE }} />
+                      <i className="ti ti-messages text-lg" style={{ color: 'var(--accent-texto)' }} />
                     )}
                     {resultado.tipo === 'favorito' && (
-                      <i className="ti ti-bookmark text-lg" style={{ color: VERDE }} />
+                      <i className="ti ti-bookmark text-lg" style={{ color: 'var(--accent-texto)' }} />
                     )}
                   </div>
 
@@ -247,7 +287,14 @@ export function Omnibar({ onClose }: Props) {
                       <div className={`text-xs truncate ${
                         modoOscuro ? 'text-zinc-400' : 'text-zinc-500'
                       }`}>
-                        {resultado.subtitulo}
+                        {resultado.tipo === 'apunte' ? `Apunte · ${resultado.subtitulo}` : resultado.subtitulo}
+                      </div>
+                    )}
+                    {resultado.fragmento && (
+                      <div className={`text-xs mt-0.5 line-clamp-2 ${modoOscuro ? 'text-zinc-300' : 'text-zinc-600'}`}>
+                        {resultado.fragmento.antes}
+                        <mark className="rounded px-0.5 bg-yellow-200 text-zinc-900">{resultado.fragmento.coincidencia}</mark>
+                        {resultado.fragmento.despues}
                       </div>
                     )}
                   </div>
@@ -265,7 +312,7 @@ export function Omnibar({ onClose }: Props) {
                 </button>
               ))}
             </motion.div>
-          ) : busqueda.trim() ? (
+          ) : consulta.trim() && consulta === busqueda ? (
             <div className={`px-4 py-8 text-center text-sm ${
               modoOscuro ? 'text-zinc-500' : 'text-zinc-500'
             }`}>

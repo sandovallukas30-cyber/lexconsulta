@@ -126,7 +126,7 @@ export function AdminView() {
       })
   }, [jurisprudencia, busqueda])
 
-  const inputClass = `w-full px-3 py-2 rounded-lg text-sm outline-none border transition-colors ${
+  const inputClass = `w-full px-3 py-2 rounded-lg text-sm outline-none border campo-foco transition-colors ${
     modoOscuro
       ? 'bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-[var(--accent-600)]'
       : 'bg-white border-zinc-300 text-zinc-900 placeholder:text-zinc-400 focus:border-[var(--accent-500)]'
@@ -374,7 +374,7 @@ function EntradaCard({
           <span
             className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full"
             style={{
-              color: VERDE,
+              color: 'var(--accent-texto)',
               background: modoOscuro
                 ? 'color-mix(in srgb, var(--accent-base) 19%, transparent)'
                 : 'color-mix(in srgb, var(--accent-base) 8%, transparent)',
@@ -452,7 +452,7 @@ function EmptyState({ modoOscuro, onAgregar }: { modoOscuro: boolean; onAgregar:
         className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-5"
         style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
       >
-        <i className="ti ti-shield-cog text-4xl" style={{ color: VERDE }} />
+        <i className="ti ti-shield-cog text-4xl" style={{ color: 'var(--accent-texto)' }} />
       </div>
       <h3 className={`text-xl font-serif font-semibold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
         Aún no hay resoluciones cargadas

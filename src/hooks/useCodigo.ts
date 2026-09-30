@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { cargarCodigo, codigosCargados, obtenerCodigo } from '../services/codigos'
 import type { CodigoData, CodigoTipo } from '../types'
 
@@ -6,12 +6,16 @@ export interface EstadoCodigo {
   codigo: CodigoData | null
   cargando: boolean
   error: string | null
+  /** Vuelve a intentar la carga (tras un error de red). */
+  reintentar: () => void
 }
 
 /** Hook async: carga el JSON del código dinámicamente con loading state. */
 export function useCodigo(tipo: CodigoTipo | null): EstadoCodigo {
   const cacheado = tipo ? obtenerCodigo(tipo) : null
-  const [estado, setEstado] = useState<EstadoCodigo>({
+  const [intento, setIntento] = useState(0)
+  const reintentar = useCallback(() => setIntento((n) => n + 1), [])
+  const [estado, setEstado] = useState<Omit<EstadoCodigo, 'reintentar'>>({
     codigo: cacheado,
     cargando: !cacheado && !!tipo,
     error: null,
@@ -36,14 +40,28 @@ export function useCodigo(tipo: CodigoTipo | null): EstadoCodigo {
       })
       .catch((err) => {
         if (cancelado) return
-        setEstado({ codigo: null, cargando: false, error: err.message ?? 'Error cargando código' })
+        setEstado({ codigo: null, cargando: false, error: err?.message ?? 'Error cargando código' })
       })
     return () => {
       cancelado = true
     }
-  }, [tipo])
+  }, [tipo, intento])
 
-  return estado
+  // si la carga falló por red, reintentar solo cuando vuelve la conexión
+  const fallo = !!estado.error
+  useEffect(() => {
+    if (!fallo) return
+    window.addEventListener('online', reintentar)
+    return () => window.removeEventListener('online', reintentar)
+  }, [fallo, reintentar])
+
+  // Al cambiar `tipo`, el estado de arriba todavía es el del código anterior
+  // durante un render (el efecto aún no corrió): nunca devolver un código
+  // que no es el pedido. Si el nuevo ya está en caché, se entrega al tiro.
+  const enCache = tipo ? obtenerCodigo(tipo) : null
+  if (enCache) return { codigo: enCache, cargando: false, error: null, reintentar }
+  if (estado.codigo && estado.codigo.tipo !== tipo) return { codigo: null, cargando: !!tipo, error: null, reintentar }
+  return { ...estado, reintentar }
 }
 
 export function listarCodigosCargados(): CodigoTipo[] {

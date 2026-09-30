@@ -135,7 +135,7 @@ function MenuSeleccionJuegos({
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
+          transition={{ duration: 0.25 }}
           className="text-center mb-10"
         >
           <div
@@ -146,7 +146,7 @@ function MenuSeleccionJuegos({
                 : 'color-mix(in srgb, var(--accent-base) 6%, transparent)',
             }}
           >
-            <i className="ti ti-puzzle text-3xl" style={{ color: VERDE }} />
+            <i className="ti ti-puzzle text-3xl" style={{ color: 'var(--accent-texto)' }} />
           </div>
           <h1 className={`text-3xl font-serif font-bold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
             Área de práctica
@@ -178,11 +178,11 @@ function MenuSeleccionJuegos({
                     : 'color-mix(in srgb, var(--accent-base) 8%, transparent)',
                 }}
               >
-                <i className="ti ti-puzzle text-2xl" style={{ color: VERDE }} />
+                <i className="ti ti-puzzle text-2xl" style={{ color: 'var(--accent-texto)' }} />
               </span>
               <i
                 className="ti ti-arrow-right text-lg transition-transform group-hover:translate-x-1"
-                style={{ color: VERDE }}
+                style={{ color: 'var(--accent-texto)' }}
               />
             </div>
             <h2 className={`text-xl font-serif font-bold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
@@ -217,11 +217,11 @@ function MenuSeleccionJuegos({
                     : 'color-mix(in srgb, var(--accent-base) 8%, transparent)',
                 }}
               >
-                <i className="ti ti-help text-2xl" style={{ color: VERDE }} />
+                <i className="ti ti-help text-2xl" style={{ color: 'var(--accent-texto)' }} />
               </span>
               <i
                 className="ti ti-arrow-right text-lg transition-transform group-hover:translate-x-1"
-                style={{ color: VERDE }}
+                style={{ color: 'var(--accent-texto)' }}
               />
             </div>
             <h2 className={`text-xl font-serif font-bold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
@@ -256,11 +256,11 @@ function MenuSeleccionJuegos({
                     : 'color-mix(in srgb, var(--accent-base) 8%, transparent)',
                 }}
               >
-                <i className="ti ti-user-exclamation text-2xl" style={{ color: VERDE }} />
+                <i className="ti ti-user-exclamation text-2xl" style={{ color: 'var(--accent-texto)' }} />
               </span>
               <i
                 className="ti ti-arrow-right text-lg transition-transform group-hover:translate-x-1"
-                style={{ color: VERDE }}
+                style={{ color: 'var(--accent-texto)' }}
               />
             </div>
             <h2 className={`text-xl font-serif font-bold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
@@ -328,14 +328,14 @@ function SeleccionArea({
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
+          transition={{ duration: 0.25 }}
           className="text-center mb-10"
         >
           <div
             className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
             style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
           >
-            <i className="ti ti-puzzle text-3xl" style={{ color: VERDE }} />
+            <i className="ti ti-puzzle text-3xl" style={{ color: 'var(--accent-texto)' }} />
           </div>
           <h1 className={`text-3xl font-serif font-bold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
             Pasapalabra jurídico
@@ -399,13 +399,13 @@ function SeleccionArea({
                     className="w-10 h-10 rounded-lg flex items-center justify-center"
                     style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 19%, transparent)' : 'color-mix(in srgb, var(--accent-base) 8%, transparent)' }}
                   >
-                    <i className={`ti ${a.icono} text-xl`} style={{ color: VERDE }} />
+                    <i className={`ti ${a.icono} text-xl`} style={{ color: 'var(--accent-texto)' }} />
                   </span>
                   <h3 className={`text-base font-serif font-semibold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
                     {a.nombre}
                   </h3>
                   {cargando === a.id && (
-                    <i className="ti ti-loader-2 text-base animate-spin ml-auto" style={{ color: VERDE }} />
+                    <i className="ti ti-loader-2 text-base animate-spin ml-auto" style={{ color: 'var(--accent-texto)' }} />
                   )}
                 </div>
                 <p className={`text-xs leading-relaxed ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
@@ -562,7 +562,7 @@ function Pasapalabra({ partida, modoOscuro }: { partida: PartidaPasapalabra; mod
             <div className="flex items-baseline gap-3 mb-3">
               <span
                 className="text-4xl font-bold font-serif"
-                style={{ color: VERDE }}
+                style={{ color: 'var(--accent-texto)' }}
               >
                 {actual.letra}
               </span>
@@ -801,7 +801,7 @@ function ResumenPartida({
             className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
             style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
           >
-            <i className="ti ti-trophy text-3xl" style={{ color: VERDE }} />
+            <i className="ti ti-trophy text-3xl" style={{ color: 'var(--accent-texto)' }} />
           </div>
           <h1 className={`text-3xl font-serif font-bold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
             Partida terminada
@@ -985,7 +985,7 @@ function ModalContinuar({
               className="w-10 h-10 rounded-lg flex items-center justify-center"
               style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 19%, transparent)' : 'color-mix(in srgb, var(--accent-base) 8%, transparent)' }}
             >
-              <i className="ti ti-player-pause text-xl" style={{ color: VERDE }} />
+              <i className="ti ti-player-pause text-xl" style={{ color: 'var(--accent-texto)' }} />
             </span>
             <h2 className={`text-xl font-serif font-semibold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
               ¿Continuar la partida?
@@ -1073,14 +1073,14 @@ function SeleccionAreaAhorcado({
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
+          transition={{ duration: 0.25 }}
           className="text-center mb-10"
         >
           <div
             className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
             style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
           >
-            <i className="ti ti-user-exclamation text-3xl" style={{ color: VERDE }} />
+            <i className="ti ti-user-exclamation text-3xl" style={{ color: 'var(--accent-texto)' }} />
           </div>
           <h1 className={`text-3xl font-serif font-bold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
             El Acusado
@@ -1144,13 +1144,13 @@ function SeleccionAreaAhorcado({
                     className="w-10 h-10 rounded-lg flex items-center justify-center"
                     style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 19%, transparent)' : 'color-mix(in srgb, var(--accent-base) 8%, transparent)' }}
                   >
-                    <i className={`ti ${a.icono} text-xl`} style={{ color: VERDE }} />
+                    <i className={`ti ${a.icono} text-xl`} style={{ color: 'var(--accent-texto)' }} />
                   </span>
                   <h3 className={`text-base font-serif font-semibold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
                     {a.nombre}
                   </h3>
                   {cargando === a.id && (
-                    <i className="ti ti-loader-2 text-base animate-spin ml-auto" style={{ color: VERDE }} />
+                    <i className="ti ti-loader-2 text-base animate-spin ml-auto" style={{ color: 'var(--accent-texto)' }} />
                   )}
                 </div>
                 <p className={`text-xs leading-relaxed ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
@@ -1542,7 +1542,7 @@ function SelectorCodigoQuiz({
               : 'color-mix(in srgb, var(--accent-base) 6%, transparent)',
           }}
         >
-          <i className="ti ti-help text-3xl" style={{ color: VERDE }} />
+          <i className="ti ti-help text-3xl" style={{ color: 'var(--accent-texto)' }} />
         </div>
         <h1 className={`text-3xl font-serif font-bold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
           {titulo}
@@ -1572,7 +1572,7 @@ function SelectorCodigoQuiz({
               </h3>
               <i
                 className="ti ti-arrow-right text-base transition-transform group-hover:translate-x-1"
-                style={{ color: VERDE }}
+                style={{ color: 'var(--accent-texto)' }}
               />
             </div>
             <p className={`text-xs leading-relaxed mt-2 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
@@ -1616,7 +1616,7 @@ function PantallaJuegoQuiz({
               <p className={`text-xs font-semibold ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>
                 Puntos
               </p>
-              <p className="text-lg font-bold" style={{ color: VERDE }}>
+              <p className="text-lg font-bold" style={{ color: 'var(--accent-texto)' }}>
                 {flujo.puntos}
               </p>
             </div>
@@ -1625,7 +1625,7 @@ function PantallaJuegoQuiz({
               <p className={`text-xs font-semibold ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>
                 Racha
               </p>
-              <p className="text-lg font-bold" style={{ color: VERDE }}>
+              <p className="text-lg font-bold" style={{ color: 'var(--accent-texto)' }}>
                 ×{flujo.racha}
               </p>
             </div>
@@ -1637,7 +1637,7 @@ function PantallaJuegoQuiz({
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${progreso}%` }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.25 }}
             className="h-full rounded-full"
             style={{ background: VERDE }}
           />
@@ -1658,7 +1658,7 @@ function PantallaJuegoQuiz({
         <div className="mb-2">
           <p
             className="text-xs font-mono font-semibold"
-            style={{ color: VERDE }}
+            style={{ color: 'var(--accent-texto)' }}
           >
             {pregunta.articulo}
           </p>
@@ -1860,7 +1860,7 @@ function PantallaResultadoQuiz({
               : 'color-mix(in srgb, var(--accent-base) 6%, transparent)',
           }}
         >
-          <i className="ti ti-trophy text-4xl" style={{ color: VERDE }} />
+          <i className="ti ti-trophy text-4xl" style={{ color: 'var(--accent-texto)' }} />
         </div>
         <h1 className={`text-3xl font-serif font-bold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
           ¡Fin de la ronda!
@@ -1874,7 +1874,7 @@ function PantallaResultadoQuiz({
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: 0.25 }}
         className={`rounded-2xl p-8 mb-8 border ${modoOscuro ? 'bg-zinc-800 border-zinc-700' : 'bg-white border-zinc-200'}`}
       >
         <div className="grid grid-cols-3 gap-4 text-center">
@@ -1882,7 +1882,7 @@ function PantallaResultadoQuiz({
             <p className={`text-xs uppercase tracking-wider font-semibold mb-2 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
               Puntos
             </p>
-            <p className="text-3xl font-bold" style={{ color: VERDE }}>
+            <p className="text-3xl font-bold" style={{ color: 'var(--accent-texto)' }}>
               {puntos}
             </p>
           </div>
@@ -1890,7 +1890,7 @@ function PantallaResultadoQuiz({
             <p className={`text-xs uppercase tracking-wider font-semibold mb-2 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
               Racha máxima
             </p>
-            <p className="text-3xl font-bold" style={{ color: VERDE }}>
+            <p className="text-3xl font-bold" style={{ color: 'var(--accent-texto)' }}>
               ×{racha}
             </p>
           </div>

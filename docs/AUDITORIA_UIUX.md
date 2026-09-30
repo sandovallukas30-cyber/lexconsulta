@@ -1,0 +1,32 @@
+# Auditoría UI/UX (C0)
+
+Fecha: 2026-09-30. Método: `npm run dev` + Chromium (Playwright) en claro y oscuro a 375, 768 y 1280 px, recorriendo las 11 vistas del menú, con un detector automático de desborde horizontal (elementos cuyo borde derecho supera el ancho de la ventana y no están dentro de un contenedor con scroll) y de botones de menos de 32 px. Capturas en el scratchpad de la sesión (no se suben al repo).
+
+Resumen del detector: sin scroll horizontal en `document` en ninguna vista, pero **a 375 px el `<main>` mide 118 px de ancho** en todas las vistas: el sidebar fijo de 256 px se come la pantalla, así que el "sin desborde" es engañoso (todo el contenido está aplastado en una columna de 118 px).
+
+| # | Vista | Archivo | Qué falla | Propuesta | Ítem |
+|---|---|---|---|---|---|
+| 1 | Todas (375–768 px) | `layout/Sidebar.tsx:71-77` | El sidebar mide siempre 256 px (68 px colapsado) aunque la ventana tenga 375 px: el contenido queda en 118 px, ilegible. No hay menú hamburguesa. | En < 768 px: sidebar como panel deslizable (drawer) sobre el contenido, cerrado por defecto, con botón de menú en el Topbar; se cierra al elegir una vista y con Esc. | C6 |
+| 2 | Todas | `layout/Topbar.tsx:48` | Topbar con `px-6` y título + aviso + perfil: a 375 px no queda espacio para un botón de menú. | Botón de menú a la izquierda en móvil, padding 16 px. | C6 |
+| 3 | Explorador (código abierto) | `ExploradorView.tsx:228` | El botón de búsqueda tiene `min-w-[220px]` y la barra suma Índice + Modo lectura + imprimir: a 375 px desborda. | Búsqueda como botón de ícono en móvil; `flex-wrap`/`overflow-x-auto` en la barra. | C6 |
+| 4 | Explorador | `ExploradorView.tsx:285` | Tarjeta del artículo con `p-10` y `my-8` fijos: en móvil deja ~200 px de texto. | `p-5 sm:p-10`, `my-4 sm:my-8`. | C6 |
+| 5 | Explorador | `ExploradorView.tsx:130-139` | Si la carga del JSON falla (red), se muestra "No hay códigos cargados." sin explicación ni forma de reintentar; `useCodigo` sí tiene `error` pero no se usa. | Estado de error con mensaje y botón "Reintentar"; volver al selector. | C4 |
+| 6 | Explorador | `ExploradorView.tsx:1248` | Mientras carga un código grande solo hay un ícono girando: la pantalla "salta" cuando aparece el artículo. | Skeleton con la forma de la barra, la miga y la tarjeta del artículo. | C4 / C8 |
+| 7 | Explorador | `ExploradorView.tsx:912-971` | El buscador del código no tolera tildes ("prescripcion" ≠ "prescripción") ni ids con sufijo ("183-A", "183 bis", "art 19 n°"); no resalta la coincidencia. | Normalizar tildes, reconocer `N-A`, `N bis/ter`, y resaltar. "Ir al artículo N" directo con Enter. | C7 |
+| 8 | Explorador | `ExploradorView.tsx:289-306` | No hay forma de copiar un artículo con su cita ("Art. 1545 CC"). | Botón "Copiar con cita" con aviso "Copiado". | C7 / C2 |
+| 9 | Explorador | `ExploradorView.tsx:276` | Al pasar de un artículo largo a otro, el scroll queda donde estaba (se empieza a leer el siguiente desde la mitad). Sin indicador de posición dentro del código fuera del "12 de 165". | Scroll arriba al cambiar de artículo; barra fina de posición en el código. | C1 / C7 |
+| 10 | Modo Lectura de apuntes | `ModoLecturaApunte.tsx:327-329` | Barra de progreso de 2 px sin porcentaje ni tiempo restante; el índice no marca la sección actual; no hay "volver arriba"; la posición se restaura sola desde `localStorage` (se pierde al limpiar datos y no va en el respaldo). | % + minutos restantes, scroll-spy, botón volver arriba, "Retomar donde quedaste" guardado en el store. | C1 |
+| 11 | Editor de apuntes | `editorApunte/EditorApunte.tsx:139-163` | No hay indicador "Guardando… / Guardado", ni Ctrl+S, ni aviso si se cierra la pestaña con cambios sin escribir. | Indicador en la barra, Ctrl+S que fuerza la escritura, `beforeunload` si hay pendientes. | C3 |
+| 12 | Formulario de apunte | `moduloDetalle/TabApuntes.tsx` | Cerrar el formulario con "Cancelar" o cambiar de pestaña descarta lo escrito sin preguntar. | Confirmar si hay cambios sin guardar. | C3 |
+| 13 | Módulo detalle | `ModuloDetalle.tsx` (fila de pestañas) | Las 6 pestañas no tienen `overflow-x-auto`: a 375 px desbordan. | Fila desplazable horizontalmente sin barra visible. | C6 |
+| 14 | Módulo detalle | `moduloDetalle/TabClases.tsx`, `TabExamenes.tsx`, `TabTextos.tsx`, `TabCasos.tsx` | Formularios con `grid-cols-2` fijo: a 375 px los campos de fecha y ponderación miden ~150 px. | `grid-cols-1 sm:grid-cols-2`. | C6 |
+| 15 | Módulo detalle | `moduloDetalle/comunes.tsx` (`EstadoVacio`) | Los estados vacíos explican pero no ofrecen la acción ("Aún no tienes apuntes"): hay que buscar el botón arriba. | Botones "Crear" / "Importar" dentro del estado vacío. | C4 |
+| 16 | Mapas mentales (lista) | `MapasMentalesView.tsx:273` | El botón eliminar es `opacity-0 group-hover:opacity-100`: en pantallas táctiles no existe. | Visible siempre en táctil (`[@media(hover:none)]:opacity-100`). | C6 |
+| 17 | Sidebar | `layout/Sidebar.tsx` (pie) | "53 de 54 activos · incl. leye" se corta a mitad de palabra. | Texto más corto o `truncate` con `title`. | C5 |
+| 18 | Topbar | `layout/Topbar.tsx:57` | El aviso "Orientación educativa · No reemplaza…" se trunca a 768 px ("Orientación educativa · …"). | Versión corta bajo 1024 px. | C5 |
+| 19 | Global | varios | Radios (`rounded-lg/xl/2xl`), sombras y duraciones (0.15–0.3 s) distintos para el mismo tipo de control; foco de teclado invisible en muchos botones (sin `focus-visible`). | Tokens en `index.css` (radios, sombras, duraciones 150–250 ms) y un anillo de foco común. | C5 |
+| 20 | Global | `App.tsx` | Al cambiar de vista y volver, el scroll vuelve arriba; no hay panel de atajos (`?`) aunque existen varios (Ctrl+K, Ctrl+B, flechas). | Recordar scroll por vista; modal de atajos con `?`. | C7 |
+| 21 | Apuntes / artículos | `index.css` (`@media print`) | Imprimir un apunte imprime toda la app o nada (`#root` se oculta y solo hay vistas imprimibles para Colecciones, Explorador y Mapas). | Vista imprimible de apunte y de artículo, sin barras, recuadros sin cortarse. | C9 |
+| 22 | Consultar | `ConsultarView.tsx` | 10 botones de menos de 32 px (chips y controles del compositor) a 1280 px; a 375 px 6. | Altura mínima 40 px en táctil. | C6 |
+
+Las 3 pantallas más inconsistentes (para C5): **Explorador** (barra con 4 estilos de botón distintos, `py-1.5` vs `w-8 h-8`, sin foco visible), **Módulo detalle** (botones `px-3 py-2`, `py-1.5`, `w-7 h-7`, radios `lg`/`xl`/`md` mezclados) y **Topbar/Sidebar** (alturas y paddings distintos entre ítems y pie).

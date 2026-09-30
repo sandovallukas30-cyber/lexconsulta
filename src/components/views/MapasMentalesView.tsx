@@ -27,8 +27,19 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useStore } from '../../store/useStore'
+import { eliminarMapaMentalConDeshacer } from '../../services/deshacer'
 import type { MapaMental, NodoMapaMental, ConexionMapaMental, FormaNodoMental, TamanoTextoMental } from '../../types'
 import { MAPAS_MENTALES_PLANTILLA } from '../../data/mapasMentalesPlantilla'
+
+// Inter solo para Mapas mentales (.fuente-mapa-mental): se pide al cargar
+// esta vista, no en el arranque de la app (C8).
+if (typeof document !== 'undefined' && !document.getElementById('fuente-inter')) {
+  const link = document.createElement('link')
+  link.id = 'fuente-inter'
+  link.rel = 'stylesheet'
+  link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
+  document.head.appendChild(link)
+}
 
 const VERDE = 'var(--accent-base)'
 /** Paleta CON significado fijo, no un selector de color libre: la idea es
@@ -119,7 +130,6 @@ export function MapasMentalesView() {
   const mapaActivoId = useStore((s) => s.mapaMentalActivoId)
   const crearMapaMental = useStore((s) => s.crearMapaMental)
   const actualizarMapaMental = useStore((s) => s.actualizarMapaMental)
-  const eliminarMapaMental = useStore((s) => s.eliminarMapaMental)
   const setMapaMentalActivo = useStore((s) => s.setMapaMentalActivo)
 
   const mapaActivo = useMemo(() => mapas.find((m) => m.id === mapaActivoId) ?? null, [mapas, mapaActivoId])
@@ -180,7 +190,7 @@ export function MapasMentalesView() {
           setMapaMentalActivo(id)
         }}
         onUsarPlantilla={usarPlantilla}
-        onEliminar={eliminarMapaMental}
+        onEliminar={eliminarMapaMentalConDeshacer}
       />
     )
   }
@@ -224,7 +234,7 @@ function ListaMapas({
                 : 'color-mix(in srgb, var(--accent-base) 6%, transparent)',
             }}
           >
-            <i className="ti ti-hierarchy-2 text-lg" style={{ color: VERDE }} />
+            <i className="ti ti-hierarchy-2 text-lg" style={{ color: 'var(--accent-texto)' }} />
           </div>
           <h1 className={`text-xl font-serif font-semibold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
             Mapas mentales
@@ -238,7 +248,7 @@ function ListaMapas({
         <button
           onClick={onCrear}
           className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed text-sm font-medium mb-6 transition-colors"
-          style={{ borderColor: modoOscuro ? '#3f3f46' : '#d4d4d8', color: VERDE }}
+          style={{ borderColor: modoOscuro ? '#3f3f46' : '#d4d4d8', color: 'var(--accent-texto)' }}
         >
           <i className="ti ti-plus text-base" />
           Nuevo mapa mental
@@ -270,8 +280,10 @@ function ListaMapas({
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
-                    if (confirm(`¿Eliminar "${m.titulo}"?`)) onEliminar(m.id)
+                    onEliminar(m.id)
                   }}
+                  aria-label={`Eliminar el mapa "${m.titulo}"`}
+                  title="Eliminar"
                   className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ${
                     modoOscuro ? 'text-zinc-500 hover:bg-zinc-700 hover:text-red-400' : 'text-zinc-400 hover:bg-zinc-100 hover:text-red-500'
                   }`}
@@ -296,7 +308,7 @@ function ListaMapas({
                   modoOscuro ? 'bg-zinc-800/40 border-zinc-800 hover:bg-zinc-800' : 'bg-white border-zinc-200 hover:bg-zinc-50'
                 }`}
               >
-                <i className="ti ti-template text-lg flex-shrink-0" style={{ color: VERDE }} />
+                <i className="ti ti-template text-lg flex-shrink-0" style={{ color: 'var(--accent-texto)' }} />
                 <div className="flex-1 min-w-0">
                   <h3 className={`text-sm font-medium truncate ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
                     {p.titulo}
@@ -990,7 +1002,6 @@ function MapaMentalDetalle({
 }) {
   const renombrarMapaMental = useStore((s) => s.renombrarMapaMental)
   const actualizarMapaMental = useStore((s) => s.actualizarMapaMental)
-  const eliminarMapaMental = useStore((s) => s.eliminarMapaMental)
   // Colección vinculada (si alguna) — ver Coleccion.mapaMentalVinculado en
   // types/index.ts: un solo lado guarda el vínculo, acá solo se consulta.
   const coleccionVinculada = useStore((s) => s.colecciones.find((c) => c.mapaMentalVinculado === mapa.id))
@@ -1470,7 +1481,7 @@ function MapaMentalDetalle({
   return (
     <div className={`fuente-mapa-mental h-full flex flex-col ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
       <div
-        className={`flex items-center gap-3 px-6 py-3 border-b flex-shrink-0 ${
+        className={`flex flex-wrap items-center gap-2 sm:gap-3 px-3 sm:px-6 py-2 sm:py-3 border-b flex-shrink-0 ${
           modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
         }`}
       >
@@ -1497,7 +1508,7 @@ function MapaMentalDetalle({
                 setEditandoTitulo(false)
               }
             }}
-            className={`flex-1 min-w-0 bg-transparent outline-none border-b-2 text-lg font-serif font-semibold px-0.5 ${
+            className={`flex-1 min-w-0 bg-transparent outline-none border campo-foco-b-2 text-lg font-serif font-semibold px-0.5 ${
               modoOscuro ? 'text-white' : 'text-zinc-900'
             }`}
             style={{ borderColor: VERDE }}
@@ -1641,11 +1652,7 @@ function MapaMentalDetalle({
         </button>
 
         <button
-          onClick={() => {
-            if (confirm(`¿Eliminar el mapa "${mapa.titulo}"?`)) {
-              eliminarMapaMental(mapa.id)
-            }
-          }}
+          onClick={() => eliminarMapaMentalConDeshacer(mapa.id)}
           title="Eliminar mapa mental"
           className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
             modoOscuro ? 'text-zinc-500 hover:bg-zinc-800 hover:text-red-400' : 'text-zinc-400 hover:bg-zinc-100 hover:text-red-500'
@@ -2268,7 +2275,7 @@ function EdgeEditable(props: EdgeProps<EdgeWithData>) {
               }}
               maxLength={40}
               placeholder="etiqueta..."
-              className={`text-[11px] px-2 py-0.5 rounded outline-none border ${
+              className={`text-[11px] px-2 py-0.5 rounded outline-none border campo-foco ${
                 modoOscuro ? 'bg-zinc-800 border-zinc-600 text-white' : 'bg-white border-zinc-300 text-zinc-900'
               }`}
               style={{ width: 110 }}

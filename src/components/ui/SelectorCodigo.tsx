@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
-import { codigosCargados, obtenerCodigo } from '../../services/codigos'
+import { cargarCodigo, codigosCargados, obtenerCodigo } from '../../services/codigos'
+import { obtenerMetadata } from '../../data/codigosMetadata'
 import type { CodigoTipo } from '../../types'
 
-const VERDE = 'var(--accent-base)'
 
 interface Props {
   titulo: string
@@ -18,6 +18,7 @@ export function SelectorCodigo({ titulo, descripcion, icono, onElegir }: Props) 
   const modoOscuro = useStore((s) => s.modoOscuro)
   const cargados = codigosCargados()
   const [tratadosAbierto, setTratadosAbierto] = useState(false)
+  const [filtro, setFiltro] = useState('')
 
   const lista = useMemo(() => {
     return codigos.map((c) => {
@@ -31,11 +32,25 @@ export function SelectorCodigo({ titulo, descripcion, icono, onElegir }: Props) 
         bloqueado: c.bloqueado,
         cargado,
         totalArts: data ? data.total_articulos + (data.total_transitorios ?? 0) : 0,
+        norma: obtenerMetadata(c.tipo)?.norma ?? '',
       }
     })
   }, [codigos, cargados])
 
-  const disponibles = lista.filter((c) => c.cargado)
+  // Con 54 normas la lista ya no se recorre de un vistazo: filtro por nombre,
+  // número de ley o descripción, sin distinguir mayúsculas ni tildes, y
+  // tolerando "19496" o "19.496".
+  // Cada palabra del filtro debe ser el COMIENZO de alguna palabra ("pacto"
+  // no debe traer "impacto ambiental").
+  const q = normalizarBusqueda(filtro)
+  const palabrasFiltro = q.split(/\s+/).filter(Boolean)
+  const coincide = (c: { nombre: string; descripcion: string; norma: string }) => {
+    if (palabrasFiltro.length === 0) return true
+    const palabras = normalizarBusqueda(`${c.nombre} ${c.descripcion} ${c.norma}`).split(/[^a-z0-9ñ]+/)
+    return palabrasFiltro.every((f) => palabras.some((p) => p.startsWith(f)))
+  }
+
+  const disponibles = lista.filter((c) => c.cargado && coincide(c))
   const pendientes = lista.filter((c) => !c.cargado)
   // Tres secciones: Códigos (fundamentales + sustantivos + procedimentales),
   // Leyes especiales, y Tratados internacionales.
@@ -51,14 +66,14 @@ export function SelectorCodigo({ titulo, descripcion, icono, onElegir }: Props) 
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
+          transition={{ duration: 0.25 }}
           className="text-center mb-10"
         >
           <div
             className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
             style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
           >
-            <i className={`ti ${icono} text-3xl`} style={{ color: VERDE }} />
+            <i className={`ti ${icono} text-3xl`} style={{ color: 'var(--accent-texto)' }} />
           </div>
           <h1 className={`text-3xl font-serif font-bold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
             {titulo}
@@ -66,7 +81,26 @@ export function SelectorCodigo({ titulo, descripcion, icono, onElegir }: Props) 
           <p className={`text-sm ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
             {descripcion}
           </p>
+          <div className="relative max-w-md mx-auto mt-6">
+            <i className={`ti ti-search absolute left-3 top-1/2 -translate-y-1/2 text-base ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`} aria-hidden />
+            <input
+              type="search"
+              value={filtro}
+              onChange={(e) => setFiltro(e.target.value)}
+              placeholder="Filtrar por nombre o número (ej. consumidor, 18.290)"
+              aria-label="Filtrar códigos y leyes"
+              className={`w-full rounded-xl pl-9 pr-3 min-h-[44px] text-sm outline-none border campo-foco transition-colors focus:border-[var(--accent-base)] ${
+                modoOscuro ? 'bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500' : 'bg-white border-zinc-200 text-zinc-900 placeholder:text-zinc-400'
+              }`}
+            />
+          </div>
         </motion.div>
+
+        {q && disponibles.length === 0 && (
+          <p className={`text-center text-sm mb-8 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
+            Ningún código o ley coincide con “{filtro}”.
+          </p>
+        )}
 
         {codigosDisponibles.length > 0 && (
           <section className="mb-8">
@@ -89,7 +123,7 @@ export function SelectorCodigo({ titulo, descripcion, icono, onElegir }: Props) 
                   codigo={c}
                   onClick={() => onElegir(c.tipo)}
                   modoOscuro={modoOscuro}
-                  delay={i * 0.03}
+                  delay={Math.min(i, 8) * 0.03}
                 />
               ))}
             </div>
@@ -117,7 +151,7 @@ export function SelectorCodigo({ titulo, descripcion, icono, onElegir }: Props) 
                   codigo={c}
                   onClick={() => onElegir(c.tipo)}
                   modoOscuro={modoOscuro}
-                  delay={i * 0.03}
+                  delay={Math.min(i, 8) * 0.03}
                 />
               ))}
             </div>
@@ -172,7 +206,7 @@ export function SelectorCodigo({ titulo, descripcion, icono, onElegir }: Props) 
             </button>
 
             <AnimatePresence initial={false}>
-              {tratadosAbierto && (
+              {(tratadosAbierto || !!q) && (
                 <motion.div
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
@@ -187,7 +221,7 @@ export function SelectorCodigo({ titulo, descripcion, icono, onElegir }: Props) 
                         codigo={c}
                         onClick={() => onElegir(c.tipo)}
                         modoOscuro={modoOscuro}
-                        delay={i * 0.03}
+                        delay={Math.min(i, 8) * 0.03}
                       />
                     ))}
                   </div>
@@ -238,6 +272,7 @@ interface CodigoCardProps {
     categoria: string
     bloqueado?: boolean
     totalArts: number
+    norma: string
   }
   onClick: () => void
   modoOscuro: boolean
@@ -251,6 +286,10 @@ function CodigoCard({ codigo, onClick, modoOscuro, delay }: CodigoCardProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, delay }}
       onClick={onClick}
+      // precarga: el JSON empieza a bajar al pasar el mouse o enfocar la
+      // tarjeta, así al hacer clic el código suele estar listo
+      onMouseEnter={() => void cargarCodigo(codigo.tipo).catch(() => {})}
+      onFocus={() => void cargarCodigo(codigo.tipo).catch(() => {})}
       className={`group text-left rounded-xl border-2 p-5 transition-all hover:shadow-lg hover:-translate-y-0.5 ${
         modoOscuro
           ? 'bg-zinc-800/40 border-zinc-800 hover:border-[var(--accent-700)]'
@@ -262,7 +301,7 @@ function CodigoCard({ codigo, onClick, modoOscuro, delay }: CodigoCardProps) {
           className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
           style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 19%, transparent)' : 'color-mix(in srgb, var(--accent-base) 8%, transparent)' }}
         >
-          <i className="ti ti-book-2 text-xl" style={{ color: VERDE }} />
+          <i className="ti ti-book-2 text-xl" style={{ color: 'var(--accent-texto)' }} />
         </span>
         <div className="flex-1 min-w-0">
           <h3 className={`text-base font-serif font-semibold leading-tight ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
@@ -289,11 +328,11 @@ function CodigoCard({ codigo, onClick, modoOscuro, delay }: CodigoCardProps) {
         }`}
       >
         <span className={modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}>
-          {codigo.totalArts > 0 ? `${codigo.totalArts} artículos` : 'Sin datos'}
+          {codigo.totalArts > 0 ? `${codigo.totalArts} artículos` : codigo.norma}
         </span>
         <span
           className="flex items-center gap-1 font-semibold transition-colors"
-          style={{ color: VERDE }}
+          style={{ color: 'var(--accent-texto)' }}
         >
           Abrir
           <i className="ti ti-arrow-right text-sm group-hover:translate-x-0.5 transition-transform" />
@@ -301,4 +340,13 @@ function CodigoCard({ codigo, onClick, modoOscuro, delay }: CodigoCardProps) {
       </div>
     </motion.button>
   )
+}
+
+function normalizarBusqueda(t: string): string {
+  return t
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/(\d)\.(\d)/g, '$1$2')
+    .trim()
 }

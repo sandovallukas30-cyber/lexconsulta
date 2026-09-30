@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { useStore } from '../../store/useStore'
+import { useEsMovil } from '../../hooks/useEsMovil'
 
-const VERDE = 'var(--accent-base)'
 
 export function RightSidebar() {
   const modoOscuro = useStore((s) => s.modoOscuro)
@@ -17,6 +17,7 @@ export function RightSidebar() {
   const setCanvasActivo = useStore((s) => s.setCanvasActivo)
 
   const MOBILE_BREAKPOINT = 768
+  const esMovil = useEsMovil()
 
   const cerrarEnMobile = () => {
     if (window.innerWidth < MOBILE_BREAKPOINT && rightSidebarAbierto) {
@@ -36,7 +37,9 @@ export function RightSidebar() {
       initial={false}
       animate={{ width: rightSidebarAbierto ? 280 : 0 }}
       transition={{ duration: 0.22, ease: 'easeOut' }}
-      className={`flex flex-col border-l overflow-hidden ${
+      // en móvil se superpone (no empuja) al contenido; cerrado = inerte
+      inert={!rightSidebarAbierto ? true : undefined}
+      className={`flex flex-col border-l overflow-hidden ${esMovil ? 'fixed inset-y-0 right-0 z-[60] shadow-2xl' : ''} ${
         modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
       }`}
     >
@@ -93,7 +96,7 @@ export function RightSidebar() {
                   }`}
                   title={fav.titulo}
                 >
-                  <i className="ti ti-bookmark mr-1.5 text-[10px]" style={{ color: VERDE }} />
+                  <i className="ti ti-bookmark mr-1.5 text-[10px]" style={{ color: 'var(--accent-texto)' }} />
                   <span className="align-text-bottom">{fav.titulo}</span>
                 </button>
               ))}
@@ -125,7 +128,7 @@ export function RightSidebar() {
                   }`}
                   title={rec.articulo}
                 >
-                  <i className="ti ti-history mr-1.5 text-[10px]" style={{ color: VERDE }} />
+                  <i className="ti ti-history mr-1.5 text-[10px]" style={{ color: 'var(--accent-texto)' }} />
                   <span className="align-text-bottom">{rec.articulo}</span>
                 </button>
               ))}
@@ -157,7 +160,7 @@ export function RightSidebar() {
                   : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900'
               }`}
             >
-              <i className="ti ti-messages text-sm" style={{ color: VERDE }} />
+              <i className="ti ti-messages text-sm" style={{ color: 'var(--accent-texto)' }} />
               <span>Nueva consulta</span>
             </button>
             <button
@@ -172,7 +175,7 @@ export function RightSidebar() {
                   : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900'
               }`}
             >
-              <i className="ti ti-affiliate text-sm" style={{ color: VERDE }} />
+              <i className="ti ti-affiliate text-sm" style={{ color: 'var(--accent-texto)' }} />
               <span>Nuevo canvas</span>
             </button>
             <button
@@ -186,7 +189,7 @@ export function RightSidebar() {
                   : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900'
               }`}
             >
-              <i className="ti ti-puzzle text-sm" style={{ color: VERDE }} />
+              <i className="ti ti-puzzle text-sm" style={{ color: 'var(--accent-texto)' }} />
               <span>Practicar</span>
             </button>
           </div>

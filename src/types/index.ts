@@ -26,6 +26,37 @@ export type CodigoTipo =
   | 'pdc'
   | 'pde'
   | 'aap'
+  // Lote 1 de leyes especiales (sept. 2026, ver docs/INFORME_NUBE_LOTE1.md)
+  | 'cns'
+  | 'mat'
+  | 'ali'
+  | 'vif'
+  | 'fil'
+  | 'soc'
+  | 'mvl'
+  | 'pvp'
+  | 'rpj'
+  | 'dec'
+  | 'pns'
+  | 'dsc'
+  | 'mas'
+  | 'soa'
+  | 'trt'
+  | 'amb'
+  | 'tam'
+  | 'bga'
+  | 'est'
+  | 'emu'
+  | 'mun'
+  | 'arr'
+  | 'cop'
+  | 'pin'
+  | 'pid'
+  | 'dis'
+  | 'fel'
+  | 'tde'
+  | 'ind'
+  | 'cng'
 
 export type CategoriaCodigo =
   | 'fundamentales'
@@ -636,6 +667,18 @@ export interface BriefCaso {
   articuloRelacionado?: string
   fechaCreacion: number
   fechaModificacion: number
+}
+
+/** Estado de repaso (Leitner) de una tarjeta generada por reglas desde un
+ *  apunte (ver services/tarjetasApunte.ts). Se guarda por id de tarjeta,
+ *  aparte del apunte, para que editar el texto no toque el progreso. */
+export interface EstadoTarjetaRepaso {
+  caja: number
+  /** epoch ms desde el que vuelve a estar "para hoy" */
+  proximo: number
+  aciertos: number
+  fallos: number
+  ultimo: number
 }
 
 export interface DatosAcademicosModulo {

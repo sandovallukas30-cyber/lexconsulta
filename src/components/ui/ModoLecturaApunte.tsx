@@ -1,11 +1,18 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { useLecturaVoz } from '../../hooks/useLecturaVoz'
 import { useWakeLock } from '../../hooks/useWakeLock'
+import { useProgresoScroll } from '../../hooks/useProgresoScroll'
 import { TAMANOS_FUENTE, TEMAS_LECTURA } from '../../services/lecturaTema'
 import { encabezadosDe, parsearApunte, textoPlanoDe, tieneEstructuraAncha } from '../../services/apunteFormato'
 import { ApunteContenido } from './ApunteContenido'
+import { quitarResaltado, resaltarCoincidencia } from '../../services/resaltado'
+import { descargarApunteMd } from '../../services/apunteArchivo'
+import { imprimir, useImprimirConCtrlP } from '../../services/impresion'
+import { VistaImprimibleApunte } from './VistasImprimibles'
+import { tarjetasDe } from '../../services/tarjetasApunte'
+import { RepasoApunte } from './RepasoApunte'
 import { NotasMargen } from './NotasMargen'
 import type { ApunteModulo, SesionClase, CuadernoApuntes } from '../../types'
 
@@ -14,9 +21,10 @@ const EditorApunte = lazy(() => import('./editorApunte/EditorApunte'))
 export type CambiosApunte = Partial<Pick<ApunteModulo, 'titulo' | 'contenido'>>
 
 const VERDE = 'var(--accent-base)'
-const PALABRAS_POR_MINUTO = 180
+const PALABRAS_POR_MINUTO = 200
 const CLAVE_FUENTE = 'prima-lex-apunte-fuente'
-const CLAVE_SCROLL = 'prima-lex-apunte-scroll:'
+/** Desde cuántos px de scroll aparece "volver arriba". */
+const UMBRAL_VOLVER_ARRIBA = 600
 
 function leerLocal(clave: string): string | null {
   try {
@@ -49,6 +57,8 @@ interface Props {
   onCambiar: (cambios: CambiosApunte) => void
   /** Abrir directo en el editor visual (el lápiz de la lista) en vez de en lectura. */
   editarAlAbrir?: boolean
+  /** Texto buscado en el Omnibar: al abrir, saltar a su primera aparición. */
+  resaltarAlAbrir?: string
 }
 
 /**
@@ -66,11 +76,11 @@ interface Props {
  * Notion): índice de títulos para saltar de sección, barra de progreso, y
  * recuerda por apunte hasta dónde llegaste y qué tamaño de letra usás.
  */
-export function ModoLecturaApunte({ abierto, apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, editarAlAbrir = false }: Props) {
+export function ModoLecturaApunte({ abierto, apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, editarAlAbrir = false, resaltarAlAbrir }: Props) {
   return (
     <AnimatePresence>
       {abierto && apunte && (
-        <LectorApunte key={apunte.id} apunte={apunte} clase={clase} cuaderno={cuaderno} onCerrar={onCerrar} onEditar={onEditar} onCambiar={onCambiar} editarAlAbrir={editarAlAbrir} />
+        <LectorApunte key={apunte.id} apunte={apunte} clase={clase} cuaderno={cuaderno} onCerrar={onCerrar} onEditar={onEditar} onCambiar={onCambiar} editarAlAbrir={editarAlAbrir} resaltar={resaltarAlAbrir} />
       )}
     </AnimatePresence>
   )
@@ -84,29 +94,39 @@ interface PropsLector {
   onEditar: () => void
   onCambiar: (cambios: CambiosApunte) => void
   editarAlAbrir: boolean
+  resaltar?: string
 }
+
 
 // Se monta al abrir y se desmonta al cerrar: así el índice, el progreso y la
 // voz arrancan limpios en cada apunte sin tener que resetear estado a mano.
-function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, editarAlAbrir }: PropsLector) {
+function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, editarAlAbrir, resaltar }: PropsLector) {
   const [indiceTamano, setIndiceTamano] = useState(tamanoInicial)
   const [editando, setEditando] = useState(editarAlAbrir)
   const [columna, setColumna] = useState<HTMLElement | null>(null)
   const [raiz, setRaiz] = useState<HTMLElement | null>(null)
   const [indiceAbierto, setIndiceAbierto] = useState(false)
-  const [progreso, setProgreso] = useState(0)
+  const [repasando, setRepasando] = useState(false)
+  const [seccionActual, setSeccionActual] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
-  const temporizadorScroll = useRef<number | undefined>(undefined)
+  const guardarPosicion = useStore((s) => s.guardarPosicionLectura)
+  // posición guardada al abrir (se lee una vez: la que se va guardando al
+  // leer no debe volver a ofrecer "retomar")
+  const [posicionInicial] = useState(() => useStore.getState().posicionLectura[apunte.id]?.ratio ?? 0)
+  const [ofrecerRetomar, setOfrecerRetomar] = useState(() => !resaltar && !editarAlAbrir && posicionInicial > 0.02)
   const temaLectura = useStore((s) => s.modoLecturaTema)
   const setTemaLectura = useStore((s) => s.setModoLecturaTema)
   const tema = TEMAS_LECTURA[temaLectura]
 
   const contenido = apunte.contenido
-  const bloques = useMemo(() => parsearApunte(contenido), [contenido])
+  // Mientras se edita, el lector está oculto: no re-analizar el apunte en
+  // cada autoguardado (cada ~700 ms) -- en uno de miles de palabras eso era
+  // trabajo inútil en el hilo principal justo mientras se escribe.
+  const bloques = useMemo(() => (editando ? [] : parsearApunte(contenido)), [contenido, editando])
   const encabezados = useMemo(() => encabezadosDe(bloques), [bloques])
   const nivelMin = useMemo(() => Math.min(3, ...encabezados.map((e) => e.n)), [encabezados])
   const ancho = useMemo(() => tieneEstructuraAncha(bloques), [bloques])
-  const textoVoz = useMemo(() => textoPlanoDe(contenido), [contenido])
+  const textoVoz = useMemo(() => (editando ? '' : textoPlanoDe(contenido)), [contenido, editando])
   const voz = useLecturaVoz(textoVoz)
   useWakeLock(true)
 
@@ -120,29 +140,67 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
     return () => window.removeEventListener('keydown', handler)
   }, [onCerrar, indiceAbierto, editando])
 
-  // Al abrir un apunte: volver a donde se había quedado leyendo.
   const id = apunte.id
+  const { ratio: progreso, scrollTop, desplazable } = useProgresoScroll(scrollRef, `${editando}-${indiceTamano}`)
+
+  // Guardar hasta dónde se leyó (agrupado: no en cada evento de scroll)
   useEffect(() => {
-    const guardado = Number(leerLocal(CLAVE_SCROLL + id))
-    const raf = requestAnimationFrame(() => {
-      const el = scrollRef.current
-      if (!el || !Number.isFinite(guardado) || guardado <= 0) return
-      el.scrollTop = guardado * (el.scrollHeight - el.clientHeight)
-    })
-    return () => cancelAnimationFrame(raf)
-  }, [id])
+    if (editando || !desplazable) return
+    const t = window.setTimeout(() => guardarPosicion(id, progreso), 500)
+    return () => window.clearTimeout(t)
+  }, [progreso, id, editando, desplazable, guardarPosicion])
 
-  const alHacerScroll = useCallback(() => {
+  // "Retomar donde quedaste" se ofrece al abrir y desaparece solo a los 8 s
+  // o apenas el usuario empieza a leer por su cuenta
+  useEffect(() => {
+    if (!ofrecerRetomar) return
+    const t = window.setTimeout(() => setOfrecerRetomar(false), 8000)
+    return () => window.clearTimeout(t)
+  }, [ofrecerRetomar])
+  if (ofrecerRetomar && scrollTop > 200) setOfrecerRetomar(false)
+
+  const retomar = () => {
     const el = scrollRef.current
-    if (!el) return
-    const max = el.scrollHeight - el.clientHeight
-    const ratio = max > 0 ? Math.min(1, Math.max(0, el.scrollTop / max)) : 0
-    setProgreso(ratio)
-    window.clearTimeout(temporizadorScroll.current)
-    temporizadorScroll.current = window.setTimeout(() => guardarLocal(CLAVE_SCROLL + id, ratio > 0.985 ? '0' : String(ratio)), 400)
-  }, [id])
+    if (el) el.scrollTo({ top: posicionInicial * (el.scrollHeight - el.clientHeight), behavior: 'smooth' })
+    setOfrecerRetomar(false)
+  }
 
-  useEffect(() => () => window.clearTimeout(temporizadorScroll.current), [])
+  // Scroll-spy: la sección visible es el último título que ya pasó el borde
+  // superior del área de lectura
+  useEffect(() => {
+    const cont = scrollRef.current
+    if (!cont || editando || encabezados.length === 0) return
+    const titulos = encabezados
+      .map((e) => document.getElementById(`lec-${id}-${e.id}`))
+      .filter((el): el is HTMLElement => !!el)
+    if (titulos.length === 0) return
+    const visibles = new Map<Element, boolean>()
+    const obs = new IntersectionObserver(
+      (entradas) => {
+        for (const en of entradas) visibles.set(en.target, en.boundingClientRect.top < (en.rootBounds?.top ?? 0) + 120)
+        let actual: string | null = null
+        for (const t of titulos) {
+          if (t.getBoundingClientRect().top - cont.getBoundingClientRect().top < 120) actual = t.id.slice(`lec-${id}-`.length)
+        }
+        setSeccionActual(actual)
+      },
+      { root: cont, rootMargin: '0px 0px -60% 0px', threshold: [0, 1] }
+    )
+    titulos.forEach((t) => obs.observe(t))
+    return () => obs.disconnect()
+  }, [encabezados, id, editando, indiceTamano])
+
+  // Saltar a la primera coincidencia del texto buscado y marcarla (CSS
+  // Custom Highlight API; si el navegador no la tiene, queda seleccionada).
+  useEffect(() => {
+    if (!resaltar || !raiz) return
+    const raf = requestAnimationFrame(() => resaltarCoincidencia(raiz, resaltar))
+    return () => {
+      cancelAnimationFrame(raf)
+      quitarResaltado()
+    }
+  }, [resaltar, raiz])
+
 
   const cambiarTamano = (delta: number) => {
     setIndiceTamano((i) => {
@@ -157,22 +215,25 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
     if (window.matchMedia('(max-width: 1023px)').matches) setIndiceAbierto(false)
   }
 
-  const descargar = () => {
-    const blob = new Blob([`# ${apunte.titulo}\n\n${apunte.contenido}\n`], { type: 'text/markdown;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${apunte.titulo.replace(/[\\/:*?"<>|]+/g, ' ').trim() || 'apunte'}.md`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
+  const descargar = () => descargarApunteMd(apunte)
+  // C9: Ctrl+P imprime el apunte (antes: una hoja en blanco)
+  useImprimirConCtrlP('apunte', !editando)
 
-  const palabras = textoVoz.trim() ? textoVoz.trim().split(/\s+/).length : 0
+  const palabras = useMemo(() => (textoVoz.trim() ? textoVoz.trim().split(/\s+/).length : 0), [textoVoz])
   const minutosLectura = palabras > 0 ? Math.max(1, Math.round(palabras / PALABRAS_POR_MINUTO)) : 0
-  const metaPartes = [cuaderno?.nombre, clase?.tema, minutosLectura > 0 ? `~${minutosLectura} min` : null].filter((p): p is string => Boolean(p))
+  const minutosRestantes = Math.ceil((palabras * (1 - progreso)) / PALABRAS_POR_MINUTO)
+  const pct = Math.round(progreso * 100)
+  const tituloSeccion = seccionActual ? encabezados.find((e) => e.id === seccionActual)?.texto : undefined
+  // Antes de empezar: cuaderno · clase · duración. Leyendo: % · lo que falta · sección.
+  const metaPartes = (
+    desplazable && progreso > 0.01
+      ? [`${pct}%`, minutosRestantes > 0 ? `${minutosRestantes} min restantes` : 'terminado', tituloSeccion]
+      : [cuaderno?.nombre, clase?.tema, minutosLectura > 0 ? `~${minutosLectura} min` : null]
+  ).filter((p): p is string => Boolean(p))
 
   const colorTexto = temaLectura === 'oscuro' ? 'text-zinc-200' : temaLectura === 'papel' ? 'text-[#3a2c1a]' : 'text-zinc-800'
   const hayIndice = encabezados.length >= 3
+  const nTarjetas = useMemo(() => (editando ? 0 : tarjetasDe(apunte).length), [apunte, editando])
 
   return (
     <motion.div
@@ -180,8 +241,9 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.18 }}
-      className={`fixed inset-0 z-[80] flex flex-col ${tema.bg}`}
+      className={`fixed inset-0 h-[100dvh] z-[80] flex flex-col ${tema.bg}`}
     >
+      {!editando && <VistaImprimibleApunte apunte={apunte} bloques={bloques} clase={clase} cuaderno={cuaderno} />}
       <div className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-3 border-b flex-shrink-0 ${tema.border}`}>
         {!editando && (
           <button
@@ -195,7 +257,9 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
 
         <div className="flex-1 min-w-0">
           <p className={`text-sm font-semibold truncate ${tema.text}`}>{editando ? `Editando · ${apunte.titulo}` : apunte.titulo}</p>
-          {!editando && metaPartes.length > 0 && <p className={`text-[11px] truncate ${tema.textSoft}`}>{metaPartes.join(' · ')}</p>}
+          {!editando && metaPartes.length > 0 && (
+            <p className={`text-[11px] truncate ${tema.textSoft} ${desplazable && progreso > 0.01 ? 'hidden sm:block' : ''}`}>{metaPartes.join(' · ')}</p>
+          )}
         </div>
 
         {hayIndice && !editando && (
@@ -225,6 +289,20 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
               <span className="hidden sm:inline">Editar</span>
             </button>
 
+            {nTarjetas > 0 && (
+              <button
+                onClick={() => {
+                  voz.detener()
+                  setRepasando(true)
+                }}
+                title={`Repasar ${nTarjetas} tarjetas generadas desde este apunte`}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-shrink-0 ${tema.chipBg} ${tema.text} ${tema.chipHover}`}
+              >
+                <i className="ti ti-cards text-sm" />
+                <span className="hidden sm:inline">Repasar</span>
+              </button>
+            )}
+
             <button
               onClick={onEditar}
               title="Propiedades: título, clase, cuaderno, artículo, editor de texto"
@@ -234,6 +312,17 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
               <i className="ti ti-adjustments-horizontal text-lg" />
             </button>
           </>
+        )}
+
+        {!editando && (
+          <button
+            onClick={() => imprimir('apunte')}
+            title="Imprimir o guardar como PDF (Ctrl+P)"
+            aria-label="Imprimir el apunte"
+            className={`hidden sm:flex w-9 h-9 rounded-lg items-center justify-center transition-colors flex-shrink-0 ${tema.textSoft} ${tema.hoverSuave}`}
+          >
+            <i className="ti ti-printer text-lg" />
+          </button>
         )}
 
         <button
@@ -276,8 +365,9 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
         </div>
 
         {/* Voz */}
+        {/* voz: en móvil se oculta para dejarle espacio al título */}
         {voz.soportado && !editando && (
-          <div className={`flex items-center gap-0.5 rounded-lg p-1 flex-shrink-0 ${tema.chipBg}`}>
+          <div className={`hidden sm:flex items-center gap-0.5 rounded-lg p-1 flex-shrink-0 ${tema.chipBg}`}>
             {voz.estado === 'inactivo' && (
               <button
                 onClick={voz.reproducir}
@@ -324,12 +414,26 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
         </Suspense>
       ) : (
         <>
-          <div className="h-0.5 flex-shrink-0" aria-hidden>
-            <div className="h-full transition-[width] duration-150" style={{ width: `${progreso * 100}%`, background: VERDE }} />
+          <div
+            className={`h-[3px] flex-shrink-0 ${tema.chipBg}`}
+            role="progressbar"
+            aria-label="Progreso de lectura"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={pct}
+          >
+            <div className="h-full transition-[width] duration-150 ease-out" style={{ width: `${progreso * 100}%`, background: VERDE }} />
           </div>
+          {/* En móvil el encabezado no deja lugar para "% · min restantes ·
+              sección": va en una línea propia bajo la barra mientras se lee */}
+          {desplazable && progreso > 0.01 && (
+            <p className={`sm:hidden px-4 py-1 text-[11px] truncate border-b ${tema.border} ${tema.textSoft}`} aria-hidden>
+              {metaPartes.join(' · ')}
+            </p>
+          )}
 
           <div className="relative flex-1 min-h-0">
-            <div ref={scrollRef} onScroll={alHacerScroll} className="h-full overflow-y-auto">
+            <div ref={scrollRef} className="h-full overflow-y-auto">
               <div ref={setColumna} className={`relative ${ancho ? 'max-w-4xl' : 'max-w-2xl'} mx-auto px-5 sm:px-8 py-10`}>
                 <h1 className={`text-3xl font-serif font-bold mb-6 ${tema.text}`}>{apunte.titulo}</h1>
                 <div ref={setRaiz} className={colorTexto} style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontSize: TAMANOS_FUENTE[indiceTamano] }}>
@@ -343,6 +447,46 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
               </div>
             </div>
 
+            {/* Retomar donde quedaste */}
+            <AnimatePresence>
+              {ofrecerRetomar && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2 }}
+                  className={`absolute top-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 pl-4 pr-1 py-1 rounded-full border shadow-lg text-sm whitespace-nowrap ${tema.bg} ${tema.border} ${tema.text}`}
+                  role="status"
+                >
+                  <span>Ibas en el {Math.round(posicionInicial * 100)}%</span>
+                  <button onClick={retomar} className="px-3 min-h-[36px] rounded-full font-semibold" style={{ color: VERDE }}>
+                    Retomar
+                  </button>
+                  <button onClick={() => setOfrecerRetomar(false)} aria-label="Empezar desde el inicio" className={`w-9 h-9 rounded-full flex items-center justify-center ${tema.textSoft} ${tema.hoverSuave}`}>
+                    <i className="ti ti-x text-sm" />
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Volver arriba */}
+            <AnimatePresence>
+              {scrollTop > UMBRAL_VOLVER_ARRIBA && !indiceAbierto && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.15 }}
+                  onClick={() => scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+                  aria-label="Volver arriba"
+                  title="Volver arriba"
+                  className={`absolute bottom-5 right-5 w-11 h-11 rounded-full border shadow-lg flex items-center justify-center print:hidden ${tema.bg} ${tema.border} ${tema.text}`}
+                >
+                  <i className="ti ti-arrow-up text-lg" />
+                </motion.button>
+              )}
+            </AnimatePresence>
+
             <AnimatePresence>
               {indiceAbierto && (
                 <motion.nav
@@ -355,17 +499,21 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
                 >
                   <p className={`px-4 pt-4 pb-2 text-[11px] font-semibold uppercase tracking-wide ${tema.textSoft}`}>Índice</p>
                   <ul className="pb-4">
-                    {encabezados.map((e) => (
-                      <li key={e.id}>
-                        <button
-                          onClick={() => irA(e.id)}
-                          className={`w-full text-left py-1.5 pr-4 text-sm transition-colors ${tema.hoverSuave} ${e.n - nivelMin >= 2 ? `${tema.textSoft} text-[13px]` : tema.text} ${e.n === nivelMin ? 'font-semibold' : ''}`}
-                          style={{ paddingLeft: 16 + (e.n - nivelMin) * 14 }}
-                        >
-                          {e.texto}
-                        </button>
-                      </li>
-                    ))}
+                    {encabezados.map((e) => {
+                      const actual = e.id === seccionActual
+                      return (
+                        <li key={e.id}>
+                          <button
+                            onClick={() => irA(e.id)}
+                            aria-current={actual ? 'location' : undefined}
+                            className={`w-full text-left py-1.5 pr-4 text-sm transition-colors border-l-2 ${tema.hoverSuave} ${e.n - nivelMin >= 2 ? `${tema.textSoft} text-[13px]` : tema.text} ${e.n === nivelMin ? 'font-semibold' : ''} ${actual ? tema.chipBg : 'border-transparent'}`}
+                            style={{ paddingLeft: 14 + (e.n - nivelMin) * 14, borderColor: actual ? VERDE : undefined }}
+                          >
+                            {e.texto}
+                          </button>
+                        </li>
+                      )
+                    })}
                   </ul>
                 </motion.nav>
               )}
@@ -373,6 +521,7 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
           </div>
         </>
       )}
+      <AnimatePresence>{repasando && <RepasoApunte apunte={apunte} onCerrar={() => setRepasando(false)} />}</AnimatePresence>
     </motion.div>
   )
 }

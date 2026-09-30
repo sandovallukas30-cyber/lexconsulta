@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useStore } from '../store/useStore'
 import { buscar } from '../services/busqueda'
 import { consultar } from '../services/anthropic'
@@ -9,6 +9,10 @@ import type { Mensaje, ConsultaHistorial } from '../types'
 function titularDesdePregunta(p: string): string {
   const limpio = p.trim().replace(/\s+/g, ' ')
   return limpio.length > 80 ? limpio.slice(0, 77) + '…' : limpio
+}
+
+export function esMensajeError(m: Mensaje): boolean {
+  return m.rol === 'assistant' && m.contenido.startsWith('⚠️')
 }
 
 export function useChat() {
@@ -25,6 +29,8 @@ export function useChat() {
   const [mensajes, setMensajes] = useState<Mensaje[]>([])
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // para "Reintentar": se repite la última pregunta con la misma opción
+  const ultimaJurisprudencia = useRef(false)
 
   // Cargar mensajes cuando cambia la conversación activa
   useEffect(() => {
@@ -39,9 +45,13 @@ export function useChat() {
   }, [consultaActivaId])
 
   const enviar = useCallback(
-    async (pregunta: string, incluirJurisprudencia: boolean = false) => {
+    /** `base`: conversación sobre la que se agrega la pregunta (por
+     *  defecto, la actual). Reintentar pasa la conversación SIN la pregunta
+     *  fallida ni su mensaje de error, para no duplicarlos. */
+    async (pregunta: string, incluirJurisprudencia: boolean = false, base?: Mensaje[]) => {
       const texto = pregunta.trim()
       if (!texto || cargando) return
+      ultimaJurisprudencia.current = incluirJurisprudencia
 
       const cargadosDisponibles = codigosCargados()
       const activos = codigos
@@ -54,7 +64,7 @@ export function useChat() {
         contenido: texto,
         timestamp: new Date(),
       }
-      const mensajesConUser = [...mensajes, mensajeUsuario]
+      const mensajesConUser = [...(base ?? mensajes), mensajeUsuario]
       setMensajes(mensajesConUser)
       setCargando(true)
       setError(null)
@@ -112,11 +122,21 @@ export function useChat() {
     [cargando, codigos, perfil, mensajes, consultaActivaId, agregarConsulta, actualizarConsulta, usuarioEmail, setConsultasRestantes]
   )
 
+  /** Repite la última pregunta si su respuesta fue un error (⚠️). */
+  const reintentar = useCallback(() => {
+    const ultimo = mensajes[mensajes.length - 1]
+    if (cargando || !ultimo || !esMensajeError(ultimo)) return
+    let i = mensajes.length - 2
+    while (i >= 0 && mensajes[i].rol !== 'user') i--
+    if (i < 0) return
+    void enviar(mensajes[i].contenido, ultimaJurisprudencia.current, mensajes.slice(0, i))
+  }, [mensajes, cargando, enviar])
+
   const limpiar = useCallback(() => {
     nuevaConsulta()
     setMensajes([])
     setError(null)
   }, [nuevaConsulta])
 
-  return { mensajes, cargando, error, enviar, limpiar }
+  return { mensajes, cargando, error, enviar, reintentar, limpiar }
 }

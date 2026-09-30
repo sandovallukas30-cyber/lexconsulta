@@ -368,7 +368,7 @@ function ConsultaCard({
           >
             <i
               className={`ti ${moduloIcono[consulta.modulo]} text-base`}
-              style={{ color: VERDE }}
+              style={{ color: 'var(--accent-texto)' }}
             />
           </div>
           <div className="flex-1 min-w-0">
@@ -419,7 +419,7 @@ function ConsultaCard({
               {activa && (
                 <>
                   <span>·</span>
-                  <span className="font-semibold" style={{ color: VERDE }}>
+                  <span className="font-semibold" style={{ color: 'var(--accent-texto)' }}>
                     Activa
                   </span>
                 </>
@@ -461,7 +461,7 @@ function EmptyState({ modoOscuro }: { modoOscuro: boolean }) {
           className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-5"
           style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
         >
-          <i className="ti ti-history text-4xl" style={{ color: VERDE }} />
+          <i className="ti ti-history text-4xl" style={{ color: 'var(--accent-texto)' }} />
         </div>
         <h3 className={`text-2xl font-serif font-semibold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
           Aún no hay historial

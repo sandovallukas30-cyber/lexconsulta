@@ -23,6 +23,7 @@ import {
 import '@xyflow/react/dist/style.css'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
+import { avisar } from '../../store/useAvisos'
 import { generarConcepto, generarRelacion, type ResultadoConcepto } from '../../services/canvas'
 import { cargarCodigo } from '../../services/codigos'
 import type { Canvas, NodoCanvas, ArticuloRelevante, CodigoActivo, CodigoTipo } from '../../types'
@@ -289,7 +290,7 @@ export function CanvasView() {
         setNodes((nds) =>
           nds.map((n) => (n.id === id ? { ...n, data: { ...n.data, expandiendo: false } } : n))
         )
-        alert(e instanceof Error ? e.message : 'No se pudo profundizar el nodo. Intenta de nuevo.')
+        avisar.error(e instanceof Error ? e.message : 'No se pudo profundizar el nodo. Intenta de nuevo.')
       }
     },
     [setNodes, pushHistory]
@@ -382,7 +383,7 @@ export function CanvasView() {
         }
 
         if (nuevosNodos.length === 0) {
-          alert('Ya hay un nodo con el texto completo de cada artículo de esta lista.')
+          avisar.info('Ya hay un nodo con el texto completo de cada artículo de esta lista.')
           return
         }
 
@@ -391,7 +392,7 @@ export function CanvasView() {
         setEdges((eds) => [...eds, ...nuevasEdges])
       } catch (e) {
         console.error('Error al crear nodos de artículos:', e)
-        alert(e instanceof Error ? e.message : 'No se pudieron crear los nodos. Intenta de nuevo.')
+        avisar.error(e instanceof Error ? e.message : 'No se pudieron crear los nodos. Intenta de nuevo.')
       } finally {
         setNodes((nds) =>
           nds.map((n) => (n.id === id ? { ...n, data: { ...n.data, creandoArticulos: false } } : n))
@@ -677,7 +678,7 @@ export function CanvasView() {
               : 'bg-white border-zinc-200 focus-within:border-[var(--accent-500)]'
           }`}
         >
-          <i className="ti ti-bulb text-base" style={{ color: VERDE }} />
+          <i className="ti ti-bulb text-base" style={{ color: 'var(--accent-texto)' }} />
           <input
             type="text"
             value={concepto}
@@ -1221,7 +1222,7 @@ function ProfundizarOpcion({
         modoOscuro ? 'hover:bg-zinc-700 text-zinc-200' : 'hover:bg-zinc-100 text-zinc-800'
       }`}
     >
-      <i className={`ti ${icono} text-sm mt-0.5 flex-shrink-0`} style={{ color: VERDE }} />
+      <i className={`ti ${icono} text-sm mt-0.5 flex-shrink-0`} style={{ color: 'var(--accent-texto)' }} />
       <div className="flex-1 min-w-0">
         <div className="text-xs font-medium leading-tight">{label}</div>
         <div className={`text-[10px] leading-tight mt-0.5 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
@@ -1298,7 +1299,7 @@ function EdgeEditable(props: EdgeProps<EdgeWithData>) {
               }}
               maxLength={40}
               placeholder="etiqueta..."
-              className={`text-[11px] px-2 py-0.5 rounded outline-none border ${
+              className={`text-[11px] px-2 py-0.5 rounded outline-none border campo-foco ${
                 modoOscuro
                   ? 'bg-zinc-800 border-zinc-600 text-white'
                   : 'bg-white border-zinc-300 text-zinc-900'
@@ -1417,7 +1418,7 @@ function EmptyState({ modoOscuro, onSugerencia }: { modoOscuro: boolean; onSuger
           className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-5"
           style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
         >
-          <i className="ti ti-affiliate text-4xl" style={{ color: VERDE }} />
+          <i className="ti ti-affiliate text-4xl" style={{ color: 'var(--accent-texto)' }} />
         </div>
         <h3 className={`text-2xl font-serif font-semibold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
           Canvas jurídico inteligente

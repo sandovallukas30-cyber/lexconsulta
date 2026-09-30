@@ -112,7 +112,7 @@ export function ModalRegistro({ abierto, onCerrar }: ModalRegistroProps) {
                           : 'color-mix(in srgb, var(--accent-base) 6%, transparent)',
                       }}
                     >
-                      <i className="ti ti-mail text-3xl" style={{ color: VERDE }} />
+                      <i className="ti ti-mail text-3xl" style={{ color: 'var(--accent-texto)' }} />
                     </div>
                     <h2 className={`text-2xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
                       Obtén más consultas
@@ -187,7 +187,7 @@ export function ModalRegistro({ abierto, onCerrar }: ModalRegistroProps) {
                               : 'color-mix(in srgb, var(--accent-base) 6%, transparent)',
                           }}
                         >
-                          <i className="ti ti-mail text-2xl" style={{ color: VERDE }} />
+                          <i className="ti ti-mail text-2xl" style={{ color: 'var(--accent-texto)' }} />
                         </div>
                         <h3 className={`text-xl font-semibold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
                           Verifica tu email
@@ -195,7 +195,7 @@ export function ModalRegistro({ abierto, onCerrar }: ModalRegistroProps) {
                         <p className={`text-sm ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
                           Hemos enviado un link de verificación a:
                         </p>
-                        <p className="text-sm font-medium mt-1" style={{ color: VERDE }}>
+                        <p className="text-sm font-medium mt-1" style={{ color: 'var(--accent-texto)' }}>
                           {email}
                         </p>
                       </div>
@@ -266,7 +266,7 @@ export function ModalRegistro({ abierto, onCerrar }: ModalRegistroProps) {
                           : 'color-mix(in srgb, var(--accent-base) 6%, transparent)',
                       }}
                     >
-                      <i className="ti ti-user-check text-3xl" style={{ color: VERDE }} />
+                      <i className="ti ti-user-check text-3xl" style={{ color: 'var(--accent-texto)' }} />
                     </div>
                     <h2 className={`text-2xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
                       Sesión activa
@@ -281,7 +281,7 @@ export function ModalRegistro({ abierto, onCerrar }: ModalRegistroProps) {
                     <p className={`text-sm ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>
                       <span className="font-medium">Registrado como:</span>
                     </p>
-                    <p className="text-lg font-semibold" style={{ color: VERDE }}>
+                    <p className="text-lg font-semibold" style={{ color: 'var(--accent-texto)' }}>
                       {usuarioEmail}
                     </p>
                   </div>

@@ -77,7 +77,7 @@ export function PlazosView() {
                 : 'color-mix(in srgb, var(--accent-base) 6%, transparent)',
             }}
           >
-            <i className="ti ti-calendar-time text-xl" style={{ color: VERDE }} />
+            <i className="ti ti-calendar-time text-xl" style={{ color: 'var(--accent-texto)' }} />
           </div>
           <div>
             <h1 className={`text-2xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
@@ -124,10 +124,11 @@ export function PlazosView() {
           }`}
         >
           <div>
-            <label className={`block text-xs font-semibold uppercase tracking-wide mb-1.5 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
+            <label className={`block text-xs font-semibold uppercase tracking-wide mb-1.5 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`} htmlFor="plazo-fecha">
               Fecha de inicio
             </label>
             <input
+              id="plazo-fecha"
               type="date"
               value={fechaInicioStr}
               onChange={(e) => setFechaInicioStr(e.target.value)}
@@ -139,10 +140,11 @@ export function PlazosView() {
 
           <div className="flex gap-3">
             <div className="flex-1">
-              <label className={`block text-xs font-semibold uppercase tracking-wide mb-1.5 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
+              <label className={`block text-xs font-semibold uppercase tracking-wide mb-1.5 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`} htmlFor="plazo-cantidad">
                 Plazo de
               </label>
               <input
+                id="plazo-cantidad"
                 type="number"
                 min={1}
                 value={cantidad}
@@ -153,10 +155,11 @@ export function PlazosView() {
               />
             </div>
             <div className="flex-1">
-              <label className={`block text-xs font-semibold uppercase tracking-wide mb-1.5 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
+              <label className={`block text-xs font-semibold uppercase tracking-wide mb-1.5 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`} htmlFor="plazo-unidad">
                 Unidad
               </label>
               <select
+                id="plazo-unidad"
                 value={unidad}
                 onChange={(e) => setUnidad(e.target.value as UnidadPlazo)}
                 className={`w-full px-3 py-2.5 rounded-lg border text-sm ${
@@ -221,7 +224,7 @@ export function PlazosView() {
             <p className={`text-xs uppercase tracking-wide font-semibold mb-1.5 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
               El plazo vence el
             </p>
-            <p className="font-serif text-2xl font-bold" style={{ color: VERDE }}>
+            <p className="font-serif text-2xl font-bold" style={{ color: 'var(--accent-texto)' }}>
               {conMayusculaInicial(formatearFecha(resultado.fechaFin))}
             </p>
             <p className={`text-xs mt-2 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
@@ -281,19 +284,19 @@ export function PlazosView() {
             }`}
           >
             <p>
-              <strong style={{ color: VERDE }}>Art. 48. </strong>
+              <strong style={{ color: 'var(--accent-texto)' }}>Art. 48. </strong>
               Todos los plazos de días, meses o años de que se haga mención en las leyes o en los decretos del
               Presidente de la República, de los tribunales o juzgados, se entenderá que han de ser completos; y
               correrán además hasta la medianoche del último día del plazo. El primero y último día de un plazo de
               meses o años deberán tener un mismo número en los respectivos meses.
             </p>
             <p>
-              <strong style={{ color: VERDE }}>Art. 49. </strong>
+              <strong style={{ color: 'var(--accent-texto)' }}>Art. 49. </strong>
               Cuando se dice que un acto debe ejecutarse en o dentro de cierto plazo, se entenderá que vale si se
               ejecuta antes de la medianoche en que termina el último día del plazo.
             </p>
             <p>
-              <strong style={{ color: VERDE }}>Art. 50. </strong>
+              <strong style={{ color: 'var(--accent-texto)' }}>Art. 50. </strong>
               En los plazos que se señalaren en las leyes... se comprenderán aun los días feriados; a menos que el
               plazo señalado sea de días útiles, expresándose así, pues en tal caso no se contarán los feriados.
             </p>
@@ -420,7 +423,7 @@ function ModoBuscarNorma({ modoOscuro }: { modoOscuro: boolean }) {
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className={etiquetaClase}>{seleccionada.nombreCodigo}</p>
-              <h2 className="font-serif text-xl font-bold mt-0.5" style={{ color: VERDE }}>
+              <h2 className="font-serif text-xl font-bold mt-0.5" style={{ color: 'var(--accent-texto)' }}>
                 {seleccionada.articulo}
               </h2>
               <p className={`text-sm font-medium mt-0.5 ${modoOscuro ? 'text-zinc-200' : 'text-zinc-800'}`}>{seleccionada.materia}</p>
@@ -489,9 +492,9 @@ function ModoBuscarNorma({ modoOscuro }: { modoOscuro: boolean }) {
         {seleccionada.cantidad > 0 ? (
           <>
             <div className={`mt-4 ${tarjetaClase}`}>
-              <label className={`block ${etiquetaClase} mb-1.5`}>Fecha del hecho que da inicio al plazo</label>
+              <label className={`block ${etiquetaClase} mb-1.5`} htmlFor="plazo-fecha-hecho">Fecha del hecho que da inicio al plazo</label>
               <p className={`text-xs mb-2 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>{seleccionada.diesAQuo}</p>
-              <input type="date" value={fechaInicioStr} onChange={(e) => setFechaInicioStr(e.target.value)} className={inputClase} />
+              <input id="plazo-fecha-hecho" type="date" value={fechaInicioStr} onChange={(e) => setFechaInicioStr(e.target.value)} className={inputClase} />
             </div>
 
             {resultado && (
@@ -505,7 +508,7 @@ function ModoBuscarNorma({ modoOscuro }: { modoOscuro: boolean }) {
                 <p className={`text-xs uppercase tracking-wide font-semibold mb-1.5 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
                   El plazo vence el
                 </p>
-                <p className="font-serif text-2xl font-bold" style={{ color: VERDE }}>
+                <p className="font-serif text-2xl font-bold" style={{ color: 'var(--accent-texto)' }}>
                   {conMayusculaInicial(formatearFecha(resultado.fechaFin))}
                 </p>
                 {resultado.diasSaltados.length > 0 && (
@@ -580,7 +583,7 @@ function ModoBuscarNorma({ modoOscuro }: { modoOscuro: boolean }) {
                   <span className={`text-[10px] uppercase font-semibold tracking-wide ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
                     {n.nombreCodigo}
                   </span>
-                  <span className="text-xs font-mono font-semibold" style={{ color: VERDE }}>
+                  <span className="text-xs font-mono font-semibold" style={{ color: 'var(--accent-texto)' }}>
                     {n.articulo}
                   </span>
                 </div>

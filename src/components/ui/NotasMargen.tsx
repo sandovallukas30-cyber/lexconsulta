@@ -123,7 +123,7 @@ export function NotasMargen({ columna, raiz, version, tema, onCambiar, onElimina
             if (e.key === 'Escape') setEditando(null)
             if (e.key === 'Enter' && !e.shiftKey) e.currentTarget.blur()
           }}
-          className="w-full resize-none rounded bg-transparent outline-none border border-current/30 px-1 py-0.5"
+          className="w-full resize-none rounded bg-transparent outline-none border campo-foco border-current/30 px-1 py-0.5"
         />
       ) : (
         <div className="flex items-start gap-1.5">

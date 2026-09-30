@@ -2,42 +2,29 @@ import { Sidebar } from './components/layout/Sidebar'
 import { Topbar } from './components/layout/Topbar'
 import { ModalPerfil } from './components/ui/ModalPerfil'
 import { ModalRegistro } from './components/ui/ModalRegistro'
-import { ConsultarView } from './components/views/ConsultarView'
-import { SituacionView } from './components/views/SituacionView'
-import { ModulosView } from './components/views/ModulosView'
-import { CanvasView } from './components/views/CanvasView'
-import { MapaView } from './components/views/MapaView'
-import { ExploradorView } from './components/views/ExploradorView'
-import { ColeccionesView, ModalConfirmarImportacion } from './components/views/ColeccionesView'
 import { PARAM_IMPORTAR, decodificarColeccion } from './services/compartirColeccion'
 import type { ColeccionCompartida } from './types'
-import { MapasMentalesView } from './components/views/MapasMentalesView'
-import { HistorialView } from './components/views/HistorialView'
-import { AdminView } from './components/views/AdminView'
-import { PracticaView } from './components/views/PracticaView'
-import { PlazosView } from './components/views/PlazosView'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { useStore } from './store/useStore'
+import { avisar } from './store/useAvisos'
 import { aplicarTema } from './theme'
 import { Omnibar } from './components/ui/Omnibar'
+import { PanelAtajos } from './components/ui/PanelAtajos'
+import { Avisos } from './components/ui/Avisos'
 import { RightSidebar } from './components/layout/RightSidebar'
 import { esAdmin } from './config/admin'
-import type { VistaId } from './types'
+import { vistas } from './vistas'
+import { LimiteError } from './components/ui/LimiteError'
 
-const vistas: Record<VistaId, React.ComponentType> = {
-  consultar: ConsultarView,
-  situacion: SituacionView,
-  modulos: ModulosView,
-  canvas: CanvasView,
-  mapa: MapaView,
-  explorador: ExploradorView,
-  colecciones: ColeccionesView,
-  mapasmentales: MapasMentalesView,
-  historial: HistorialView,
-  admin: AdminView,
-  practica: PracticaView,
-  plazos: PlazosView,
+// solo se descarga si alguien abre un enlace para importar una colección
+const ModalConfirmarImportacion = lazy(() =>
+  import('./components/views/ColeccionesView').then((m) => ({ default: m.ModalConfirmarImportacion }))
+)
+
+/** Mientras baja el chunk de la vista: el mismo fondo, sin saltos. */
+function CargandoVista({ modoOscuro }: { modoOscuro: boolean }) {
+  return <div className={`h-full ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`} aria-busy="true" aria-label="Cargando" />
 }
 
 function App() {
@@ -72,7 +59,7 @@ function App() {
     window.history.replaceState(null, '', window.location.pathname + (nuevaQuery ? `?${nuevaQuery}` : '') + window.location.hash)
     const decodificada = decodificarColeccion(crudo)
     if (decodificada) setColeccionParaImportar(decodificada)
-    else alert('El link de colección compartida no es válido o está dañado.')
+    else avisar.error('El link de colección compartida no es válido o está dañado.')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -82,6 +69,12 @@ function App() {
   useEffect(() => {
     aplicarTema(temaColor)
   }, [temaColor])
+
+  // El tema también en <html>: los modales y avisos van por portal fuera
+  // del div .dark de abajo y los tokens de index.css lo leen de acá.
+  useEffect(() => {
+    document.documentElement.dataset.tema = modoOscuro ? 'oscuro' : 'claro'
+  }, [modoOscuro])
 
   // Atajo global: Cmd/Ctrl+K para abrir Omnibar
   useEffect(() => {
@@ -106,27 +99,36 @@ function App() {
         <Topbar onAbrirRegistro={() => setModalRegistroAbierto(true)} />
         <div className="flex-1 flex overflow-hidden">
           <main className="flex-1 overflow-y-auto">
-            <VistaComponente />
+            <LimiteError key={vistaActiva} modoOscuro={modoOscuro}>
+              <Suspense fallback={<CargandoVista modoOscuro={modoOscuro} />}>
+                <VistaComponente />
+              </Suspense>
+            </LimiteError>
           </main>
           <RightSidebar />
         </div>
       </div>
       <ModalPerfil />
+      <Avisos />
+      <PanelAtajos />
       <ModalRegistro abierto={modalRegistroAbierto} onCerrar={() => setModalRegistroAbierto(false)} />
       <AnimatePresence>
         {omnibarAbierto && <Omnibar onClose={() => setOmnibarAbierto(false)} />}
       </AnimatePresence>
       {coleccionParaImportar && (
+        <Suspense fallback={null}>
         <ModalConfirmarImportacion
           compartida={coleccionParaImportar}
           onCancelar={() => setColeccionParaImportar(null)}
           onConfirmar={() => {
             const id = importarColeccion(coleccionParaImportar)
+            avisar.exito(`Colección "${coleccionParaImportar.titulo}" importada`)
             setColeccionParaImportar(null)
             setColeccionActiva(id)
             setVistaActiva('colecciones')
           }}
         />
+        </Suspense>
       )}
     </div>
   )

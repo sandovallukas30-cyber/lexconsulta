@@ -110,7 +110,7 @@ function PantallaEleccion({
           className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
           style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
         >
-          <i className="ti ti-clock-bolt text-3xl" style={{ color: VERDE }} />
+          <i className="ti ti-clock-bolt text-3xl" style={{ color: 'var(--accent-texto)' }} />
         </div>
         <h1 className={`text-2xl font-serif font-bold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
           {codigoMeta?.nombre}: próximamente
@@ -146,7 +146,7 @@ function PantallaEleccion({
           className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
           style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
         >
-          <i className="ti ti-list-numbers text-3xl" style={{ color: VERDE }} />
+          <i className="ti ti-list-numbers text-3xl" style={{ color: 'var(--accent-texto)' }} />
         </div>
         <h1 className={`text-3xl font-serif font-bold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
           ¿Qué situación estás viviendo?
@@ -175,7 +175,7 @@ function PantallaEleccion({
                 className="w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0"
                 style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 19%, transparent)' : 'color-mix(in srgb, var(--accent-base) 8%, transparent)' }}
               >
-                <i className={`ti ${area.icono} text-xl`} style={{ color: VERDE }} />
+                <i className={`ti ${area.icono} text-xl`} style={{ color: 'var(--accent-texto)' }} />
               </span>
               <div className="flex-1 min-w-0">
                 <h3 className={`text-base font-serif font-semibold leading-tight ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
@@ -192,7 +192,7 @@ function PantallaEleccion({
                 className={`ti ti-arrow-right text-base mt-1 transition-transform group-hover:translate-x-1 ${
                   modoOscuro ? 'text-zinc-500' : 'text-zinc-400'
                 }`}
-                style={{ color: VERDE }}
+                style={{ color: 'var(--accent-texto)' }}
               />
             </div>
           </motion.button>
@@ -255,7 +255,7 @@ function PantallaCuestionario({
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${progreso}%` }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.25 }}
             className="h-full rounded-full"
             style={{ background: VERDE }}
           />
@@ -409,7 +409,7 @@ function PantallaAnalizando({ modoOscuro }: { modoOscuro: boolean }) {
           className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
           style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
         >
-          <i className="ti ti-sparkles text-3xl" style={{ color: VERDE }} />
+          <i className="ti ti-sparkles text-3xl" style={{ color: 'var(--accent-texto)' }} />
         </motion.div>
         <h2 className={`text-xl font-serif font-semibold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
           Analizando tu situación
@@ -458,7 +458,7 @@ function PantallaResultado({
             className="w-11 h-11 rounded-lg flex items-center justify-center"
             style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 19%, transparent)' : 'color-mix(in srgb, var(--accent-base) 8%, transparent)' }}
           >
-            <i className={`ti ${area.icono} text-xl`} style={{ color: VERDE }} />
+            <i className={`ti ${area.icono} text-xl`} style={{ color: 'var(--accent-texto)' }} />
           </span>
           <div>
             <p className={`text-[10px] uppercase tracking-wider font-semibold ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
@@ -599,7 +599,7 @@ function PantallaResultado({
           <ul className="space-y-1.5">
             {resultado.dondeAcudir.map((d, i) => (
               <li key={i} className={`flex items-start gap-2 text-sm ${modoOscuro ? 'text-zinc-200' : 'text-zinc-800'}`}>
-                <i className="ti ti-map-pin text-sm mt-1" style={{ color: VERDE }} />
+                <i className="ti ti-map-pin text-sm mt-1" style={{ color: 'var(--accent-texto)' }} />
                 <span>{d}</span>
               </li>
             ))}

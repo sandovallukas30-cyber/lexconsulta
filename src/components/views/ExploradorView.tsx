@@ -1,10 +1,12 @@
-import { useState, useMemo, useEffect, useRef, type ReactNode, type TouchEvent } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback, type ReactNode, type TouchEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
+import { useProgresoScroll } from '../../hooks/useProgresoScroll'
 import { useCodigo } from '../../hooks/useCodigo'
 import { useReferenciasFiltradas } from '../../hooks/useReferencias'
 import { SelectorCodigo } from '../ui/SelectorCodigo'
+import { BotonVolver } from '../ui/BotonVolver'
 import { EsquemaCodigo } from '../ui/EsquemaCodigo'
 import { ContenedorResaltable, ParrafoResaltado } from '../ui/TextoResaltable'
 import { useLecturaVoz } from '../../hooks/useLecturaVoz'
@@ -13,6 +15,12 @@ import { modernizar, necesitaModernizacion } from '../../services/moderniza'
 import { obtenerMetadata, formatearFechaIndexacion, nombreCortoMetadata } from '../../data/codigosMetadata'
 import { construirEsquema, ETIQUETAS_NIVEL, type NodoEsquema } from '../../services/esquema'
 import { buscarVinculosArticulo } from '../../services/modulosAcademico'
+import { buscarEnCodigo, consultaComoId } from '../../services/buscarEnCodigo'
+import { quitarResaltado, resaltarCoincidencia } from '../../services/resaltado'
+import { citaArticulo, copiarAlPortapapeles, textoConCita } from '../../services/citas'
+import { avisar } from '../../store/useAvisos'
+import { imprimir, useImprimirConCtrlP } from '../../services/impresion'
+import { VistaImprimibleArticulo } from '../ui/VistasImprimibles'
 import { TAMANOS_FUENTE, TEMAS_LECTURA } from '../../services/lecturaTema'
 import type { Articulo, CodigoData, CodigoTipo } from '../../types'
 
@@ -45,19 +53,27 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
   const setColeccionActiva = useStore((s) => s.setColeccionActiva)
   const setVistaActiva = useStore((s) => s.setVistaActiva)
   const articuloPendiente = useStore((s) => s.articuloExploradorPendiente)
+  const recordarArticulo = useStore((s) => s.recordarArticuloExplorador)
   const limpiarArticuloPendiente = useStore((s) => s.limpiarArticuloExploradorPendiente)
   const aplicarModernizacion = modernizarLenguaje && necesitaModernizacion(tipoActivo)
   const transformarTexto = (t: string) => (aplicarModernizacion ? modernizar(t) : t)
-  const [seleccionadoId, setSeleccionadoId] = useState<string | null>(null)
+  // La selección pertenece a UN código: al cambiar de código deja de valer
+  // sola (antes el "Art. 3" del Civil seguía elegido en el Código del Trabajo
+  // y además se guardaba como su último artículo leído).
+  const [seleccion, setSeleccion] = useState<{ tipo: CodigoTipo; id: string | null }>({ tipo: tipoActivo, id: null })
+  const seleccionadoId = seleccion.tipo === tipoActivo ? seleccion.id : null
+  const setSeleccionadoId = useCallback((id: string | null) => setSeleccion({ tipo: tipoActivo, id }), [tipoActivo])
   const [indiceAbierto, setIndiceAbierto] = useState(false)
   const [esquemaAbierto, setEsquemaAbierto] = useState(false)
   const [modoLecturaAbierto, setModoLecturaAbierto] = useState(false)
   const [busquedaAbierta, setBusquedaAbierta] = useState(false)
   const [busqueda, setBusqueda] = useState('')
+  // coincidencia a marcar en el artículo al abrirlo desde una búsqueda de texto
+  const [resaltado, setResaltado] = useState<{ articulo: string; texto: string } | null>(null)
+  const refTarjeta = useRef<HTMLElement>(null)
 
-  // Reset selección cuando cambia el código
+  // Limpiar la búsqueda cuando cambia el código
   useEffect(() => {
-    setSeleccionadoId(null)
     setBusqueda('')
   }, [tipoActivo])
 
@@ -72,9 +88,10 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
     if (!articuloPendiente) return
     setSeleccionadoId(articuloPendiente)
     limpiarArticuloPendiente()
-  }, [articuloPendiente, limpiarArticuloPendiente])
+  }, [articuloPendiente, limpiarArticuloPendiente, setSeleccionadoId])
 
-  const { codigo, cargando: cargandoCodigo } = useCodigo(tipoActivo)
+  const { codigo, cargando: cargandoCodigo, error: errorCodigo, reintentar } = useCodigo(tipoActivo)
+  const refArticulo = useRef<HTMLDivElement>(null)
 
   const arts = codigo?.articulos ?? []
   const seleccionado = useMemo(
@@ -86,6 +103,36 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
     () => (seleccionado ? arts.findIndex((a) => a.a === seleccionado.a) : -1),
     [arts, seleccionado]
   )
+
+  // Al cambiar de artículo, empezar a leerlo desde arriba (antes quedaba el
+  // scroll del artículo anterior y el siguiente se leía desde la mitad)
+  useEffect(() => {
+    refArticulo.current?.scrollTo({ top: 0 })
+    return () => quitarResaltado()
+  }, [seleccionado?.a])
+
+  // marcar la coincidencia cuando termina la transición del artículo (250 ms;
+  // también si se eligió el MISMO artículo que ya estaba abierto)
+  useEffect(() => {
+    if (!resaltado) return
+    const t = window.setTimeout(() => {
+      if (refTarjeta.current && refTarjeta.current.dataset.articulo === resaltado.articulo) {
+        resaltarCoincidencia(refTarjeta.current, resaltado.texto)
+      }
+    }, 300)
+    return () => window.clearTimeout(t)
+  }, [resaltado])
+
+  // en el Modo Lectura, Ctrl+P imprime el artículo que se está leyendo (no
+  // el código completo, que es lo que imprime Ctrl+P en la vista normal)
+  useImprimirConCtrlP('articulo', modoLecturaAbierto)
+
+  const copiarConCita = async () => {
+    if (!seleccionado) return
+    const ok = await copiarAlPortapapeles(textoConCita(tipoActivo, seleccionado))
+    if (ok) avisar.exito(`Copiado: ${citaArticulo(tipoActivo, seleccionado.a)}`)
+    else avisar.error('No se pudo copiar. Selecciona el texto y usa Ctrl+C.')
+  }
 
   const anterior = indiceActual > 0 ? arts[indiceActual - 1] : null
   const siguiente = indiceActual >= 0 && indiceActual < arts.length - 1 ? arts[indiceActual + 1] : null
@@ -107,15 +154,26 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
     // mismo lote) y una referencia a otro código siempre terminaba
     // mostrando el primer artículo del código destino en vez del referido.
     if (!seleccionadoId && !articuloPendiente && arts.length > 0) {
-      setSeleccionadoId(arts[0].a)
+      // retomar el último artículo leído en este código (C7)
+      const ultimo = useStore.getState().ultimoArticuloExplorador[tipoActivo]
+      setSeleccionadoId(ultimo && arts.some((a) => a.a === ultimo) ? ultimo : arts[0].a)
     }
-  }, [arts, seleccionadoId, articuloPendiente])
+  }, [arts, seleccionadoId, articuloPendiente, tipoActivo, setSeleccionadoId])
+
+  // solo lo que el usuario eligió: en el render en que cambia el código,
+  // `seleccionado` cae a arts[0] del código nuevo y pisaba lo guardado
+  useEffect(() => {
+    if (seleccionado && seleccionado.a === seleccionadoId) recordarArticulo(tipoActivo, seleccionado.a)
+  }, [seleccionado, seleccionadoId, tipoActivo, recordarArticulo])
 
   // Atajos: Cmd/Ctrl+K para buscar, flechas para navegar
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault()
+        // en el Explorador, Ctrl+K busca en el código (lo dice el botón); sin
+        // esto se abrían a la vez esta búsqueda y la Omnibar de App.tsx
+        e.stopImmediatePropagation()
         setBusquedaAbierta(true)
       }
       if (e.key === 'Escape') {
@@ -123,17 +181,39 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
         setIndiceAbierto(false)
       }
     }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
+    // en captura: corre antes que el atajo global (registrado antes, en App)
+    window.addEventListener('keydown', handler, true)
+    return () => window.removeEventListener('keydown', handler, true)
   }, [])
 
   if (cargandoCodigo) {
     return <PantallaCargandoCodigo modoOscuro={modoOscuro} />
   }
   if (!codigo) {
+    // Antes: "No hay códigos cargados." sin salida. Casi siempre es un corte
+    // de red al bajar el JSON (se descarga recién al abrir el código).
     return (
-      <div className="h-full flex items-center justify-center p-8">
-        <p className={modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}>No hay códigos cargados.</p>
+      <div className={`h-full flex items-center justify-center p-8 ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
+        <div className="max-w-sm text-center" role="alert">
+          <i className={`ti ti-wifi-off text-3xl mb-3 inline-block ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`} aria-hidden />
+          <p className={`text-base font-semibold mb-1 ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>No se pudo abrir este código</p>
+          <p className={`text-sm mb-5 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
+            {errorCodigo ? 'Revisa tu conexión a internet e inténtalo de nuevo.' : 'El código no está disponible.'}
+          </p>
+          <div className="flex justify-center gap-2">
+            {errorCodigo && (
+              <button onClick={reintentar} className="boton boton-primario px-4">
+                Reintentar
+              </button>
+            )}
+            <button
+              onClick={onCambiarCodigo}
+              className="boton boton-borde px-4"
+            >
+              Elegir otro código
+            </button>
+          </div>
+        </div>
       </div>
     )
   }
@@ -141,15 +221,15 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
   return (
     <div className={`h-full flex flex-col ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
       <div
-        className={`flex items-center gap-3 px-6 py-3 border-b ${
+        className={`flex items-center gap-1.5 sm:gap-3 px-3 sm:px-6 py-2 sm:py-3 border-b ${
           modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
         }`}
       >
+        <BotonVolver />
+
         <button
           onClick={onCambiarCodigo}
-          className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-colors group ${
-            modoOscuro ? 'hover:bg-zinc-800' : 'hover:bg-zinc-100'
-          }`}
+          className="boton boton-fantasma group px-2 gap-2 min-w-0 flex-shrink"
           title="Cambiar código"
           aria-label="Cambiar código"
         >
@@ -157,7 +237,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
             className="w-7 h-7 rounded-lg flex items-center justify-center"
             style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
           >
-            <i className="ti ti-book-2 text-base" style={{ color: VERDE }} />
+            <i className="ti ti-book-2 text-base" style={{ color: 'var(--accent-texto)' }} />
           </span>
           <div className="hidden md:block text-left">
             <p className={`text-sm font-semibold leading-tight ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
@@ -181,24 +261,18 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
 
         <button
           onClick={() => setIndiceAbierto(true)}
-          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
-            modoOscuro
-              ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-              : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
-          }`}
+          aria-label="Índice del código"
+          className="boton boton-suave max-sm:boton-icono"
         >
           <i className="ti ti-list-tree text-base" />
-          Índice
+          <span className="hidden sm:inline">Índice</span>
         </button>
 
         <button
           onClick={() => setModoLecturaAbierto(true)}
           title="Modo lectura: pantalla completa, letra ajustable y lectura en voz alta"
-          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
-            modoOscuro
-              ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-              : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
-          }`}
+          aria-label="Modo lectura"
+          className="boton boton-suave max-md:boton-icono"
         >
           <i className="ti ti-book text-base" />
           <span className="hidden md:inline">Modo lectura</span>
@@ -208,33 +282,25 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
           <button
             onClick={toggleModernizar}
             title={modernizarLenguaje ? 'Mostrar texto original (siglo XIX)' : 'Modernizar lenguaje antiguo'}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
-              modernizarLenguaje
-                ? 'text-white'
-                : modoOscuro
-                ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-                : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
-            }`}
-            style={modernizarLenguaje ? { background: VERDE } : undefined}
+            aria-label={modernizarLenguaje ? 'Mostrar texto original' : 'Modernizar lenguaje antiguo'}
+            aria-pressed={modernizarLenguaje}
+            className="boton boton-suave max-lg:boton-icono"
           >
             <i className={`ti ${modernizarLenguaje ? 'ti-language' : 'ti-language-off'} text-base`} />
-            Lenguaje moderno
+            <span className="hidden lg:inline">Lenguaje moderno</span>
           </button>
         )}
 
 
         <button
           onClick={() => setBusquedaAbierta(true)}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors min-w-[220px] ${
-            modoOscuro
-              ? 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
-              : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'
-          }`}
+          aria-label="Buscar o ir a un artículo (Ctrl+K)"
+          className="boton boton-suave max-sm:boton-icono font-normal sm:min-w-[220px]"
         >
           <i className="ti ti-search text-base" />
-          <span className="flex-1 text-left">Buscar artículo...</span>
+          <span className="hidden sm:inline flex-1 text-left">Buscar o ir a artículo…</span>
           <kbd
-            className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${
+            className={`hidden sm:inline text-[10px] px-1.5 py-0.5 rounded font-mono ${
               modoOscuro ? 'bg-zinc-900 text-zinc-500' : 'bg-white text-zinc-400 border border-zinc-200'
             }`}
           >
@@ -244,58 +310,103 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
 
         <button
           onClick={() => window.print()}
-          title="Exportar el código completo a PDF: abre el diálogo de impresión, elegí 'Guardar como PDF'"
-          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
-            modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'
-          }`}
+          title="Imprimir el código COMPLETO o guardarlo como PDF (para un solo artículo, usa el ícono junto al artículo)"
+          aria-label="Imprimir o guardar el código completo como PDF"
+          className="boton boton-fantasma boton-icono max-sm:hidden"
         >
           <i className="ti ti-printer text-base" />
         </button>
       </div>
 
       <VistaImprimibleCodigo codigo={codigo} tipo={tipoActivo} transformarTexto={transformarTexto} />
+      {seleccionado && (
+        <VistaImprimibleArticulo
+          tipo={tipoActivo}
+          articulo={seleccionado}
+          texto={transformarTexto(seleccionado.t)}
+          rutaSeccion={[seleccionado.libro, seleccionado.titulo, seleccionado.capitulo].filter(Boolean).join(' · ')}
+        />
+      )}
 
       {seleccionado && (
         <div
-          className={`px-6 py-2.5 border-b text-xs flex items-center gap-1.5 overflow-x-auto ${
+          className={`px-4 sm:px-6 py-2.5 border-b text-xs flex items-center gap-1.5 overflow-x-auto ${
             modoOscuro ? 'bg-zinc-900 border-zinc-800 text-zinc-400' : 'bg-white border-zinc-200 text-zinc-500'
           }`}
         >
-          <span className={modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}>{codigo.codigo}</span>
+          <span className="text-zinc-500 whitespace-nowrap flex-shrink-0">{codigo.codigo}</span>
           {seleccionado.libro && <><Sep /><span className="truncate">Libro {seleccionado.libro}</span></>}
           {seleccionado.titulo && <><Sep /><span className="truncate">Título {seleccionado.titulo}</span></>}
           {seleccionado.capitulo && <><Sep /><span className="truncate">Cap. {seleccionado.capitulo}</span></>}
           {seleccionado.parrafo && <><Sep /><span className="truncate">Párrafo {seleccionado.parrafo}</span></>}
           <Sep />
-          <span className="font-semibold whitespace-nowrap" style={{ color: VERDE }}>
+          <span className="font-semibold whitespace-nowrap" style={{ color: 'var(--accent-texto)' }}>
             {seleccionado.a}
           </span>
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto">
+      {/* Posición dentro del código (C1): con 2.566 artículos, "12 de 2566"
+          solo no da idea de cuánto falta */}
+      <div
+        className={`h-[3px] flex-shrink-0 ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-100'}`}
+        role="progressbar"
+        aria-label="Posición en el código"
+        aria-valuemin={1}
+        aria-valuemax={arts.length}
+        aria-valuenow={indiceActual + 1}
+        title={`Artículo ${indiceActual + 1} de ${arts.length}`}
+      >
+        <div
+          className="h-full transition-[width] duration-200 ease-out"
+          style={{ width: `${arts.length > 1 ? ((indiceActual + 1) / arts.length) * 100 : 100}%`, background: VERDE }}
+        />
+      </div>
+
+      <div ref={refArticulo} className="flex-1 overflow-y-auto">
         {seleccionado && (
           <AnimatePresence mode="wait">
             <motion.article
               key={seleccionado.a}
+              ref={refTarjeta}
+              data-articulo={seleccionado.a}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.25 }}
-              className={`max-w-3xl mx-auto my-8 rounded-2xl p-10 ${
-                modoOscuro ? 'bg-zinc-800/40 border border-zinc-800' : 'bg-white shadow-sm border border-zinc-200/60'
+              className={`max-w-3xl mx-3 sm:mx-auto my-4 sm:my-8 rounded-panel p-5 sm:p-10 ${
+                modoOscuro ? 'bg-zinc-800/40 border border-zinc-800' : 'bg-white shadow-tarjeta border border-zinc-200/60'
               }`}
             >
               <div className="flex items-baseline justify-between gap-3 mb-6">
                 <h1
-                  className={`text-3xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}
+                  className={`text-2xl sm:text-3xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}
                   style={{ color: undefined }}
                 >
-                  <span style={{ color: VERDE }}>{seleccionado.a}</span>
+                  <span style={{ color: 'var(--accent-texto)' }}>{seleccionado.a}</span>
                 </h1>
-                <span className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                  {indiceActual + 1} de {arts.length}
-                </span>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                    {indiceActual + 1} de {arts.length}
+                  </span>
+                  <button
+                    onClick={() => imprimir('articulo')}
+                    title="Imprimir o guardar como PDF solo este artículo"
+                    aria-label={`Imprimir ${seleccionado.a}`}
+                    className="boton boton-fantasma boton-chico boton-icono max-sm:hidden"
+                  >
+                    <i className="ti ti-printer text-sm" aria-hidden />
+                  </button>
+                  <button
+                    onClick={copiarConCita}
+                    title={`Copiar el texto con la cita "${citaArticulo(tipoActivo, seleccionado.a)}" y la fuente`}
+                    aria-label={`Copiar ${seleccionado.a} con cita`}
+                    className="boton boton-fantasma boton-chico max-sm:boton-icono"
+                  >
+                    <i className="ti ti-copy text-sm" aria-hidden />
+                    <span className="hidden sm:inline">Copiar con cita</span>
+                  </button>
+                </div>
               </div>
               <ArticuloTexto
                 texto={transformarTexto(seleccionado.t)}
@@ -310,7 +421,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
       </div>
 
       <div
-        className={`border-t px-4 py-3 ${
+        className={`border-t px-2 sm:px-4 py-2 sm:py-3 ${
           modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
         }`}
       >
@@ -329,7 +440,6 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
             arts={cercanos}
             actualId={seleccionado?.a}
             onSelect={(a) => setSeleccionadoId(a)}
-            modoOscuro={modoOscuro}
           />
 
           <NavBtn
@@ -384,6 +494,8 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
         busqueda={busqueda}
         setBusqueda={setBusqueda}
         onSelect={(a) => {
+          // buscó texto (no un número): marcar dónde aparece
+          setResaltado(busqueda.trim() && !consultaComoId(busqueda) ? { articulo: a, texto: busqueda } : null)
           setSeleccionadoId(a)
           setBusquedaAbierta(false)
           setBusqueda('')
@@ -531,13 +643,8 @@ function NavBtn({
     <button
       disabled={disabled}
       onClick={onClick}
-      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors flex-shrink-0 ${
-        disabled
-          ? 'opacity-30 cursor-not-allowed'
-          : modoOscuro
-          ? 'hover:bg-zinc-800 text-zinc-300'
-          : 'hover:bg-zinc-100 text-zinc-700'
-      }`}
+      aria-label={`${label}${sub ? `: ${sub}` : ''}`}
+      className={`boton boton-fantasma gap-2 px-2 sm:px-3 min-h-[44px] ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}
     >
       {align === 'left' && <i className={`ti ${icono} text-lg`} />}
       <div className={align === 'right' ? 'text-right' : 'text-left'}>
@@ -555,29 +662,22 @@ function Carrusel({
   arts,
   actualId,
   onSelect,
-  modoOscuro,
 }: {
   arts: Articulo[]
   actualId?: string
   onSelect: (a: string) => void
-  modoOscuro: boolean
 }) {
   return (
-    <div className="flex-1 flex items-center gap-1 overflow-x-auto justify-center min-w-0">
+    <div className="flex-1 flex items-center gap-1 overflow-x-auto justify-center min-w-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {arts.map((a) => {
         const activo = a.a === actualId
         return (
           <button
             key={a.a}
             onClick={() => onSelect(a.a)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-mono whitespace-nowrap transition-colors flex-shrink-0 ${
-              activo
-                ? 'text-white font-semibold'
-                : modoOscuro
-                ? 'text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800'
-                : 'text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100'
-            }`}
-            style={activo ? { background: VERDE } : undefined}
+            // en móvil solo el artículo actual: los vecinos ya están en Anterior/Siguiente
+            aria-current={activo ? 'true' : undefined}
+            className={`boton boton-chico font-mono ${activo ? 'boton-primario font-semibold' : 'boton-fantasma max-sm:hidden'}`}
             title={primerasPalabras(a.t, 10)}
           >
             {a.a}
@@ -639,9 +739,7 @@ function ModalIndice({
               <button
                 onClick={onCerrar}
                 aria-label="Cerrar índice"
-                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
-                  modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'
-                }`}
+                className="boton boton-fantasma boton-chico boton-icono"
               >
                 <i className="ti ti-x text-lg" />
               </button>
@@ -650,8 +748,7 @@ function ModalIndice({
             <div className={`px-3 pt-3 border-b pb-3 ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
               <button
                 onClick={onAbrirEsquema}
-                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90"
-                style={{ background: VERDE }}
+                className="boton boton-primario w-full justify-start gap-2.5"
               >
                 <i className="ti ti-sitemap text-base" />
                 <span className="flex-1 text-left">Ver esquema de estudio</span>
@@ -909,66 +1006,8 @@ function ModalBusqueda({
   const inputRef = useRef<HTMLInputElement>(null)
   const [indiceActivo, setIndiceActivo] = useState(0)
 
-  const resultados = useMemo(() => {
-    const q = busqueda.trim().toLowerCase()
-    if (!q) return arts.slice(0, 50)
-
-    // Si lo que escribió parece un identificador de artículo puro
-    // (ej. "161", "art 161", "art. 161", "artículo 161°"), buscamos por
-    // número de artículo en vez de por contenido — es lo que el usuario
-    // normalmente espera al teclear solo el número.
-    const matchSoloId = q.match(/^(?:art(?:[íi]culo)?\.?\s*)?(\d+)\s*[°ºo]?\s*$/i)
-    const qSoloIdArticulo = matchSoloId !== null
-    const qNumPuro = matchSoloId ? matchSoloId[1] : null
-
-    type Puntuado = { a: typeof arts[number]; score: number }
-    const puntuados: Puntuado[] = []
-
-    for (const a of arts) {
-      const numArt = a.a.replace(/[^\d]/g, '')
-      let score = 0
-
-      if (qSoloIdArticulo && qNumPuro) {
-        // Búsqueda por identificador: el match por id pesa muchísimo más,
-        // así Art. 161 sale primero. Pero NO descartamos las menciones a
-        // ese número dentro del texto de otros artículos — solo quedan abajo.
-        if (numArt === qNumPuro) score += 10000
-        else if (numArt.startsWith(qNumPuro)) score += 1000 - (numArt.length - qNumPuro.length)
-        // Menciones del número en el texto (con peso bajo)
-        const lower = a.t.toLowerCase()
-        if (lower.includes(qNumPuro)) score += 5
-      } else {
-        // Búsqueda mixta o de texto libre.
-        if (a.a.toLowerCase().includes(q)) score += 500
-        const lower = a.t.toLowerCase()
-        if (lower.includes(q)) score += 100
-        // Bonus por palabras individuales del query (>2 chars)
-        const palabras = q.split(/\s+/).filter((w) => w.length > 2)
-        for (const w of palabras) {
-          if (lower.includes(w)) score += 10
-        }
-      }
-
-      if (score > 0) puntuados.push({ a, score })
-    }
-
-    // Deduplicar por id + primeros 80 chars del texto: si el JSON trae el
-    // mismo artículo duplicado (caso conocido del parser cuando varios
-    // libros reinician numeración), el buscador muestra solo la primera
-    // ocurrencia. Sigue diferenciando artículos distintos con mismo id
-    // (porque el snippet de texto será diferente).
-    const vistos = new Set<string>()
-    return puntuados
-      .sort((x, y) => y.score - x.score)
-      .filter((p) => {
-        const clave = `${p.a.a}::${p.a.t.slice(0, 80)}`
-        if (vistos.has(clave)) return false
-        vistos.add(clave)
-        return true
-      })
-      .slice(0, 50)
-      .map((p) => p.a)
-  }, [arts, busqueda])
+  // C7: ids tolerantes ("183a", "183-A", "4 bis") y texto sin tildes
+  const resultados = useMemo(() => buscarEnCodigo(arts, busqueda), [arts, busqueda])
 
   useEffect(() => {
     setIndiceActivo(0)
@@ -987,7 +1026,7 @@ function ModalBusqueda({
       setIndiceActivo((i) => Math.max(i - 1, 0))
     } else if (e.key === 'Enter') {
       const r = resultados[indiceActivo]
-      if (r) onSelect(r.a)
+      if (r) onSelect(r.articulo.a)
     }
   }
 
@@ -1007,7 +1046,7 @@ function ModalBusqueda({
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.96, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}
-            className={`w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[70vh] ${
+            className={`w-full max-w-2xl rounded-panel shadow-flotante overflow-hidden flex flex-col max-h-[70vh] ${
               modoOscuro ? 'bg-zinc-900' : 'bg-white'
             }`}
           >
@@ -1018,7 +1057,8 @@ function ModalBusqueda({
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
                 onKeyDown={onKey}
-                placeholder='Busca por número ("161") o palabra clave ("vacaciones")'
+                placeholder='Número ("183-A", "4 bis") o palabras ("prescripción")'
+                aria-label="Buscar o ir a un artículo"
                 className={`flex-1 bg-transparent outline-none text-base ${
                   modoOscuro ? 'text-white placeholder:text-zinc-500' : 'text-zinc-900 placeholder:text-zinc-400'
                 }`}
@@ -1035,11 +1075,11 @@ function ModalBusqueda({
                   <p className="text-sm">Sin resultados</p>
                 </div>
               ) : (
-                resultados.map((a, i) => {
+                resultados.map(({ articulo: a, fragmento, exacto }, i) => {
                   const activo = i === indiceActivo
                   return (
                     <button
-                      key={a.a}
+                      key={`${a.a}::${i}`}
                       onClick={() => onSelect(a.a)}
                       onMouseEnter={() => setIndiceActivo(i)}
                       className={`w-full text-left px-4 py-2.5 transition-colors ${
@@ -1051,7 +1091,7 @@ function ModalBusqueda({
                       }`}
                     >
                       <div className="flex items-baseline gap-2 mb-0.5">
-                        <span className="font-mono text-xs font-semibold" style={{ color: VERDE }}>
+                        <span className="font-mono text-xs font-semibold" style={{ color: 'var(--accent-texto)' }}>
                           {a.a}
                         </span>
                         {a.libro && (
@@ -1059,9 +1099,20 @@ function ModalBusqueda({
                             · Libro {a.libro.split(' — ')[0]}
                           </span>
                         )}
+                        {exacto && i === 0 && (
+                          <span className={`ml-auto text-[10px] font-medium ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>↵ Ir al artículo</span>
+                        )}
                       </div>
-                      <p className={`text-xs line-clamp-1 ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>
-                        {primerasPalabras(a.t, 18)}
+                      <p className={`text-xs line-clamp-2 ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>
+                        {fragmento ? (
+                          <>
+                            {fragmento.antes}
+                            <mark className={`rounded-sm px-0.5 ${modoOscuro ? 'bg-amber-400/30 text-amber-100' : 'bg-amber-200 text-zinc-900'}`}>{fragmento.coincidencia}</mark>
+                            {fragmento.despues}
+                          </>
+                        ) : (
+                          primerasPalabras(a.t, 18)
+                        )}
                       </p>
                     </button>
                   )
@@ -1109,14 +1160,10 @@ function FichaCodigo({ tipo, modoOscuro }: { tipo: CodigoTipo; modoOscuro: boole
       <button
         onClick={() => setAbierto((v) => !v)}
         title="Ver fuente, decreto y fecha de indexación"
-        className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
-          abierto
-            ? modoOscuro
-              ? 'bg-zinc-800 text-[var(--accent-400)]'
-              : 'bg-[var(--accent-50)] text-[var(--accent-700)]'
-            : modoOscuro
-            ? 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
-            : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800'
+        aria-label="Ficha del código: fuente, decreto y fecha de indexación"
+        aria-expanded={abierto}
+        className={`boton boton-fantasma boton-chico boton-icono ${
+          abierto ? (modoOscuro ? 'bg-zinc-800 text-[var(--accent-400)]' : 'bg-[var(--accent-50)] text-[var(--accent-700)]') : ''
         }`}
       >
         <i className="ti ti-info-circle text-base" />
@@ -1245,20 +1292,37 @@ function FichaFila({
   )
 }
 
+/** Skeleton con la forma real del Explorador (barra, miga, tarjeta del
+ *  artículo y navegación): así la pantalla no "salta" cuando aparece el
+ *  artículo (C4/C8). Un código grande (Civil, 1,5 MB) tarda en bajar. */
 function PantallaCargandoCodigo({ modoOscuro }: { modoOscuro: boolean }) {
+  const bloque = modoOscuro ? 'bg-zinc-800' : 'bg-zinc-200/80'
   return (
-    <div className={`h-full flex items-center justify-center ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
-      <div className="text-center">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-          className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3"
-          style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
-        >
-          <i className="ti ti-loader-2 text-2xl" style={{ color: VERDE }} />
-        </motion.div>
-        <p className={`text-sm ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>Cargando código...</p>
+    <div className={`h-full flex flex-col ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`} aria-busy="true" aria-label="Cargando código">
+      <div className={`flex items-center gap-3 px-3 sm:px-6 py-3 border-b ${modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+        <div className={`w-7 h-7 rounded-lg animate-pulse ${bloque}`} />
+        <div className="space-y-1.5">
+          <div className={`h-3 w-40 rounded animate-pulse ${bloque}`} />
+          <div className={`h-2 w-20 rounded animate-pulse ${bloque}`} />
+        </div>
+        <div className="flex-1" />
+        <div className={`h-10 w-10 sm:w-24 rounded-lg animate-pulse ${bloque}`} />
+        <div className={`h-10 w-10 sm:w-56 rounded-lg animate-pulse ${bloque}`} />
       </div>
+      <div className={`px-4 sm:px-6 py-3 border-b ${modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+        <div className={`h-2.5 w-64 max-w-full rounded animate-pulse ${bloque}`} />
+      </div>
+      <div className="h-[3px]" />
+      <div className="flex-1 overflow-hidden">
+        <div className={`max-w-3xl mx-3 sm:mx-auto my-4 sm:my-8 rounded-panel p-5 sm:p-10 ${modoOscuro ? 'bg-zinc-800/40 border border-zinc-800' : 'bg-white shadow-tarjeta border border-zinc-200/60'}`}>
+          <div className={`h-7 w-28 rounded animate-pulse mb-6 ${bloque}`} />
+          {[100, 96, 92, 98, 60].map((w, i) => (
+            <div key={i} className={`h-3.5 rounded animate-pulse mb-3 ${bloque}`} style={{ width: `${w}%` }} />
+          ))}
+        </div>
+      </div>
+      <div className={`border-t px-4 py-3 h-[62px] ${modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`} />
+      <p className="sr-only">Cargando código…</p>
     </div>
   )
 }
@@ -1303,6 +1367,13 @@ function ModoLecturaOverlay({
   posicionActual: number
   totalArticulos: number
 }) {
+  // Progreso dentro del artículo (C1): algunos artículos son de varias
+  // pantallas (ej. las definiciones de la Ley del Consumidor)
+  const refLectura = useRef<HTMLDivElement>(null)
+  const { ratio: progresoArticulo, desplazable: articuloLargo } = useProgresoScroll(refLectura, `${abierto}-${seleccionado?.a}`)
+  useEffect(() => {
+    refLectura.current?.scrollTo({ top: 0 })
+  }, [seleccionado?.a])
   const [indiceTamano, setIndiceTamano] = useState(0)
   const temaLectura = useStore((s) => s.modoLecturaTema)
   const setTemaLectura = useStore((s) => s.setModoLecturaTema)
@@ -1386,7 +1457,7 @@ function ModoLecturaOverlay({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.18 }}
-          className={`fixed inset-0 z-[80] flex flex-col ${tema.bg}`}
+          className={`fixed inset-0 h-[100dvh] z-[80] flex flex-col ${tema.bg}`}
         >
           <div className={`flex items-center gap-3 px-5 py-3 border-b flex-shrink-0 ${tema.border}`}>
             <button
@@ -1481,7 +1552,10 @@ function ModoLecturaOverlay({
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto" onTouchStart={alTocar} onTouchEnd={alSoltarToque}>
+          <div className={`h-[3px] flex-shrink-0 ${tema.chipBg}`} role="progressbar" aria-label="Progreso de lectura del artículo" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((articuloLargo ? progresoArticulo : 1) * 100)}>
+            <div className="h-full transition-[width] duration-150 ease-out" style={{ width: `${(articuloLargo ? progresoArticulo : 1) * 100}%`, background: VERDE }} />
+          </div>
+          <div ref={refLectura} className="flex-1 overflow-y-auto" onTouchStart={alTocar} onTouchEnd={alSoltarToque}>
             <div className="max-w-2xl mx-auto px-6 py-10">
               <h1 className={`text-3xl font-serif font-bold mb-6 ${tema.text}`}>
                 <span style={{ color: VERDE }}>{seleccionado.a}</span>

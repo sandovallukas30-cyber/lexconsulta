@@ -454,7 +454,7 @@ function MapaInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: CodigoTipo; 
             className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3"
             style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
           >
-            <i className="ti ti-loader-2 text-2xl" style={{ color: VERDE }} />
+            <i className="ti ti-loader-2 text-2xl" style={{ color: 'var(--accent-texto)' }} />
           </motion.div>
           <p className={`text-sm ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>Cargando código...</p>
         </div>
@@ -476,7 +476,7 @@ function MapaInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: CodigoTipo; 
             modoOscuro ? 'hover:bg-zinc-800' : 'hover:bg-zinc-100'
           }`}
         >
-          <i className="ti ti-network text-base" style={{ color: VERDE }} />
+          <i className="ti ti-network text-base" style={{ color: 'var(--accent-texto)' }} />
           <span className={`text-sm font-semibold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
             {codigo.codigo}
           </span>
@@ -500,7 +500,7 @@ function MapaInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: CodigoTipo; 
             modoOscuro ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
           }`}
         >
-          <i className="ti ti-target text-sm" style={{ color: VERDE }} />
+          <i className="ti ti-target text-sm" style={{ color: 'var(--accent-texto)' }} />
           <span className="flex-1 text-left truncate">
             {raiz ? `Centro: ${raiz}` : 'Elegir artículo central...'}
           </span>
@@ -562,7 +562,7 @@ function MapaInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: CodigoTipo; 
             <div className={`absolute top-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 px-3 py-1 rounded-full text-[10px] uppercase tracking-wider font-semibold pointer-events-none ${modoOscuro ? 'bg-zinc-900/80 text-zinc-400' : 'bg-white/80 text-zinc-500'}`}>
               <span>Lo mencionan</span>
               <span>→</span>
-              <span style={{ color: VERDE }}>Artículo central</span>
+              <span style={{ color: 'var(--accent-texto)' }}>Artículo central</span>
               <span>→</span>
               <span>Menciona a</span>
             </div>
@@ -707,7 +707,7 @@ function NodoArticuloMapa({ data }: NodeProps<Node<MapaNodoData>>) {
           >
             {articulo.a}
           </span>
-          {esRaiz && <i className="ti ti-target text-xs" style={{ color: VERDE }} />}
+          {esRaiz && <i className="ti ti-target text-xs" style={{ color: 'var(--accent-texto)' }} />}
         </div>
         <p
           className={`text-[11px] leading-snug line-clamp-2 ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}
@@ -738,7 +738,7 @@ function NodoMas({ data }: NodeProps<Node<MasNodoData>>) {
         <div className="flex items-center justify-center gap-1.5 text-sm font-semibold">
           <i
             className={`ti ${esExpandir ? 'ti-plus' : 'ti-minus'} text-base`}
-            style={{ color: VERDE }}
+            style={{ color: 'var(--accent-texto)' }}
           />
           {esExpandir ? `Ver ${cantidad} más` : `Mostrar menos`}
         </div>
@@ -804,7 +804,7 @@ function PanelDetalle({
     >
       <div className={`px-5 py-4 border-b ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
         <div className="flex items-baseline justify-between gap-2 mb-1">
-          <span className="font-mono text-base font-bold" style={{ color: VERDE }}>
+          <span className="font-mono text-base font-bold" style={{ color: 'var(--accent-texto)' }}>
             {articulo.a}
           </span>
           {esRaiz ? (
@@ -1042,7 +1042,7 @@ function ModalBuscador({
         <div
           className={`flex items-center gap-3 px-4 py-3 border-b ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}
         >
-          <i className="ti ti-target text-lg" style={{ color: VERDE }} />
+          <i className="ti ti-target text-lg" style={{ color: 'var(--accent-texto)' }} />
           <input
             ref={inputRef}
             value={busqueda}
@@ -1065,7 +1065,7 @@ function ModalBuscador({
               }`}
             >
               <div className="flex items-baseline gap-2 mb-0.5">
-                <span className="font-mono text-xs font-semibold" style={{ color: VERDE }}>
+                <span className="font-mono text-xs font-semibold" style={{ color: 'var(--accent-texto)' }}>
                   {a.a}
                 </span>
               </div>
@@ -1240,7 +1240,7 @@ function EmptyState({ modoOscuro, onElegir }: { modoOscuro: boolean; onElegir: (
           className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-5"
           style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
         >
-          <i className="ti ti-network text-4xl" style={{ color: VERDE }} />
+          <i className="ti ti-network text-4xl" style={{ color: 'var(--accent-texto)' }} />
         </div>
         <h3 className={`text-2xl font-serif font-semibold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
           Mapa de relaciones

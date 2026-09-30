@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { crearAlmacenamiento } from './almacenamiento'
 import type { TemaColorId } from '../theme'
 import { JURISPRUDENCIA_SEED } from '../data/jurisprudenciaSeed'
 
@@ -47,7 +48,10 @@ import type {
   Ramo,
   BriefCaso,
   CodigoTipo,
+  EstadoTarjetaRepaso,
 } from '../types'
+import { siguienteEstado } from '../services/tarjetasApunte'
+import { confirmarSalida } from '../services/guardiaCambios'
 import { agregarActividadHoy } from '../services/actividadEstudio'
 import { aplicarResultadoPracticaATodos, aplicarResultadoQuizATodos } from '../services/progresoModulos'
 
@@ -78,6 +82,9 @@ interface AppState {
    * cambiar solo porque se prefiere leer en papel. */
   modoLecturaTema: TemaLectura
   sidebarColapsado: boolean
+  /** Solo en móvil (< 768 px): el sidebar es un panel deslizable. No persistido. */
+  menuMovilAbierto: boolean
+  setMenuMovilAbierto: (abierto: boolean) => void
   modernizarLenguaje: boolean
   modalPerfilAbierto: boolean
   consultaActivaId: string | null
@@ -233,6 +240,13 @@ interface AppState {
   moduloActivoId: string | null
   setModuloActivo: (id: string | null) => void
 
+  /** Apunte a abrir en Modo Lectura la próxima vez que se monte su pestaña
+   *  (desde el buscador del Omnibar). No persistido; se consume y se limpia.
+   *  `resaltar` = texto buscado, para saltar a la primera coincidencia. */
+  apuntePendiente: { moduloId: string; apunteId: string; resaltar?: string } | null
+  abrirApunte: (moduloId: string, apunteId: string, resaltar?: string) => void
+  limpiarApuntePendiente: () => void
+
   /** Espacio de estudio personal por Módulo: clases, evaluaciones,
    * bibliografía y apuntes propios del usuario -- vacío por defecto, sin
    * datos de fábrica. Cada setter reemplaza la lista completa; el
@@ -250,7 +264,15 @@ interface AppState {
   ramos: Ramo[]
   crearRamo: (ramo: Omit<Ramo, 'id'>) => string
   actualizarRamo: (id: string, cambios: Partial<Omit<Ramo, 'id'>>) => void
-  eliminarRamo: (id: string) => void
+  /** Elimina el Ramo Y sus datos académicos (clases, apuntes...) --
+   *  antes quedaban huérfanos en academicoModulos[ramo.id], sin forma de
+   *  llegar a ellos desde la UI. Devuelve lo borrado para poder deshacer. */
+  eliminarRamo: (id: string) => { ramo: Ramo; datos?: DatosAcademicosModulo } | null
+  /** Deshacer de eliminarRamo: vuelve a insertar el Ramo y sus datos. */
+  restaurarRamo: (ramo: Ramo, datos?: DatosAcademicosModulo) => void
+  /** Deshacer de eliminarColeccion / eliminarMapaMental: reinsertar tal cual. */
+  restaurarColeccion: (coleccion: Coleccion) => void
+  restaurarMapaMental: (mapa: MapaMental) => void
 
   /** Días (YYYY-MM-DD, hora local) en que hubo alguna actividad de estudio
    *  -- repasar una tarjeta, tocar el contenido académico de un módulo, o
@@ -258,6 +280,20 @@ interface AppState {
    *  "Hoy" (ver services/actividadEstudio.ts); no es un registro fino de
    *  qué se hizo, solo de qué días hubo actividad. */
   diasActividadEstudio: string[]
+
+  /** Progreso del repaso de tarjetas de apuntes (B5), por id de tarjeta. */
+  repasoApuntes: Record<string, EstadoTarjetaRepaso>
+  registrarRepasoTarjeta: (id: string, resultado: 'sabia' | 'no_sabia') => void
+
+  /** Hasta dónde se leyó cada apunte (0-1 del alto total), para ofrecer
+   *  "Retomar donde quedaste" (C1). Antes vivía suelto en localStorage con
+   *  una clave por apunte: no iba en el respaldo. */
+  posicionLectura: Record<string, { ratio: number; fecha: number }>
+  guardarPosicionLectura: (apunteId: string, ratio: number) => void
+  /** Último artículo abierto en cada código del Explorador (C7): al volver a
+   *  un código se retoma ahí y no en el Art. 1. */
+  ultimoArticuloExplorador: Partial<Record<CodigoActivo['tipo'], string>>
+  recordarArticuloExplorador: (tipo: CodigoActivo['tipo'], articulo: string) => void
 }
 
 const datosAcademicosVacios: DatosAcademicosModulo = { clases: [], evaluaciones: [], textos: [], apuntes: [], cuadernos: [], briefs: [] }
@@ -287,11 +323,41 @@ const codigosIniciales: CodigoActivo[] = [
   { tipo: 'pdc', nombre: 'Pacto Internacional de Derechos Civiles y Políticos', nombreCorto: 'Pacto Civiles y Políticos', descripcion: 'Tratado internacional de DDHH ratificado por Chile; en virtud del Art. 5° inc. 2° de la Constitución integra el bloque de constitucionalidad', categoria: 'tratados', activo: true, cargado: true },
   { tipo: 'pde', nombre: 'Pacto Internacional de Derechos Económicos, Sociales y Culturales', nombreCorto: 'Pacto DESC', descripcion: 'Tratado internacional de DDHH (PIDESC) ratificado por Chile; reconoce derechos al trabajo, salud, educación, alimentación, vivienda y cultura', categoria: 'tratados', activo: true, cargado: true },
   { tipo: 'aap', nombre: 'Auto Acordado sobre Tramitación del Recurso de Protección', nombreCorto: 'Auto Ac. Protección', descripcion: 'Corte competente, plazo, admisibilidad, informe, prueba, fallo y apelación del recurso de protección (Acta 94-2015 de la Corte Suprema)', categoria: 'procedimentales', activo: true, cargado: true },
+  { tipo: 'cns', nombre: 'Ley 19.496 - Protección de los Derechos de los Consumidores', nombreCorto: 'Consumidor', descripcion: 'Derechos y deberes de consumidores y proveedores, garantía legal, SERNAC y procedimientos de reclamo', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'mat', nombre: 'Ley 19.947 - Nueva Ley de Matrimonio Civil', nombreCorto: 'Matrimonio Civil', descripcion: 'Requisitos y celebración del matrimonio, separación, nulidad, divorcio y compensación económica', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'ali', nombre: 'Ley 14.908 - Abandono de Familia y Pago de Pensiones Alimenticias', nombreCorto: 'Pensiones de Alimentos', descripcion: 'Juicio de alimentos, apremios, Registro Nacional de Deudores y pago efectivo de pensiones', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'vif', nombre: 'Ley 20.066 - Violencia Intrafamiliar', nombreCorto: 'Violencia Intrafamiliar', descripcion: 'Prevención, sanción y reparación de la violencia intrafamiliar; delito de maltrato habitual', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'fil', nombre: 'Ley 19.585 - Modifica el Código Civil en materia de Filiación', nombreCorto: 'Filiación', descripcion: 'Reforma de 1998 que iguala a todos los hijos y modifica el Código Civil en materia de filiación', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'soc', nombre: 'Ley 18.046 - Sociedades Anónimas', nombreCorto: 'Sociedades Anónimas', descripcion: 'Constitución, administración, juntas de accionistas, fusión y disolución de sociedades anónimas', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'mvl', nombre: 'Ley 18.045 - Mercado de Valores', nombreCorto: 'Mercado de Valores', descripcion: 'Oferta pública de valores, emisores, intermediarios, información privilegiada y fiscalización de la CMF', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'pvp', nombre: 'Ley 19.628 - Protección de la Vida Privada (datos personales)', nombreCorto: 'Vida Privada', descripcion: 'Tratamiento de datos personales, derechos del titular y registros de datos (ley \'Dicom\')', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'rpj', nombre: 'Ley 20.393 - Responsabilidad Penal de las Personas Jurídicas', nombreCorto: 'Resp. Penal P. Jurídicas', descripcion: 'Delitos por los que responden las personas jurídicas, modelos de prevención y penas aplicables', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'dec', nombre: 'Ley 21.595 - Delitos Económicos', nombreCorto: 'Delitos Económicos', descripcion: 'Categorías de delitos económicos, reglas especiales de determinación de penas y delitos ambientales', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'pns', nombre: 'Ley 18.216 - Penas Sustitutivas', nombreCorto: 'Penas Sustitutivas', descripcion: 'Remisión condicional, reclusión parcial, libertad vigilada, prestación de servicios en beneficio de la comunidad y expulsión', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'dsc', nombre: 'Ley 20.609 - Medidas contra la Discriminación', nombreCorto: 'Antidiscriminación', descripcion: 'Acción de no discriminación arbitraria (\'Ley Zamudio\') y agravante penal por discriminación', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'mas', nombre: 'Ley 21.020 - Tenencia Responsable de Mascotas y Animales de Compañía', nombreCorto: 'Tenencia de Mascotas', descripcion: 'Obligaciones de los tenedores de mascotas, registro, microchip, perros potencialmente peligrosos y sanciones', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'soa', nombre: 'Ley 18.490 - Seguro Obligatorio de Accidentes Personales (SOAP)', nombreCorto: 'SOAP', descripcion: 'Seguro obligatorio de accidentes personales por circulación de vehículos motorizados', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'trt', nombre: 'Ley 18.290 - Ley de Tránsito', nombreCorto: 'Tránsito', descripcion: 'Licencias de conducir, normas de circulación, infracciones, responsabilidad y delitos del tránsito', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'amb', nombre: 'Ley 19.300 - Bases Generales del Medio Ambiente', nombreCorto: 'Medio Ambiente', descripcion: 'Evaluación de impacto ambiental, normas de calidad, responsabilidad por daño ambiental y Superintendencia del Medio Ambiente', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'tam', nombre: 'Ley 20.600 - Tribunales Ambientales', nombreCorto: 'Tribunales Ambientales', descripcion: 'Organización, competencia y procedimientos de los tribunales ambientales', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'bga', nombre: 'Ley 18.575 - LOC de Bases Generales de la Administración del Estado', nombreCorto: 'Bases Adm. del Estado', descripcion: 'Principios de la Administración del Estado, carrera funcionaria y probidad administrativa', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'est', nombre: 'Ley 18.834 - Estatuto Administrativo', nombreCorto: 'Estatuto Administrativo', descripcion: 'Ingreso, derechos, deberes, responsabilidad administrativa y cese de funciones de los funcionarios públicos', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'emu', nombre: 'Ley 18.883 - Estatuto Administrativo de Funcionarios Municipales', nombreCorto: 'Estatuto Municipal', descripcion: 'Carrera, derechos, obligaciones y responsabilidad de los funcionarios municipales', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'mun', nombre: 'Ley 18.695 - LOC de Municipalidades', nombreCorto: 'Municipalidades', descripcion: 'Funciones y atribuciones municipales, alcalde, concejo municipal y participación ciudadana', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'arr', nombre: 'Ley 18.101 - Arrendamiento de Predios Urbanos', nombreCorto: 'Arrendamiento Urbano', descripcion: 'Arrendamiento de bienes raíces urbanos: desahucio, restitución, rentas y procedimiento', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'cop', nombre: 'Ley 21.442 - Nueva Ley de Copropiedad Inmobiliaria', nombreCorto: 'Copropiedad', descripcion: 'Condominios, bienes comunes, administración, asambleas y gastos comunes', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'pin', nombre: 'Ley 17.336 - Propiedad Intelectual', nombreCorto: 'Propiedad Intelectual', descripcion: 'Derecho de autor, derechos conexos, excepciones y sanciones', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'pid', nombre: 'Ley 19.039 - Propiedad Industrial', nombreCorto: 'Propiedad Industrial', descripcion: 'Marcas, patentes, modelos de utilidad, diseños industriales e indicaciones geográficas', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'dis', nombre: 'Ley 20.422 - Igualdad de Oportunidades e Inclusión Social de Personas con Discapacidad', nombreCorto: 'Inclusión Discapacidad', descripcion: 'Igualdad de oportunidades, accesibilidad, ajustes necesarios y registro de personas con discapacidad', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'fel', nombre: 'Ley 19.799 - Documentos Electrónicos y Firma Electrónica', nombreCorto: 'Firma Electrónica', descripcion: 'Validez de documentos y firma electrónica, firma avanzada y prestadores de certificación', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'tde', nombre: 'Ley 21.180 - Transformación Digital del Estado', nombreCorto: 'Transformación Digital', descripcion: 'Procedimientos administrativos electrónicos: expediente electrónico, notificaciones y documentos digitales', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'ind', nombre: 'Ley 19.253 - Protección, Fomento y Desarrollo de los Indígenas', nombreCorto: 'Ley Indígena', descripcion: 'Reconocimiento de los pueblos indígenas, tierras y aguas indígenas, CONADI y áreas de desarrollo', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'cng', nombre: 'Ley 18.918 - LOC del Congreso Nacional', nombreCorto: 'Congreso Nacional', descripcion: 'Organización del Congreso, tramitación de proyectos de ley, probidad y comisiones investigadoras', categoria: 'especiales', activo: true, cargado: true },
 ]
 
 export const useStore = create<AppState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       perfil: null,
       vistaActiva: 'consultar',
       codigos: codigosIniciales,
@@ -308,6 +374,7 @@ export const useStore = create<AppState>()(
       modoOscuro: false,
       modoLecturaTema: 'claro',
       sidebarColapsado: false,
+      menuMovilAbierto: false,
       modernizarLenguaje: false,
       modalPerfilAbierto: false,
       acercaAbierto: false,
@@ -331,12 +398,18 @@ export const useStore = create<AppState>()(
       fechaConsultas: null,
       progresoModulos: {},
       moduloActivoId: null,
+      apuntePendiente: null,
       academicoModulos: {},
       ramos: [],
       diasActividadEstudio: [],
+      repasoApuntes: {},
+      posicionLectura: {},
+      ultimoArticuloExplorador: {},
 
       setPerfil: (perfil) => set({ perfil, modalPerfilAbierto: false }),
-      setVistaActiva: (vistaActiva) =>
+      setVistaActiva: (vistaActiva) => {
+        // formulario con cambios sin guardar: preguntar antes de salir
+        if (get().vistaActiva !== vistaActiva && !confirmarSalida()) return
         set((s) => {
           // Si hay una partida de Pasapalabra en curso y el usuario sale de
           // Práctica, pausarla automáticamente para preservar el tiempo restante.
@@ -346,7 +419,8 @@ export const useStore = create<AppState>()(
           return debePausar
             ? { vistaActiva, partidaPasapalabra: { ...p!, pausadaEn: Date.now() } }
             : { vistaActiva }
-        }),
+        })
+      },
       toggleCodigo: (tipo) =>
         set((s) => ({
           codigos: s.codigos.map((c) =>
@@ -699,6 +773,7 @@ export const useStore = create<AppState>()(
       toggleModoOscuro: () => set((s) => ({ modoOscuro: !s.modoOscuro })),
       setModoLecturaTema: (tema) => set({ modoLecturaTema: tema }),
       toggleSidebar: () => set((s) => ({ sidebarColapsado: !s.sidebarColapsado })),
+      setMenuMovilAbierto: (abierto) => set({ menuMovilAbierto: abierto }),
       toggleModernizar: () => set((s) => ({ modernizarLenguaje: !s.modernizarLenguaje })),
       setCodigoExplorador: (tipo) => set({ codigoExploradorActivo: tipo }),
       abrirArticuloEnExplorador: (codigo, articulo) =>
@@ -926,7 +1001,13 @@ export const useStore = create<AppState>()(
             },
           }
         }),
-      setModuloActivo: (id) => set({ moduloActivoId: id }),
+      setModuloActivo: (id) => {
+        if (get().moduloActivoId !== id && !confirmarSalida()) return
+        set({ moduloActivoId: id })
+      },
+      abrirApunte: (moduloId, apunteId, resaltar) =>
+        set({ vistaActiva: 'modulos', moduloActivoId: moduloId, apuntePendiente: { moduloId, apunteId, resaltar } }),
+      limpiarApuntePendiente: () => set({ apuntePendiente: null }),
       setClasesModulo: (moduloId, clases) =>
         set((s) => ({
           academicoModulos: {
@@ -981,12 +1062,55 @@ export const useStore = create<AppState>()(
       },
       actualizarRamo: (id, cambios) =>
         set((s) => ({ ramos: s.ramos.map((r) => (r.id === id ? { ...r, ...cambios } : r)) })),
-      eliminarRamo: (id) =>
-        set((s) => ({ ramos: s.ramos.filter((r) => r.id !== id) })),
+      eliminarRamo: (id) => {
+        const s = get()
+        const ramo = s.ramos.find((r) => r.id === id)
+        if (!ramo) return null
+        const datos = s.academicoModulos[id]
+        const academicoModulos = { ...s.academicoModulos }
+        delete academicoModulos[id]
+        set({
+          ramos: s.ramos.filter((r) => r.id !== id),
+          academicoModulos,
+          moduloActivoId: s.moduloActivoId === id ? null : s.moduloActivoId,
+        })
+        return { ramo, datos }
+      },
+      restaurarRamo: (ramo, datos) =>
+        set((s) => ({
+          ramos: s.ramos.some((r) => r.id === ramo.id) ? s.ramos : [...s.ramos, ramo],
+          academicoModulos: datos ? { ...s.academicoModulos, [ramo.id]: datos } : s.academicoModulos,
+        })),
+      registrarRepasoTarjeta: (id, resultado) =>
+        set((s) => ({
+          repasoApuntes: { ...s.repasoApuntes, [id]: siguienteEstado(s.repasoApuntes[id], resultado) },
+          diasActividadEstudio: agregarActividadHoy(s.diasActividadEstudio),
+        })),
+      recordarArticuloExplorador: (tipo, articulo) =>
+        set((s) =>
+          s.ultimoArticuloExplorador[tipo] === articulo ? s : { ultimoArticuloExplorador: { ...s.ultimoArticuloExplorador, [tipo]: articulo } }
+        ),
+      guardarPosicionLectura: (apunteId, ratio) =>
+        set((s) => {
+          const posicionLectura = { ...s.posicionLectura }
+          // al llegar al final (o volver al inicio) no hay nada que retomar
+          if (ratio <= 0.02 || ratio >= 0.985) delete posicionLectura[apunteId]
+          else posicionLectura[apunteId] = { ratio, fecha: Date.now() }
+          return { posicionLectura }
+        }),
+      restaurarColeccion: (coleccion) =>
+        set((s) => ({
+          colecciones: s.colecciones.some((c) => c.id === coleccion.id) ? s.colecciones : [coleccion, ...s.colecciones],
+        })),
+      restaurarMapaMental: (mapa) =>
+        set((s) => ({
+          mapasMentales: s.mapasMentales.some((m) => m.id === mapa.id) ? s.mapasMentales : [mapa, ...s.mapasMentales],
+        })),
     }),
     {
       name: 'prima-lex-storage-v3',
-      version: 28,
+      storage: crearAlmacenamiento(),
+      version: 32,
       partialize: (s) => ({
         perfil: s.perfil,
         codigos: s.codigos,
@@ -1016,21 +1140,33 @@ export const useStore = create<AppState>()(
         academicoModulos: s.academicoModulos,
         ramos: s.ramos,
         diasActividadEstudio: s.diasActividadEstudio,
+        repasoApuntes: s.repasoApuntes,
+        posicionLectura: s.posicionLectura,
+        // C7: al recargar se vuelve a la última vista (y módulo/código)
+        vistaActiva: s.vistaActiva,
+        moduloActivoId: s.moduloActivoId,
+        codigoExploradorActivo: s.codigoExploradorActivo,
+        ultimoArticuloExplorador: s.ultimoArticuloExplorador,
       }),
       migrate: (persisted: unknown, version: number) => {
-        if (version < 3) {
-          const state = persisted as { codigos?: unknown }
-          return { ...(state ?? {}), codigos: codigosIniciales }
-        }
-        if (version < 23) {
-          // v11-22: refrescar metadatos. v23: incorporar PIDESC (pde) como
-          // tratado internacional cargado.
-          const state = persisted as { codigos?: CodigoActivo[] }
+        // Las migraciones se ENCADENAN: cada bloque transforma `state` y el
+        // siguiente parte de ese resultado. Antes cada `if` hacía `return`,
+        // así que un usuario que venía de una versión vieja recibía solo la
+        // primera migración aplicable y se saltaba las demás (p. ej. desde
+        // v25 se aplicaba v26 y nunca la resincronización de `codigos`).
+        // Para agregar una: sumar un bloque `if (version < N)` al final que
+        // reasigne `state`, y subir `version` arriba.
+        let state = (persisted ?? {}) as Record<string, unknown>
+
+        /** Reconstruye `codigos` desde codigosIniciales conservando el
+         *  activo/inactivo que el usuario había elegido en cada código. */
+        const resincronizarCodigos = () => {
           const prefs = new Map<string, boolean>()
-          if (Array.isArray(state.codigos)) {
-            for (const c of state.codigos) prefs.set(c.tipo, c.activo)
+          const previos = state.codigos
+          if (Array.isArray(previos)) {
+            for (const c of previos as CodigoActivo[]) prefs.set(c.tipo, c.activo)
           }
-          return {
+          state = {
             ...state,
             codigos: codigosIniciales.map((c) => ({
               ...c,
@@ -1038,15 +1174,23 @@ export const useStore = create<AppState>()(
             })),
           }
         }
+
+        if (version < 3) {
+          state = { ...state, codigos: codigosIniciales }
+        }
+        if (version < 23) {
+          // v11-22: refrescar metadatos. v23: incorporar PIDESC (pde) como
+          // tratado internacional cargado.
+          resincronizarCodigos()
+        }
         if (version < 24) {
           // v24: incorporar el lote inicial de jurisprudencia curada (DT +
           // Tribunal Ambiental). Se deduplica por id para no reinsertar si el
           // usuario ya la tenía (p. ej. tras una migración previa).
-          const state = persisted as { jurisprudencia?: EntradaJurisprudencia[] }
-          const existentes = Array.isArray(state.jurisprudencia) ? state.jurisprudencia : []
+          const existentes = Array.isArray(state.jurisprudencia) ? (state.jurisprudencia as EntradaJurisprudencia[]) : []
           const idsExistentes = new Set(existentes.map((j) => j.id))
           const nuevas = JURISPRUDENCIA_SEED.filter((j) => !idsExistentes.has(j.id))
-          return { ...state, jurisprudencia: [...nuevas, ...existentes] }
+          state = { ...state, jurisprudencia: [...nuevas, ...existentes] }
         }
         if (version < 26) {
           // v25: DatosAcademicosModulo incorpora `cuadernos`. v26: incorpora
@@ -1057,49 +1201,66 @@ export const useStore = create<AppState>()(
             cuadernos?: CuadernoApuntes[]
             briefs?: BriefCaso[]
           }
-          const state = persisted as { academicoModulos?: Record<string, DatosParciales> }
-          if (state.academicoModulos) {
+          const academicos = state.academicoModulos as Record<string, DatosParciales> | undefined
+          if (academicos) {
             const migrados: Record<string, DatosAcademicosModulo> = {}
-            for (const [id, datos] of Object.entries(state.academicoModulos)) {
+            for (const [id, datos] of Object.entries(academicos)) {
               migrados[id] = { ...datos, cuadernos: datos.cuadernos ?? [], briefs: datos.briefs ?? [] }
             }
-            return { ...state, academicoModulos: migrados }
+            state = { ...state, academicoModulos: migrados }
           }
         }
         if (version < 27) {
           // v27: incorpora Historia Legal Chilena (ensayos constitucionales
           // c23/c26/c28/c33 de 1823-1833) como nueva categoría del Explorador.
-          const state = persisted as { codigos?: CodigoActivo[] }
-          const prefs = new Map<string, boolean>()
-          if (Array.isArray(state.codigos)) {
-            for (const c of state.codigos) prefs.set(c.tipo, c.activo)
-          }
-          return {
-            ...state,
-            codigos: codigosIniciales.map((c) => ({
-              ...c,
-              activo: c.bloqueado ? true : prefs.get(c.tipo) ?? c.activo,
-            })),
-          }
+          resincronizarCodigos()
         }
         if (version < 28) {
           // v28: revierte Historia Legal Chilena del Explorador (c23/c26/c28/c33
           // se llevan a Apuntes en su lugar). Resincroniza 'codigos' contra
           // codigosIniciales, que ya no los incluye.
-          const state = persisted as { codigos?: CodigoActivo[] }
-          const prefs = new Map<string, boolean>()
-          if (Array.isArray(state.codigos)) {
-            for (const c of state.codigos) prefs.set(c.tipo, c.activo)
-          }
-          return {
-            ...state,
-            codigos: codigosIniciales.map((c) => ({
-              ...c,
-              activo: c.bloqueado ? true : prefs.get(c.tipo) ?? c.activo,
-            })),
-          }
+          resincronizarCodigos()
         }
-        return persisted as never
+        if (version < 29) {
+          // v29: lote 1 de leyes especiales (30 leyes: Consumidor, Matrimonio
+          // Civil, Pensiones de Alimentos, VIF, ... ver scripts/leyes_lote1.mjs).
+          // Sin esto, un usuario existente no las ve: su `codigos` persistido
+          // no las trae y el merge de persist no agrega elementos a un array.
+          resincronizarCodigos()
+        }
+        if (version < 30) {
+          // v30: repaso de tarjetas generadas desde los apuntes (B5).
+          const previo = state.repasoApuntes
+          state = { ...state, repasoApuntes: previo && typeof previo === 'object' && !Array.isArray(previo) ? previo : {} }
+        }
+        if (version < 31) {
+          // v31: la posición de lectura de cada apunte pasa al store. Se
+          // traen las que había en localStorage ("prima-lex-apunte-scroll:<id>").
+          const posicionLectura: Record<string, { ratio: number; fecha: number }> = {}
+          try {
+            const PREFIJO = 'prima-lex-apunte-scroll:'
+            const viejas: string[] = []
+            for (let i = 0; i < localStorage.length; i++) {
+              const clave = localStorage.key(i)
+              if (clave?.startsWith(PREFIJO)) viejas.push(clave)
+            }
+            for (const clave of viejas) {
+              const ratio = Number(localStorage.getItem(clave))
+              if (Number.isFinite(ratio) && ratio > 0.02 && ratio < 0.985) posicionLectura[clave.slice(PREFIJO.length)] = { ratio, fecha: Date.now() }
+              localStorage.removeItem(clave)
+            }
+          } catch {
+            // sin localStorage: se parte de cero
+          }
+          state = { ...state, posicionLectura }
+        }
+        if (version < 32) {
+          // v32: se empiezan a guardar la última vista, el módulo y el código
+          // abiertos y el último artículo por código. No hay nada que
+          // transformar: en un estado anterior faltan y quedan los valores
+          // iniciales (Consultar, sin módulo ni código).
+        }
+        return state as never
       },
     }
   )

@@ -188,7 +188,7 @@ function BloqueView({ b, modo, depth }: { b: Bloque; modo: Modo; depth: number }
       return <ListaView items={b.items} depth={depth} modo={modo} />
     case 'cita':
       return (
-        <div className={`flex gap-3 rounded-xl border px-4 py-3 mb-4 ${paleta.cita[varianteDeIcono(b.icono)]}`}>
+        <div data-recuadro className={`flex gap-3 rounded-xl border px-4 py-3 mb-4 ${paleta.cita[varianteDeIcono(b.icono)]}`}>
           {b.icono && (
             <span aria-hidden className="flex-shrink-0 text-[1.2em] leading-snug" style={{ fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif' }}>
               {b.icono}
@@ -212,7 +212,7 @@ function BloqueView({ b, modo, depth }: { b: Bloque; modo: Modo; depth: number }
     case 'tabla': {
       const cuerpo = b.encabezado ? b.filas.slice(1) : b.filas
       return (
-        <div className={`overflow-x-auto mb-4 rounded-lg border ${paleta.borde}`}>
+        <div data-tabla className={`overflow-x-auto mb-4 rounded-lg border ${paleta.borde}`}>
           <table className="w-full border-collapse text-[0.92em]">
             {b.encabezado && (
               <thead>

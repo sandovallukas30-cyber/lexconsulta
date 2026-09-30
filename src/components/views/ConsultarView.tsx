@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useStore } from '../../store/useStore'
-import { useChat } from '../../hooks/useChat'
+import { esMensajeError, useChat } from '../../hooks/useChat'
 import { CitaBlock } from '../ui/CitaBlock'
 import { JurisprudenciaToggle } from '../ui/JurisprudenciaToggle'
 import type { Mensaje } from '../../types'
@@ -28,7 +28,7 @@ export function ConsultarView() {
   const perfil = useStore((s) => s.perfil)
   const codigos = useStore((s) => s.codigos)
   const modoOscuro = useStore((s) => s.modoOscuro)
-  const { mensajes, cargando, enviar, limpiar } = useChat()
+  const { mensajes, cargando, enviar, reintentar, limpiar } = useChat()
   const [pregunta, setPregunta] = useState('')
   const [incluirJurisprudencia, setIncluirJurisprudencia] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -95,9 +95,15 @@ export function ConsultarView() {
             modoOscuro={modoOscuro}
           />
         ) : (
-          <div className="max-w-3xl mx-auto px-6 py-6 space-y-6">
-            {mensajes.map((m) => (
-              <MensajeBubble key={m.id} mensaje={m} modoOscuro={modoOscuro} />
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+            {mensajes.map((m, i) => (
+              <MensajeBubble
+                key={m.id}
+                mensaje={m}
+                modoOscuro={modoOscuro}
+                // solo el último error se puede reintentar (los anteriores ya quedaron atrás)
+                onReintentar={i === mensajes.length - 1 && !cargando && esMensajeError(m) ? reintentar : undefined}
+              />
             ))}
             {cargando && <PensandoBubble modoOscuro={modoOscuro} />}
           </div>
@@ -105,12 +111,12 @@ export function ConsultarView() {
       </div>
 
       <div
-        className={`px-6 py-4 border-t ${
+        className={`px-4 sm:px-6 py-3 sm:py-4 border-t ${
           modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
         }`}
       >
         <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
-          <div className="flex items-center justify-between mb-2 gap-4">
+          <div className="flex items-center justify-between mb-2 gap-2 sm:gap-4">
             <div className="flex items-center gap-2">
               <ToggleModo modoOscuro={modoOscuro} />
               <div className={`w-px h-6 ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-200'}`} />
@@ -120,7 +126,7 @@ export function ConsultarView() {
                 disabled={cargando}
               />
             </div>
-            <span className={`text-[10px] ${modoOscuro ? 'text-zinc-600' : 'text-zinc-400'}`}>
+            <span className={`hidden sm:inline text-[10px] ${modoOscuro ? 'text-zinc-600' : 'text-zinc-400'}`}>
               {codigosActivos} código{codigosActivos !== 1 ? 's' : ''} activo{codigosActivos !== 1 ? 's' : ''}
             </span>
           </div>
@@ -166,8 +172,9 @@ export function ConsultarView() {
           </div>
           {!cargando && (
             <div
-              className={`text-[10px] mt-2 text-center space-x-2 ${
-                modoOscuro ? 'text-zinc-600' : 'text-zinc-400'
+              // contraste AA (antes zinc-400/600: 2,6:1, lo marcaba Lighthouse)
+              className={`text-[11px] mt-2 text-center space-x-2 ${
+                modoOscuro ? 'text-zinc-400' : 'text-zinc-500'
               }`}
             >
               <span>Prima Lex es orientación jurídica, no reemplaza el asesoramiento profesional ·</span>
@@ -202,14 +209,14 @@ function Bienvenida({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+        transition={{ duration: 0.25 }}
         className="w-full max-w-2xl text-center"
       >
         <div
           className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
           style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
         >
-          <i className="ti ti-scale text-2xl" style={{ color: VERDE }} />
+          <i className="ti ti-scale text-2xl" style={{ color: 'var(--accent-texto)' }} />
         </div>
         <h1
           className={`text-3xl font-serif font-bold mb-2 ${
@@ -245,7 +252,7 @@ function Bienvenida({
           }`}
         >
           <span>
-            <span className="font-semibold" style={{ color: VERDE }}>
+            <span className="font-semibold" style={{ color: 'var(--accent-texto)' }}>
               {codigosActivos}
             </span>{' '}
             código{codigosActivos !== 1 ? 's' : ''} activo{codigosActivos !== 1 ? 's' : ''}
@@ -277,8 +284,8 @@ function EnlaceLegal({
     <button
       type="button"
       onClick={() => abrirAcerca(pestana)}
-      className={`underline-offset-2 hover:underline ${
-        modoOscuro ? 'hover:text-zinc-300' : 'hover:text-zinc-700'
+      className={`underline underline-offset-2 sin-tactil ${
+        modoOscuro ? 'hover:text-zinc-200' : 'hover:text-zinc-800'
       }`}
     >
       {children}
@@ -335,7 +342,7 @@ function ToggleModo({ modoOscuro }: { modoOscuro: boolean }) {
   )
 }
 
-function MensajeBubble({ mensaje, modoOscuro }: { mensaje: Mensaje; modoOscuro: boolean }) {
+function MensajeBubble({ mensaje, modoOscuro, onReintentar }: { mensaje: Mensaje; modoOscuro: boolean; onReintentar?: () => void }) {
   if (mensaje.rol === 'user') {
     return (
       <motion.div
@@ -379,7 +386,7 @@ function MensajeBubble({ mensaje, modoOscuro }: { mensaje: Mensaje; modoOscuro: 
           <div className="flex items-center gap-2 mt-1 mb-1">
             <div className="h-px flex-1" style={{ background: modoOscuro ? '#27272a' : '#e4e4e7' }} />
             <div className="flex items-center gap-1.5">
-              <i className="ti ti-book-2 text-xs" style={{ color: VERDE }} />
+              <i className="ti ti-book-2 text-xs" style={{ color: 'var(--accent-texto)' }} />
               <span
                 className={`text-xs font-semibold ${
                   modoOscuro ? 'text-zinc-300' : 'text-zinc-700'
@@ -395,7 +402,20 @@ function MensajeBubble({ mensaje, modoOscuro }: { mensaje: Mensaje; modoOscuro: 
           ))}
         </div>
       )}
-      {!mensaje.contenido.startsWith('⚠️') && (
+      {onReintentar && (
+        <div className="ml-11">
+          <button
+            onClick={onReintentar}
+            className={`inline-flex items-center gap-1.5 px-3 min-h-[36px] rounded-lg text-xs font-medium border transition-colors ${
+              modoOscuro ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-300 text-zinc-700 hover:bg-zinc-100'
+            }`}
+          >
+            <i className="ti ti-reload text-sm" />
+            Reintentar
+          </button>
+        </div>
+      )}
+      {!esMensajeError(mensaje) && (
         <div className="ml-11">
           <Feedback mensaje={mensaje} modoOscuro={modoOscuro} />
         </div>

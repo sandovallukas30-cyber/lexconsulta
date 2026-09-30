@@ -1,9 +1,11 @@
+import { precargarVista } from '../../vistas'
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { ModalCodigos } from '../ui/ModalCodigos'
 import { ModalAcercaDe } from '../ui/ModalAcercaDe'
 import { esAdmin } from '../../config/admin'
+import { useEsMovil } from '../../hooks/useEsMovil'
 import type { VistaId } from '../../types'
 
 interface ItemMenu {
@@ -43,8 +45,20 @@ export function Sidebar() {
   const codigos = useStore((s) => s.codigos)
   const usuarioEmail = useStore((s) => s.usuarioEmail)
   const modoOscuro = useStore((s) => s.modoOscuro)
-  const colapsado = useStore((s) => s.sidebarColapsado)
-  const toggleSidebar = useStore((s) => s.toggleSidebar)
+  const colapsadoEscritorio = useStore((s) => s.sidebarColapsado)
+  const toggleSidebarEscritorio = useStore((s) => s.toggleSidebar)
+  const menuMovilAbierto = useStore((s) => s.menuMovilAbierto)
+  const setMenuMovilAbierto = useStore((s) => s.setMenuMovilAbierto)
+  // En móvil el sidebar es un panel que se superpone al contenido (antes
+  // medía siempre 256 px y dejaba 118 px de contenido a 375 px): nunca
+  // colapsado, y "colapsar" = cerrarlo.
+  const esMovil = useEsMovil()
+  const colapsado = esMovil ? false : colapsadoEscritorio
+  const toggleSidebar = esMovil ? () => setMenuMovilAbierto(false) : toggleSidebarEscritorio
+  const irA = (id: VistaId) => {
+    setVistaActiva(id)
+    if (esMovil) setMenuMovilAbierto(false)
+  }
   const [modalCodigos, setModalCodigos] = useState(false)
   const acercaAbierto = useStore((s) => s.acercaAbierto)
   const acercaPestana = useStore((s) => s.acercaPestana)
@@ -54,14 +68,27 @@ export function Sidebar() {
   // Atajo: Ctrl/Cmd + B para colapsar
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+      // defaultPrevented: el campo de un apunte ya usó Ctrl+B para negrita
+      // (antes además colapsaba el menú)
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b' && !e.defaultPrevented) {
         e.preventDefault()
-        toggleSidebar()
+        if (esMovil) setMenuMovilAbierto(false)
+        else toggleSidebarEscritorio()
       }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [toggleSidebar])
+  }, [esMovil, setMenuMovilAbierto, toggleSidebarEscritorio])
+
+  // Esc cierra el panel móvil
+  useEffect(() => {
+    if (!esMovil || !menuMovilAbierto) return
+    const h = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuMovilAbierto(false)
+    }
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [esMovil, menuMovilAbierto, setMenuMovilAbierto])
 
   const activos = codigos.filter((c) => c.activo).length
   const total = codigos.length
@@ -69,13 +96,38 @@ export function Sidebar() {
 
   return (
     <>
+      <AnimatePresence>
+        {esMovil && menuMovilAbierto && (
+          <motion.div
+            key="fondo-menu"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[65] bg-black/40"
+            onClick={() => setMenuMovilAbierto(false)}
+            aria-hidden
+          />
+        )}
+      </AnimatePresence>
       <motion.aside
         initial={false}
-        animate={{ width: colapsado ? 68 : 256 }}
+        animate={esMovil ? { x: menuMovilAbierto ? 0 : -300, width: 280 } : { x: 0, width: colapsado ? 68 : 256 }}
         transition={{ duration: 0.22, ease: 'easeOut' }}
+        aria-label="Menú principal"
+        // en móvil se cierra también deslizándolo hacia la izquierda
+        drag={esMovil && menuMovilAbierto ? 'x' : false}
+        dragConstraints={{ left: -300, right: 0 }}
+        dragElastic={{ left: 0.2, right: 0 }}
+        dragSnapToOrigin
+        onDragEnd={(_, info) => {
+          if (info.offset.x < -70 || info.velocity.x < -400) setMenuMovilAbierto(false)
+        }}
+        // en móvil, cerrado = fuera de la pantalla e inerte (no se puede tabular a él)
+        inert={esMovil && !menuMovilAbierto ? true : undefined}
         className={`flex flex-col border-r overflow-hidden ${
-          modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
-        }`}
+          esMovil ? 'fixed inset-y-0 left-0 z-[70] shadow-2xl' : 'relative flex-shrink-0'
+        } ${modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}
       >
         <div
           className={`flex items-center border-b ${
@@ -104,7 +156,7 @@ export function Sidebar() {
                     modoOscuro ? 'text-white' : 'text-zinc-900'
                   }`}
                 >
-                  Prima<span style={{ color: VERDE }}> Lex</span>
+                  Prima<span style={{ color: 'var(--accent-texto)' }}> Lex</span>
                 </h1>
                 <p className={`text-[11px] mt-0.5 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
                   Consultor jurídico con IA
@@ -112,15 +164,11 @@ export function Sidebar() {
               </div>
               <button
                 onClick={toggleSidebar}
-                title="Colapsar (Ctrl+B)"
-                aria-label="Colapsar menú lateral"
-                className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${
-                  modoOscuro
-                    ? 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
-                    : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900'
-                }`}
+                title={esMovil ? 'Cerrar menú' : 'Colapsar (Ctrl+B)'}
+                aria-label={esMovil ? 'Cerrar menú' : 'Colapsar menú lateral'}
+                className="boton boton-fantasma boton-chico boton-icono"
               >
-                <i className="ti ti-layout-sidebar-left-collapse text-lg" />
+                <i className={`ti ${esMovil ? 'ti-x' : 'ti-layout-sidebar-left-collapse'} text-lg`} />
               </button>
             </>
           )}
@@ -135,7 +183,7 @@ export function Sidebar() {
                 activo={vistaActiva === item.id}
                 colapsado={colapsado}
                 modoOscuro={modoOscuro}
-                onClick={() => setVistaActiva(item.id)}
+                onClick={() => irA(item.id)}
               />
             ))}
           </div>
@@ -150,7 +198,7 @@ export function Sidebar() {
                 activo={vistaActiva === item.id}
                 colapsado={colapsado}
                 modoOscuro={modoOscuro}
-                onClick={() => setVistaActiva(item.id)}
+                onClick={() => irA(item.id)}
               />
             ))}
           </div>
@@ -160,17 +208,17 @@ export function Sidebar() {
           <button
             onClick={() => setModalCodigos(true)}
             title={colapsado ? `Códigos · ${activos} de ${total} activos (incluye leyes especiales)` : undefined}
-            className={`w-full rounded-lg text-sm font-medium transition-colors text-left flex items-center ${
-              colapsado ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2.5'
+            className={`w-full min-h-control rounded-control text-sm font-medium transition-colors text-left flex items-center ${
+              colapsado ? 'justify-center px-0 py-1' : 'gap-3 px-3 py-1'
             } ${
-              modoOscuro ? 'text-zinc-300 hover:bg-zinc-800' : 'text-zinc-700 hover:bg-zinc-50'
+              modoOscuro ? 'text-zinc-300 hover:bg-zinc-800' : 'text-zinc-700 hover:bg-zinc-100'
             }`}
           >
             <span
               className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 relative"
               style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
             >
-              <i className="ti ti-books text-base" style={{ color: VERDE }} />
+              <i className="ti ti-books text-base" style={{ color: 'var(--accent-texto)' }} />
               {colapsado && (
                 <span
                   className={`absolute -top-1 -right-1 min-w-[16px] h-4 rounded-full text-[9px] font-bold flex items-center justify-center px-1 text-white`}
@@ -190,8 +238,8 @@ export function Sidebar() {
                   className="flex-1 overflow-hidden whitespace-nowrap"
                 >
                   <span className="block">Códigos</span>
-                  <span className={`block text-[11px] font-normal ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                    {activos} de {total} activos · incl. leyes
+                  <span className={`block text-[11px] font-normal truncate ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                    {activos} de {total} activos
                   </span>
                 </motion.span>
               )}
@@ -204,10 +252,10 @@ export function Sidebar() {
           <button
             onClick={() => abrirAcerca('acerca')}
             title={colapsado ? 'Configuración · Apariencia, aviso legal, privacidad' : undefined}
-            className={`w-full mt-1 rounded-lg text-xs transition-colors flex items-center ${
-              colapsado ? 'justify-center px-0 py-2' : 'gap-2 px-3 py-2'
+            className={`w-full mt-1 min-h-control rounded-control text-xs transition-colors flex items-center ${
+              colapsado ? 'justify-center px-0' : 'gap-3 px-3'
             } ${
-              modoOscuro ? 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200' : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700'
+              modoOscuro ? 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'
             }`}
           >
             <i className="ti ti-settings text-base flex-shrink-0" />
@@ -251,8 +299,12 @@ function BotonNav({
     <button
       onClick={onClick}
       title={colapsado ? item.label : undefined}
-      className={`w-full rounded-lg text-sm font-medium transition-colors text-left relative flex items-center ${
-        colapsado ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2.5'
+      aria-current={activo ? 'page' : undefined}
+      // C8: bajar el código de la vista antes del clic (~100-300 ms antes)
+      onPointerEnter={() => precargarVista(item.id)}
+      onFocus={() => precargarVista(item.id)}
+      className={`w-full min-h-control rounded-control text-sm font-medium transition-colors text-left relative flex items-center ${
+        colapsado ? 'justify-center px-0' : 'gap-3 px-3'
       } ${
         activo
           ? modoOscuro
@@ -260,7 +312,7 @@ function BotonNav({
             : 'bg-[var(--accent-50)] text-[var(--accent-900)]'
           : modoOscuro
           ? 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
-          : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900'
+          : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
       }`}
     >
       {activo && (

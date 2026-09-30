@@ -31,8 +31,39 @@ export function formatearCountdown(dias: number): string {
   if (dias === 0) return 'Hoy'
   if (dias === 1) return 'Mañana'
   if (dias === -1) return 'Ayer'
-  if (dias > 1) return `En ${dias} días`
+  if (dias > 1 && dias < 14) return `En ${dias} días`
+  if (dias >= 14) {
+    const semanas = Math.round(dias / 7)
+    return dias < 60 ? `En ${semanas} semanas` : `En ${Math.round(dias / 30)} meses`
+  }
   return `Hace ${-dias} días`
+}
+
+export interface EvaluacionPendiente {
+  moduloId: string
+  evaluacion: EvaluacionModulo
+  dias: number
+}
+
+/** Evaluaciones SIN nota de todos los módulos y ramos, separadas en
+ *  próximas (hoy o después, de la más cercana a la más lejana) y vencidas
+ *  (fecha pasada y aún sin nota: o se rindió y falta anotar la nota, o se
+ *  postergó -- en ambos casos el usuario tiene que hacer algo). */
+export function evaluacionesPendientes(academicoModulos: Record<string, DatosAcademicosModulo>): {
+  proximas: EvaluacionPendiente[]
+  vencidas: EvaluacionPendiente[]
+} {
+  const todas: EvaluacionPendiente[] = []
+  for (const [moduloId, datos] of Object.entries(academicoModulos)) {
+    for (const e of datos.evaluaciones) {
+      if (e.nota !== null || !e.fecha) continue
+      todas.push({ moduloId, evaluacion: e, dias: diasHasta(e.fecha) })
+    }
+  }
+  return {
+    proximas: todas.filter((x) => x.dias >= 0).sort((a, b) => a.dias - b.dias),
+    vencidas: todas.filter((x) => x.dias < 0).sort((a, b) => b.dias - a.dias),
+  }
 }
 
 export type Urgencia = 'vencido' | 'urgente' | 'proximo' | 'normal'
@@ -41,7 +72,7 @@ export type Urgencia = 'vencido' | 'urgente' | 'proximo' | 'normal'
  *  el color exacto (y el tema claro/oscuro), esto solo clasifica. */
 export function urgenciaDe(dias: number): Urgencia {
   if (dias < 0) return 'vencido'
-  if (dias <= 2) return 'urgente'
+  if (dias <= 3) return 'urgente'
   if (dias <= 7) return 'proximo'
   return 'normal'
 }

@@ -102,7 +102,7 @@ function PantallaJuego({
               <p className={`text-xs font-semibold ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>
                 Puntos
               </p>
-              <p className="text-lg font-bold" style={{ color: VERDE }}>
+              <p className="text-lg font-bold" style={{ color: 'var(--accent-texto)' }}>
                 {flujo.puntos}
               </p>
             </div>
@@ -113,7 +113,7 @@ function PantallaJuego({
               <p className={`text-xs font-semibold ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>
                 Racha
               </p>
-              <p className="text-lg font-bold" style={{ color: VERDE }}>
+              <p className="text-lg font-bold" style={{ color: 'var(--accent-texto)' }}>
                 ×{flujo.racha}
               </p>
             </div>
@@ -125,7 +125,7 @@ function PantallaJuego({
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${progreso}%` }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.25 }}
             className="h-full rounded-full"
             style={{ background: VERDE }}
           />
@@ -146,7 +146,7 @@ function PantallaJuego({
         <div className="mb-2">
           <p
             className="text-xs font-mono font-semibold"
-            style={{ color: VERDE }}
+            style={{ color: 'var(--accent-texto)' }}
           >
             {pregunta.articulo}
           </p>
@@ -348,7 +348,7 @@ function PantallaResultado({
               : 'color-mix(in srgb, var(--accent-base) 6%, transparent)',
           }}
         >
-          <i className="ti ti-trophy text-4xl" style={{ color: VERDE }} />
+          <i className="ti ti-trophy text-4xl" style={{ color: 'var(--accent-texto)' }} />
         </div>
         <h1 className={`text-3xl font-serif font-bold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
           ¡Fin de la ronda!
@@ -362,7 +362,7 @@ function PantallaResultado({
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: 0.25 }}
         className={`rounded-2xl p-8 mb-8 border ${modoOscuro ? 'bg-zinc-800 border-zinc-700' : 'bg-white border-zinc-200'}`}
       >
         <div className="grid grid-cols-3 gap-4 text-center">
@@ -370,7 +370,7 @@ function PantallaResultado({
             <p className={`text-xs uppercase tracking-wider font-semibold mb-2 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
               Puntos
             </p>
-            <p className="text-3xl font-bold" style={{ color: VERDE }}>
+            <p className="text-3xl font-bold" style={{ color: 'var(--accent-texto)' }}>
               {puntos}
             </p>
           </div>
@@ -378,7 +378,7 @@ function PantallaResultado({
             <p className={`text-xs uppercase tracking-wider font-semibold mb-2 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
               Racha máxima
             </p>
-            <p className="text-3xl font-bold" style={{ color: VERDE }}>
+            <p className="text-3xl font-bold" style={{ color: 'var(--accent-texto)' }}>
               ×{racha}
             </p>
           </div>

@@ -1,10 +1,17 @@
 <!doctype html>
-<html lang="en">
+<html lang="es-CL">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
     <title>Prima Lex</title>
+    <!-- Íconos (Tabler): antes era un @import dentro del CSS de la app, así
+         que el navegador recién lo descubría después de bajar ese CSS y ambos
+         bloqueaban el primer pintado. Ahora se pide en paralelo y sin
+         bloquear (los íconos aparecen apenas llega la fuente). -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link rel="preload" as="style" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" /></noscript>
   </head>
   <body>
     <div id="root"></div>
