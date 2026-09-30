@@ -290,6 +290,10 @@ interface AppState {
    *  una clave por apunte: no iba en el respaldo. */
   posicionLectura: Record<string, { ratio: number; fecha: number }>
   guardarPosicionLectura: (apunteId: string, ratio: number) => void
+  /** Último artículo abierto en cada código del Explorador (C7): al volver a
+   *  un código se retoma ahí y no en el Art. 1. */
+  ultimoArticuloExplorador: Partial<Record<CodigoActivo['tipo'], string>>
+  recordarArticuloExplorador: (tipo: CodigoActivo['tipo'], articulo: string) => void
 }
 
 const datosAcademicosVacios: DatosAcademicosModulo = { clases: [], evaluaciones: [], textos: [], apuntes: [], cuadernos: [], briefs: [] }
@@ -400,6 +404,7 @@ export const useStore = create<AppState>()(
       diasActividadEstudio: [],
       repasoApuntes: {},
       posicionLectura: {},
+      ultimoArticuloExplorador: {},
 
       setPerfil: (perfil) => set({ perfil, modalPerfilAbierto: false }),
       setVistaActiva: (vistaActiva) => {
@@ -1081,6 +1086,10 @@ export const useStore = create<AppState>()(
           repasoApuntes: { ...s.repasoApuntes, [id]: siguienteEstado(s.repasoApuntes[id], resultado) },
           diasActividadEstudio: agregarActividadHoy(s.diasActividadEstudio),
         })),
+      recordarArticuloExplorador: (tipo, articulo) =>
+        set((s) =>
+          s.ultimoArticuloExplorador[tipo] === articulo ? s : { ultimoArticuloExplorador: { ...s.ultimoArticuloExplorador, [tipo]: articulo } }
+        ),
       guardarPosicionLectura: (apunteId, ratio) =>
         set((s) => {
           const posicionLectura = { ...s.posicionLectura }
@@ -1101,7 +1110,7 @@ export const useStore = create<AppState>()(
     {
       name: 'prima-lex-storage-v3',
       storage: crearAlmacenamiento(),
-      version: 31,
+      version: 32,
       partialize: (s) => ({
         perfil: s.perfil,
         codigos: s.codigos,
@@ -1133,6 +1142,11 @@ export const useStore = create<AppState>()(
         diasActividadEstudio: s.diasActividadEstudio,
         repasoApuntes: s.repasoApuntes,
         posicionLectura: s.posicionLectura,
+        // C7: al recargar se vuelve a la última vista (y módulo/código)
+        vistaActiva: s.vistaActiva,
+        moduloActivoId: s.moduloActivoId,
+        codigoExploradorActivo: s.codigoExploradorActivo,
+        ultimoArticuloExplorador: s.ultimoArticuloExplorador,
       }),
       migrate: (persisted: unknown, version: number) => {
         // Las migraciones se ENCADENAN: cada bloque transforma `state` y el
@@ -1239,6 +1253,12 @@ export const useStore = create<AppState>()(
             // sin localStorage: se parte de cero
           }
           state = { ...state, posicionLectura }
+        }
+        if (version < 32) {
+          // v32: se empiezan a guardar la última vista, el módulo y el código
+          // abiertos y el último artículo por código. No hay nada que
+          // transformar: en un estado anterior faltan y quedan los valores
+          // iniciales (Consultar, sin módulo ni código).
         }
         return state as never
       },

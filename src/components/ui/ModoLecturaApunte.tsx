@@ -7,7 +7,7 @@ import { useProgresoScroll } from '../../hooks/useProgresoScroll'
 import { TAMANOS_FUENTE, TEMAS_LECTURA } from '../../services/lecturaTema'
 import { encabezadosDe, parsearApunte, textoPlanoDe, tieneEstructuraAncha } from '../../services/apunteFormato'
 import { ApunteContenido } from './ApunteContenido'
-import { normalizarConMapa, normalizarConsulta } from '../../services/buscarApuntes'
+import { quitarResaltado, resaltarCoincidencia } from '../../services/resaltado'
 import { descargarApunteMd } from '../../services/apunteArchivo'
 import { tarjetasDe } from '../../services/tarjetasApunte'
 import { RepasoApunte } from './RepasoApunte'
@@ -95,28 +95,6 @@ interface PropsLector {
   resaltar?: string
 }
 
-/** Primera aparición de `consulta` (sin tildes ni mayúsculas) dentro de
- *  `raiz`, como Range del DOM -- busca nodo de texto por nodo de texto. */
-function rangoDeCoincidencia(raiz: HTMLElement, consulta: string): Range | null {
-  const palabras = normalizarConsulta(consulta)
-  if (palabras.length === 0) return null
-  // primero la frase completa; si no está en un mismo nodo, la primera palabra
-  const candidatos = palabras.length > 1 ? [palabras.join(' '), palabras[0]] : [palabras[0]]
-  for (const buscado of candidatos) {
-    const walker = document.createTreeWalker(raiz, NodeFilter.SHOW_TEXT)
-    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
-      const texto = n.textContent ?? ''
-      const { norm, mapa } = normalizarConMapa(texto)
-      const i = norm.indexOf(buscado)
-      if (i < 0) continue
-      const rango = document.createRange()
-      rango.setStart(n, mapa[i])
-      rango.setEnd(n, mapa[i + buscado.length - 1] + 1)
-      return rango
-    }
-  }
-  return null
-}
 
 // Se monta al abrir y se desmonta al cerrar: así el índice, el progreso y la
 // voz arrancan limpios en cada apunte sin tener que resetear estado a mano.
@@ -214,22 +192,10 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
   // Custom Highlight API; si el navegador no la tiene, queda seleccionada).
   useEffect(() => {
     if (!resaltar || !raiz) return
-    const raf = requestAnimationFrame(() => {
-      const rango = rangoDeCoincidencia(raiz, resaltar)
-      if (!rango) return
-      ;(rango.startContainer.parentElement ?? raiz).scrollIntoView({ block: 'center' })
-      const api = (globalThis as { CSS?: { highlights?: Map<string, unknown> } }).CSS?.highlights
-      const Resaltado = (globalThis as { Highlight?: new (r: Range) => unknown }).Highlight
-      if (api && Resaltado) api.set('prima-busqueda', new Resaltado(rango))
-      else {
-        const sel = window.getSelection()
-        sel?.removeAllRanges()
-        sel?.addRange(rango)
-      }
-    })
+    const raf = requestAnimationFrame(() => resaltarCoincidencia(raiz, resaltar))
     return () => {
       cancelAnimationFrame(raf)
-      ;(globalThis as { CSS?: { highlights?: Map<string, unknown> } }).CSS?.highlights?.delete('prima-busqueda')
+      quitarResaltado()
     }
   }, [resaltar, raiz])
 

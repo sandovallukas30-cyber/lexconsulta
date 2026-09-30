@@ -22,6 +22,7 @@ import { useStore } from './store/useStore'
 import { avisar } from './store/useAvisos'
 import { aplicarTema } from './theme'
 import { Omnibar } from './components/ui/Omnibar'
+import { PanelAtajos } from './components/ui/PanelAtajos'
 import { Avisos } from './components/ui/Avisos'
 import { RightSidebar } from './components/layout/RightSidebar'
 import { esAdmin } from './config/admin'
@@ -121,6 +122,7 @@ function App() {
       </div>
       <ModalPerfil />
       <Avisos />
+      <PanelAtajos />
       <ModalRegistro abierto={modalRegistroAbierto} onCerrar={() => setModalRegistroAbierto(false)} />
       <AnimatePresence>
         {omnibarAbierto && <Omnibar onClose={() => setOmnibarAbierto(false)} />}

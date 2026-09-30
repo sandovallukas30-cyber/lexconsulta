@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client'
 import { MotionConfig } from 'framer-motion'
 import './index.css'
 import App from './App.tsx'
+// historial de "Volver" y scroll por vista (se engancha al store)
+import './services/navegacion'
 import { VerificarView } from './components/views/VerificarView.tsx'
 import { useStore } from './store/useStore'
 

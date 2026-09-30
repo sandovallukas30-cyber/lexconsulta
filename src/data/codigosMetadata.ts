@@ -618,6 +618,32 @@ export function nombreCortoMetadata(tipo: CodigoTipo): string {
   return nombres[tipo] ?? tipo
 }
 
+/** Abreviatura usual en Chile para citar un artículo: "Art. 1545 CC",
+ *  "Art. 19 CPR", "Art. 3 Ley 19.496". Las leyes se citan por su número. */
+export function abreviaturaCita(tipo: CodigoTipo): string {
+  const codigos: Partial<Record<CodigoTipo, string>> = {
+    con: 'CPR',
+    civ: 'CC',
+    lab: 'CT',
+    pen: 'CP',
+    tri: 'CTrib',
+    com: 'CCom',
+    pci: 'CPC',
+    ppe: 'CPP',
+    cot: 'COT',
+    min: 'CMin',
+    agu: 'CAg',
+    san: 'CSan',
+    mil: 'CJM',
+    pdc: 'PIDCP',
+    pde: 'PIDESC',
+    aap: 'AA Recurso de Protección',
+  }
+  if (codigos[tipo]) return codigos[tipo]!
+  const ley = /^Ley [\d.]+/.exec(nombreCortoMetadata(tipo))
+  return ley ? ley[0] : nombreCortoMetadata(tipo)
+}
+
 export function obtenerMetadata(tipo: CodigoTipo): CodigoMetadata | null {
   return CODIGOS_METADATA[tipo] ?? null
 }

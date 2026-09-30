@@ -55,6 +55,12 @@ export function useCodigo(tipo: CodigoTipo | null): EstadoCodigo {
     return () => window.removeEventListener('online', reintentar)
   }, [fallo, reintentar])
 
+  // Al cambiar `tipo`, el estado de arriba todavía es el del código anterior
+  // durante un render (el efecto aún no corrió): nunca devolver un código
+  // que no es el pedido. Si el nuevo ya está en caché, se entrega al tiro.
+  const enCache = tipo ? obtenerCodigo(tipo) : null
+  if (enCache) return { codigo: enCache, cargando: false, error: null, reintentar }
+  if (estado.codigo && estado.codigo.tipo !== tipo) return { codigo: null, cargando: !!tipo, error: null, reintentar }
   return { ...estado, reintentar }
 }
 

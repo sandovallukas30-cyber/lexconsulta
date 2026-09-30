@@ -1,3 +1,4 @@
+import { BotonVolver } from './BotonVolver'
 import { useStore } from '../../store/useStore'
 import type { Modulo } from '../../types'
 import { coleccionesDeModulo } from '../../services/modulosAcademico'
@@ -89,13 +90,14 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEdit
   return (
     <div className={`h-full overflow-y-auto ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        <button
-          onClick={onVolver}
-className="boton boton-fantasma boton-chico -ml-2.5 mb-4"
-        >
-          <i className="ti ti-arrow-left text-sm" />
-          Todos los módulos
-        </button>
+        <nav aria-label="Migas" className="flex items-center gap-1 -ml-2.5 mb-4 min-w-0">
+          <button onClick={onVolver} className="boton boton-fantasma boton-chico">
+            <i className="ti ti-arrow-left text-sm" />
+            Todos los módulos
+          </button>
+          {/* si se llegó desde otra parte (Explorador, Omnibar, otro módulo) */}
+          <BotonVolver ocultarSi={(l) => l.vista === 'modulos' && l.moduloActivoId === null} />
+        </nav>
 
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <div className="flex items-center gap-3 min-w-0">

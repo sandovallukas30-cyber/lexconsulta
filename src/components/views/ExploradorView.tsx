@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef, type ReactNode, type TouchEvent } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback, type ReactNode, type TouchEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
@@ -6,6 +6,7 @@ import { useProgresoScroll } from '../../hooks/useProgresoScroll'
 import { useCodigo } from '../../hooks/useCodigo'
 import { useReferenciasFiltradas } from '../../hooks/useReferencias'
 import { SelectorCodigo } from '../ui/SelectorCodigo'
+import { BotonVolver } from '../ui/BotonVolver'
 import { EsquemaCodigo } from '../ui/EsquemaCodigo'
 import { ContenedorResaltable, ParrafoResaltado } from '../ui/TextoResaltable'
 import { useLecturaVoz } from '../../hooks/useLecturaVoz'
@@ -14,6 +15,10 @@ import { modernizar, necesitaModernizacion } from '../../services/moderniza'
 import { obtenerMetadata, formatearFechaIndexacion, nombreCortoMetadata } from '../../data/codigosMetadata'
 import { construirEsquema, ETIQUETAS_NIVEL, type NodoEsquema } from '../../services/esquema'
 import { buscarVinculosArticulo } from '../../services/modulosAcademico'
+import { buscarEnCodigo, consultaComoId } from '../../services/buscarEnCodigo'
+import { quitarResaltado, resaltarCoincidencia } from '../../services/resaltado'
+import { citaArticulo, copiarAlPortapapeles, textoConCita } from '../../services/citas'
+import { avisar } from '../../store/useAvisos'
 import { TAMANOS_FUENTE, TEMAS_LECTURA } from '../../services/lecturaTema'
 import type { Articulo, CodigoData, CodigoTipo } from '../../types'
 
@@ -46,19 +51,27 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
   const setColeccionActiva = useStore((s) => s.setColeccionActiva)
   const setVistaActiva = useStore((s) => s.setVistaActiva)
   const articuloPendiente = useStore((s) => s.articuloExploradorPendiente)
+  const recordarArticulo = useStore((s) => s.recordarArticuloExplorador)
   const limpiarArticuloPendiente = useStore((s) => s.limpiarArticuloExploradorPendiente)
   const aplicarModernizacion = modernizarLenguaje && necesitaModernizacion(tipoActivo)
   const transformarTexto = (t: string) => (aplicarModernizacion ? modernizar(t) : t)
-  const [seleccionadoId, setSeleccionadoId] = useState<string | null>(null)
+  // La selección pertenece a UN código: al cambiar de código deja de valer
+  // sola (antes el "Art. 3" del Civil seguía elegido en el Código del Trabajo
+  // y además se guardaba como su último artículo leído).
+  const [seleccion, setSeleccion] = useState<{ tipo: CodigoTipo; id: string | null }>({ tipo: tipoActivo, id: null })
+  const seleccionadoId = seleccion.tipo === tipoActivo ? seleccion.id : null
+  const setSeleccionadoId = useCallback((id: string | null) => setSeleccion({ tipo: tipoActivo, id }), [tipoActivo])
   const [indiceAbierto, setIndiceAbierto] = useState(false)
   const [esquemaAbierto, setEsquemaAbierto] = useState(false)
   const [modoLecturaAbierto, setModoLecturaAbierto] = useState(false)
   const [busquedaAbierta, setBusquedaAbierta] = useState(false)
   const [busqueda, setBusqueda] = useState('')
+  // coincidencia a marcar en el artículo al abrirlo desde una búsqueda de texto
+  const [resaltado, setResaltado] = useState<{ articulo: string; texto: string } | null>(null)
+  const refTarjeta = useRef<HTMLElement>(null)
 
-  // Reset selección cuando cambia el código
+  // Limpiar la búsqueda cuando cambia el código
   useEffect(() => {
-    setSeleccionadoId(null)
     setBusqueda('')
   }, [tipoActivo])
 
@@ -73,7 +86,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
     if (!articuloPendiente) return
     setSeleccionadoId(articuloPendiente)
     limpiarArticuloPendiente()
-  }, [articuloPendiente, limpiarArticuloPendiente])
+  }, [articuloPendiente, limpiarArticuloPendiente, setSeleccionadoId])
 
   const { codigo, cargando: cargandoCodigo, error: errorCodigo, reintentar } = useCodigo(tipoActivo)
   const refArticulo = useRef<HTMLDivElement>(null)
@@ -93,7 +106,27 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
   // scroll del artículo anterior y el siguiente se leía desde la mitad)
   useEffect(() => {
     refArticulo.current?.scrollTo({ top: 0 })
+    return () => quitarResaltado()
   }, [seleccionado?.a])
+
+  // marcar la coincidencia cuando termina la transición del artículo (250 ms;
+  // también si se eligió el MISMO artículo que ya estaba abierto)
+  useEffect(() => {
+    if (!resaltado) return
+    const t = window.setTimeout(() => {
+      if (refTarjeta.current && refTarjeta.current.dataset.articulo === resaltado.articulo) {
+        resaltarCoincidencia(refTarjeta.current, resaltado.texto)
+      }
+    }, 300)
+    return () => window.clearTimeout(t)
+  }, [resaltado])
+
+  const copiarConCita = async () => {
+    if (!seleccionado) return
+    const ok = await copiarAlPortapapeles(textoConCita(tipoActivo, seleccionado))
+    if (ok) avisar.exito(`Copiado: ${citaArticulo(tipoActivo, seleccionado.a)}`)
+    else avisar.error('No se pudo copiar. Selecciona el texto y usa Ctrl+C.')
+  }
 
   const anterior = indiceActual > 0 ? arts[indiceActual - 1] : null
   const siguiente = indiceActual >= 0 && indiceActual < arts.length - 1 ? arts[indiceActual + 1] : null
@@ -115,15 +148,26 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
     // mismo lote) y una referencia a otro código siempre terminaba
     // mostrando el primer artículo del código destino en vez del referido.
     if (!seleccionadoId && !articuloPendiente && arts.length > 0) {
-      setSeleccionadoId(arts[0].a)
+      // retomar el último artículo leído en este código (C7)
+      const ultimo = useStore.getState().ultimoArticuloExplorador[tipoActivo]
+      setSeleccionadoId(ultimo && arts.some((a) => a.a === ultimo) ? ultimo : arts[0].a)
     }
-  }, [arts, seleccionadoId, articuloPendiente])
+  }, [arts, seleccionadoId, articuloPendiente, tipoActivo, setSeleccionadoId])
+
+  // solo lo que el usuario eligió: en el render en que cambia el código,
+  // `seleccionado` cae a arts[0] del código nuevo y pisaba lo guardado
+  useEffect(() => {
+    if (seleccionado && seleccionado.a === seleccionadoId) recordarArticulo(tipoActivo, seleccionado.a)
+  }, [seleccionado, seleccionadoId, tipoActivo, recordarArticulo])
 
   // Atajos: Cmd/Ctrl+K para buscar, flechas para navegar
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault()
+        // en el Explorador, Ctrl+K busca en el código (lo dice el botón); sin
+        // esto se abrían a la vez esta búsqueda y la Omnibar de App.tsx
+        e.stopImmediatePropagation()
         setBusquedaAbierta(true)
       }
       if (e.key === 'Escape') {
@@ -131,8 +175,9 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
         setIndiceAbierto(false)
       }
     }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
+    // en captura: corre antes que el atajo global (registrado antes, en App)
+    window.addEventListener('keydown', handler, true)
+    return () => window.removeEventListener('keydown', handler, true)
   }, [])
 
   if (cargandoCodigo) {
@@ -174,6 +219,8 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
           modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
         }`}
       >
+        <BotonVolver />
+
         <button
           onClick={onCambiarCodigo}
           className="boton boton-fantasma group px-2 gap-2 min-w-0 flex-shrink"
@@ -273,7 +320,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
             modoOscuro ? 'bg-zinc-900 border-zinc-800 text-zinc-400' : 'bg-white border-zinc-200 text-zinc-500'
           }`}
         >
-          <span className={modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}>{codigo.codigo}</span>
+          <span className="text-zinc-500 whitespace-nowrap flex-shrink-0">{codigo.codigo}</span>
           {seleccionado.libro && <><Sep /><span className="truncate">Libro {seleccionado.libro}</span></>}
           {seleccionado.titulo && <><Sep /><span className="truncate">Título {seleccionado.titulo}</span></>}
           {seleccionado.capitulo && <><Sep /><span className="truncate">Cap. {seleccionado.capitulo}</span></>}
@@ -307,6 +354,8 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
           <AnimatePresence mode="wait">
             <motion.article
               key={seleccionado.a}
+              ref={refTarjeta}
+              data-articulo={seleccionado.a}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
@@ -322,9 +371,20 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
                 >
                   <span style={{ color: VERDE }}>{seleccionado.a}</span>
                 </h1>
-                <span className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                  {indiceActual + 1} de {arts.length}
-                </span>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                    {indiceActual + 1} de {arts.length}
+                  </span>
+                  <button
+                    onClick={copiarConCita}
+                    title={`Copiar el texto con la cita "${citaArticulo(tipoActivo, seleccionado.a)}" y la fuente`}
+                    aria-label={`Copiar ${seleccionado.a} con cita`}
+                    className="boton boton-fantasma boton-chico max-sm:boton-icono"
+                  >
+                    <i className="ti ti-copy text-sm" aria-hidden />
+                    <span className="hidden sm:inline">Copiar con cita</span>
+                  </button>
+                </div>
               </div>
               <ArticuloTexto
                 texto={transformarTexto(seleccionado.t)}
@@ -412,6 +472,8 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
         busqueda={busqueda}
         setBusqueda={setBusqueda}
         onSelect={(a) => {
+          // buscó texto (no un número): marcar dónde aparece
+          setResaltado(busqueda.trim() && !consultaComoId(busqueda) ? { articulo: a, texto: busqueda } : null)
           setSeleccionadoId(a)
           setBusquedaAbierta(false)
           setBusqueda('')
@@ -922,66 +984,8 @@ function ModalBusqueda({
   const inputRef = useRef<HTMLInputElement>(null)
   const [indiceActivo, setIndiceActivo] = useState(0)
 
-  const resultados = useMemo(() => {
-    const q = busqueda.trim().toLowerCase()
-    if (!q) return arts.slice(0, 50)
-
-    // Si lo que escribió parece un identificador de artículo puro
-    // (ej. "161", "art 161", "art. 161", "artículo 161°"), buscamos por
-    // número de artículo en vez de por contenido — es lo que el usuario
-    // normalmente espera al teclear solo el número.
-    const matchSoloId = q.match(/^(?:art(?:[íi]culo)?\.?\s*)?(\d+)\s*[°ºo]?\s*$/i)
-    const qSoloIdArticulo = matchSoloId !== null
-    const qNumPuro = matchSoloId ? matchSoloId[1] : null
-
-    type Puntuado = { a: typeof arts[number]; score: number }
-    const puntuados: Puntuado[] = []
-
-    for (const a of arts) {
-      const numArt = a.a.replace(/[^\d]/g, '')
-      let score = 0
-
-      if (qSoloIdArticulo && qNumPuro) {
-        // Búsqueda por identificador: el match por id pesa muchísimo más,
-        // así Art. 161 sale primero. Pero NO descartamos las menciones a
-        // ese número dentro del texto de otros artículos — solo quedan abajo.
-        if (numArt === qNumPuro) score += 10000
-        else if (numArt.startsWith(qNumPuro)) score += 1000 - (numArt.length - qNumPuro.length)
-        // Menciones del número en el texto (con peso bajo)
-        const lower = a.t.toLowerCase()
-        if (lower.includes(qNumPuro)) score += 5
-      } else {
-        // Búsqueda mixta o de texto libre.
-        if (a.a.toLowerCase().includes(q)) score += 500
-        const lower = a.t.toLowerCase()
-        if (lower.includes(q)) score += 100
-        // Bonus por palabras individuales del query (>2 chars)
-        const palabras = q.split(/\s+/).filter((w) => w.length > 2)
-        for (const w of palabras) {
-          if (lower.includes(w)) score += 10
-        }
-      }
-
-      if (score > 0) puntuados.push({ a, score })
-    }
-
-    // Deduplicar por id + primeros 80 chars del texto: si el JSON trae el
-    // mismo artículo duplicado (caso conocido del parser cuando varios
-    // libros reinician numeración), el buscador muestra solo la primera
-    // ocurrencia. Sigue diferenciando artículos distintos con mismo id
-    // (porque el snippet de texto será diferente).
-    const vistos = new Set<string>()
-    return puntuados
-      .sort((x, y) => y.score - x.score)
-      .filter((p) => {
-        const clave = `${p.a.a}::${p.a.t.slice(0, 80)}`
-        if (vistos.has(clave)) return false
-        vistos.add(clave)
-        return true
-      })
-      .slice(0, 50)
-      .map((p) => p.a)
-  }, [arts, busqueda])
+  // C7: ids tolerantes ("183a", "183-A", "4 bis") y texto sin tildes
+  const resultados = useMemo(() => buscarEnCodigo(arts, busqueda), [arts, busqueda])
 
   useEffect(() => {
     setIndiceActivo(0)
@@ -1000,7 +1004,7 @@ function ModalBusqueda({
       setIndiceActivo((i) => Math.max(i - 1, 0))
     } else if (e.key === 'Enter') {
       const r = resultados[indiceActivo]
-      if (r) onSelect(r.a)
+      if (r) onSelect(r.articulo.a)
     }
   }
 
@@ -1031,7 +1035,8 @@ function ModalBusqueda({
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
                 onKeyDown={onKey}
-                placeholder='Busca por número ("161") o palabra clave ("vacaciones")'
+                placeholder='Número ("183-A", "4 bis") o palabras ("prescripción")'
+                aria-label="Buscar o ir a un artículo"
                 className={`flex-1 bg-transparent outline-none text-base ${
                   modoOscuro ? 'text-white placeholder:text-zinc-500' : 'text-zinc-900 placeholder:text-zinc-400'
                 }`}
@@ -1048,11 +1053,11 @@ function ModalBusqueda({
                   <p className="text-sm">Sin resultados</p>
                 </div>
               ) : (
-                resultados.map((a, i) => {
+                resultados.map(({ articulo: a, fragmento, exacto }, i) => {
                   const activo = i === indiceActivo
                   return (
                     <button
-                      key={a.a}
+                      key={`${a.a}::${i}`}
                       onClick={() => onSelect(a.a)}
                       onMouseEnter={() => setIndiceActivo(i)}
                       className={`w-full text-left px-4 py-2.5 transition-colors ${
@@ -1072,9 +1077,20 @@ function ModalBusqueda({
                             · Libro {a.libro.split(' — ')[0]}
                           </span>
                         )}
+                        {exacto && i === 0 && (
+                          <span className={`ml-auto text-[10px] font-medium ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>↵ Ir al artículo</span>
+                        )}
                       </div>
-                      <p className={`text-xs line-clamp-1 ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>
-                        {primerasPalabras(a.t, 18)}
+                      <p className={`text-xs line-clamp-2 ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>
+                        {fragmento ? (
+                          <>
+                            {fragmento.antes}
+                            <mark className={`rounded-sm px-0.5 ${modoOscuro ? 'bg-amber-400/30 text-amber-100' : 'bg-amber-200 text-zinc-900'}`}>{fragmento.coincidencia}</mark>
+                            {fragmento.despues}
+                          </>
+                        ) : (
+                          primerasPalabras(a.t, 18)
+                        )}
                       </p>
                     </button>
                   )

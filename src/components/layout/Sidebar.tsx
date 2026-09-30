@@ -67,14 +67,17 @@ export function Sidebar() {
   // Atajo: Ctrl/Cmd + B para colapsar
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+      // defaultPrevented: el campo de un apunte ya usó Ctrl+B para negrita
+      // (antes además colapsaba el menú)
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b' && !e.defaultPrevented) {
         e.preventDefault()
-        toggleSidebar()
+        if (esMovil) setMenuMovilAbierto(false)
+        else toggleSidebarEscritorio()
       }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [toggleSidebar])
+  }, [esMovil, setMenuMovilAbierto, toggleSidebarEscritorio])
 
   // Esc cierra el panel móvil
   useEffect(() => {

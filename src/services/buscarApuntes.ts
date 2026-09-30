@@ -51,7 +51,7 @@ export function normalizarConsulta(q: string): string[] {
 
 const CONTEXTO = 60
 
-function fragmentoEn(texto: string, palabras: string[]): { fragmento: FragmentoCoincidencia; ocurrencias: number } | null {
+export function fragmentoEn(texto: string, palabras: string[]): { fragmento: FragmentoCoincidencia; ocurrencias: number } | null {
   const { norm, mapa } = normalizarConMapa(texto)
   let ocurrencias = 0
   let primera = -1
