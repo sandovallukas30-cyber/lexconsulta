@@ -75,7 +75,19 @@ export function generarTarjetas(apunte: Pick<ApunteModulo, 'id' | 'contenido'>):
     const termino = RE_TERMINO.exec(linea)
     if (termino) {
       const frente = quitarMarcas(termino[1]).replace(/:\s*$/, '').trim()
-      const reverso = quitarMarcas(termino[2]).replace(/^:\s*/, '').trim()
+      // la definición puede seguir en líneas con sangría que no son otro punto
+      const tabs = /^\t*/.exec(linea)?.[0].length ?? 0
+      const partes = [termino[2]]
+      while (
+        i + 1 < lineas.length &&
+        lineas[i + 1].trim() &&
+        (/^\t*/.exec(lineas[i + 1])?.[0].length ?? 0) > tabs &&
+        !/^\t*(?:-|\d{1,3}[.)]\s)/.test(lineas[i + 1])
+      ) {
+        i++
+        partes.push(lineas[i].trim())
+      }
+      const reverso = quitarMarcas(partes.join('\n')).replace(/^:\s*/, '').trim()
       agregar({ tipo: 'termino', frente, reverso, seccion })
     }
   }

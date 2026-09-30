@@ -11,6 +11,8 @@ import {
 import type { ApunteModulo } from '../../types'
 
 const VERDE = 'var(--accent-base)'
+/** Sesiones cortas: 80 tarjetas seguidas cansan y se abandona a la mitad. */
+const TARJETAS_POR_SESION = 20
 
 interface Props {
   apunte: ApunteModulo
@@ -31,21 +33,29 @@ export function RepasoApunte({ apunte, onCerrar }: Props) {
   )
 
   const [cola, setCola] = useState<TarjetaRepaso[]>(() =>
-    ordenarParaSesion(tarjetas, useStore.getState().repasoApuntes, true)
+    ordenarParaSesion(tarjetas, useStore.getState().repasoApuntes, true).slice(0, TARJETAS_POR_SESION)
   )
   const [indice, setIndice] = useState(0)
   const [volteada, setVolteada] = useState(false)
   const [sabidas, setSabidas] = useState<Set<string>>(() => new Set())
   const [falladas, setFalladas] = useState<Set<string>>(() => new Set())
+  // Solo la PRIMERA respuesta de cada tarjeta en la sesión cuenta para la
+  // programación: acertar una fallada 3 tarjetas después es reaprendizaje,
+  // no debe subirla de caja (si no, "no la sabía" nunca volvería mañana).
+  const [registradas, setRegistradas] = useState<Set<string>>(() => new Set())
 
   const actual = cola[indice]
   const terminado = indice >= cola.length
 
   const responder = (resultado: 'sabia' | 'no_sabia') => {
     if (!actual || !volteada) return
-    registrar(actual.id, resultado)
+    const primera = !registradas.has(actual.id)
+    if (primera) {
+      registrar(actual.id, resultado)
+      setRegistradas((s) => new Set(s).add(actual.id))
+    }
     if (resultado === 'sabia') {
-      setSabidas((s) => new Set(s).add(actual.id))
+      if (primera) setSabidas((s) => new Set(s).add(actual.id))
     } else {
       setFalladas((s) => new Set(s).add(actual.id))
       // vuelve antes: unas tarjetas más adelante, no al final de la sesión
@@ -65,6 +75,7 @@ export function RepasoApunte({ apunte, onCerrar }: Props) {
     setVolteada(false)
     setSabidas(new Set())
     setFalladas(new Set())
+    setRegistradas(new Set())
   }
 
   useEffect(() => {
@@ -141,16 +152,30 @@ export function RepasoApunte({ apunte, onCerrar }: Props) {
             <i className="ti ti-circle-check text-5xl mb-3 inline-block" style={{ color: VERDE }} />
             <p className={`text-xl font-serif font-bold mb-1 ${texto}`}>¡Repaso terminado!</p>
             <p className={`text-sm mb-6 ${suave}`}>
-              Sabías {sabidas.size} · {falladas.size} para reforzar{falladas.size > 0 ? ' (vuelven mañana)' : ''}
+              Sabías {sabidas.size} de {unicas} a la primera
+              {falladas.size > 0 ? ` · ${falladas.size} para reforzar (vuelve${falladas.size === 1 ? '' : 'n'} mañana)` : ''}
             </p>
             <div className="flex flex-col sm:flex-row gap-2 justify-center">
+              {(() => {
+                const restantes = tarjetas.filter((t) => estaPendiente(estados[t.id]))
+                if (restantes.length === 0) return null
+                return (
+                  <button
+                    onClick={() => reiniciar(ordenarParaSesion(tarjetas, estados, true).slice(0, TARJETAS_POR_SESION))}
+                    className="px-4 min-h-[44px] rounded-lg text-sm font-medium text-white"
+                    style={{ background: VERDE }}
+                  >
+                    Seguir ({restantes.length} para hoy)
+                  </button>
+                )
+              })()}
               {falladas.size > 0 && (
                 <button
                   onClick={() => reiniciar(tarjetas.filter((t) => falladas.has(t.id)))}
                   className="px-4 min-h-[44px] rounded-lg text-sm font-medium text-white"
                   style={{ background: VERDE }}
                 >
-                  Repasar las {falladas.size} falladas
+                  {falladas.size === 1 ? 'Repasar la fallada' : `Repasar las ${falladas.size} falladas`}
                 </button>
               )}
               <button
@@ -185,7 +210,11 @@ export function RepasoApunte({ apunte, onCerrar }: Props) {
                   {volteada ? ' · respuesta' : ''}
                 </span>
                 {volteada ? (
-                  <p className={`text-base sm:text-lg leading-relaxed whitespace-pre-line font-serif ${texto}`}>{actual.reverso}</p>
+                  <>
+                    {/* el frente queda visible arriba: reforzar la asociación pregunta → respuesta */}
+                    <p className={`text-sm font-semibold mb-3 ${suave}`}>{actual.frente}</p>
+                    <p className={`text-base sm:text-lg leading-relaxed whitespace-pre-line font-serif ${texto}`}>{actual.reverso}</p>
+                  </>
                 ) : (
                   <p className={`text-xl sm:text-2xl font-serif font-bold ${texto}`}>{actual.frente}</p>
                 )}
