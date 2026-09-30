@@ -1373,6 +1373,37 @@ const COLOR_POR_CODIGO: Record<CodigoTipo, FamiliaColor> = {
   san: 'emerald', // Sanitario (sin área fija en la lista, verde por salud)
   fam: 'fuchsia', // Familia
   aap: 'red', // Auto Acordado del recurso de protección → familia Constitucional (implementa el art. 20)
+  // Lote 1 de leyes especiales: cada una con la familia del área a la que pertenece en la práctica
+  cns: 'yellow', // Consumidor
+  mat: 'fuchsia', // Matrimonio Civil
+  ali: 'fuchsia', // Pensiones de Alimentos
+  vif: 'fuchsia', // Violencia Intrafamiliar
+  fil: 'fuchsia', // Filiación
+  soc: 'yellow', // Sociedades Anónimas
+  mvl: 'yellow', // Mercado de Valores
+  pvp: 'red', // Vida Privada
+  rpj: 'zinc', // Resp. Penal P. Jurídicas
+  dec: 'zinc', // Delitos Económicos
+  pns: 'zinc', // Penas Sustitutivas
+  dsc: 'red', // Antidiscriminación
+  mas: 'lime', // Tenencia de Mascotas
+  soa: 'sky', // SOAP
+  trt: 'sky', // Tránsito
+  amb: 'emerald', // Medio Ambiente
+  tam: 'emerald', // Tribunales Ambientales
+  bga: 'sky', // Bases Adm. del Estado
+  est: 'sky', // Estatuto Administrativo
+  emu: 'sky', // Estatuto Municipal
+  mun: 'sky', // Municipalidades
+  arr: 'blue', // Arrendamiento Urbano
+  cop: 'blue', // Copropiedad
+  pin: 'yellow', // Propiedad Intelectual
+  pid: 'yellow', // Propiedad Industrial
+  dis: 'sky', // Inclusión Discapacidad
+  fel: 'slate', // Firma Electrónica
+  tde: 'sky', // Transformación Digital
+  ind: 'red', // Ley Indígena
+  cng: 'red', // Congreso Nacional
 }
 
 const HEX_POR_FAMILIA: Record<FamiliaColor, string> = {

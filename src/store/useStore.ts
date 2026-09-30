@@ -296,6 +296,36 @@ const codigosIniciales: CodigoActivo[] = [
   { tipo: 'pdc', nombre: 'Pacto Internacional de Derechos Civiles y Políticos', nombreCorto: 'Pacto Civiles y Políticos', descripcion: 'Tratado internacional de DDHH ratificado por Chile; en virtud del Art. 5° inc. 2° de la Constitución integra el bloque de constitucionalidad', categoria: 'tratados', activo: true, cargado: true },
   { tipo: 'pde', nombre: 'Pacto Internacional de Derechos Económicos, Sociales y Culturales', nombreCorto: 'Pacto DESC', descripcion: 'Tratado internacional de DDHH (PIDESC) ratificado por Chile; reconoce derechos al trabajo, salud, educación, alimentación, vivienda y cultura', categoria: 'tratados', activo: true, cargado: true },
   { tipo: 'aap', nombre: 'Auto Acordado sobre Tramitación del Recurso de Protección', nombreCorto: 'Auto Ac. Protección', descripcion: 'Corte competente, plazo, admisibilidad, informe, prueba, fallo y apelación del recurso de protección (Acta 94-2015 de la Corte Suprema)', categoria: 'procedimentales', activo: true, cargado: true },
+  { tipo: 'cns', nombre: 'Ley 19.496 - Protección de los Derechos de los Consumidores', nombreCorto: 'Consumidor', descripcion: 'Derechos y deberes de consumidores y proveedores, garantía legal, SERNAC y procedimientos de reclamo', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'mat', nombre: 'Ley 19.947 - Nueva Ley de Matrimonio Civil', nombreCorto: 'Matrimonio Civil', descripcion: 'Requisitos y celebración del matrimonio, separación, nulidad, divorcio y compensación económica', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'ali', nombre: 'Ley 14.908 - Abandono de Familia y Pago de Pensiones Alimenticias', nombreCorto: 'Pensiones de Alimentos', descripcion: 'Juicio de alimentos, apremios, Registro Nacional de Deudores y pago efectivo de pensiones', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'vif', nombre: 'Ley 20.066 - Violencia Intrafamiliar', nombreCorto: 'Violencia Intrafamiliar', descripcion: 'Prevención, sanción y reparación de la violencia intrafamiliar; delito de maltrato habitual', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'fil', nombre: 'Ley 19.585 - Modifica el Código Civil en materia de Filiación', nombreCorto: 'Filiación', descripcion: 'Reforma de 1998 que iguala a todos los hijos y modifica el Código Civil en materia de filiación', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'soc', nombre: 'Ley 18.046 - Sociedades Anónimas', nombreCorto: 'Sociedades Anónimas', descripcion: 'Constitución, administración, juntas de accionistas, fusión y disolución de sociedades anónimas', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'mvl', nombre: 'Ley 18.045 - Mercado de Valores', nombreCorto: 'Mercado de Valores', descripcion: 'Oferta pública de valores, emisores, intermediarios, información privilegiada y fiscalización de la CMF', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'pvp', nombre: 'Ley 19.628 - Protección de la Vida Privada (datos personales)', nombreCorto: 'Vida Privada', descripcion: 'Tratamiento de datos personales, derechos del titular y registros de datos (ley \'Dicom\')', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'rpj', nombre: 'Ley 20.393 - Responsabilidad Penal de las Personas Jurídicas', nombreCorto: 'Resp. Penal P. Jurídicas', descripcion: 'Delitos por los que responden las personas jurídicas, modelos de prevención y penas aplicables', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'dec', nombre: 'Ley 21.595 - Delitos Económicos', nombreCorto: 'Delitos Económicos', descripcion: 'Categorías de delitos económicos, reglas especiales de determinación de penas y delitos ambientales', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'pns', nombre: 'Ley 18.216 - Penas Sustitutivas', nombreCorto: 'Penas Sustitutivas', descripcion: 'Remisión condicional, reclusión parcial, libertad vigilada, prestación de servicios en beneficio de la comunidad y expulsión', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'dsc', nombre: 'Ley 20.609 - Medidas contra la Discriminación', nombreCorto: 'Antidiscriminación', descripcion: 'Acción de no discriminación arbitraria (\'Ley Zamudio\') y agravante penal por discriminación', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'mas', nombre: 'Ley 21.020 - Tenencia Responsable de Mascotas y Animales de Compañía', nombreCorto: 'Tenencia de Mascotas', descripcion: 'Obligaciones de los tenedores de mascotas, registro, microchip, perros potencialmente peligrosos y sanciones', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'soa', nombre: 'Ley 18.490 - Seguro Obligatorio de Accidentes Personales (SOAP)', nombreCorto: 'SOAP', descripcion: 'Seguro obligatorio de accidentes personales por circulación de vehículos motorizados', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'trt', nombre: 'Ley 18.290 - Ley de Tránsito', nombreCorto: 'Tránsito', descripcion: 'Licencias de conducir, normas de circulación, infracciones, responsabilidad y delitos del tránsito', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'amb', nombre: 'Ley 19.300 - Bases Generales del Medio Ambiente', nombreCorto: 'Medio Ambiente', descripcion: 'Evaluación de impacto ambiental, normas de calidad, responsabilidad por daño ambiental y Superintendencia del Medio Ambiente', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'tam', nombre: 'Ley 20.600 - Tribunales Ambientales', nombreCorto: 'Tribunales Ambientales', descripcion: 'Organización, competencia y procedimientos de los tribunales ambientales', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'bga', nombre: 'Ley 18.575 - LOC de Bases Generales de la Administración del Estado', nombreCorto: 'Bases Adm. del Estado', descripcion: 'Principios de la Administración del Estado, carrera funcionaria y probidad administrativa', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'est', nombre: 'Ley 18.834 - Estatuto Administrativo', nombreCorto: 'Estatuto Administrativo', descripcion: 'Ingreso, derechos, deberes, responsabilidad administrativa y cese de funciones de los funcionarios públicos', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'emu', nombre: 'Ley 18.883 - Estatuto Administrativo de Funcionarios Municipales', nombreCorto: 'Estatuto Municipal', descripcion: 'Carrera, derechos, obligaciones y responsabilidad de los funcionarios municipales', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'mun', nombre: 'Ley 18.695 - LOC de Municipalidades', nombreCorto: 'Municipalidades', descripcion: 'Funciones y atribuciones municipales, alcalde, concejo municipal y participación ciudadana', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'arr', nombre: 'Ley 18.101 - Arrendamiento de Predios Urbanos', nombreCorto: 'Arrendamiento Urbano', descripcion: 'Arrendamiento de bienes raíces urbanos: desahucio, restitución, rentas y procedimiento', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'cop', nombre: 'Ley 21.442 - Nueva Ley de Copropiedad Inmobiliaria', nombreCorto: 'Copropiedad', descripcion: 'Condominios, bienes comunes, administración, asambleas y gastos comunes', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'pin', nombre: 'Ley 17.336 - Propiedad Intelectual', nombreCorto: 'Propiedad Intelectual', descripcion: 'Derecho de autor, derechos conexos, excepciones y sanciones', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'pid', nombre: 'Ley 19.039 - Propiedad Industrial', nombreCorto: 'Propiedad Industrial', descripcion: 'Marcas, patentes, modelos de utilidad, diseños industriales e indicaciones geográficas', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'dis', nombre: 'Ley 20.422 - Igualdad de Oportunidades e Inclusión Social de Personas con Discapacidad', nombreCorto: 'Inclusión Discapacidad', descripcion: 'Igualdad de oportunidades, accesibilidad, ajustes necesarios y registro de personas con discapacidad', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'fel', nombre: 'Ley 19.799 - Documentos Electrónicos y Firma Electrónica', nombreCorto: 'Firma Electrónica', descripcion: 'Validez de documentos y firma electrónica, firma avanzada y prestadores de certificación', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'tde', nombre: 'Ley 21.180 - Transformación Digital del Estado', nombreCorto: 'Transformación Digital', descripcion: 'Procedimientos administrativos electrónicos: expediente electrónico, notificaciones y documentos digitales', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'ind', nombre: 'Ley 19.253 - Protección, Fomento y Desarrollo de los Indígenas', nombreCorto: 'Ley Indígena', descripcion: 'Reconocimiento de los pueblos indígenas, tierras y aguas indígenas, CONADI y áreas de desarrollo', categoria: 'especiales', activo: true, cargado: true },
+  { tipo: 'cng', nombre: 'Ley 18.918 - LOC del Congreso Nacional', nombreCorto: 'Congreso Nacional', descripcion: 'Organización del Congreso, tramitación de proyectos de ley, probidad y comisiones investigadoras', categoria: 'especiales', activo: true, cargado: true },
 ]
 
 export const useStore = create<AppState>()(
@@ -1021,7 +1051,7 @@ export const useStore = create<AppState>()(
     {
       name: 'prima-lex-storage-v3',
       storage: almacenamientoPersistente,
-      version: 28,
+      version: 29,
       partialize: (s) => ({
         perfil: s.perfil,
         codigos: s.codigos,
@@ -1123,6 +1153,13 @@ export const useStore = create<AppState>()(
           // v28: revierte Historia Legal Chilena del Explorador (c23/c26/c28/c33
           // se llevan a Apuntes en su lugar). Resincroniza 'codigos' contra
           // codigosIniciales, que ya no los incluye.
+          resincronizarCodigos()
+        }
+        if (version < 29) {
+          // v29: lote 1 de leyes especiales (30 leyes: Consumidor, Matrimonio
+          // Civil, Pensiones de Alimentos, VIF, ... ver scripts/leyes_lote1.mjs).
+          // Sin esto, un usuario existente no las ve: su `codigos` persistido
+          // no las trae y el merge de persist no agrega elementos a un array.
           resincronizarCodigos()
         }
         return state as never
