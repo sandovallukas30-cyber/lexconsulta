@@ -19,6 +19,8 @@ import { buscarEnCodigo, consultaComoId } from '../../services/buscarEnCodigo'
 import { quitarResaltado, resaltarCoincidencia } from '../../services/resaltado'
 import { citaArticulo, copiarAlPortapapeles, textoConCita } from '../../services/citas'
 import { avisar } from '../../store/useAvisos'
+import { imprimir } from '../../services/impresion'
+import { VistaImprimibleArticulo } from '../ui/VistasImprimibles'
 import { TAMANOS_FUENTE, TEMAS_LECTURA } from '../../services/lecturaTema'
 import type { Articulo, CodigoData, CodigoTipo } from '../../types'
 
@@ -304,8 +306,8 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
 
         <button
           onClick={() => window.print()}
-          title="Exportar el código completo a PDF: abre el diálogo de impresión, elegí 'Guardar como PDF'"
-          aria-label="Imprimir o guardar el código como PDF"
+          title="Imprimir el código COMPLETO o guardarlo como PDF (para un solo artículo, usa el ícono junto al artículo)"
+          aria-label="Imprimir o guardar el código completo como PDF"
           className="boton boton-fantasma boton-icono max-sm:hidden"
         >
           <i className="ti ti-printer text-base" />
@@ -313,6 +315,14 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
       </div>
 
       <VistaImprimibleCodigo codigo={codigo} tipo={tipoActivo} transformarTexto={transformarTexto} />
+      {seleccionado && (
+        <VistaImprimibleArticulo
+          tipo={tipoActivo}
+          articulo={seleccionado}
+          texto={transformarTexto(seleccionado.t)}
+          rutaSeccion={[seleccionado.libro, seleccionado.titulo, seleccionado.capitulo].filter(Boolean).join(' · ')}
+        />
+      )}
 
       {seleccionado && (
         <div
@@ -375,6 +385,14 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
                   <span className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
                     {indiceActual + 1} de {arts.length}
                   </span>
+                  <button
+                    onClick={() => imprimir('articulo')}
+                    title="Imprimir o guardar como PDF solo este artículo"
+                    aria-label={`Imprimir ${seleccionado.a}`}
+                    className="boton boton-fantasma boton-chico boton-icono max-sm:hidden"
+                  >
+                    <i className="ti ti-printer text-sm" aria-hidden />
+                  </button>
                   <button
                     onClick={copiarConCita}
                     title={`Copiar el texto con la cita "${citaArticulo(tipoActivo, seleccionado.a)}" y la fuente`}

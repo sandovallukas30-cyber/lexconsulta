@@ -9,6 +9,8 @@ import { encabezadosDe, parsearApunte, textoPlanoDe, tieneEstructuraAncha } from
 import { ApunteContenido } from './ApunteContenido'
 import { quitarResaltado, resaltarCoincidencia } from '../../services/resaltado'
 import { descargarApunteMd } from '../../services/apunteArchivo'
+import { imprimir, useImprimirConCtrlP } from '../../services/impresion'
+import { VistaImprimibleApunte } from './VistasImprimibles'
 import { tarjetasDe } from '../../services/tarjetasApunte'
 import { RepasoApunte } from './RepasoApunte'
 import { NotasMargen } from './NotasMargen'
@@ -214,6 +216,8 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
   }
 
   const descargar = () => descargarApunteMd(apunte)
+  // C9: Ctrl+P imprime el apunte (antes: una hoja en blanco)
+  useImprimirConCtrlP('apunte', !editando)
 
   const palabras = useMemo(() => (textoVoz.trim() ? textoVoz.trim().split(/\s+/).length : 0), [textoVoz])
   const minutosLectura = palabras > 0 ? Math.max(1, Math.round(palabras / PALABRAS_POR_MINUTO)) : 0
@@ -239,6 +243,7 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
       transition={{ duration: 0.18 }}
       className={`fixed inset-0 h-[100dvh] z-[80] flex flex-col ${tema.bg}`}
     >
+      {!editando && <VistaImprimibleApunte apunte={apunte} bloques={bloques} clase={clase} cuaderno={cuaderno} />}
       <div className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-3 border-b flex-shrink-0 ${tema.border}`}>
         {!editando && (
           <button
@@ -307,6 +312,17 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
               <i className="ti ti-adjustments-horizontal text-lg" />
             </button>
           </>
+        )}
+
+        {!editando && (
+          <button
+            onClick={() => imprimir('apunte')}
+            title="Imprimir o guardar como PDF (Ctrl+P)"
+            aria-label="Imprimir el apunte"
+            className={`hidden sm:flex w-9 h-9 rounded-lg items-center justify-center transition-colors flex-shrink-0 ${tema.textSoft} ${tema.hoverSuave}`}
+          >
+            <i className="ti ti-printer text-lg" />
+          </button>
         )}
 
         <button

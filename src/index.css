@@ -190,6 +190,23 @@ html, body, #root { height: 100%; width: 100%; overflow: hidden; }
   .imprimir-coleccion, .imprimir-codigo, .imprimir-mapa-mental-svg { display: block; width: 100%; }
 }
 
+/* C9: un artículo o un apunte solos (ver services/impresion.ts). */
+.imprimir-articulo, .imprimir-apunte { display: none; }
+@media print {
+  body[data-imprimir] .imprimir-coleccion,
+  body[data-imprimir] .imprimir-codigo,
+  body[data-imprimir] .imprimir-mapa-mental-svg { display: none; }
+  body[data-imprimir='articulo'] .imprimir-articulo,
+  body[data-imprimir='apunte'] .imprimir-apunte { display: block; width: 100%; }
+  /* colores de recuadros, resaltados y notas tal como en pantalla */
+  .imprimir-apunte, .imprimir-articulo { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  /* recuadros, tablas y títulos: sin cortarse ni quedar huérfanos al pie */
+  .imprimir-apunte [data-recuadro], .imprimir-apunte [data-tabla], .imprimir-apunte tr, .imprimir-apunte li { break-inside: avoid; }
+  .imprimir-apunte h2, .imprimir-apunte h3, .imprimir-apunte h4 { break-after: avoid; }
+  .imprimir-apunte [data-tabla] { overflow: visible; }
+  .imprimir-apunte p, .imprimir-articulo p { orphans: 3; widows: 3; }
+}
+
 /* Acciones que solo aparecen al pasar el mouse (eliminar colección, mapa,
    consulta...): en pantallas táctiles no hay hover y quedaban invisibles
    para siempre; con teclado, invisibles aunque tuvieran el foco. */
