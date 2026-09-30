@@ -205,6 +205,15 @@ html, body, #root { height: 100%; width: 100%; overflow: hidden; }
   .imprimir-apunte h2, .imprimir-apunte h3, .imprimir-apunte h4 { break-after: avoid; }
   .imprimir-apunte [data-tabla] { overflow: visible; }
   .imprimir-apunte p, .imprimir-articulo p { orphans: 3; widows: 3; }
+  /* Ctrl+P en una pantalla sin versión imprimible: antes salía una hoja en
+     blanco (#root oculto y nada más); ahora, cómo imprimir lo que se busca. */
+  body:not(:has(.imprimir-coleccion, .imprimir-codigo, .imprimir-mapa-mental-svg, .imprimir-apunte, .imprimir-articulo))::after {
+    content: 'Esta pantalla de Prima Lex no tiene versión para imprimir. Para imprimir un apunte, ábrelo en Modo Lectura; para un artículo o un código, usa el ícono de impresora del Explorador; también se pueden imprimir las colecciones y los mapas mentales.';
+    display: block;
+    padding: 2cm;
+    font: 14px/1.6 Georgia, serif;
+    color: #333;
+  }
 }
 
 /* Acciones que solo aparecen al pasar el mouse (eliminar colección, mapa,

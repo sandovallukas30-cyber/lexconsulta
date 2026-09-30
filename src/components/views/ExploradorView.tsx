@@ -19,7 +19,7 @@ import { buscarEnCodigo, consultaComoId } from '../../services/buscarEnCodigo'
 import { quitarResaltado, resaltarCoincidencia } from '../../services/resaltado'
 import { citaArticulo, copiarAlPortapapeles, textoConCita } from '../../services/citas'
 import { avisar } from '../../store/useAvisos'
-import { imprimir } from '../../services/impresion'
+import { imprimir, useImprimirConCtrlP } from '../../services/impresion'
 import { VistaImprimibleArticulo } from '../ui/VistasImprimibles'
 import { TAMANOS_FUENTE, TEMAS_LECTURA } from '../../services/lecturaTema'
 import type { Articulo, CodigoData, CodigoTipo } from '../../types'
@@ -122,6 +122,10 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
     }, 300)
     return () => window.clearTimeout(t)
   }, [resaltado])
+
+  // en el Modo Lectura, Ctrl+P imprime el artículo que se está leyendo (no
+  // el código completo, que es lo que imprime Ctrl+P en la vista normal)
+  useImprimirConCtrlP('articulo', modoLecturaAbierto)
 
   const copiarConCita = async () => {
     if (!seleccionado) return
