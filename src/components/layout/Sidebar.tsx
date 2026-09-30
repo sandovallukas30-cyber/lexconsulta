@@ -111,6 +111,14 @@ export function Sidebar() {
         animate={esMovil ? { x: menuMovilAbierto ? 0 : -300, width: 280 } : { x: 0, width: colapsado ? 68 : 256 }}
         transition={{ duration: 0.22, ease: 'easeOut' }}
         aria-label="Menú principal"
+        // en móvil se cierra también deslizándolo hacia la izquierda
+        drag={esMovil && menuMovilAbierto ? 'x' : false}
+        dragConstraints={{ left: -300, right: 0 }}
+        dragElastic={{ left: 0.2, right: 0 }}
+        dragSnapToOrigin
+        onDragEnd={(_, info) => {
+          if (info.offset.x < -70 || info.velocity.x < -400) setMenuMovilAbierto(false)
+        }}
         // en móvil, cerrado = fuera de la pantalla e inerte (no se puede tabular a él)
         inert={esMovil && !menuMovilAbierto ? true : undefined}
         className={`flex flex-col border-r overflow-hidden ${

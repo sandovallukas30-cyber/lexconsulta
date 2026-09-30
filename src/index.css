@@ -79,6 +79,14 @@ html, body, #root { height: 100%; width: 100%; overflow: hidden; }
 }
 .group:focus-within .group-hover\:opacity-100 { opacity: 1; }
 
+/* Pantallas táctiles: ningún botón del contenido por debajo de 40 px de
+   alto (con el dedo, los chips de 25-30 px se fallaban). Solo afecta a
+   punteros "gruesos"; con mouse todo queda igual. Los enlaces en línea no
+   cambian (min-height no aplica a elementos inline). */
+@media (pointer: coarse) {
+  main button:not(.sin-tactil), header button, [role='dialog'] button:not(.sin-tactil) { min-height: 40px; }
+}
+
 /* Coincidencia del buscador de apuntes (Omnibar → Modo Lectura) */
 ::highlight(prima-busqueda) { background-color: #fde047; color: #1c1917; }
 
