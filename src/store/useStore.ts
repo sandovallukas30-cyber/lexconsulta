@@ -283,6 +283,12 @@ interface AppState {
   /** Progreso del repaso de tarjetas de apuntes (B5), por id de tarjeta. */
   repasoApuntes: Record<string, EstadoTarjetaRepaso>
   registrarRepasoTarjeta: (id: string, resultado: 'sabia' | 'no_sabia') => void
+
+  /** Hasta dónde se leyó cada apunte (0-1 del alto total), para ofrecer
+   *  "Retomar donde quedaste" (C1). Antes vivía suelto en localStorage con
+   *  una clave por apunte: no iba en el respaldo. */
+  posicionLectura: Record<string, { ratio: number; fecha: number }>
+  guardarPosicionLectura: (apunteId: string, ratio: number) => void
 }
 
 const datosAcademicosVacios: DatosAcademicosModulo = { clases: [], evaluaciones: [], textos: [], apuntes: [], cuadernos: [], briefs: [] }
@@ -392,6 +398,7 @@ export const useStore = create<AppState>()(
       ramos: [],
       diasActividadEstudio: [],
       repasoApuntes: {},
+      posicionLectura: {},
 
       setPerfil: (perfil) => set({ perfil, modalPerfilAbierto: false }),
       setVistaActiva: (vistaActiva) =>
@@ -1067,6 +1074,14 @@ export const useStore = create<AppState>()(
           repasoApuntes: { ...s.repasoApuntes, [id]: siguienteEstado(s.repasoApuntes[id], resultado) },
           diasActividadEstudio: agregarActividadHoy(s.diasActividadEstudio),
         })),
+      guardarPosicionLectura: (apunteId, ratio) =>
+        set((s) => {
+          const posicionLectura = { ...s.posicionLectura }
+          // al llegar al final (o volver al inicio) no hay nada que retomar
+          if (ratio <= 0.02 || ratio >= 0.985) delete posicionLectura[apunteId]
+          else posicionLectura[apunteId] = { ratio, fecha: Date.now() }
+          return { posicionLectura }
+        }),
       restaurarColeccion: (coleccion) =>
         set((s) => ({
           colecciones: s.colecciones.some((c) => c.id === coleccion.id) ? s.colecciones : [coleccion, ...s.colecciones],
@@ -1079,7 +1094,7 @@ export const useStore = create<AppState>()(
     {
       name: 'prima-lex-storage-v3',
       storage: crearAlmacenamiento(),
-      version: 30,
+      version: 31,
       partialize: (s) => ({
         perfil: s.perfil,
         codigos: s.codigos,
@@ -1110,6 +1125,7 @@ export const useStore = create<AppState>()(
         ramos: s.ramos,
         diasActividadEstudio: s.diasActividadEstudio,
         repasoApuntes: s.repasoApuntes,
+        posicionLectura: s.posicionLectura,
       }),
       migrate: (persisted: unknown, version: number) => {
         // Las migraciones se ENCADENAN: cada bloque transforma `state` y el
@@ -1195,6 +1211,27 @@ export const useStore = create<AppState>()(
           // v30: repaso de tarjetas generadas desde los apuntes (B5).
           const previo = state.repasoApuntes
           state = { ...state, repasoApuntes: previo && typeof previo === 'object' && !Array.isArray(previo) ? previo : {} }
+        }
+        if (version < 31) {
+          // v31: la posición de lectura de cada apunte pasa al store. Se
+          // traen las que había en localStorage ("prima-lex-apunte-scroll:<id>").
+          const posicionLectura: Record<string, { ratio: number; fecha: number }> = {}
+          try {
+            const PREFIJO = 'prima-lex-apunte-scroll:'
+            const viejas: string[] = []
+            for (let i = 0; i < localStorage.length; i++) {
+              const clave = localStorage.key(i)
+              if (clave?.startsWith(PREFIJO)) viejas.push(clave)
+            }
+            for (const clave of viejas) {
+              const ratio = Number(localStorage.getItem(clave))
+              if (Number.isFinite(ratio) && ratio > 0.02 && ratio < 0.985) posicionLectura[clave.slice(PREFIJO.length)] = { ratio, fecha: Date.now() }
+              localStorage.removeItem(clave)
+            }
+          } catch {
+            // sin localStorage: se parte de cero
+          }
+          state = { ...state, posicionLectura }
         }
         return state as never
       },

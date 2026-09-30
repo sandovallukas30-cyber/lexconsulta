@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef, type ReactNode, type TouchEvent }
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
+import { useProgresoScroll } from '../../hooks/useProgresoScroll'
 import { useCodigo } from '../../hooks/useCodigo'
 import { useReferenciasFiltradas } from '../../hooks/useReferencias'
 import { SelectorCodigo } from '../ui/SelectorCodigo'
@@ -75,6 +76,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
   }, [articuloPendiente, limpiarArticuloPendiente])
 
   const { codigo, cargando: cargandoCodigo } = useCodigo(tipoActivo)
+  const refArticulo = useRef<HTMLDivElement>(null)
 
   const arts = codigo?.articulos ?? []
   const seleccionado = useMemo(
@@ -86,6 +88,12 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
     () => (seleccionado ? arts.findIndex((a) => a.a === seleccionado.a) : -1),
     [arts, seleccionado]
   )
+
+  // Al cambiar de artículo, empezar a leerlo desde arriba (antes quedaba el
+  // scroll del artículo anterior y el siguiente se leía desde la mitad)
+  useEffect(() => {
+    refArticulo.current?.scrollTo({ top: 0 })
+  }, [seleccionado?.a])
 
   const anterior = indiceActual > 0 ? arts[indiceActual - 1] : null
   const siguiente = indiceActual >= 0 && indiceActual < arts.length - 1 ? arts[indiceActual + 1] : null
@@ -279,7 +287,24 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto">
+      {/* Posición dentro del código (C1): con 2.566 artículos, "12 de 2566"
+          solo no da idea de cuánto falta */}
+      <div
+        className={`h-[3px] flex-shrink-0 ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-100'}`}
+        role="progressbar"
+        aria-label="Posición en el código"
+        aria-valuemin={1}
+        aria-valuemax={arts.length}
+        aria-valuenow={indiceActual + 1}
+        title={`Artículo ${indiceActual + 1} de ${arts.length}`}
+      >
+        <div
+          className="h-full transition-[width] duration-200 ease-out"
+          style={{ width: `${arts.length > 1 ? ((indiceActual + 1) / arts.length) * 100 : 100}%`, background: VERDE }}
+        />
+      </div>
+
+      <div ref={refArticulo} className="flex-1 overflow-y-auto">
         {seleccionado && (
           <AnimatePresence mode="wait">
             <motion.article
@@ -1311,6 +1336,13 @@ function ModoLecturaOverlay({
   posicionActual: number
   totalArticulos: number
 }) {
+  // Progreso dentro del artículo (C1): algunos artículos son de varias
+  // pantallas (ej. las definiciones de la Ley del Consumidor)
+  const refLectura = useRef<HTMLDivElement>(null)
+  const { ratio: progresoArticulo, desplazable: articuloLargo } = useProgresoScroll(refLectura, `${abierto}-${seleccionado?.a}`)
+  useEffect(() => {
+    refLectura.current?.scrollTo({ top: 0 })
+  }, [seleccionado?.a])
   const [indiceTamano, setIndiceTamano] = useState(0)
   const temaLectura = useStore((s) => s.modoLecturaTema)
   const setTemaLectura = useStore((s) => s.setModoLecturaTema)
@@ -1489,7 +1521,10 @@ function ModoLecturaOverlay({
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto" onTouchStart={alTocar} onTouchEnd={alSoltarToque}>
+          <div className={`h-[3px] flex-shrink-0 ${tema.chipBg}`} role="progressbar" aria-label="Progreso de lectura del artículo" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((articuloLargo ? progresoArticulo : 1) * 100)}>
+            <div className="h-full transition-[width] duration-150 ease-out" style={{ width: `${(articuloLargo ? progresoArticulo : 1) * 100}%`, background: VERDE }} />
+          </div>
+          <div ref={refLectura} className="flex-1 overflow-y-auto" onTouchStart={alTocar} onTouchEnd={alSoltarToque}>
             <div className="max-w-2xl mx-auto px-6 py-10">
               <h1 className={`text-3xl font-serif font-bold mb-6 ${tema.text}`}>
                 <span style={{ color: VERDE }}>{seleccionado.a}</span>

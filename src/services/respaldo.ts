@@ -31,6 +31,8 @@ export interface DatosRespaldo {
   mapasMentales: MapaMental[]
   /** Progreso del repaso de tarjetas de apuntes (desde persist v30). */
   repasoApuntes: Record<string, EstadoTarjetaRepaso>
+  /** Hasta dónde se leyó cada apunte (desde persist v31). */
+  posicionLectura: Record<string, { ratio: number; fecha: number }>
 }
 
 export interface ArchivoRespaldo {
@@ -74,6 +76,7 @@ export function crearRespaldo(): ArchivoRespaldo {
       subrayados: s.subrayados,
       mapasMentales: s.mapasMentales,
       repasoApuntes: s.repasoApuntes,
+      posicionLectura: s.posicionLectura,
     },
   }
 }
@@ -184,6 +187,7 @@ export function validarRespaldo(texto: string): ResultadoValidacion {
     subrayados: (d.subrayados as Record<string, string[]>) ?? {},
     mapasMentales: (d.mapasMentales as MapaMental[]) ?? [],
     repasoApuntes: (d.repasoApuntes as Record<string, EstadoTarjetaRepaso>) ?? {},
+    posicionLectura: esObjeto(d.posicionLectura) ? (d.posicionLectura as Record<string, { ratio: number; fecha: number }>) : {},
   }
   const respaldo: ArchivoRespaldo = { app: MARCA_APP, version: crudo.version, fecha: esTexto(crudo.fecha) ? crudo.fecha : '', datos }
   return { ok: true, respaldo, resumen: resumirRespaldo(datos) }
@@ -277,6 +281,7 @@ export function aplicarRespaldo(respaldo: ArchivoRespaldo, modo: ModoImportacion
     subrayados: s.subrayados,
     mapasMentales: s.mapasMentales,
     repasoApuntes: s.repasoApuntes,
+    posicionLectura: s.posicionLectura,
   }
   useEstadoGuardado.setState({ error: null })
   silenciarAvisoGuardado()
@@ -301,6 +306,7 @@ function aplicarSinVerificar(respaldo: ArchivoRespaldo, modo: ModoImportacion) {
       subrayados: d.subrayados,
       mapasMentales: d.mapasMentales,
       repasoApuntes: d.repasoApuntes,
+      posicionLectura: d.posicionLectura,
       moduloActivoId: null,
       coleccionActivaId: null,
       mapaMentalActivoId: null,
@@ -322,5 +328,6 @@ function aplicarSinVerificar(respaldo: ArchivoRespaldo, modo: ModoImportacion) {
     subrayados,
     mapasMentales: unirPorId(s.mapasMentales, d.mapasMentales),
     repasoApuntes: { ...d.repasoApuntes, ...s.repasoApuntes },
+    posicionLectura: { ...d.posicionLectura, ...s.posicionLectura },
   })
 }
