@@ -5,6 +5,7 @@ import {
   Controls,
   useNodesState,
   useEdgesState,
+  useReactFlow,
   Handle,
   Position,
   MarkerType,
@@ -12,6 +13,7 @@ import {
   type Edge,
   type NodeProps,
 } from '@xyflow/react'
+import '@xyflow/react/dist/style.css'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { cargarCodigo, obtenerCodigo } from '../../services/codigos'
@@ -21,7 +23,6 @@ import {
   type Relacion,
   type TipoRelacion,
 } from '../../services/relaciones'
-import { SelectorCodigo } from '../ui/SelectorCodigo'
 import type { Articulo, CodigoTipo } from '../../types'
 
 const VERDE = 'var(--accent-base)'
@@ -65,25 +66,23 @@ interface ItemRelacion {
   mismaSeccion: boolean
 }
 
-export function MapaView() {
-  const codigoElegido = useStore((s) => s.codigoMapaActivo)
-  const setCodigoElegido = useStore((s) => s.setCodigoMapa)
-
-  if (!codigoElegido) {
-    return (
-      <SelectorCodigo
-        titulo="Mapa de relaciones"
-        descripcion="Elige el código cuyas conexiones internas quieres visualizar"
-        icono="ti-network"
-        onElegir={(tipo) => setCodigoElegido(tipo)}
-      />
-    )
-  }
-
-  return <MapaInterno tipoActivo={codigoElegido} onCambiarCodigo={() => setCodigoElegido(null)} />
-}
-
-function MapaInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: CodigoTipo; onCambiarCodigo: () => void }) {
+/** Mapa de relaciones entre los artículos de un código. Ya no es una pantalla
+ *  propia: vive DENTRO del Explorador («Mapa» en su barra), centrado en el
+ *  artículo que se está leyendo. */
+export function MapaInterno({
+  tipoActivo,
+  raizInicial,
+  onVolver,
+  onLeer,
+}: {
+  tipoActivo: CodigoTipo
+  /** Artículo con que se abre el mapa (el que se estaba leyendo). */
+  raizInicial?: string
+  /** Vuelve al texto del Explorador. */
+  onVolver: () => void
+  /** Cierra el mapa y abre este artículo para leerlo. */
+  onLeer: (id: string) => void
+}) {
   const modoOscuro = useStore((s) => s.modoOscuro)
   const [raiz, setRaiz] = useState<string | null>(null)
   const [seleccionado, setSeleccionado] = useState<string | null>(null)
@@ -143,7 +142,9 @@ function MapaInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: CodigoTipo; 
   // Auto-pick default root: Art. 1 (first article)
   useEffect(() => {
     if (!grafo || raiz) return
-    const elegido = grafo.articulos.has('Art. 1')
+    const elegido = raizInicial && grafo.articulos.has(raizInicial)
+      ? raizInicial
+      : grafo.articulos.has('Art. 1')
       ? 'Art. 1'
       : [...grafo.articulos.keys()][0]
     setRaiz(elegido)
@@ -465,38 +466,28 @@ function MapaInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: CodigoTipo; 
   return (
     <div className={`h-full flex flex-col ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
       <div
-        className={`flex flex-wrap items-center gap-3 px-6 py-3 border-b ${
+        className={`flex flex-wrap items-center gap-3 px-3 sm:px-6 py-3 border-b ${
           modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
         }`}
       >
-        <button
-          onClick={onCambiarCodigo}
-          title="Cambiar código"
-          className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-colors group ${
-            modoOscuro ? 'hover:bg-zinc-800' : 'hover:bg-zinc-100'
-          }`}
-        >
-          <i className="ti ti-network text-base" style={{ color: 'var(--accent-texto)' }} />
-          <span className={`text-sm font-semibold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
-            {codigo.codigo}
-          </span>
+        <button onClick={onVolver} className="boton boton-borde boton-chico" title="Volver a leer el código">
+          <i className="ti ti-arrow-left text-sm" aria-hidden /> Volver al texto
+        </button>
+        <span className="flex items-center gap-2 min-w-0">
+          <i className="ti ti-network text-base" style={{ color: 'var(--accent-texto)' }} aria-hidden />
+          <span className={`text-sm font-semibold truncate ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>Mapa de relaciones</span>
           {stats && (
-            <span className={`text-[11px] ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
+            <span className="text-[11px] text-zinc-500 hidden sm:inline">
               · {stats.totalArticulos} arts · {stats.totalRelaciones} relaciones
             </span>
           )}
-          <i
-            className={`ti ti-chevron-down text-xs opacity-0 group-hover:opacity-60 transition-opacity ${
-              modoOscuro ? 'text-zinc-400' : 'text-zinc-500'
-            }`}
-          />
-        </button>
+        </span>
 
         <div className="flex-1" />
 
         <button
           onClick={() => setBuscadorAbierto(true)}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors min-w-[260px] ${
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors sm:min-w-[260px] min-w-0 ${
             modoOscuro ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
           }`}
         >
@@ -553,13 +544,14 @@ function MapaInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: CodigoTipo; 
           outgoingTotal={outgoingTodos.length}
           outgoingMostrados={Math.min(VISIBLES_POR_COLUMNA, outgoingFiltradas.length)}
           onHacerRaiz={() => seleccionado && setRaiz(seleccionado)}
+          onLeer={() => seleccionado && onLeer(seleccionado)}
           soloMismoLibro={soloMismoLibro}
           modoOscuro={modoOscuro}
         />
 
         <div className="flex-1 relative">
           {raizArticulo && (
-            <div className={`absolute top-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 px-3 py-1 rounded-full text-[10px] uppercase tracking-wider font-semibold pointer-events-none ${modoOscuro ? 'bg-zinc-900/80 text-zinc-400' : 'bg-white/80 text-zinc-500'}`}>
+            <div className={`max-sm:hidden absolute top-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 px-3 py-1 rounded-full text-[10px] uppercase tracking-wider font-semibold pointer-events-none ${modoOscuro ? 'bg-zinc-900/80 text-zinc-400' : 'bg-white/80 text-zinc-500'}`}>
               <span>Lo mencionan</span>
               <span>→</span>
               <span style={{ color: 'var(--accent-texto)' }}>Artículo central</span>
@@ -587,6 +579,7 @@ function MapaInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: CodigoTipo; 
               snapGrid={[20, 20]}
               proOptions={{ hideAttribution: true }}
             >
+              <AjustarVista clave={`${modoLayout}|${nodes.map((n) => n.id).join(',')}`} />
               <Background color={modoOscuro ? '#27272a' : '#e4e4e7'} gap={24} />
               <Controls
                 showInteractive={false}
@@ -601,15 +594,22 @@ function MapaInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: CodigoTipo; 
             <EmptyState modoOscuro={modoOscuro} onElegir={() => setBuscadorAbierto(true)} />
           )}
 
+          {/* En móvil el panel lateral no cabe: leer el artículo elegido desde acá */}
+          {seleccionado && (
+            <button onClick={() => onLeer(seleccionado)} className="md:hidden absolute top-3 right-3 z-10 boton boton-primario boton-chico">
+              <i className="ti ti-book-2 text-sm" aria-hidden /> Leer {seleccionado}
+            </button>
+          )}
+
           {/* Leyenda */}
           <div
-            className={`absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-4 px-3 py-1.5 rounded-lg text-[11px] ${
+            className={`absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-4 whitespace-nowrap px-3 py-1.5 rounded-lg text-[11px] ${
               modoOscuro ? 'bg-zinc-900/90 border border-zinc-800' : 'bg-white/95 border border-zinc-200'
             }`}
           >
             <Leyenda color={VERDE} label="menciona" modoOscuro={modoOscuro} />
             <Leyenda color={MORADO} label="forma parte de" punteada modoOscuro={modoOscuro} />
-            <span className={`text-[10px] ml-2 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
+            <span className={`max-sm:hidden text-[10px] ml-2 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
               Doble clic en un nodo → cambia el centro
             </span>
           </div>
@@ -639,6 +639,18 @@ function MapaInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: CodigoTipo; 
       </AnimatePresence>
     </div>
   )
+}
+
+/** El mapa se encuadra solo UNA vez al montar (fitView), cuando a veces solo
+ *  está el nodo central. Acá se reencuadra cada vez que cambia el conjunto de
+ *  nodos o el diseño (no al arrastrar: la clave no incluye posiciones). */
+function AjustarVista({ clave }: { clave: string }) {
+  const { fitView } = useReactFlow()
+  useEffect(() => {
+    const t = window.setTimeout(() => fitView({ padding: 0.25, duration: 200 }), 80)
+    return () => window.clearTimeout(t)
+  }, [clave, fitView])
+  return null
 }
 
 // ============= SCORING & HELPERS =============
@@ -767,6 +779,7 @@ function PanelDetalle({
   outgoingTotal,
   outgoingMostrados,
   onHacerRaiz,
+  onLeer,
   soloMismoLibro,
   modoOscuro,
 }: {
@@ -778,13 +791,14 @@ function PanelDetalle({
   outgoingTotal: number
   outgoingMostrados: number
   onHacerRaiz: () => void
+  onLeer: () => void
   soloMismoLibro: boolean
   modoOscuro: boolean
 }) {
   if (!articulo) {
     return (
       <aside
-        className={`w-80 flex-shrink-0 border-r p-6 ${
+        className={`max-md:hidden w-80 flex-shrink-0 border-r p-6 ${
           modoOscuro ? 'bg-zinc-900 border-zinc-800 text-zinc-500' : 'bg-white border-zinc-200 text-zinc-400'
         }`}
       >
@@ -798,7 +812,7 @@ function PanelDetalle({
 
   return (
     <aside
-      className={`w-80 flex-shrink-0 border-r flex flex-col overflow-hidden ${
+      className={`max-md:hidden w-80 flex-shrink-0 border-r flex flex-col overflow-hidden ${
         modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
       }`}
     >
@@ -828,6 +842,9 @@ function PanelDetalle({
         <p className={`text-[10px] uppercase tracking-wider font-semibold ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
           {codigoNombre}
         </p>
+        <button onClick={onLeer} className="boton boton-borde boton-chico mt-2">
+          <i className="ti ti-book-2 text-sm" aria-hidden /> Leer este artículo
+        </button>
         {(articulo.libro || articulo.titulo || articulo.capitulo) && (
           <p className={`text-[11px] mt-1.5 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
             {[

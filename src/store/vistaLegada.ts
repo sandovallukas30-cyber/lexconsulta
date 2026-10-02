@@ -14,7 +14,10 @@ export function resolverVista(id: VistaId | string): DestinoVista {
   switch (id) {
     case 'practica':
       return { vista: 'repasar', repasarTab: 'juegos' }
-    case 'hoy': case 'consultar': case 'situacion': case 'modulos': case 'canvas': case 'mapa':
+    case 'mapa':
+      // el mapa de relaciones vive dentro del Explorador
+      return { vista: 'explorador' }
+    case 'hoy': case 'consultar': case 'situacion': case 'modulos': case 'canvas':
     case 'explorador': case 'colecciones': case 'mapasmentales': case 'historial':
     case 'admin': case 'repasar': case 'plazos':
       return { vista: id }

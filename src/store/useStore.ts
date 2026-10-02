@@ -94,7 +94,6 @@ interface AppState {
   modalPerfilAbierto: boolean
   consultaActivaId: string | null
   codigoExploradorActivo: CodigoActivo['tipo'] | null
-  codigoMapaActivo: CodigoActivo['tipo'] | null
   /** Artículo específico a seleccionar la próxima vez que Explorador monte
    * o reciba esto (lo consume y lo vuelve a null de inmediato). Necesario
    * para navegar a una referencia detectada en el texto ("ver artículo
@@ -187,7 +186,6 @@ interface AppState {
    * texto de otro artículo. */
   abrirArticuloEnExplorador: (codigo: CodigoActivo['tipo'], articulo: string) => void
   limpiarArticuloExploradorPendiente: () => void
-  setCodigoMapa: (tipo: CodigoActivo['tipo'] | null) => void
   abrirModalPerfil: () => void
   cerrarModalPerfil: () => void
   acercaAbierto: boolean
@@ -402,7 +400,6 @@ export const useStore = create<AppState>()(
       codigoExploradorActivo: null,
       articuloExploradorPendiente: null,
       busquedaPlazoPendiente: null,
-      codigoMapaActivo: null,
       omnibarAbierto: false,
       rightSidebarAbierto: false,
       visitadosRecientes: [],
@@ -805,7 +802,6 @@ export const useStore = create<AppState>()(
       limpiarArticuloExploradorPendiente: () => set({ articuloExploradorPendiente: null }),
       abrirBusquedaEnPlazos: (texto) => set({ vistaActiva: 'plazos', busquedaPlazoPendiente: texto }),
       limpiarBusquedaPlazoPendiente: () => set({ busquedaPlazoPendiente: null }),
-      setCodigoMapa: (tipo) => set({ codigoMapaActivo: tipo }),
       abrirModalPerfil: () => set({ modalPerfilAbierto: true }),
       cerrarModalPerfil: () => set({ modalPerfilAbierto: false }),
       abrirAcerca: (pestana = 'acerca') => set({ acercaAbierto: true, acercaPestana: pestana }),

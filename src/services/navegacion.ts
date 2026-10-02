@@ -30,7 +30,6 @@ const NOMBRES_VISTA: Partial<Record<VistaActiva, string>> = {
   modulos: 'Módulos',
   mapasmentales: 'Mapas mentales',
   canvas: 'Canvas',
-  mapa: 'Mapa',
   explorador: 'Explorador',
   colecciones: 'Colecciones',
   historial: 'Historial',

@@ -16,7 +16,6 @@ const cargadores: Record<VistaActiva, Cargador> = {
   situacion: () => import('./components/views/SituacionView').then((m) => ({ default: m.SituacionView })),
   modulos: () => import('./components/views/ModulosView').then((m) => ({ default: m.ModulosView })),
   canvas: () => import('./components/views/CanvasView').then((m) => ({ default: m.CanvasView })),
-  mapa: () => import('./components/views/MapaView').then((m) => ({ default: m.MapaView })),
   explorador: () => import('./components/views/ExploradorView').then((m) => ({ default: m.ExploradorView })),
   colecciones: () => import('./components/views/ColeccionesView').then((m) => ({ default: m.ColeccionesView })),
   mapasmentales: () => import('./components/views/MapasMentalesView').then((m) => ({ default: m.MapasMentalesView })),

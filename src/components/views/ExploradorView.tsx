@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef, useCallback, type ReactNode, type TouchEvent } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback, lazy, Suspense, type ReactNode, type TouchEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
@@ -17,6 +17,7 @@ import { construirEsquema, ETIQUETAS_NIVEL, type NodoEsquema } from '../../servi
 import { buscarVinculosArticulo } from '../../services/modulosAcademico'
 import { buscarEnCodigo, consultaComoId } from '../../services/buscarEnCodigo'
 import { quitarResaltado, resaltarCoincidencia } from '../../services/resaltado'
+import { getGrafo } from '../../services/relaciones'
 import { citaArticulo, copiarAlPortapapeles, textoConCita } from '../../services/citas'
 import { avisar } from '../../store/useAvisos'
 import { imprimir, useImprimirConCtrlP } from '../../services/impresion'
@@ -44,6 +45,9 @@ export function ExploradorView() {
   return <ExploradorInterno tipoActivo={codigoElegido} onCambiarCodigo={() => setCodigoElegido(null)} />
 }
 
+// React Flow pesa bastante: el mapa se baja solo al abrirlo
+const MapaInterno = lazy(() => import('./MapaView').then((m) => ({ default: m.MapaInterno })))
+
 function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: CodigoTipo; onCambiarCodigo: () => void }) {
   const modoOscuro = useStore((s) => s.modoOscuro)
   const modernizarLenguaje = useStore((s) => s.modernizarLenguaje)
@@ -68,6 +72,8 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
   const [modoLecturaAbierto, setModoLecturaAbierto] = useState(false)
   const [busquedaAbierta, setBusquedaAbierta] = useState(false)
   const [busqueda, setBusqueda] = useState('')
+  // mapa de relaciones del código, dentro del Explorador (antes era la pantalla «Mapa»)
+  const [vistaMapa, setVistaMapa] = useState(false)
   // coincidencia a marcar en el artículo al abrirlo desde una búsqueda de texto
   const [resaltado, setResaltado] = useState<{ articulo: string; texto: string } | null>(null)
   const refTarjeta = useRef<HTMLElement>(null)
@@ -75,6 +81,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
   // Limpiar la búsqueda cuando cambia el código
   useEffect(() => {
     setBusqueda('')
+    setVistaMapa(false)
   }, [tipoActivo])
 
   // Seguir un enlace de referencia ("ver artículo 1698"), incluso entre
@@ -269,6 +276,17 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
         </button>
 
         <button
+          onClick={() => setVistaMapa((v) => !v)}
+          aria-pressed={vistaMapa}
+          title="Mapa de relaciones: qué artículos mencionan a este y a cuáles menciona"
+          aria-label="Mapa de relaciones"
+          className="boton boton-suave max-md:boton-icono"
+        >
+          <i className="ti ti-network text-base" />
+          <span className="hidden md:inline">Mapa</span>
+        </button>
+
+        <button
           onClick={() => setModoLecturaAbierto(true)}
           title="Modo lectura: pantalla completa, letra ajustable y lectura en voz alta"
           aria-label="Modo lectura"
@@ -328,131 +346,150 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
         />
       )}
 
-      {seleccionado && (
+      {vistaMapa ? (
+        <div className="flex-1 min-h-0">
+          <Suspense fallback={<div className="h-full" aria-busy="true" aria-label="Cargando el mapa" />}>
+            <MapaInterno
+              tipoActivo={tipoActivo}
+              raizInicial={seleccionado?.a}
+              onVolver={() => setVistaMapa(false)}
+              onLeer={(id) => {
+                setSeleccionadoId(id)
+                setVistaMapa(false)
+              }}
+            />
+          </Suspense>
+        </div>
+      ) : (
+        <>
+        {seleccionado && (
+          <div
+            className={`px-4 sm:px-6 py-2.5 border-b text-xs flex items-center gap-1.5 overflow-x-auto ${
+              modoOscuro ? 'bg-zinc-900 border-zinc-800 text-zinc-400' : 'bg-white border-zinc-200 text-zinc-500'
+            }`}
+          >
+            <span className="text-zinc-500 whitespace-nowrap flex-shrink-0">{codigo.codigo}</span>
+            {seleccionado.libro && <><Sep /><span className="truncate">Libro {seleccionado.libro}</span></>}
+            {seleccionado.titulo && <><Sep /><span className="truncate">Título {seleccionado.titulo}</span></>}
+            {seleccionado.capitulo && <><Sep /><span className="truncate">Cap. {seleccionado.capitulo}</span></>}
+            {seleccionado.parrafo && <><Sep /><span className="truncate">Párrafo {seleccionado.parrafo}</span></>}
+            <Sep />
+            <span className="font-semibold whitespace-nowrap" style={{ color: 'var(--accent-texto)' }}>
+              {seleccionado.a}
+            </span>
+          </div>
+        )}
+
+        {/* Posición dentro del código (C1): con 2.566 artículos, "12 de 2566"
+            solo no da idea de cuánto falta */}
         <div
-          className={`px-4 sm:px-6 py-2.5 border-b text-xs flex items-center gap-1.5 overflow-x-auto ${
-            modoOscuro ? 'bg-zinc-900 border-zinc-800 text-zinc-400' : 'bg-white border-zinc-200 text-zinc-500'
+          className={`h-[3px] flex-shrink-0 ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-100'}`}
+          role="progressbar"
+          aria-label="Posición en el código"
+          aria-valuemin={1}
+          aria-valuemax={arts.length}
+          aria-valuenow={indiceActual + 1}
+          title={`Artículo ${indiceActual + 1} de ${arts.length}`}
+        >
+          <div
+            className="h-full transition-[width] duration-200 ease-out"
+            style={{ width: `${arts.length > 1 ? ((indiceActual + 1) / arts.length) * 100 : 100}%`, background: VERDE }}
+          />
+        </div>
+
+        <div ref={refArticulo} className="flex-1 overflow-y-auto">
+          {seleccionado && (
+            <AnimatePresence mode="wait">
+              <motion.article
+                key={seleccionado.a}
+                ref={refTarjeta}
+                data-articulo={seleccionado.a}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                className={`max-w-3xl mx-3 sm:mx-auto my-4 sm:my-8 rounded-panel p-5 sm:p-10 ${
+                  modoOscuro ? 'bg-zinc-800/40 border border-zinc-800' : 'bg-white shadow-tarjeta border border-zinc-200/60'
+                }`}
+              >
+                <div className="flex items-baseline justify-between gap-3 mb-6">
+                  <h1
+                    className={`text-2xl sm:text-3xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}
+                    style={{ color: undefined }}
+                  >
+                    <span style={{ color: 'var(--accent-texto)' }}>{seleccionado.a}</span>
+                  </h1>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                      {indiceActual + 1} de {arts.length}
+                    </span>
+                    <button
+                      onClick={() => imprimir('articulo')}
+                      title="Imprimir o guardar como PDF solo este artículo"
+                      aria-label={`Imprimir ${seleccionado.a}`}
+                      className="boton boton-fantasma boton-chico boton-icono max-sm:hidden"
+                    >
+                      <i className="ti ti-printer text-sm" aria-hidden />
+                    </button>
+                    <button
+                      onClick={copiarConCita}
+                      title={`Copiar el texto con la cita "${citaArticulo(tipoActivo, seleccionado.a)}" y la fuente`}
+                      aria-label={`Copiar ${seleccionado.a} con cita`}
+                      className="boton boton-fantasma boton-chico max-sm:boton-icono"
+                    >
+                      <i className="ti ti-copy text-sm" aria-hidden />
+                      <span className="hidden sm:inline">Copiar con cita</span>
+                    </button>
+                  </div>
+                </div>
+                <ArticuloTexto
+                  texto={transformarTexto(seleccionado.t)}
+                  modoOscuro={modoOscuro}
+                  codigo={tipoActivo}
+                  articulo={seleccionado.a}
+                />
+                <RelacionesArticulo codigo={tipoActivo} articulo={seleccionado.a} onIr={setSeleccionadoId} onMapa={() => setVistaMapa(true)} modoOscuro={modoOscuro} />
+              <VinculosArticulo codigo={tipoActivo} articulo={seleccionado.a} modoOscuro={modoOscuro} />
+              </motion.article>
+            </AnimatePresence>
+          )}
+        </div>
+
+        <div
+          className={`border-t px-2 sm:px-4 py-2 sm:py-3 ${
+            modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
           }`}
         >
-          <span className="text-zinc-500 whitespace-nowrap flex-shrink-0">{codigo.codigo}</span>
-          {seleccionado.libro && <><Sep /><span className="truncate">Libro {seleccionado.libro}</span></>}
-          {seleccionado.titulo && <><Sep /><span className="truncate">Título {seleccionado.titulo}</span></>}
-          {seleccionado.capitulo && <><Sep /><span className="truncate">Cap. {seleccionado.capitulo}</span></>}
-          {seleccionado.parrafo && <><Sep /><span className="truncate">Párrafo {seleccionado.parrafo}</span></>}
-          <Sep />
-          <span className="font-semibold whitespace-nowrap" style={{ color: 'var(--accent-texto)' }}>
-            {seleccionado.a}
-          </span>
+          <div className="max-w-5xl mx-auto flex items-center gap-2">
+            <NavBtn
+              disabled={!anterior}
+              label="Anterior"
+              sub={anterior?.a}
+              onClick={() => anterior && setSeleccionadoId(anterior.a)}
+              icono="ti-chevron-left"
+              modoOscuro={modoOscuro}
+              align="left"
+            />
+
+            <Carrusel
+              arts={cercanos}
+              actualId={seleccionado?.a}
+              onSelect={(a) => setSeleccionadoId(a)}
+            />
+
+            <NavBtn
+              disabled={!siguiente}
+              label="Siguiente"
+              sub={siguiente?.a}
+              onClick={() => siguiente && setSeleccionadoId(siguiente.a)}
+              icono="ti-chevron-right"
+              modoOscuro={modoOscuro}
+              align="right"
+            />
+          </div>
         </div>
+        </>
       )}
-
-      {/* Posición dentro del código (C1): con 2.566 artículos, "12 de 2566"
-          solo no da idea de cuánto falta */}
-      <div
-        className={`h-[3px] flex-shrink-0 ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-100'}`}
-        role="progressbar"
-        aria-label="Posición en el código"
-        aria-valuemin={1}
-        aria-valuemax={arts.length}
-        aria-valuenow={indiceActual + 1}
-        title={`Artículo ${indiceActual + 1} de ${arts.length}`}
-      >
-        <div
-          className="h-full transition-[width] duration-200 ease-out"
-          style={{ width: `${arts.length > 1 ? ((indiceActual + 1) / arts.length) * 100 : 100}%`, background: VERDE }}
-        />
-      </div>
-
-      <div ref={refArticulo} className="flex-1 overflow-y-auto">
-        {seleccionado && (
-          <AnimatePresence mode="wait">
-            <motion.article
-              key={seleccionado.a}
-              ref={refTarjeta}
-              data-articulo={seleccionado.a}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className={`max-w-3xl mx-3 sm:mx-auto my-4 sm:my-8 rounded-panel p-5 sm:p-10 ${
-                modoOscuro ? 'bg-zinc-800/40 border border-zinc-800' : 'bg-white shadow-tarjeta border border-zinc-200/60'
-              }`}
-            >
-              <div className="flex items-baseline justify-between gap-3 mb-6">
-                <h1
-                  className={`text-2xl sm:text-3xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}
-                  style={{ color: undefined }}
-                >
-                  <span style={{ color: 'var(--accent-texto)' }}>{seleccionado.a}</span>
-                </h1>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                    {indiceActual + 1} de {arts.length}
-                  </span>
-                  <button
-                    onClick={() => imprimir('articulo')}
-                    title="Imprimir o guardar como PDF solo este artículo"
-                    aria-label={`Imprimir ${seleccionado.a}`}
-                    className="boton boton-fantasma boton-chico boton-icono max-sm:hidden"
-                  >
-                    <i className="ti ti-printer text-sm" aria-hidden />
-                  </button>
-                  <button
-                    onClick={copiarConCita}
-                    title={`Copiar el texto con la cita "${citaArticulo(tipoActivo, seleccionado.a)}" y la fuente`}
-                    aria-label={`Copiar ${seleccionado.a} con cita`}
-                    className="boton boton-fantasma boton-chico max-sm:boton-icono"
-                  >
-                    <i className="ti ti-copy text-sm" aria-hidden />
-                    <span className="hidden sm:inline">Copiar con cita</span>
-                  </button>
-                </div>
-              </div>
-              <ArticuloTexto
-                texto={transformarTexto(seleccionado.t)}
-                modoOscuro={modoOscuro}
-                codigo={tipoActivo}
-                articulo={seleccionado.a}
-              />
-              <VinculosArticulo codigo={tipoActivo} articulo={seleccionado.a} modoOscuro={modoOscuro} />
-            </motion.article>
-          </AnimatePresence>
-        )}
-      </div>
-
-      <div
-        className={`border-t px-2 sm:px-4 py-2 sm:py-3 ${
-          modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
-        }`}
-      >
-        <div className="max-w-5xl mx-auto flex items-center gap-2">
-          <NavBtn
-            disabled={!anterior}
-            label="Anterior"
-            sub={anterior?.a}
-            onClick={() => anterior && setSeleccionadoId(anterior.a)}
-            icono="ti-chevron-left"
-            modoOscuro={modoOscuro}
-            align="left"
-          />
-
-          <Carrusel
-            arts={cercanos}
-            actualId={seleccionado?.a}
-            onSelect={(a) => setSeleccionadoId(a)}
-          />
-
-          <NavBtn
-            disabled={!siguiente}
-            label="Siguiente"
-            sub={siguiente?.a}
-            onClick={() => siguiente && setSeleccionadoId(siguiente.a)}
-            icono="ti-chevron-right"
-            modoOscuro={modoOscuro}
-            align="right"
-          />
-        </div>
-      </div>
 
       <ModalIndice
         abierto={indiceAbierto}
@@ -1707,6 +1744,86 @@ const LABEL_VINCULO: Record<string, string> = { apunte: 'Apunte', texto: 'Texto'
 /** Apuntes, Textos y Casos que el propio usuario vinculó a este artículo
  *  desde Módulos (ver ModuloDetalle.tsx) -- el Explorador no sabe nada de
  *  esto por sí solo, se calcula recorriendo academicoModulos. */
+/** Relaciones del artículo DENTRO del mismo código (a cuáles remite, quiénes
+ *  lo citan, de qué artículo es sub-artículo y cuáles cuelgan de él): lo que
+ *  antes solo se veía en la pantalla «Mapa», ahora junto al texto. */
+function RelacionesArticulo({
+  codigo, articulo, onIr, onMapa, modoOscuro,
+}: {
+  codigo: CodigoTipo
+  articulo: string
+  onIr: (id: string) => void
+  onMapa: () => void
+  modoOscuro: boolean
+}) {
+  const grafo = useMemo(() => getGrafo(codigo), [codigo])
+  if (!grafo) return null
+  const unicos = (rels: { desde: string; hasta: string; tipo: string }[] | undefined, lado: 'desde' | 'hasta', tipo: string) => [
+    ...new Set((rels ?? []).filter((r) => r.tipo === tipo).map((r) => r[lado])),
+  ]
+  const grupos: { titulo: string; ids: string[] }[] = [
+    { titulo: 'Remite a', ids: unicos(grafo.outgoing.get(articulo), 'hasta', 'remite') },
+    { titulo: 'Lo citan', ids: unicos(grafo.incoming.get(articulo), 'desde', 'remite') },
+    { titulo: 'Es parte de', ids: unicos(grafo.outgoing.get(articulo), 'hasta', 'sub-articulo') },
+    { titulo: 'Incluye', ids: unicos(grafo.incoming.get(articulo), 'desde', 'sub-articulo') },
+  ].filter((g) => g.ids.length > 0)
+  if (grupos.length === 0) return null
+  return (
+    <div className={`mt-6 pt-4 border-t ${modoOscuro ? 'border-zinc-700' : 'border-zinc-100'}`}>
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <span className={`text-xs font-semibold ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
+          <i className="ti ti-network mr-1" aria-hidden /> Relaciones en este código
+        </span>
+        <button onClick={onMapa} className="boton boton-fantasma boton-chico">
+          Ver en el mapa
+        </button>
+      </div>
+      <div className="space-y-2">
+        {grupos.map((g) => (
+          <GrupoRelaciones key={g.titulo} titulo={g.titulo} ids={g.ids} grafoArts={grafo.articulos} onIr={onIr} modoOscuro={modoOscuro} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+const RELACIONES_VISIBLES = 8
+
+function GrupoRelaciones({
+  titulo, ids, grafoArts, onIr, modoOscuro,
+}: {
+  titulo: string
+  ids: string[]
+  grafoArts: Map<string, Articulo>
+  onIr: (id: string) => void
+  modoOscuro: boolean
+}) {
+  const [todos, setTodos] = useState(false)
+  const visibles = todos ? ids : ids.slice(0, RELACIONES_VISIBLES)
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <span className={`text-[11px] w-20 flex-shrink-0 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>{titulo}</span>
+      {visibles.map((id) => (
+        <button
+          key={id}
+          onClick={() => onIr(id)}
+          title={primerasPalabras(grafoArts.get(id)?.t ?? '', 14)}
+          className={`text-xs font-mono px-2 min-h-[32px] rounded-md border transition-colors ${
+            modoOscuro ? 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700' : 'bg-zinc-50 border-zinc-200 text-zinc-700 hover:bg-zinc-100'
+          }`}
+        >
+          {id}
+        </button>
+      ))}
+      {ids.length > RELACIONES_VISIBLES && (
+        <button onClick={() => setTodos((v) => !v)} className={`text-xs px-1 min-h-[32px] ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'} underline`}>
+          {todos ? 'menos' : `+${ids.length - RELACIONES_VISIBLES} más`}
+        </button>
+      )}
+    </div>
+  )
+}
+
 function VinculosArticulo({ codigo, articulo, modoOscuro }: { codigo: CodigoTipo; articulo: string; modoOscuro: boolean }) {
   const academicoModulos = useStore((s) => s.academicoModulos)
   const setModuloActivo = useStore((s) => s.setModuloActivo)

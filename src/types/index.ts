@@ -72,7 +72,6 @@ export type VistaActiva =
   | 'situacion'
   | 'modulos'
   | 'canvas'
-  | 'mapa'
   | 'explorador'
   | 'colecciones'
   | 'mapasmentales'
@@ -84,7 +83,7 @@ export type VistaActiva =
 /** Ids que ya no son pantallas propias pero se siguen aceptando en
  *  `setVistaActiva` (y en datos guardados): se redirigen a la vista que los
  *  absorbió. Ver `resolverVista` en store/vistaLegada.ts. */
-export type VistaLegada = 'practica'
+export type VistaLegada = 'practica' | 'mapa'
 
 export type VistaId = VistaActiva | VistaLegada
 
