@@ -19,6 +19,7 @@ interface ItemMenu {
 // ya consultado) y herramientas de estudio después (Canvas en adelante). El
 // divisor fino entre ambas se dibuja aparte, no es un ItemMenu más.
 const itemsProfesionales: ItemMenu[] = [
+  { id: 'hoy', icono: 'ti-home', label: 'Hoy' },
   { id: 'consultar', icono: 'ti-messages', label: 'Consultar' },
   { id: 'situacion', icono: 'ti-list-numbers', label: 'Situación' },
   { id: 'plazos', icono: 'ti-calendar-time', label: 'Plazos' },

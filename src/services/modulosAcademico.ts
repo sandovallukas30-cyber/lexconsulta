@@ -181,3 +181,14 @@ export function buscarVinculosArticulo(
   }
   return vinculos
 }
+
+/** Nombre, color e ícono de un módulo del catálogo O de un Ramo propio --
+ *  antes solo se buscaba en MODULOS y las evaluaciones de los Ramos se
+ *  descartaban sin mostrarse. */
+export function resolverModulo(id: string, ramos: Ramo[]): { nombre: string; color: string; icono: string } | null {
+  const m = MODULOS.find((x) => x.id === id)
+  if (m) return m
+  const r = ramos.find((x) => x.id === id)
+  if (!r) return null
+  return moduloDesdeRamo(r, MODULOS.filter((x) => r.modulosVinculados.includes(x.id)))
+}

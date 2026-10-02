@@ -23,6 +23,7 @@ function areasCitadasDe(consulta: ConsultaHistorial): string[] {
 }
 
 const moduloLabel: Record<VistaId, string> = {
+  hoy: 'Hoy',
   consultar: 'Consultar',
   situacion: 'Situación',
   modulos: 'Módulos',
@@ -39,6 +40,7 @@ const moduloLabel: Record<VistaId, string> = {
 }
 
 const moduloIcono: Record<VistaId, string> = {
+  hoy: 'ti-home',
   consultar: 'ti-messages',
   situacion: 'ti-list-numbers',
   modulos: 'ti-layout-grid',

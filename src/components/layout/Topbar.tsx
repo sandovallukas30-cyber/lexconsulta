@@ -5,6 +5,7 @@ interface TopbarProps {
 }
 
 const titulos: Record<string, string> = {
+  hoy: 'Hoy',
   consultar: 'Consultar',
   situacion: 'Situación concreta',
   modulos: 'Módulos',

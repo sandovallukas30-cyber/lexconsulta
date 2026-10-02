@@ -244,6 +244,10 @@ interface AppState {
    * componente, por el mismo motivo que coleccionActivaId/canvasActivoId. */
   moduloActivoId: string | null
   setModuloActivo: (id: string | null) => void
+  /** Pestaña (y evaluación a enfocar) con que debe abrirse el módulo que se
+   *  acaba de elegir -- desde Hoy o desde «Mis ramos». No persistido. */
+  moduloDestino: { moduloId: string; tab?: 'resumen' | 'clases' | 'examenes' | 'textos' | 'apuntes' | 'casos'; evaluacionId?: string } | null
+  abrirModuloEn: (moduloId: string, tab?: NonNullable<AppState['moduloDestino']>['tab'], evaluacionId?: string) => void
 
   /** Apunte a abrir en Modo Lectura la próxima vez que se monte su pestaña
    *  (desde el buscador del Omnibar). No persistido; se consume y se limpia.
@@ -368,7 +372,7 @@ export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
       perfil: null,
-      vistaActiva: 'consultar',
+      vistaActiva: 'hoy',
       repasarTab: 'cola',
       codigos: codigosIniciales,
       jurisprudencia: JURISPRUDENCIA_SEED,
@@ -1023,7 +1027,12 @@ export const useStore = create<AppState>()(
         }),
       setModuloActivo: (id) => {
         if (get().moduloActivoId !== id && !confirmarSalida()) return
-        set({ moduloActivoId: id })
+        set({ moduloActivoId: id, moduloDestino: null })
+      },
+      moduloDestino: null,
+      abrirModuloEn: (moduloId, tab, evaluacionId) => {
+        if (get().moduloActivoId !== moduloId && !confirmarSalida()) return
+        set({ vistaActiva: 'modulos', moduloActivoId: moduloId, moduloDestino: { moduloId, tab, evaluacionId } })
       },
       abrirApunte: (moduloId, apunteId, resaltar) =>
         set({ vistaActiva: 'modulos', moduloActivoId: moduloId, apuntePendiente: { moduloId, apunteId, resaltar } }),
@@ -1135,6 +1144,13 @@ export const useStore = create<AppState>()(
     {
       name: 'prima-lex-storage-v3',
       storage: crearAlmacenamiento(),
+      // Pase lo que pase con lo guardado, la vista activa debe ser una que
+      // exista hoy (un id viejo, o uno que un día se retire, no deja la app
+      // en blanco).
+      merge: (persistido, actual) => {
+        const p = (persistido ?? {}) as Partial<AppState>
+        return { ...actual, ...p, vistaActiva: resolverVista(p.vistaActiva ?? actual.vistaActiva).vista }
+      },
       version: 33,
       partialize: (s) => ({
         perfil: s.perfil,

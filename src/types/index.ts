@@ -67,6 +67,7 @@ export type CategoriaCodigo =
 
 /** Vistas que existen hoy (las que puede tener `vistaActiva`). */
 export type VistaActiva =
+  | 'hoy'
   | 'consultar'
   | 'situacion'
   | 'modulos'

@@ -11,6 +11,7 @@ import { resolverVista } from './store/vistaLegada'
 type Cargador = () => Promise<{ default: ComponentType }>
 
 const cargadores: Record<VistaActiva, Cargador> = {
+  hoy: () => import('./components/views/HoyView').then((m) => ({ default: m.HoyView })),
   consultar: () => import('./components/views/ConsultarView').then((m) => ({ default: m.ConsultarView })),
   situacion: () => import('./components/views/SituacionView').then((m) => ({ default: m.SituacionView })),
   modulos: () => import('./components/views/ModulosView').then((m) => ({ default: m.ModulosView })),

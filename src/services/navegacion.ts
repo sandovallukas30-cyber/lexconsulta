@@ -24,6 +24,7 @@ const MAX_PILA = 20
 export const useNavegacion = create<{ pila: Lugar[] }>(() => ({ pila: [] }))
 
 const NOMBRES_VISTA: Partial<Record<VistaActiva, string>> = {
+  hoy: 'Hoy',
   consultar: 'Consultar',
   situacion: 'Situación',
   modulos: 'Módulos',
@@ -129,6 +130,18 @@ function restaurarScroll(clave: string) {
 }
 
 // ---------------------------------------------------------------------------
+
+// Una sesión NUEVA del navegador (pestaña nueva, app recién abierta) empieza
+// en «Hoy», no en la última pantalla. Recargar dentro de la misma sesión sí
+// vuelve al mismo lugar (C7). Va antes de suscribirse: no es una navegación.
+try {
+  if (!sessionStorage.getItem('prima-lex-sesion-iniciada')) {
+    sessionStorage.setItem('prima-lex-sesion-iniciada', '1')
+    if (useStore.getState().vistaActiva !== 'hoy') useStore.setState({ vistaActiva: 'hoy', moduloActivoId: null })
+  }
+} catch {
+  // sin sessionStorage: queda donde estaba
+}
 
 let volviendo = false
 

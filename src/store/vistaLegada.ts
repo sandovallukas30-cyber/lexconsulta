@@ -14,11 +14,11 @@ export function resolverVista(id: VistaId | string): DestinoVista {
   switch (id) {
     case 'practica':
       return { vista: 'repasar', repasarTab: 'juegos' }
-    case 'consultar': case 'situacion': case 'modulos': case 'canvas': case 'mapa':
+    case 'hoy': case 'consultar': case 'situacion': case 'modulos': case 'canvas': case 'mapa':
     case 'explorador': case 'colecciones': case 'mapasmentales': case 'historial':
     case 'admin': case 'repasar': case 'plazos':
       return { vista: id }
     default:
-      return { vista: 'consultar' }
+      return { vista: 'hoy' }
   }
 }
