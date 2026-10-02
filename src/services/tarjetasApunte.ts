@@ -1,5 +1,6 @@
 import type { ApunteModulo, EstadoTarjetaRepaso } from '../types'
 import { normalizarTexto, quitarMarcas } from './apunteFormato'
+import { estaPendiente } from './leitner'
 
 /** Tarjetas de repaso generadas POR REGLAS a partir del texto de un apunte
  *  (B5) -- sin IA, igual que el resto del formato de apuntes:
@@ -108,27 +109,10 @@ export function tarjetasDe(apunte: Pick<ApunteModulo, 'id' | 'contenido'>): Tarj
 }
 
 // ---------------------------------------------------------------------------
-// Programación (Leitner de 5 cajas, igual que el repaso de Colecciones)
+// Programación: núcleo compartido en leitner.ts
 // ---------------------------------------------------------------------------
 
-const DIAS_POR_CAJA: Record<number, number> = { 1: 1, 2: 3, 3: 7, 4: 14, 5: 30 }
-const DIA_MS = 24 * 60 * 60 * 1000
-
-export function siguienteEstado(previo: EstadoTarjetaRepaso | undefined, resultado: 'sabia' | 'no_sabia', ahora = Date.now()): EstadoTarjetaRepaso {
-  const caja = resultado === 'sabia' ? Math.min(5, (previo?.caja ?? 0) + 1) : 1
-  return {
-    caja,
-    // "no la sabía" vuelve mañana (y además antes, dentro de la misma sesión)
-    proximo: ahora + (DIAS_POR_CAJA[caja] ?? 1) * DIA_MS,
-    aciertos: (previo?.aciertos ?? 0) + (resultado === 'sabia' ? 1 : 0),
-    fallos: (previo?.fallos ?? 0) + (resultado === 'no_sabia' ? 1 : 0),
-    ultimo: ahora,
-  }
-}
-
-export function estaPendiente(estado: EstadoTarjetaRepaso | undefined, ahora = Date.now()): boolean {
-  return !estado || estado.proximo <= ahora
-}
+export { siguienteEstado, estaPendiente } from './leitner'
 
 /** Orden de una sesión: primero las pendientes, y entre ellas las que más
  *  se han fallado; después (si se pide repasar todo) el resto. */

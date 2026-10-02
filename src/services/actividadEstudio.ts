@@ -1,5 +1,3 @@
-import type { Coleccion } from '../types'
-
 export function fechaLocalISO(d: Date): string {
   const anio = d.getFullYear()
   const mes = String(d.getMonth() + 1).padStart(2, '0')
@@ -29,18 +27,4 @@ export function calcularRachaEstudio(diasActividad: string[]): number {
     cursor.setDate(cursor.getDate() - 1)
   }
   return racha
-}
-
-/** Tarjetas de repetición espaciada (Leitner, ver registrarRepaso en
- *  useStore.ts) listas para repasar hoy, sumando TODAS las Colecciones --
- *  sin proximoRepaso asignado (nunca repasada) cuenta como vencida. */
-export function contarTarjetasVencidas(colecciones: Coleccion[]): number {
-  const ahora = Date.now()
-  let total = 0
-  for (const c of colecciones) {
-    for (const a of c.articulos) {
-      if (!a.proximoRepaso || a.proximoRepaso <= ahora) total++
-    }
-  }
-  return total
 }

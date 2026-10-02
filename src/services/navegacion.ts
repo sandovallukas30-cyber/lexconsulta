@@ -3,7 +3,7 @@ import { useStore } from '../store/useStore'
 import { MODULOS } from '../data/modulos'
 import { nombreCortoMetadata } from '../data/codigosMetadata'
 import { confirmarSalida } from './guardiaCambios'
-import type { CodigoTipo, VistaId } from '../types'
+import type { CodigoTipo, VistaActiva } from '../types'
 
 /** Navegación (C7): historial para "Volver" y memoria del scroll por vista.
  *
@@ -15,7 +15,7 @@ import type { CodigoTipo, VistaId } from '../types'
  *  leer. */
 
 export interface Lugar {
-  vista: VistaId
+  vista: VistaActiva
   moduloActivoId: string | null
   codigoExploradorActivo: CodigoTipo | null
 }
@@ -23,7 +23,7 @@ export interface Lugar {
 const MAX_PILA = 20
 export const useNavegacion = create<{ pila: Lugar[] }>(() => ({ pila: [] }))
 
-const NOMBRES_VISTA: Partial<Record<VistaId, string>> = {
+const NOMBRES_VISTA: Partial<Record<VistaActiva, string>> = {
   consultar: 'Consultar',
   situacion: 'Situación',
   modulos: 'Módulos',
@@ -33,7 +33,7 @@ const NOMBRES_VISTA: Partial<Record<VistaId, string>> = {
   explorador: 'Explorador',
   colecciones: 'Colecciones',
   historial: 'Historial',
-  practica: 'Práctica',
+  repasar: 'Repasar',
   plazos: 'Plazos',
 }
 

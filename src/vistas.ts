@@ -1,5 +1,6 @@
 import { lazy, type ComponentType } from 'react'
-import type { VistaId } from './types'
+import type { VistaActiva, VistaId } from './types'
+import { resolverVista } from './store/vistaLegada'
 
 /** Vistas cargadas bajo demanda (C8). Antes App.tsx importaba las 12 vistas
  *  de una vez y el bundle inicial pesaba ~1,7 MB (475 KB comprimido): la
@@ -9,7 +10,7 @@ import type { VistaId } from './types'
 
 type Cargador = () => Promise<{ default: ComponentType }>
 
-const cargadores: Record<VistaId, Cargador> = {
+const cargadores: Record<VistaActiva, Cargador> = {
   consultar: () => import('./components/views/ConsultarView').then((m) => ({ default: m.ConsultarView })),
   situacion: () => import('./components/views/SituacionView').then((m) => ({ default: m.SituacionView })),
   modulos: () => import('./components/views/ModulosView').then((m) => ({ default: m.ModulosView })),
@@ -20,17 +21,18 @@ const cargadores: Record<VistaId, Cargador> = {
   mapasmentales: () => import('./components/views/MapasMentalesView').then((m) => ({ default: m.MapasMentalesView })),
   historial: () => import('./components/views/HistorialView').then((m) => ({ default: m.HistorialView })),
   admin: () => import('./components/views/AdminView').then((m) => ({ default: m.AdminView })),
-  practica: () => import('./components/views/PracticaView').then((m) => ({ default: m.PracticaView })),
+  repasar: () => import('./components/views/RepasarView').then((m) => ({ default: m.RepasarView })),
   plazos: () => import('./components/views/PlazosView').then((m) => ({ default: m.PlazosView })),
 }
 
 export const vistas = Object.fromEntries(
   Object.entries(cargadores).map(([id, c]) => [id, lazy(c)])
-) as unknown as Record<VistaId, ComponentType>
+) as unknown as Record<VistaActiva, ComponentType>
 
-const precargadas = new Set<VistaId>()
+const precargadas = new Set<VistaActiva>()
 /** Descarga el chunk de una vista sin mostrarla (hover/foco en el menú). */
-export function precargarVista(id: VistaId) {
+export function precargarVista(vista: VistaId) {
+  const id = resolverVista(vista).vista
   if (precargadas.has(id)) return
   precargadas.add(id)
   cargadores[id]().catch(() => precargadas.delete(id))

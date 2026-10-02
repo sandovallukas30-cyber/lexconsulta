@@ -8,7 +8,8 @@ import { ModuloDetalle, type Tab } from '../ui/ModuloDetalle'
 import { RamoCard } from '../ui/RamoCard'
 import { ModalRamo } from '../ui/ModalRamo'
 import { diasHasta, evaluacionesPendientes, obtenerProximosEventos, formatearCountdown, urgenciaDe, moduloDesdeRamo, type EvaluacionPendiente, type Urgencia } from '../../services/modulosAcademico'
-import { calcularRachaEstudio, contarTarjetasVencidas } from '../../services/actividadEstudio'
+import { calcularRachaEstudio } from '../../services/actividadEstudio'
+import { useRepaso } from '../../hooks/useRepaso'
 import type { Ramo } from '../../types'
 
 
@@ -177,11 +178,11 @@ function ProximasEvaluaciones({ modoOscuro, onAbrir }: { modoOscuro: boolean; on
 
 function DashboardHoy({ modoOscuro }: { modoOscuro: boolean }) {
   const diasActividadEstudio = useStore((s) => s.diasActividadEstudio)
-  const colecciones = useStore((s) => s.colecciones)
   const setVistaActiva = useStore((s) => s.setVistaActiva)
+  const { resumen } = useRepaso()
 
   const racha = calcularRachaEstudio(diasActividadEstudio)
-  const tarjetasVencidas = contarTarjetasVencidas(colecciones)
+  const tarjetasVencidas = resumen.total
 
   if (racha === 0 && tarjetasVencidas === 0) return null
 
@@ -202,7 +203,7 @@ function DashboardHoy({ modoOscuro }: { modoOscuro: boolean }) {
       )}
       {tarjetasVencidas > 0 && (
         <button
-          onClick={() => setVistaActiva('colecciones')}
+          onClick={() => setVistaActiva('repasar')}
           className={`flex items-center gap-3 p-4 rounded-xl border text-left transition-colors ${
             modoOscuro ? 'bg-zinc-800/60 border-zinc-800 hover:bg-zinc-800' : 'bg-white border-zinc-200 hover:bg-zinc-50'
           }`}

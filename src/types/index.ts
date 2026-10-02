@@ -65,7 +65,8 @@ export type CategoriaCodigo =
   | 'especiales'
   | 'tratados'
 
-export type VistaId =
+/** Vistas que existen hoy (las que puede tener `vistaActiva`). */
+export type VistaActiva =
   | 'consultar'
   | 'situacion'
   | 'modulos'
@@ -76,8 +77,15 @@ export type VistaId =
   | 'mapasmentales'
   | 'historial'
   | 'admin'
-  | 'practica'
+  | 'repasar'
   | 'plazos'
+
+/** Ids que ya no son pantallas propias pero se siguen aceptando en
+ *  `setVistaActiva` (y en datos guardados): se redirigen a la vista que los
+ *  absorbió. Ver `resolverVista` en store/vistaLegada.ts. */
+export type VistaLegada = 'practica'
+
+export type VistaId = VistaActiva | VistaLegada
 
 /** Tema propio del modo lectura del Explorador -- independiente del claro/
  * oscuro general de la app. "papel" es un tercer tema cálido pensado solo

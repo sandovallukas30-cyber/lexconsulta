@@ -33,6 +33,8 @@ export interface DatosRespaldo {
   repasoApuntes: Record<string, EstadoTarjetaRepaso>
   /** Hasta dónde se leyó cada apunte (desde persist v31). */
   posicionLectura: Record<string, { ratio: number; fecha: number }>
+  /** Progreso de las preguntas del repaso unificado (desde persist v33). */
+  repasoPreguntas: Record<string, EstadoTarjetaRepaso>
 }
 
 export interface ArchivoRespaldo {
@@ -77,6 +79,7 @@ export function crearRespaldo(): ArchivoRespaldo {
       mapasMentales: s.mapasMentales,
       repasoApuntes: s.repasoApuntes,
       posicionLectura: s.posicionLectura,
+      repasoPreguntas: s.repasoPreguntas,
     },
   }
 }
@@ -163,6 +166,8 @@ export function validarRespaldo(texto: string): ResultadoValidacion {
   if (d.mapasMentales !== undefined && !listaValida(d.mapasMentales, mapaValido)) problemas.push('mapas mentales')
   if (d.repasoApuntes !== undefined && !(esObjeto(d.repasoApuntes) && Object.values(d.repasoApuntes).every((e) => esObjeto(e) && typeof e.caja === 'number' && typeof e.proximo === 'number')))
     problemas.push('repaso de tarjetas')
+  if (d.repasoPreguntas !== undefined && !(esObjeto(d.repasoPreguntas) && Object.values(d.repasoPreguntas).every((e) => esObjeto(e) && typeof e.caja === 'number' && typeof e.proximo === 'number')))
+    problemas.push('repaso de preguntas')
   if (problemas.length > 0) {
     return { ok: false, error: `El respaldo está dañado o incompleto (${problemas.join(', ')}). No se importó nada.` }
   }
@@ -188,6 +193,7 @@ export function validarRespaldo(texto: string): ResultadoValidacion {
     mapasMentales: (d.mapasMentales as MapaMental[]) ?? [],
     repasoApuntes: (d.repasoApuntes as Record<string, EstadoTarjetaRepaso>) ?? {},
     posicionLectura: esObjeto(d.posicionLectura) ? (d.posicionLectura as Record<string, { ratio: number; fecha: number }>) : {},
+    repasoPreguntas: (d.repasoPreguntas as Record<string, EstadoTarjetaRepaso>) ?? {},
   }
   const respaldo: ArchivoRespaldo = { app: MARCA_APP, version: crudo.version, fecha: esTexto(crudo.fecha) ? crudo.fecha : '', datos }
   return { ok: true, respaldo, resumen: resumirRespaldo(datos) }
@@ -282,6 +288,7 @@ export function aplicarRespaldo(respaldo: ArchivoRespaldo, modo: ModoImportacion
     mapasMentales: s.mapasMentales,
     repasoApuntes: s.repasoApuntes,
     posicionLectura: s.posicionLectura,
+    repasoPreguntas: s.repasoPreguntas,
   }
   useEstadoGuardado.setState({ error: null })
   silenciarAvisoGuardado()
@@ -307,6 +314,7 @@ function aplicarSinVerificar(respaldo: ArchivoRespaldo, modo: ModoImportacion) {
       mapasMentales: d.mapasMentales,
       repasoApuntes: d.repasoApuntes,
       posicionLectura: d.posicionLectura,
+      repasoPreguntas: d.repasoPreguntas,
       moduloActivoId: null,
       coleccionActivaId: null,
       mapaMentalActivoId: null,
@@ -329,5 +337,6 @@ function aplicarSinVerificar(respaldo: ArchivoRespaldo, modo: ModoImportacion) {
     mapasMentales: unirPorId(s.mapasMentales, d.mapasMentales),
     repasoApuntes: { ...d.repasoApuntes, ...s.repasoApuntes },
     posicionLectura: { ...d.posicionLectura, ...s.posicionLectura },
+    repasoPreguntas: { ...d.repasoPreguntas, ...s.repasoPreguntas },
   })
 }

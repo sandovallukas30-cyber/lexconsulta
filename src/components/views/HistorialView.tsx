@@ -34,6 +34,7 @@ const moduloLabel: Record<VistaId, string> = {
   historial: 'Historial',
   admin: 'Admin',
   practica: 'Práctica',
+  repasar: 'Repasar',
   plazos: 'Plazos',
 }
 
@@ -49,6 +50,7 @@ const moduloIcono: Record<VistaId, string> = {
   historial: 'ti-history',
   admin: 'ti-settings-2',
   practica: 'ti-puzzle',
+  repasar: 'ti-repeat',
   plazos: 'ti-calendar-time',
 }
 

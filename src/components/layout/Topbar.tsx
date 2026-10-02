@@ -15,7 +15,7 @@ const titulos: Record<string, string> = {
   colecciones: 'Colecciones',
   historial: 'Historial',
   admin: 'Administración',
-  practica: 'Práctica · Pasapalabra',
+  repasar: 'Repasar',
   plazos: 'Calculadora de plazos',
 }
 

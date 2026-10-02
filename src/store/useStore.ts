@@ -18,6 +18,7 @@ function siguienteIdx(rosco: { estado: string }[], desde: number): number {
 import type {
   PerfilUsuario,
   VistaId,
+  VistaActiva,
   CodigoActivo,
   EntradaJurisprudencia,
   ConsultaHistorial,
@@ -50,14 +51,18 @@ import type {
   CodigoTipo,
   EstadoTarjetaRepaso,
 } from '../types'
-import { siguienteEstado } from '../services/tarjetasApunte'
+import { siguienteEstado, cajaSiguiente, proximoRepasoDesde } from '../services/leitner'
+import { resolverVista } from './vistaLegada'
 import { confirmarSalida } from '../services/guardiaCambios'
 import { agregarActividadHoy } from '../services/actividadEstudio'
 import { aplicarResultadoPracticaATodos, aplicarResultadoQuizATodos } from '../services/progresoModulos'
 
 interface AppState {
   perfil: PerfilUsuario
-  vistaActiva: VistaId
+  vistaActiva: VistaActiva
+  /** Pestaña de Repasar: la cola de hoy o los juegos (antes la vista Práctica). */
+  repasarTab: 'cola' | 'juegos'
+  setRepasarTab: (tab: 'cola' | 'juegos') => void
   codigos: CodigoActivo[]
   jurisprudencia: EntradaJurisprudencia[]
   historial: ConsultaHistorial[]
@@ -284,6 +289,10 @@ interface AppState {
   /** Progreso del repaso de tarjetas de apuntes (B5), por id de tarjeta. */
   repasoApuntes: Record<string, EstadoTarjetaRepaso>
   registrarRepasoTarjeta: (id: string, resultado: 'sabia' | 'no_sabia') => void
+  /** Progreso de las preguntas de práctica dentro del repaso unificado
+   *  (v33), por id de pregunta. Mismo esquema Leitner que las tarjetas. */
+  repasoPreguntas: Record<string, EstadoTarjetaRepaso>
+  registrarRepasoPregunta: (id: string, resultado: 'sabia' | 'no_sabia') => void
 
   /** Hasta dónde se leyó cada apunte (0-1 del alto total), para ofrecer
    *  "Retomar donde quedaste" (C1). Antes vivía suelto en localStorage con
@@ -360,6 +369,7 @@ export const useStore = create<AppState>()(
     (set, get) => ({
       perfil: null,
       vistaActiva: 'consultar',
+      repasarTab: 'cola',
       codigos: codigosIniciales,
       jurisprudencia: JURISPRUDENCIA_SEED,
       historial: [],
@@ -405,22 +415,35 @@ export const useStore = create<AppState>()(
       repasoApuntes: {},
       posicionLectura: {},
       ultimoArticuloExplorador: {},
+      repasoPreguntas: {},
 
       setPerfil: (perfil) => set({ perfil, modalPerfilAbierto: false }),
-      setVistaActiva: (vistaActiva) => {
+      setVistaActiva: (id) => {
+        const destino = resolverVista(id)
+        const vistaActiva = destino.vista
         // formulario con cambios sin guardar: preguntar antes de salir
         if (get().vistaActiva !== vistaActiva && !confirmarSalida()) return
         set((s) => {
+          const repasarTab = destino.repasarTab ?? s.repasarTab
           // Si hay una partida de Pasapalabra en curso y el usuario sale de
-          // Práctica, pausarla automáticamente para preservar el tiempo restante.
+          // los juegos (de Repasar, o a su pestaña "cola"), pausarla
+          // automáticamente para preservar el tiempo restante.
           const p = s.partidaPasapalabra
-          const debePausar =
-            vistaActiva !== 'practica' && p && !p.pausadaEn && !p.finalizada
-          return debePausar
-            ? { vistaActiva, partidaPasapalabra: { ...p!, pausadaEn: Date.now() } }
-            : { vistaActiva }
+          const sigueEnJuegos = vistaActiva === 'repasar' && repasarTab === 'juegos'
+          const debePausar = !sigueEnJuegos && p && !p.pausadaEn && !p.finalizada
+          return {
+            vistaActiva,
+            repasarTab,
+            ...(debePausar ? { partidaPasapalabra: { ...p!, pausadaEn: Date.now() } } : {}),
+          }
         })
       },
+      setRepasarTab: (repasarTab) =>
+        set((s) => {
+          const p = s.partidaPasapalabra
+          const debePausar = repasarTab !== 'juegos' && p && !p.pausadaEn && !p.finalizada
+          return { repasarTab, ...(debePausar ? { partidaPasapalabra: { ...p!, pausadaEn: Date.now() } } : {}) }
+        }),
       toggleCodigo: (tipo) =>
         set((s) => ({
           codigos: s.codigos.map((c) =>
@@ -658,11 +681,8 @@ export const useStore = create<AppState>()(
                     // próximo repaso se aleja más); "no me la sabía" vuelve
                     // siempre a la caja 1 — no hay "castigo" mayor a eso,
                     // volver a ver el artículo pronto ya es la corrección.
-                    const cajaActual = a.caja ?? 1
-                    const cajaNueva = resultado === 'sabia' ? Math.min(5, cajaActual + 1) : 1
-                    const DIAS_POR_CAJA: Record<number, number> = { 1: 1, 2: 3, 3: 7, 4: 14, 5: 30 }
-                    const dias = DIAS_POR_CAJA[cajaNueva] ?? 1
-                    return { ...a, caja: cajaNueva, proximoRepaso: Date.now() + dias * 24 * 60 * 60 * 1000 }
+                    const cajaNueva = cajaSiguiente(a.caja ?? 1, resultado)
+                    return { ...a, caja: cajaNueva, proximoRepaso: proximoRepasoDesde(cajaNueva) }
                   }),
                 }
               : c
@@ -1081,6 +1101,11 @@ export const useStore = create<AppState>()(
           ramos: s.ramos.some((r) => r.id === ramo.id) ? s.ramos : [...s.ramos, ramo],
           academicoModulos: datos ? { ...s.academicoModulos, [ramo.id]: datos } : s.academicoModulos,
         })),
+      registrarRepasoPregunta: (id, resultado) =>
+        set((s) => ({
+          repasoPreguntas: { ...s.repasoPreguntas, [id]: siguienteEstado(s.repasoPreguntas[id], resultado) },
+          diasActividadEstudio: agregarActividadHoy(s.diasActividadEstudio),
+        })),
       registrarRepasoTarjeta: (id, resultado) =>
         set((s) => ({
           repasoApuntes: { ...s.repasoApuntes, [id]: siguienteEstado(s.repasoApuntes[id], resultado) },
@@ -1110,7 +1135,7 @@ export const useStore = create<AppState>()(
     {
       name: 'prima-lex-storage-v3',
       storage: crearAlmacenamiento(),
-      version: 32,
+      version: 33,
       partialize: (s) => ({
         perfil: s.perfil,
         codigos: s.codigos,
@@ -1147,6 +1172,7 @@ export const useStore = create<AppState>()(
         moduloActivoId: s.moduloActivoId,
         codigoExploradorActivo: s.codigoExploradorActivo,
         ultimoArticuloExplorador: s.ultimoArticuloExplorador,
+        repasoPreguntas: s.repasoPreguntas,
       }),
       migrate: (persisted: unknown, version: number) => {
         // Las migraciones se ENCADENAN: cada bloque transforma `state` y el
@@ -1259,6 +1285,13 @@ export const useStore = create<AppState>()(
           // abiertos y el último artículo por código. No hay nada que
           // transformar: en un estado anterior faltan y quedan los valores
           // iniciales (Consultar, sin módulo ni código).
+        }
+        if (version < 33) {
+          // la vista guardada puede ser una que ya no existe como pantalla
+          if (typeof state.vistaActiva === 'string') state = { ...state, vistaActiva: resolverVista(state.vistaActiva).vista }
+          // v33: se empieza a guardar el progreso de las preguntas del
+          // repaso unificado. Estados anteriores no lo tienen: parte vacío.
+          if (!state.repasoPreguntas || typeof state.repasoPreguntas !== 'object') state = { ...state, repasoPreguntas: {} }
         }
         return state as never
       },

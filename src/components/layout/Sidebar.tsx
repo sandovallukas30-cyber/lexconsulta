@@ -6,10 +6,10 @@ import { ModalCodigos } from '../ui/ModalCodigos'
 import { ModalAcercaDe } from '../ui/ModalAcercaDe'
 import { esAdmin } from '../../config/admin'
 import { useEsMovil } from '../../hooks/useEsMovil'
-import type { VistaId } from '../../types'
+import type { VistaActiva } from '../../types'
 
 interface ItemMenu {
-  id: VistaId
+  id: VistaActiva
   icono: string
   label: string
 }
@@ -32,7 +32,7 @@ const itemsAcademicos: ItemMenu[] = [
   { id: 'explorador', icono: 'ti-book-2', label: 'Explorador' },
   { id: 'colecciones', icono: 'ti-stack-2', label: 'Colecciones' },
   { id: 'mapasmentales', icono: 'ti-hierarchy-2', label: 'Mapas mentales' },
-  { id: 'practica', icono: 'ti-puzzle', label: 'Práctica' },
+  { id: 'repasar', icono: 'ti-repeat', label: 'Repasar' },
 ]
 
 const itemAdmin: ItemMenu = { id: 'admin', icono: 'ti-settings-2', label: 'Admin' }
@@ -55,7 +55,7 @@ export function Sidebar() {
   const esMovil = useEsMovil()
   const colapsado = esMovil ? false : colapsadoEscritorio
   const toggleSidebar = esMovil ? () => setMenuMovilAbierto(false) : toggleSidebarEscritorio
-  const irA = (id: VistaId) => {
+  const irA = (id: VistaActiva) => {
     setVistaActiva(id)
     if (esMovil) setMenuMovilAbierto(false)
   }
