@@ -1,0 +1,19 @@
+{
+  "1":  {"class_type": "LoadImage", "inputs": {"image": "tu_foto.jpg"}},
+  "2":  {"class_type": "ImageScaleToTotalPixels", "inputs": {"image": ["1", 0], "upscale_method": "lanczos", "megapixels": 1.0}},
+  "3":  {"class_type": "CheckpointLoaderSimple", "inputs": {"ckpt_name": "TU_MODELO_SDXL.safetensors"}},
+  "4":  {"class_type": "SAMModelLoader (segment anything)", "inputs": {"model_name": "sam_vit_h (2.56GB)"}},
+  "5":  {"class_type": "GroundingDinoModelLoader (segment anything)", "inputs": {"model_name": "GroundingDINO_SwinT_OGC (694MB)"}},
+  "6":  {"class_type": "GroundingDinoSAMSegment (segment anything)", "inputs": {"sam_model": ["4", 0], "grounding_dino_model": ["5", 0], "image": ["2", 0], "prompt": "jeans", "threshold": 0.3}},
+  "7":  {"class_type": "GrowMask", "inputs": {"mask": ["6", 1], "expand": 12, "tapered_corners": true}},
+  "8":  {"class_type": "CLIPTextEncode", "inputs": {"clip": ["3", 1], "text": "wearing a black leather mini skirt, photorealistic, detailed fabric texture, natural lighting, same lighting as photo"}},
+  "9":  {"class_type": "CLIPTextEncode", "inputs": {"clip": ["3", 1], "text": "deformed, extra limbs, bad anatomy, blurry, lowres, watermark, text, cartoon"}},
+  "10": {"class_type": "InpaintModelConditioning", "inputs": {"positive": ["8", 0], "negative": ["9", 0], "vae": ["3", 2], "pixels": ["2", 0], "mask": ["7", 0], "noise_mask": true}},
+  "11": {"class_type": "DifferentialDiffusion", "inputs": {"model": ["3", 0]}},
+  "12": {"class_type": "KSampler", "inputs": {"model": ["11", 0], "positive": ["10", 0], "negative": ["10", 1], "latent_image": ["10", 2], "seed": 12345, "control_after_generate": "randomize", "steps": 30, "cfg": 5.5, "sampler_name": "dpmpp_2m", "scheduler": "karras", "denoise": 0.95}},
+  "13": {"class_type": "VAEDecode", "inputs": {"samples": ["12", 0], "vae": ["3", 2]}},
+  "14": {"class_type": "ImageCompositeMasked", "inputs": {"destination": ["2", 0], "source": ["13", 0], "x": 0, "y": 0, "resize_source": false, "mask": ["7", 0]}},
+  "15": {"class_type": "SaveImage", "inputs": {"images": ["14", 0], "filename_prefix": "cambio_vestimenta"}},
+  "16": {"class_type": "MaskToImage", "inputs": {"mask": ["7", 0]}},
+  "17": {"class_type": "PreviewImage", "inputs": {"images": ["16", 0]}}
+}
