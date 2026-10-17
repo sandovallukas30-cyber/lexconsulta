@@ -44,11 +44,7 @@ export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
   const pocasConsultas = restantes <= 2 && restantes > 0
 
   return (
-    <header
-      className={`h-14 sm:h-16 px-3 sm:px-6 flex items-center justify-between gap-2 flex-shrink-0 ${
-        modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'
-      }`}
-    >
+    <header className="h-14 sm:h-[72px] px-3 sm:px-8 pt-3 flex items-center justify-between gap-2 flex-shrink-0">
       <div className="flex items-center gap-2 sm:gap-4 min-w-0">
         <button
           onClick={() => setMenuMovilAbierto(true)}
@@ -61,9 +57,7 @@ export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
           {titulos[vistaActiva]}
         </h2>
         <div
-          className={`hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium truncate ${
-            modoOscuro ? 'bg-zinc-800 text-zinc-400' : 'bg-zinc-200/60 text-zinc-600'
-          }`}
+          className="neu-chip hidden md:flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium truncate text-[var(--neu-ink2)]"
           title="Esta plataforma no constituye asesoría legal. Consulta siempre con un profesional para decisiones jurídicas."
         >
           <i className="ti ti-info-circle text-xs flex-shrink-0" />
@@ -76,7 +70,7 @@ export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
         <MiniEnfoque />
         <button
           onClick={toggleModoOscuro}
-          className="boton boton-fantasma boton-icono"
+          className="boton boton-suave boton-icono"
           title={modoOscuro ? 'Modo claro' : 'Modo oscuro'}
           aria-label={modoOscuro ? 'Activar modo claro' : 'Activar modo oscuro'}
         >

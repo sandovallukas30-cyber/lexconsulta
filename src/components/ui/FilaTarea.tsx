@@ -41,14 +41,10 @@ export function FilaTarea({ tarea, onAbrir, abierta }: Props) {
         aria-checked={tarea.hecha}
         aria-label={`${tarea.hecha ? 'Marcar como pendiente' : 'Marcar como hecha'}: ${tarea.titulo}`}
         onClick={() => alternar(tarea.id)}
-        className="sin-tactil relative mt-0.5 w-[22px] h-[22px] min-w-0 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors before:content-[''] before:absolute before:-inset-2.5"
-        style={
-          tarea.hecha
-            ? { background: 'var(--accent-base)', borderColor: 'var(--accent-base)' }
-            : { borderColor: modoOscuro ? '#52525b' : '#a1a1aa' }
-        }
+        className="sin-tactil relative mt-0.5 w-[26px] h-[26px] min-w-0 rounded-[9px] flex items-center justify-center flex-shrink-0 transition-shadow before:content-[''] before:absolute before:-inset-2.5"
+        style={{ background: 'var(--neu-bg)', boxShadow: tarea.hecha ? 'var(--neu-presionada-chica)' : 'var(--neu-chica)' }}
       >
-        {tarea.hecha && <i className="ti ti-check text-xs text-white animate-[pop_0.3s_ease-out]" aria-hidden="true" />}
+        {tarea.hecha && <i className="ti ti-check text-sm animate-[pop_0.3s_ease-out]" style={{ color: 'var(--neu-ok)' }} aria-hidden="true" />}
       </button>
 
       <div className="flex-1 min-w-0">
@@ -61,15 +57,20 @@ export function FilaTarea({ tarea, onAbrir, abierta }: Props) {
         )}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
           {ramo && (
-            <span className={`inline-flex items-center gap-1.5 text-xs ${suave}`}>
-              <span className="w-2 h-2 rounded-full" style={{ background: colorRamo(tarea.ramoId, ramos) }} aria-hidden="true" />
+            <span
+              className="inline-flex items-center text-[11.5px] font-bold px-2.5 py-0.5 rounded-full"
+              style={{
+                background: `color-mix(in srgb, ${colorRamo(tarea.ramoId, ramos)} 15%, transparent)`,
+                color: `color-mix(in srgb, ${colorRamo(tarea.ramoId, ramos)} 82%, var(--neu-ink))`,
+              }}
+            >
               {ramo}
             </span>
           )}
           {fecha && (
             <span
               className={`text-xs font-medium ${
-                fecha.tono === 'vencida' ? 'text-red-600' : fecha.tono === 'hoy' ? '' : suave
+                fecha.tono === 'vencida' ? 'text-[var(--neu-danger)]' : fecha.tono === 'hoy' ? '' : suave
               }`}
               style={fecha.tono === 'hoy' ? { color: 'var(--accent-texto)' } : undefined}
             >

@@ -22,9 +22,14 @@ export function AnilloProgreso({
   const circ = 2 * Math.PI * r
   const p = Math.min(1, Math.max(0, progreso))
   return (
-    <div className="relative flex-shrink-0" style={{ width: tamano, height: tamano }} role="img" aria-label={etiqueta}>
+    <div
+      className="relative flex-shrink-0 rounded-full"
+      style={{ width: tamano, height: tamano, background: 'var(--neu-bg)', boxShadow: tamano > 120 ? 'var(--neu-elevada)' : 'var(--neu-plana)' }}
+      role="img"
+      aria-label={etiqueta}
+    >
       <svg width={tamano} height={tamano} viewBox={`0 0 ${tamano} ${tamano}`} className="-rotate-90" aria-hidden="true">
-        <circle cx={tamano / 2} cy={tamano / 2} r={r} fill="none" strokeWidth={grosor} stroke={modoOscuro ? '#1c2230' : '#e6eaf1'} />
+        <circle cx={tamano / 2} cy={tamano / 2} r={r} fill="none" strokeWidth={grosor} stroke={modoOscuro ? 'var(--neu-sl)' : 'var(--neu-line)'} />
         <circle
           cx={tamano / 2}
           cy={tamano / 2}

@@ -107,12 +107,12 @@ export function Sidebar() {
       </AnimatePresence>
       <motion.aside
         initial={false}
-        animate={esMovil ? { x: menuMovilAbierto ? 0 : -300, width: 280 } : { x: 0, width: colapsado ? 68 : 256 }}
+        animate={esMovil ? { x: menuMovilAbierto ? 0 : -320, width: 312 } : { x: 0, width: colapsado ? 96 : 296 }}
         transition={{ duration: 0.22, ease: 'easeOut' }}
         aria-label="Menú principal"
         // en móvil se cierra también deslizándolo hacia la izquierda
         drag={esMovil && menuMovilAbierto ? 'x' : false}
-        dragConstraints={{ left: -300, right: 0 }}
+        dragConstraints={{ left: -320, right: 0 }}
         dragElastic={{ left: 0.2, right: 0 }}
         dragSnapToOrigin
         onDragEnd={(_, info) => {
@@ -120,13 +120,13 @@ export function Sidebar() {
         }}
         // en móvil, cerrado = fuera de la pantalla e inerte (no se puede tabular a él)
         inert={esMovil && !menuMovilAbierto ? true : undefined}
-        className={`flex flex-col border-r overflow-hidden ${
-          esMovil ? 'fixed inset-y-0 left-0 z-[70] shadow-2xl' : 'relative flex-shrink-0'
-        } ${modoOscuro ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-100 border-zinc-200'}`}
+        className={`flex flex-col gap-5 overflow-y-auto overflow-x-hidden p-4 ${
+          esMovil ? 'fixed inset-y-0 left-0 z-[70] shadow-2xl bg-[var(--neu-bg)]' : 'relative flex-shrink-0 pr-1'
+        }`}
       >
         <div
-          className={`flex items-center ${
-            colapsado ? 'justify-center px-2 py-4' : 'justify-between px-4 pt-5 pb-3'
+          className={`neu-raised flex-shrink-0 flex items-center ${
+            colapsado ? 'justify-center px-2 py-3' : 'justify-between pl-4 pr-2 py-4'
           }`}
         >
           {colapsado ? (
@@ -134,10 +134,10 @@ export function Sidebar() {
               onClick={toggleSidebar}
               title="Expandir (Ctrl+B)"
               aria-label="Expandir menú lateral"
-              className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-zinc-800/10 transition-colors"
+              className="w-11 h-11 rounded-xl flex items-center justify-center"
             >
               <span
-                className="w-9 h-9 rounded-lg flex items-center justify-center"
+                className="w-11 h-11 rounded-[14px] flex items-center justify-center shadow-[4px_4px_9px_var(--neu-sd),-4px_-4px_9px_var(--neu-sl)]"
                 style={{ background: VERDE }}
               >
                 <i className="ti ti-scale text-lg text-white" />
@@ -147,17 +147,17 @@ export function Sidebar() {
             <>
               <div className="flex-1 min-w-0 flex items-center gap-2.5">
                 <span
-                  className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                  className="w-11 h-11 rounded-[14px] flex items-center justify-center flex-shrink-0 shadow-[4px_4px_9px_var(--neu-sd),-4px_-4px_9px_var(--neu-sl)]"
                   style={{ background: VERDE }}
                   aria-hidden="true"
                 >
                   <i className="ti ti-scale text-lg text-white" />
                 </span>
                 <div className="min-w-0">
-                  <h1 className={`text-lg font-extrabold leading-tight tracking-tight ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+                  <h1 className="text-[17px] font-extrabold leading-tight" style={{ color: 'var(--neu-ink)' }}>
                     Prima Lex
                   </h1>
-                  <p className={`text-[11px] ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>Tu cuaderno de Derecho</p>
+                  <p className="text-[11px]" style={{ color: 'var(--neu-ink3)' }}>Tu cuaderno de Derecho</p>
                 </div>
               </div>
               <button
@@ -172,15 +172,14 @@ export function Sidebar() {
           )}
         </div>
 
-        <nav className={`flex-1 py-4 overflow-y-auto ${colapsado ? 'px-2' : 'px-3'}`}>
-          <div className="space-y-0.5">
+        <nav className={`neu-raised flex-shrink-0 py-3 ${colapsado ? 'px-2' : 'px-3'}`}>
+          <div className="space-y-1">
             {itemsSemana.map((item) => (
               <BotonNav
                 key={item.id}
                 item={item}
                 activo={vistaActiva === item.id}
                 colapsado={colapsado}
-                modoOscuro={modoOscuro}
                 onClick={() => irA(item.id)}
               />
             ))}
@@ -188,24 +187,24 @@ export function Sidebar() {
 
           <div
             aria-hidden="true"
-            className={`h-px my-3 ${colapsado ? 'mx-2' : 'mx-3'} ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-200'}`}
+            className={`h-px my-3 ${colapsado ? 'mx-2' : 'mx-3'}`}
+            style={{ background: 'var(--neu-line)' }}
           />
 
-          <div className="space-y-0.5">
+          <div className="space-y-1">
             {grupoAcademico.map((item) => (
               <BotonNav
                 key={item.id}
                 item={item}
                 activo={vistaActiva === item.id}
                 colapsado={colapsado}
-                modoOscuro={modoOscuro}
                 onClick={() => irA(item.id)}
               />
             ))}
           </div>
         </nav>
 
-        <div className={`border-t ${colapsado ? 'p-2' : 'p-3'} ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
+        <div className={`neu-flat mt-auto flex-shrink-0 ${colapsado ? 'p-2' : 'p-2.5'}`}>
           <button
             onClick={() => setModalCodigos(true)}
             title={colapsado ? `Códigos · ${activos} de ${total} activos (incluye leyes especiales)` : undefined}
@@ -287,13 +286,11 @@ function BotonNav({
   item,
   activo,
   colapsado,
-  modoOscuro,
   onClick,
 }: {
   item: ItemMenu
   activo: boolean
   colapsado: boolean
-  modoOscuro: boolean
   onClick: () => void
 }) {
   return (
@@ -304,17 +301,15 @@ function BotonNav({
       // C8: bajar el código de la vista antes del clic (~100-300 ms antes)
       onPointerEnter={() => precargarVista(item.id)}
       onFocus={() => precargarVista(item.id)}
-      className={`w-full min-h-control rounded-control text-sm transition-colors text-left relative flex items-center ${
-        colapsado ? 'justify-center px-0' : 'gap-3 px-3'
+      className={`w-full min-h-[46px] rounded-[14px] text-[14.5px] transition-all text-left relative flex items-center ${
+        colapsado ? 'justify-center px-0' : 'gap-3 px-3.5'
       } ${
         activo
-          ? 'font-semibold text-[var(--accent-texto)] bg-[color-mix(in_srgb,var(--accent-base)_11%,transparent)]'
-          : modoOscuro
-          ? 'font-medium text-zinc-400 hover:bg-zinc-800 hover:text-white'
-          : 'font-medium text-zinc-600 hover:bg-zinc-200/70 hover:text-zinc-900'
+          ? 'font-semibold text-[var(--accent-texto)] shadow-[inset_4px_4px_8px_var(--neu-sd),inset_-4px_-4px_8px_var(--neu-sl)] bg-[var(--neu-bg)]'
+          : 'font-semibold text-[var(--neu-ink2)] hover:text-[var(--neu-ink)] hover:shadow-[3px_3px_6px_var(--neu-sd),-3px_-3px_6px_var(--neu-sl)]'
       }`}
     >
-      <i className={`ti ${item.icono} text-xl flex-shrink-0`} />
+      <i className={`ti ${item.icono} text-[19px] flex-shrink-0`} />
       <AnimatePresence initial={false}>
         {!colapsado && (
           <motion.span

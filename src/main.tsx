@@ -1,10 +1,12 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { MotionConfig } from 'framer-motion'
-import '@fontsource-variable/figtree'
+import '@fontsource-variable/plus-jakarta-sans'
+import '@fontsource-variable/sora'
 // íconos Tabler servidos por la propia app (antes venían de un CDN con @latest)
 import '@tabler/icons-webfont/dist/tabler-icons.min.css'
 import './index.css'
+import './neumorfismo.css'
 import App from './App.tsx'
 // historial de "Volver" y scroll por vista (se engancha al store)
 import './services/navegacion'

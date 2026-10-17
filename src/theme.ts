@@ -9,7 +9,7 @@
 // El fondo de la app (blanco/negro) NO se ve afectado; solo cambian los
 // detalles.
 
-export type TemaColorId = 'azul' | 'esmeralda' | 'indigo' | 'borgona' | 'violeta' | 'ambar' | 'pizarra'
+export type TemaColorId = 'lex' | 'azul' | 'esmeralda' | 'indigo' | 'borgona' | 'violeta' | 'ambar' | 'pizarra'
 
 export interface PaletaAcento {
   50: string
@@ -35,6 +35,25 @@ export interface TemaColor {
 }
 
 export const TEMAS: TemaColor[] = [
+  {
+    id: 'lex',
+    nombre: 'Prima Lex',
+    descripcion: 'Índigo suave — el de la identidad de Prima Lex',
+    paleta: {
+      50: '#eeeefd',
+      100: '#e4e4fc',
+      200: '#cfd0f9',
+      300: '#b0b2f4',
+      400: '#8689ff',
+      500: '#6b6eee',
+      600: '#5457e0',
+      700: '#4346c4',
+      800: '#36389c',
+      900: '#2b2e58',
+      950: '#1d1f3d',
+      base: '#5457e0',
+    },
+  },
   {
     id: 'azul',
     nombre: 'Azul',

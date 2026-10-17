@@ -1,5 +1,4 @@
 import { motion } from 'framer-motion'
-import { useStore } from '../../store/useStore'
 
 /** Control segmentado con la píldora que se desliza (estilo Orbis). */
 export function Segmentado<T extends string>({
@@ -13,9 +12,8 @@ export function Segmentado<T extends string>({
   deshabilitado?: boolean
   etiqueta: string
 }) {
-  const modoOscuro = useStore((s) => s.modoOscuro)
   return (
-    <div role="group" aria-label={etiqueta} className={`inline-flex p-1 rounded-control gap-0.5 ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-100'}`}>
+    <div role="group" aria-label={etiqueta} className="neu-pressed inline-flex p-1.5 !rounded-full gap-1">
       {opciones.map((o) => {
         const activo = o.valor === valor
         return (
@@ -25,14 +23,15 @@ export function Segmentado<T extends string>({
             aria-pressed={activo}
             disabled={deshabilitado && !activo}
             onClick={() => onChange(o.valor)}
-            className={`sin-tactil relative h-8 px-3 rounded-[10px] text-[13px] font-semibold transition-colors disabled:opacity-40 ${
-              activo ? (modoOscuro ? 'text-white' : 'text-zinc-900') : modoOscuro ? 'text-zinc-400' : 'text-zinc-500'
+            className={`sin-tactil relative h-9 px-4 rounded-full text-[13px] font-bold transition-colors disabled:opacity-40 ${
+              activo ? 'text-[var(--accent-texto)]' : 'text-[var(--neu-ink3)] hover:text-[var(--neu-ink2)]'
             }`}
           >
             {activo && (
               <motion.span
                 layoutId={`pildora-${id}`}
-                className={`absolute inset-0 rounded-[10px] shadow-tarjeta ${modoOscuro ? 'bg-zinc-700' : 'bg-white'}`}
+                className="absolute inset-0 rounded-full"
+                style={{ background: 'var(--neu-bg)', boxShadow: 'var(--neu-chica)' }}
                 transition={{ type: 'spring', stiffness: 500, damping: 38 }}
               />
             )}

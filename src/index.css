@@ -29,31 +29,31 @@
 @theme {
   /* Tipografía: Figtree en toda la app (los títulos que antes usaban
      font-serif ahora también), como en Orbis: limpia y redondeada. */
-  --font-sans: 'Figtree Variable', 'Figtree', 'Segoe UI Variable', 'Segoe UI', ui-sans-serif, system-ui, sans-serif;
-  --font-serif: 'Figtree Variable', 'Figtree', 'Segoe UI Variable', 'Segoe UI', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', 'Segoe UI Variable', 'Segoe UI', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Sora Variable', 'Sora', 'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, sans-serif;
 
   /* Grises con un matiz azulado frío (reemplazan al zinc neutro de Tailwind).
      Claro: 50 = fondo de página, 100 = barra lateral, 200 = bordes. Oscuro:
      950 = fondo, 900 = barra lateral, 800 = tarjetas y bordes. */
-  --color-zinc-50: #f4f6fa;
-  --color-zinc-100: #ebeef4;
-  --color-zinc-200: #e0e5ed;
-  --color-zinc-300: #c9d0dc;
-  --color-zinc-400: #8d97aa;
-  --color-zinc-500: #5a6579;
-  --color-zinc-600: #465165;
-  --color-zinc-700: #323c4e;
-  --color-zinc-800: #1c2230;
-  --color-zinc-900: #121620;
-  --color-zinc-950: #0a0d14;
+  --color-zinc-50: #e9edf6;
+  --color-zinc-100: #e1e6f3;
+  --color-zinc-200: #d7dcee;
+  --color-zinc-300: #c3cbe0;
+  --color-zinc-400: #8a92b0;
+  --color-zinc-500: #5b6283;
+  --color-zinc-600: #484f72;
+  --color-zinc-700: #343a5e;
+  --color-zinc-800: #212640;
+  --color-zinc-900: #1c2032;
+  --color-zinc-950: #171a2a;
 
   /* Esquinas más suaves en toda la app. */
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
   --radius-2xl: 1.25rem;
-  --radius-control: 0.75rem;  /* botones, campos, chips */
-  --radius-tarjeta: 1rem;     /* tarjetas y filas de listas */
+  --radius-control: 0.875rem; /* botones, campos, chips */
+  --radius-tarjeta: 1.125rem; /* tarjetas y filas de listas */
   --radius-panel: 1.5rem;     /* modales, paneles, tarjeta del artículo */
 
   /* Sombras difusas en vez de bordes duros. */

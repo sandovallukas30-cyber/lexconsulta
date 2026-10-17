@@ -1,3 +1,4 @@
+import { useDialogo } from '../../hooks/useDialogo'
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useStore } from '../../store/useStore'
@@ -18,6 +19,7 @@ interface Props {
 export function ModalAcercaDe({ abierto, onCerrar, pestanaInicial = 'acerca' }: Props) {
   const modoOscuro = useStore((s) => s.modoOscuro)
   const [pestana, setPestana] = useState<Pestana>(pestanaInicial)
+  const dialogoRef = useDialogo<HTMLDivElement>(abierto, onCerrar)
 
   // Cada vez que el modal se abre, mover a la pestaña solicitada.
   useEffect(() => {
@@ -39,6 +41,10 @@ export function ModalAcercaDe({ abierto, onCerrar, pestanaInicial = 'acerca' }: 
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
+            ref={dialogoRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Acerca de Prima Lex"
             onClick={(e) => e.stopPropagation()}
             className={`max-w-2xl w-full max-h-[85vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col ${
               modoOscuro ? 'bg-zinc-900' : 'bg-white'

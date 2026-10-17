@@ -1,3 +1,4 @@
+import { useDialogo } from '../../hooks/useDialogo'
 import { useState, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useStore } from '../../store/useStore'
@@ -31,6 +32,7 @@ export function ModalCodigos({ abierto, onCerrar }: Props) {
   const toggleCodigo = useStore((s) => s.toggleCodigo)
   const modoOscuro = useStore((s) => s.modoOscuro)
   const [busqueda, setBusqueda] = useState('')
+  const dialogoRef = useDialogo<HTMLDivElement>(abierto, onCerrar)
 
   const filtrados = useMemo(() => {
     const q = busqueda.trim().toLowerCase()
@@ -84,6 +86,10 @@ export function ModalCodigos({ abierto, onCerrar }: Props) {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.96, opacity: 0 }}
             transition={{ duration: 0.2 }}
+            ref={dialogoRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Códigos y normas"
             onClick={(e) => e.stopPropagation()}
             className={`max-w-2xl w-full max-h-[85vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col ${
               modoOscuro ? 'bg-zinc-900' : 'bg-white'

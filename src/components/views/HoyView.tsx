@@ -38,12 +38,11 @@ function Tarjeta({
   derecha?: React.ReactNode
   children: React.ReactNode
 }) {
-  const modoOscuro = useStore((s) => s.modoOscuro)
   return (
-    <section className={`rounded-tarjeta border p-4 shadow-tarjeta ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
-      <div className="flex items-center gap-2 mb-2">
-        <i className={`ti ${icono} text-base`} style={{ color: 'var(--accent-texto)' }} aria-hidden="true" />
-        <h2 className={`text-sm font-semibold flex-1 ${modoOscuro ? 'text-zinc-200' : 'text-zinc-800'}`}>{titulo}</h2>
+    <section className="neu-raised p-5">
+      <div className="flex items-center gap-2.5 mb-3">
+        <i className={`ti ${icono} text-lg`} style={{ color: 'var(--accent-texto)' }} aria-hidden="true" />
+        <h2 className="text-[15px] font-bold flex-1" style={{ color: 'var(--neu-ink)' }}>{titulo}</h2>
         {derecha}
       </div>
       {children}
@@ -115,22 +114,41 @@ export function HoyView() {
   ].filter(Boolean)
 
   return (
-    <div className={`h-full overflow-y-auto ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
-      <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-5">
+    <div className="h-full overflow-y-auto">
+      <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-5">
         <header>
           <p className={`text-sm ${suave}`}>{fechaLarga()}</p>
-          <h1 className={`text-2xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{saludo()}</h1>
-          <p className={`text-sm mt-1 ${suave}`}>
-            {resumen.length > 0 ? resumen.join(' · ') : 'Hoy no tienes nada pendiente registrado.'}
-            {hechasHoy > 0 && ` · ${hechasHoy} ${hechasHoy === 1 ? 'hecha' : 'hechas'} hoy`}
-          </p>
+          <h1 className="text-[32px] font-extrabold leading-tight" style={{ color: 'var(--neu-ink)' }}>{saludo()}</h1>
+          <div className="flex flex-wrap gap-2 mt-2.5">
+            {resumen.length === 0 && <span className={`text-sm ${suave}`}>Hoy no tienes nada pendiente registrado.</span>}
+            {resumen.map((r, i) => (
+              <span
+                key={String(r)}
+                className="text-[12.5px] font-bold px-3 py-1 rounded-full"
+                style={
+                  i === 0
+                    ? { background: 'var(--accent-100)', color: 'var(--accent-700)' }
+                    : String(r).includes('evaluaci')
+                    ? { background: 'var(--neu-warn-soft)', color: 'var(--neu-warn)' }
+                    : { background: 'var(--neu-bg)', boxShadow: 'var(--neu-chica)', color: 'var(--neu-ink2)' }
+                }
+              >
+                {r}
+              </span>
+            ))}
+            {hechasHoy > 0 && (
+              <span className="text-[12.5px] font-bold px-3 py-1 rounded-full" style={{ background: 'var(--neu-ok-soft)', color: 'var(--neu-ok)' }}>
+                {hechasHoy} {hechasHoy === 1 ? 'hecha' : 'hechas'} hoy
+              </span>
+            )}
+          </div>
           {hechasHoy + paraHoy.length > 0 && (
-            <div className="mt-3 max-w-sm">
-              <div className="flex justify-between text-xs mb-1">
-                <span className={paraHoy.length === 0 ? 'font-semibold' : suave} style={paraHoy.length === 0 ? { color: 'var(--accent-texto)' } : undefined}>
-                  {paraHoy.length === 0 ? 'Terminaste todo lo de hoy' : `${hechasHoy} de ${hechasHoy + paraHoy.length} hechas`}
+            <div className="neu-raised mt-5 px-6 py-5">
+              <div className="flex justify-between text-[15px] mb-2.5">
+                <span className="font-bold" style={{ color: paraHoy.length === 0 ? 'var(--accent-texto)' : 'var(--neu-ink)' }}>
+                  {paraHoy.length === 0 ? 'Terminaste todo lo de hoy' : `${hechasHoy} de ${hechasHoy + paraHoy.length} tareas hechas`}
                 </span>
-                <span className={suave}>{Math.round((hechasHoy / (hechasHoy + paraHoy.length)) * 100)}%</span>
+                <span className="font-extrabold" style={{ color: 'var(--accent-texto)' }}>{Math.round((hechasHoy / (hechasHoy + paraHoy.length)) * 100)}%</span>
               </div>
               <div className={`h-2 rounded-full overflow-hidden ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-200'}`} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((hechasHoy / (hechasHoy + paraHoy.length)) * 100)} aria-label="Avance de tus tareas de hoy">
                 <div className="h-full rounded-full transition-all duration-500" style={{ width: `${(hechasHoy / (hechasHoy + paraHoy.length)) * 100}%`, background: 'var(--accent-base)' }} />
@@ -142,11 +160,10 @@ export function HoyView() {
         {siguiente && (
           <button
             onClick={() => abrirModulo(siguiente.moduloId)}
-            className={`w-full flex items-center gap-4 p-4 rounded-tarjeta border text-left shadow-tarjeta transition-colors ${
-              modoOscuro ? 'bg-zinc-800/60 border-zinc-800 hover:bg-zinc-800' : 'bg-white border-zinc-200 hover:bg-zinc-50'
-            }`}
+            className="sin-neu w-full flex items-center gap-4 px-5 py-4 rounded-[22px] text-left transition-shadow hover:brightness-[1.02]"
+            style={{ background: 'color-mix(in srgb, var(--accent-base) 12%, var(--neu-bg))', boxShadow: 'var(--neu-elevada)' }}
           >
-            <span className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'color-mix(in srgb, var(--accent-base) 12%, transparent)' }}>
+            <span className="w-12 h-12 rounded-[14px] flex items-center justify-center flex-shrink-0" style={{ background: 'var(--neu-bg)', boxShadow: 'var(--neu-plana)' }}>
               <i className={`ti ${siguiente.tipo === 'clase' ? 'ti-school' : 'ti-clipboard-check'} text-xl`} style={{ color: 'var(--accent-texto)' }} aria-hidden="true" />
             </span>
             <span className="min-w-0 flex-1">

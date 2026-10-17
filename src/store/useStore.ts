@@ -391,7 +391,7 @@ export const useStore = create<AppState>()(
       recordsPasapalabra: {},
       partidaAhorcado: null,
       statsAhorcado: {},
-      temaColor: 'azul' as TemaColorId,
+      temaColor: 'lex' as TemaColorId,
       consultaActivaId: null,
       codigoExploradorActivo: null,
       articuloExploradorPendiente: null,
@@ -1149,7 +1149,7 @@ export const useStore = create<AppState>()(
     {
       name: 'prima-lex-storage-v3',
       storage: crearAlmacenamiento(),
-      version: 36,
+      version: 37,
       partialize: (s) => ({
         perfil: s.perfil,
         codigos: s.codigos,
@@ -1322,6 +1322,11 @@ export const useStore = create<AppState>()(
           // verde de antes (el valor por defecto) pasa al azul; las demás
           // elecciones de color se respetan.
           if (state.temaColor === 'esmeralda') state = { ...state, temaColor: 'azul' }
+        }
+        if (version < 37) {
+          // v37: estilo neumórfico con el índigo de Prima Lex por defecto. Quien
+          // tenía el azul de antes (el valor por defecto) pasa al nuevo.
+          if (state.temaColor === 'azul') state = { ...state, temaColor: 'lex' }
         }
         return state as never
       },
