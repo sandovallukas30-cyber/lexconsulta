@@ -89,6 +89,8 @@ type NodoData = {
   tamanoTexto: TamanoTextoMental
   color?: string
   nota?: string
+  /** Solo pantalla (no se guarda): el nodo entra directo en modo edición. */
+  autoEditar?: boolean
 }
 
 interface NodoCallbacks {
@@ -1322,10 +1324,101 @@ function MapaMentalDetalle({
       id: crypto.randomUUID(),
       type: 'mental',
       position: { x: centro.x + jitter(), y: centro.y + jitter() },
-      data: { texto: 'Nuevo', forma, tamanoTexto: 'texto' },
+      data: { texto: 'Nuevo', forma, tamanoTexto: 'texto', autoEditar: true },
       style: { width: forma === 'ninguna' ? 140 : 160 },
+      initialWidth: forma === 'ninguna' ? 140 : 160,
+      initialHeight: 60,
     }
     setNodes((nds) => [...nds, nuevo])
+  }
+
+  /** Crea un nodo en `posicion`, ya seleccionado y listo para escribir. Si
+   *  viene `padreId`, lo conecta a ese nodo. */
+  const crearNodoEn = (
+    posicion: { x: number; y: number },
+    padreId: string | null,
+    extra?: Partial<NodoData> & { ancho?: number }
+  ) => {
+    pushHistory()
+    const forma: FormaNodoMental = extra?.forma ?? 'rectangulo'
+    const nuevo: NodoFlow = {
+      id: crypto.randomUUID(),
+      type: 'mental',
+      position: posicion,
+      selected: true,
+      data: { texto: extra?.texto ?? 'Nuevo', forma, tamanoTexto: extra?.tamanoTexto ?? 'texto', color: extra?.color, autoEditar: true },
+      style: { width: extra?.ancho ?? (forma === 'ninguna' ? 140 : 160) },
+      // medidas iniciales: sin ellas React Flow deja el nodo oculto hasta medirlo y no se puede escribir en él
+      initialWidth: extra?.ancho ?? (forma === 'ninguna' ? 140 : 160),
+      initialHeight: 60,
+    }
+    setNodes((nds) => [...nds.map((n) => (n.selected ? { ...n, selected: false } : n)), nuevo])
+    if (padreId) {
+      const padre = nodesRef.current.find((n) => n.id === padreId)
+      const lados = elegirLadosConexion(padre?.position ?? { x: 0, y: 0 }, posicion)
+      setEdges((eds) => [
+        ...eds,
+        { id: crypto.randomUUID(), source: padreId, target: nuevo.id, sourceHandle: lados.desdeHandle, targetHandle: lados.hastaHandle, type: 'editable', markerEnd: MARKER_FLECHA },
+      ])
+    }
+    return nuevo.id
+  }
+
+  /** Tab = rama nueva del nodo elegido (a su derecha); Enter = otro del mismo
+   *  nivel (debajo del último hermano). Como en los mapas mentales de siempre. */
+  const crearRelativo = (id: string, tipo: 'hijo' | 'hermano') => {
+    const actual = nodesRef.current.find((n) => n.id === id)
+    if (!actual) return
+    const aristas = edgesRef.current
+    const padreId = tipo === 'hermano' ? aristas.find((e) => e.target === id)?.source ?? null : id
+    const base = padreId ? nodesRef.current.find((n) => n.id === padreId) : null
+    if (!base) {
+      // sin padre: un nodo nuevo al lado, sin conexión
+      crearNodoEn({ x: actual.position.x + 220, y: actual.position.y }, null, { forma: actual.data.forma })
+      return
+    }
+    const hermanos = aristas.filter((e) => e.source === base.id).map((e) => nodesRef.current.find((n) => n.id === e.target)).filter((n): n is NodoFlow => !!n)
+    const ancho = typeof base.style?.width === 'number' ? base.style.width : 160
+    const y = hermanos.length > 0 ? Math.max(...hermanos.map((h) => h.position.y)) + 75 : base.position.y
+    crearNodoEn({ x: base.position.x + ancho + 90, y }, base.id, { forma: actual.data.forma === 'ninguna' ? 'ninguna' : 'ovalo', color: actual.data.color })
+  }
+
+  // Tab y Enter valen para el nodo elegido aunque el foco esté en la página
+  // (al confirmar un texto el foco queda en el cuerpo del documento), por eso
+  // se escucha a nivel de documento y se descartan los campos y botones.
+  const crearRelativoRef = useRef(crearRelativo)
+  useEffect(() => {
+    crearRelativoRef.current = crearRelativo
+  })
+  useEffect(() => {
+    const alTeclear = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab' && e.key !== 'Enter') return
+      if (e.ctrlKey || e.metaKey || e.altKey) return
+      const t = e.target as HTMLElement
+      if (t.closest('input, textarea, select, button, a, [contenteditable="true"], [role="dialog"]')) return
+      if (t !== document.body && !t.closest('.react-flow')) return
+      const elegidos = nodesRef.current.filter((n) => n.selected)
+      if (elegidos.length !== 1) return
+      e.preventDefault()
+      crearRelativoRef.current(elegidos[0].id, e.key === 'Tab' ? 'hijo' : 'hermano')
+    }
+    document.addEventListener('keydown', alTeclear)
+    return () => document.removeEventListener('keydown', alTeclear)
+  }, [])
+
+  // doble clic en un espacio vacío: nodo nuevo ahí mismo
+  const alDobleClicLienzo = (e: React.MouseEvent) => {
+    if (!(e.target as HTMLElement).classList.contains('react-flow__pane')) return
+    const pos = rfRef.current?.screenToFlowPosition({ x: e.clientX, y: e.clientY })
+    if (pos) crearNodoEn({ x: pos.x - 80, y: pos.y - 24 }, null)
+  }
+
+  const crearIdeaCentral = () => {
+    const rect = wrapperRef.current?.getBoundingClientRect()
+    const centro = rect
+      ? rfRef.current?.screenToFlowPosition({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }) ?? { x: 0, y: 0 }
+      : { x: 0, y: 0 }
+    crearNodoEn({ x: centro.x - 100, y: centro.y - 30 }, null, { texto: 'Idea central', forma: 'ovalo', tamanoTexto: 'titulo', ancho: 200 })
   }
 
   // ============= ORGANIZAR AUTOMÁTICO =============
@@ -1536,6 +1629,7 @@ function MapaMentalDetalle({
               key={f.id}
               onClick={() => agregarNodo(f.id)}
               title={`Agregar ${f.label}`}
+              aria-label={`Agregar ${f.label.split(' — ')[0]}`}
               className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${
                 modoOscuro ? 'text-zinc-300 hover:bg-zinc-700' : 'text-zinc-600 hover:bg-white hover:shadow-sm'
               }`}
@@ -1664,7 +1758,7 @@ function MapaMentalDetalle({
 
       <VistaImprimibleMapaMental mapa={mapa} />
 
-      <div ref={wrapperRef} className="flex-1 relative">
+      <div ref={wrapperRef} className="flex-1 relative" onDoubleClick={alDobleClicLienzo}>
         <MentalContext.Provider value={ctxValue}>
           <ReactFlow
             onInit={(instance) => {
@@ -1681,6 +1775,7 @@ function MapaMentalDetalle({
             snapToGrid
             snapGrid={[15, 15]}
             multiSelectionKeyCode="Shift"
+            zoomOnDoubleClick={false}
             // "loose": permite arrastrar una conexión desde CUALQUIER lado
             // del nodo y soltarla en cualquier otro lado (sin esto, React
             // Flow exige que la conexión salga específicamente de un handle
@@ -1716,12 +1811,22 @@ function MapaMentalDetalle({
 
         {nodes.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="text-center">
-              <i className={`ti ti-hierarchy-2 text-4xl block mb-2 ${modoOscuro ? 'text-zinc-700' : 'text-zinc-300'}`} />
-              <p className={`text-sm ${modoOscuro ? 'text-zinc-600' : 'text-zinc-400'}`}>
-                Usa los botones de forma de arriba para agregar el primer nodo
+            <div className="text-center pointer-events-auto max-w-xs px-4">
+              <i className={`ti ti-hierarchy-2 text-4xl block mb-2 ${modoOscuro ? 'text-zinc-600' : 'text-zinc-300'}`} aria-hidden="true" />
+              <p className={`text-sm font-medium mb-1 ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>Empieza por la idea central</p>
+              <p className={`text-xs mb-4 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
+                Después, con el nodo elegido: Tab agrega una rama y Enter otra del mismo nivel. Doble clic en un espacio vacío crea un nodo suelto.
               </p>
+              <button onClick={crearIdeaCentral} className="boton boton-primario">
+                <i className="ti ti-plus" aria-hidden="true" />
+                Agregar idea central
+              </button>
             </div>
+          </div>
+        )}
+        {nodes.length > 0 && nodes.length <= 6 && (
+          <div className={`absolute left-3 bottom-3 pointer-events-none text-[11px] px-2.5 py-1 rounded-full ${modoOscuro ? 'bg-zinc-800 text-zinc-400' : 'bg-white/90 text-zinc-500 shadow-tarjeta'}`}>
+            Tab: rama nueva · Enter: otro del mismo nivel · doble clic: nodo suelto
           </div>
         )}
       </div>
@@ -1839,11 +1944,33 @@ function NodoMental(props: NodeProps<NodoFlow>) {
   const color = data.color ?? VERDE
 
   useEffect(() => {
-    if (editando) {
-      ref.current?.focus()
-      ref.current?.select()
+    if (!editando) return
+    // un nodo recién creado está oculto hasta que React Flow lo mide, y un
+    // elemento oculto no puede recibir el foco: se reintenta unos instantes,
+    // y solo mientras el foco no haya llegado (así no pisa lo que se escribe)
+    const enfocar = () => {
+      const el = ref.current
+      if (!el || document.activeElement === el) return
+      el.focus()
+      if (document.activeElement === el) el.select()
+    }
+    enfocar()
+    const t1 = window.setTimeout(enfocar, 60)
+    const t2 = window.setTimeout(enfocar, 180)
+    const t3 = window.setTimeout(enfocar, 400)
+    return () => {
+      window.clearTimeout(t1)
+      window.clearTimeout(t2)
+      window.clearTimeout(t3)
     }
   }, [editando])
+
+  // un nodo recién creado con Tab, Enter o doble clic se abre listo para escribir
+  useEffect(() => {
+    if (!data.autoEditar) return
+    setEditando(true)
+    updateNode(id, (n) => ({ data: { ...n.data, autoEditar: false } }))
+  }, [data.autoEditar, id, updateNode])
 
   // Auto-crecer el nodo con el texto: antes el textarea tenía 2 filas fijas
   // sin importar cuánto se escribiera, así que un texto largo simplemente no
