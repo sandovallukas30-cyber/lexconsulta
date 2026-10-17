@@ -15,6 +15,11 @@ interface ItemMenu {
 }
 
 // Menú centrado en estudiantes: herramientas de estudio.
+const itemsSemana: ItemMenu[] = [
+  { id: 'hoy', icono: 'ti-sun', label: 'Hoy' },
+  { id: 'tareas', icono: 'ti-checkbox', label: 'Tareas' },
+]
+
 const itemsAcademicos: ItemMenu[] = [
   { id: 'modulos', icono: 'ti-layout-grid', label: 'Módulos' },
   { id: 'explorador', icono: 'ti-book-2', label: 'Explorador' },
@@ -147,7 +152,7 @@ export function Sidebar() {
                   Prima<span style={{ color: 'var(--accent-texto)' }}> Lex</span>
                 </h1>
                 <p className={`text-[11px] mt-0.5 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                  Consultor jurídico con IA
+                  Tu cuaderno de Derecho
                 </p>
               </div>
               <button
@@ -163,6 +168,24 @@ export function Sidebar() {
         </div>
 
         <nav className={`flex-1 py-4 overflow-y-auto ${colapsado ? 'px-2' : 'px-3'}`}>
+          <div className="space-y-0.5">
+            {itemsSemana.map((item) => (
+              <BotonNav
+                key={item.id}
+                item={item}
+                activo={vistaActiva === item.id}
+                colapsado={colapsado}
+                modoOscuro={modoOscuro}
+                onClick={() => irA(item.id)}
+              />
+            ))}
+          </div>
+
+          <div
+            aria-hidden="true"
+            className={`h-px my-3 ${colapsado ? 'mx-2' : 'mx-3'} ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-200'}`}
+          />
+
           <div className="space-y-0.5">
             {grupoAcademico.map((item) => (
               <BotonNav

@@ -24,6 +24,7 @@ import type {
   Favorito,
   Mensaje,
   Canvas,
+  TareaPlan,
   PartidaPasapalabra,
   RecordPasapalabra,
   AreaPractica,
@@ -52,7 +53,7 @@ import type {
 } from '../types'
 import { siguienteEstado } from '../services/tarjetasApunte'
 import { confirmarSalida } from '../services/guardiaCambios'
-import { agregarActividadHoy } from '../services/actividadEstudio'
+import { agregarActividadHoy, fechaLocalISO } from '../services/actividadEstudio'
 import { aplicarResultadoPracticaATodos, aplicarResultadoQuizATodos } from '../services/progresoModulos'
 
 interface AppState {
@@ -257,6 +258,13 @@ interface AppState {
   /** Ramos que el usuario cursa (metadata real de curso -- profesor,
    *  horario, semestre), cada uno vinculado a uno o más Módulos. */
   ramos: Ramo[]
+  /** Tareas del plan personal (vista Tareas y Hoy). */
+  tareasPlan: TareaPlan[]
+  agregarTareaPlan: (t: Pick<TareaPlan, 'titulo' | 'ramoId' | 'fecha' | 'prioridad'> & Partial<Pick<TareaPlan, 'subtareas'>>) => string
+  actualizarTareaPlan: (id: string, cambios: Partial<Omit<TareaPlan, 'id'>>) => void
+  alternarTareaPlan: (id: string) => void
+  eliminarTareaPlan: (id: string) => TareaPlan | null
+  restaurarTareaPlan: (t: TareaPlan) => void
   crearRamo: (ramo: Omit<Ramo, 'id'>) => string
   actualizarRamo: (id: string, cambios: Partial<Omit<Ramo, 'id'>>) => void
   /** Elimina el Ramo Y sus datos académicos (clases, apuntes...) --
@@ -354,7 +362,7 @@ export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
       perfil: null,
-      vistaActiva: 'modulos',
+      vistaActiva: 'hoy',
       codigos: codigosIniciales,
       jurisprudencia: JURISPRUDENCIA_SEED,
       historial: [],
@@ -395,6 +403,39 @@ export const useStore = create<AppState>()(
       apuntePendiente: null,
       academicoModulos: {},
       ramos: [],
+      tareasPlan: [],
+      agregarTareaPlan: (t) => {
+        const id = crypto.randomUUID()
+        const ahora = Date.now()
+        set((s) => ({
+          tareasPlan: [{ subtareas: [], ...t, id, hecha: false, hechaEn: null, creada: ahora, actualizada: ahora }, ...s.tareasPlan],
+        }))
+        return id
+      },
+      actualizarTareaPlan: (id, cambios) =>
+        set((s) => ({
+          tareasPlan: s.tareasPlan.map((t) => (t.id === id ? { ...t, ...cambios, actualizada: Date.now() } : t)),
+        })),
+      alternarTareaPlan: (id) =>
+        set((s) => {
+          const t = s.tareasPlan.find((x) => x.id === id)
+          if (!t) return {}
+          const hecha = !t.hecha
+          return {
+            tareasPlan: s.tareasPlan.map((x) =>
+              x.id === id ? { ...x, hecha, hechaEn: hecha ? fechaLocalISO(new Date()) : null, actualizada: Date.now() } : x
+            ),
+            // terminar una tarea cuenta como día de estudio (racha)
+            ...(hecha ? { diasActividadEstudio: agregarActividadHoy(s.diasActividadEstudio) } : {}),
+          }
+        }),
+      eliminarTareaPlan: (id) => {
+        const t = get().tareasPlan.find((x) => x.id === id) ?? null
+        if (t) set((s) => ({ tareasPlan: s.tareasPlan.filter((x) => x.id !== id) }))
+        return t
+      },
+      restaurarTareaPlan: (t) =>
+        set((s) => ({ tareasPlan: s.tareasPlan.some((x) => x.id === t.id) ? s.tareasPlan : [t, ...s.tareasPlan] })),
       diasActividadEstudio: [],
       repasoApuntes: {},
       posicionLectura: {},
@@ -1100,7 +1141,7 @@ export const useStore = create<AppState>()(
     {
       name: 'prima-lex-storage-v3',
       storage: crearAlmacenamiento(),
-      version: 34,
+      version: 35,
       partialize: (s) => ({
         perfil: s.perfil,
         codigos: s.codigos,
@@ -1129,6 +1170,7 @@ export const useStore = create<AppState>()(
         progresoModulos: s.progresoModulos,
         academicoModulos: s.academicoModulos,
         ramos: s.ramos,
+        tareasPlan: s.tareasPlan,
         diasActividadEstudio: s.diasActividadEstudio,
         repasoApuntes: s.repasoApuntes,
         posicionLectura: s.posicionLectura,
@@ -1262,6 +1304,10 @@ export const useStore = create<AppState>()(
           // v34: se retira Canvas (queda Mapas mentales). Quien lo tenía como
           // última vista vuelve a Módulos; los canvas guardados quedan sin uso.
           if (state.vistaActiva === 'canvas') state = { ...state, vistaActiva: 'modulos' }
+        }
+        if (version < 35) {
+          // v35: aparece el plan personal (Tareas y Hoy).
+          if (!Array.isArray(state.tareasPlan)) state = { ...state, tareasPlan: [] }
         }
         return state as never
       },

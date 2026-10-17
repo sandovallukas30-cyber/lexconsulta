@@ -24,6 +24,8 @@ const MAX_PILA = 20
 export const useNavegacion = create<{ pila: Lugar[] }>(() => ({ pila: [] }))
 
 const NOMBRES_VISTA: Partial<Record<VistaId, string>> = {
+  hoy: 'Hoy',
+  tareas: 'Tareas',
   modulos: 'Módulos',
   mapasmentales: 'Mapas mentales',
   explorador: 'Explorador',

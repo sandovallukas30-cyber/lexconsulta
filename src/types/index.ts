@@ -66,6 +66,8 @@ export type CategoriaCodigo =
   | 'tratados'
 
 export type VistaId =
+  | 'hoy'
+  | 'tareas'
   | 'modulos'
   | 'explorador'
   | 'colecciones'
@@ -707,4 +709,32 @@ export interface Ramo {
   /** Color propio, mismo criterio que icono. Sin valor = verde de acento
    *  de la app (var(--accent-base)). */
   color?: string
+}
+
+/** Tarea del plan personal del estudiante (vista Tareas / Hoy). Distinta de
+ *  las clases, evaluaciones y textos de cada módulo, que viven en
+ *  `academicoModulos`. Lleva `actualizada` desde el inicio para poder
+ *  sincronizar entre dispositivos por elemento más adelante. */
+export type PrioridadTarea = 'alta' | 'media' | 'baja'
+
+export interface SubtareaPlan {
+  id: string
+  titulo: string
+  hecha: boolean
+}
+
+export interface TareaPlan {
+  id: string
+  titulo: string
+  /** id de un Ramo propio o de un Módulo del catálogo; null = sin ramo. */
+  ramoId: string | null
+  /** YYYY-MM-DD; null = sin fecha. */
+  fecha: string | null
+  prioridad: PrioridadTarea
+  hecha: boolean
+  /** YYYY-MM-DD en que se marcó como hecha. */
+  hechaEn: string | null
+  subtareas: SubtareaPlan[]
+  creada: number
+  actualizada: number
 }
