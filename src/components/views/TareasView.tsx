@@ -3,6 +3,7 @@ import { useStore } from '../../store/useStore'
 import { avisar } from '../../store/useAvisos'
 import { MODULOS } from '../../data/modulos'
 import { FilaTarea } from '../ui/FilaTarea'
+import { SelectorRamo } from '../ui/SelectorRamo'
 import type { PrioridadTarea, TareaPlan } from '../../types'
 import {
   contarPorFiltro,
@@ -40,47 +41,6 @@ function useClases() {
     suave: modoOscuro ? 'text-zinc-400' : 'text-zinc-500',
     titulo: modoOscuro ? 'text-white' : 'text-zinc-900',
   }
-}
-
-/** Selector de ramo: los propios primero y después las áreas del catálogo. */
-function SelectorRamo({
-  valor,
-  onChange,
-  className,
-  etiqueta = 'Ramo',
-}: {
-  valor: string | null
-  onChange: (v: string | null) => void
-  className?: string
-  etiqueta?: string
-}) {
-  const ramos = useStore((s) => s.ramos)
-  return (
-    <select
-      aria-label={etiqueta}
-      value={valor ?? ''}
-      onChange={(e) => onChange(e.target.value || null)}
-      className={className}
-    >
-      <option value="">Sin ramo</option>
-      {ramos.length > 0 && (
-        <optgroup label="Mis ramos">
-          {ramos.map((r) => (
-            <option key={r.id} value={r.id}>
-              {r.nombre}
-            </option>
-          ))}
-        </optgroup>
-      )}
-      <optgroup label="Áreas del derecho">
-        {MODULOS.map((m) => (
-          <option key={m.id} value={m.id}>
-            {m.nombre}
-          </option>
-        ))}
-      </optgroup>
-    </select>
-  )
 }
 
 function NuevaTarea({ onCreada }: { onCreada: () => void }) {

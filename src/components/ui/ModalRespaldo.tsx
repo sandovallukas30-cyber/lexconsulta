@@ -32,6 +32,8 @@ function textoResumen(r: ResumenRespaldo): string {
     n(r.colecciones, 'colección', 'colecciones'),
     n(r.mapasMentales, 'mapa mental', 'mapas mentales'),
     n(r.subrayados, 'subrayado', 'subrayados'),
+    n(r.tareas, 'tarea', 'tareas'),
+    n(r.sesionesFoco, 'sesión de enfoque', 'sesiones de enfoque'),
   ].filter(Boolean)
   return partes.length > 0 ? partes.join(' · ') : 'nada todavía'
 }

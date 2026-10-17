@@ -1,6 +1,7 @@
 import { useStore } from '../../store/useStore'
 import type { TareaPlan } from '../../types'
 import { colorRamo, etiquetaFecha, nombreRamo, progresoSubtareas } from '../../services/tareasPlan'
+import { horasMin } from '../../services/enfoque'
 
 const COLOR_PRIORIDAD = { alta: '#dc2626', media: '#d97706', baja: '#a1a1aa' } as const
 
@@ -73,6 +74,12 @@ export function FilaTarea({ tarea, onAbrir, abierta }: Props) {
               style={fecha.tono === 'hoy' ? { color: 'var(--accent-texto)' } : undefined}
             >
               {fecha.texto}
+            </span>
+          )}
+          {(tarea.minutosEnfocados ?? 0) > 0 && (
+            <span className={`text-xs ${suave}`} title="Tiempo de enfoque dedicado a esta tarea">
+              <i className="ti ti-hourglass-high text-[11px] mr-0.5" aria-hidden="true" />
+              {horasMin(tarea.minutosEnfocados ?? 0)}
             </span>
           )}
           {total > 0 && (

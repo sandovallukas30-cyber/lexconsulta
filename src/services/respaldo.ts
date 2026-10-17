@@ -1,4 +1,6 @@
 import { useStore } from '../store/useStore'
+import { useEnfoque } from '../store/useEnfoque'
+import type { SesionFoco } from './enfoque'
 import { silenciarAvisoGuardado, useEstadoGuardado, vaciarEscrituraPendiente } from '../store/almacenamiento'
 import type {
   ApunteModulo,
@@ -8,6 +10,7 @@ import type {
   MapaMental,
   ProgresoModulo,
   Ramo,
+  TareaPlan,
 } from '../types'
 
 /** Respaldo de los datos PROPIOS del usuario (lo académico y lo de estudio)
@@ -33,6 +36,10 @@ export interface DatosRespaldo {
   repasoApuntes: Record<string, EstadoTarjetaRepaso>
   /** Hasta dónde se leyó cada apunte (desde persist v31). */
   posicionLectura: Record<string, { ratio: number; fecha: number }>
+  /** Tareas del plan personal (persist v35). Faltan en respaldos antiguos. */
+  tareasPlan: TareaPlan[]
+  /** Sesiones del temporizador Enfoque. Faltan en respaldos antiguos. */
+  sesionesFoco: SesionFoco[]
 }
 
 export interface ArchivoRespaldo {
@@ -55,6 +62,8 @@ export interface ResumenRespaldo {
   mapasMentales: number
   subrayados: number
   diasActividad: number
+  tareas: number
+  sesionesFoco: number
 }
 
 // ---------------------------------------------------------------------------
@@ -77,6 +86,8 @@ export function crearRespaldo(): ArchivoRespaldo {
       mapasMentales: s.mapasMentales,
       repasoApuntes: s.repasoApuntes,
       posicionLectura: s.posicionLectura,
+      tareasPlan: s.tareasPlan,
+      sesionesFoco: useEnfoque.getState().sesiones,
     },
   }
 }
@@ -163,6 +174,9 @@ export function validarRespaldo(texto: string): ResultadoValidacion {
   if (d.mapasMentales !== undefined && !listaValida(d.mapasMentales, mapaValido)) problemas.push('mapas mentales')
   if (d.repasoApuntes !== undefined && !(esObjeto(d.repasoApuntes) && Object.values(d.repasoApuntes).every((e) => esObjeto(e) && typeof e.caja === 'number' && typeof e.proximo === 'number')))
     problemas.push('repaso de tarjetas')
+  if (d.tareasPlan !== undefined && !listaValida(d.tareasPlan, (t) => conId(t) && esTexto((t as TareaPlan).titulo))) problemas.push('tareas')
+  if (d.sesionesFoco !== undefined && !listaValida(d.sesionesFoco, (x) => conId(x) && typeof (x as SesionFoco).minutos === 'number'))
+    problemas.push('sesiones de enfoque')
   if (problemas.length > 0) {
     return { ok: false, error: `El respaldo está dañado o incompleto (${problemas.join(', ')}). No se importó nada.` }
   }
@@ -188,6 +202,8 @@ export function validarRespaldo(texto: string): ResultadoValidacion {
     mapasMentales: (d.mapasMentales as MapaMental[]) ?? [],
     repasoApuntes: (d.repasoApuntes as Record<string, EstadoTarjetaRepaso>) ?? {},
     posicionLectura: esObjeto(d.posicionLectura) ? (d.posicionLectura as Record<string, { ratio: number; fecha: number }>) : {},
+    tareasPlan: (d.tareasPlan as TareaPlan[]) ?? [],
+    sesionesFoco: (d.sesionesFoco as SesionFoco[]) ?? [],
   }
   const respaldo: ArchivoRespaldo = { app: MARCA_APP, version: crudo.version, fecha: esTexto(crudo.fecha) ? crudo.fecha : '', datos }
   return { ok: true, respaldo, resumen: resumirRespaldo(datos) }
@@ -207,6 +223,8 @@ export function resumirRespaldo(d: DatosRespaldo): ResumenRespaldo {
     mapasMentales: d.mapasMentales.length,
     subrayados: Object.values(d.subrayados).reduce((n, l) => n + l.length, 0),
     diasActividad: d.diasActividadEstudio.length,
+    tareas: d.tareasPlan.length,
+    sesionesFoco: d.sesionesFoco.length,
   }
 }
 
@@ -282,13 +300,16 @@ export function aplicarRespaldo(respaldo: ArchivoRespaldo, modo: ModoImportacion
     mapasMentales: s.mapasMentales,
     repasoApuntes: s.repasoApuntes,
     posicionLectura: s.posicionLectura,
+    tareasPlan: s.tareasPlan,
   }
+  const sesionesPrevias = useEnfoque.getState().sesiones
   useEstadoGuardado.setState({ error: null })
   silenciarAvisoGuardado()
   aplicarSinVerificar(respaldo, modo)
   // la escritura normal va agrupada (400 ms): acá hay que saber YA si cupo
   if (vaciarEscrituraPendiente()) {
     useStore.setState(previo)
+    useEnfoque.setState({ sesiones: sesionesPrevias })
     vaciarEscrituraPendiente()
     throw new Error('almacenamiento lleno')
   }
@@ -307,10 +328,12 @@ function aplicarSinVerificar(respaldo: ArchivoRespaldo, modo: ModoImportacion) {
       mapasMentales: d.mapasMentales,
       repasoApuntes: d.repasoApuntes,
       posicionLectura: d.posicionLectura,
+      tareasPlan: d.tareasPlan,
       moduloActivoId: null,
       coleccionActivaId: null,
       mapaMentalActivoId: null,
     })
+    useEnfoque.setState({ sesiones: d.sesionesFoco })
     return
   }
   const s = useStore.getState()
@@ -329,5 +352,7 @@ function aplicarSinVerificar(respaldo: ArchivoRespaldo, modo: ModoImportacion) {
     mapasMentales: unirPorId(s.mapasMentales, d.mapasMentales),
     repasoApuntes: { ...d.repasoApuntes, ...s.repasoApuntes },
     posicionLectura: { ...d.posicionLectura, ...s.posicionLectura },
+    tareasPlan: unirPorId(s.tareasPlan, d.tareasPlan),
   })
+  useEnfoque.setState((e) => ({ sesiones: unirPorId(e.sesiones, d.sesionesFoco).sort((x, y) => y.inicio - x.inicio) }))
 }

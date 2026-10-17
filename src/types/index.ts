@@ -68,6 +68,7 @@ export type CategoriaCodigo =
 export type VistaId =
   | 'hoy'
   | 'tareas'
+  | 'enfoque'
   | 'modulos'
   | 'explorador'
   | 'colecciones'
@@ -748,6 +749,8 @@ export interface TareaPlan {
   /** YYYY-MM-DD en que se marcó como hecha. */
   hechaEn: string | null
   subtareas: SubtareaPlan[]
+  /** Minutos de enfoque (Pomodoro) dedicados a esta tarea. */
+  minutosEnfocados?: number
   creada: number
   actualizada: number
 }

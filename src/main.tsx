@@ -8,9 +8,14 @@ import App from './App.tsx'
 import './services/navegacion'
 import { VerificarView } from './components/views/VerificarView.tsx'
 import { useStore } from './store/useStore'
+import { useEnfoque } from './store/useEnfoque'
 
 // Solo en desarrollo: acceso al store desde la consola / pruebas automatizadas.
-if (import.meta.env.DEV) (window as unknown as { __store: typeof useStore }).__store = useStore
+if (import.meta.env.DEV) {
+  const w = window as unknown as { __store: typeof useStore; __enfoque: typeof useEnfoque }
+  w.__store = useStore
+  w.__enfoque = useEnfoque
+}
 
 // Detectar si estamos en la página de verificación
 const esVerificacion = window.location.pathname.startsWith('/verify')

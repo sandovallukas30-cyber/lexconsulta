@@ -1,6 +1,10 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../../store/useStore'
 import { FilaTarea } from '../ui/FilaTarea'
+import { AnilloProgreso } from '../ui/AnilloProgreso'
+import { useEnfoque, msMostrados } from '../../store/useEnfoque'
+import { useAhora } from '../../hooks/useMotorEnfoque'
+import { horasMin, minutosEnFecha, mmss } from '../../services/enfoque'
 import { calcularRachaEstudio, contarTarjetasVencidas } from '../../services/actividadEstudio'
 import {
   diasHasta,
@@ -57,6 +61,11 @@ export function HoyView() {
   const agregar = useStore((s) => s.agregarTareaPlan)
   const setVistaActiva = useStore((s) => s.setVistaActiva)
   const [nueva, setNueva] = useState('')
+  const sesionesFoco = useEnfoque((e) => e.sesiones)
+  const metaFoco = useEnfoque((e) => e.ajustes.metaDia)
+  const relojEnfoque = useEnfoque()
+  const ahoraEnfoque = useAhora(relojEnfoque.estado === 'corriendo')
+  const minFoco = minutosEnFecha(sesionesFoco, hoyISO())
 
   const suave = modoOscuro ? 'text-zinc-400' : 'text-zinc-500'
   const hoy = hoyISO()
@@ -155,6 +164,22 @@ export function HoyView() {
                 Agregar
               </button>
             </form>
+          </Tarjeta>
+
+          <Tarjeta titulo="Enfoque de hoy" icono="ti-hourglass-high">
+            <div className="flex items-center gap-4">
+              <AnilloProgreso progreso={minFoco / Math.max(1, metaFoco)} tamano={84} grosor={8} modoOscuro={modoOscuro} etiqueta={`${minFoco} de ${metaFoco} minutos de enfoque hoy`}>
+                <span className={`text-base font-bold tabular-nums ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{Math.round(Math.min(1, minFoco / Math.max(1, metaFoco)) * 100)}%</span>
+              </AnilloProgreso>
+              <div className="min-w-0">
+                <div className={`text-lg font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{horasMin(minFoco)}</div>
+                <div className={`text-xs ${suave}`}>de {horasMin(metaFoco)} de meta</div>
+              </div>
+            </div>
+            <button onClick={() => setVistaActiva('enfoque')} className="boton boton-primario w-full mt-3">
+              <i className={`ti ${relojEnfoque.estado === 'detenido' ? 'ti-player-play' : 'ti-hourglass-high'}`} aria-hidden="true" />
+              {relojEnfoque.estado === 'detenido' ? 'Iniciar un enfoque' : `Ver temporizador · ${mmss(msMostrados(relojEnfoque, ahoraEnfoque))}`}
+            </button>
           </Tarjeta>
 
           {!sinNada && (<>

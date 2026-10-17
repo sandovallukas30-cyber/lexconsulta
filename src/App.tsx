@@ -14,6 +14,7 @@ import { Avisos } from './components/ui/Avisos'
 import { RightSidebar } from './components/layout/RightSidebar'
 import { esAdmin } from './config/admin'
 import { vistas } from './vistas'
+import { useMotorEnfoque } from './hooks/useMotorEnfoque'
 import { LimiteError } from './components/ui/LimiteError'
 
 // solo se descarga si alguien abre un enlace para importar una colección
@@ -27,6 +28,7 @@ function CargandoVista({ modoOscuro }: { modoOscuro: boolean }) {
 }
 
 function App() {
+  useMotorEnfoque()
   const vistaActiva = useStore((s) => s.vistaActiva)
   const usuarioEmail = useStore((s) => s.usuarioEmail)
   const modoOscuro = useStore((s) => s.modoOscuro)

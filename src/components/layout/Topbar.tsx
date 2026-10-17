@@ -1,4 +1,5 @@
 import { useStore } from '../../store/useStore'
+import { MiniEnfoque } from './MiniEnfoque'
 
 interface TopbarProps {
   onAbrirRegistro?: () => void
@@ -7,6 +8,7 @@ interface TopbarProps {
 const titulos: Record<string, string> = {
   hoy: 'Hoy',
   tareas: 'Tareas',
+  enfoque: 'Enfoque',
   modulos: 'Módulos',
   mapasmentales: 'Mapas mentales',
   explorador: 'Explorador de códigos',
@@ -70,6 +72,7 @@ export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
       </div>
 
       <div className="flex items-center gap-2">
+        <MiniEnfoque />
         <button
           onClick={toggleModoOscuro}
           className="boton boton-fantasma boton-icono"

@@ -18,6 +18,7 @@ interface ItemMenu {
 const itemsSemana: ItemMenu[] = [
   { id: 'hoy', icono: 'ti-sun', label: 'Hoy' },
   { id: 'tareas', icono: 'ti-checkbox', label: 'Tareas' },
+  { id: 'enfoque', icono: 'ti-hourglass-high', label: 'Enfoque' },
 ]
 
 const itemsAcademicos: ItemMenu[] = [
