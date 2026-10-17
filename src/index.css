@@ -7,18 +7,18 @@
    Los valores reales los sobreescribe JS al cargar el tema persistido del usuario.
    Si JS no corre, esta paleta garantiza que la app sigue luciendo como siempre. */
 :root {
-  --accent-50:  #eff6ff;
-  --accent-100: #dbeafe;
-  --accent-200: #bfdbfe;
-  --accent-300: #93c5fd;
-  --accent-400: #60a5fa;
-  --accent-500: #3b82f6;
-  --accent-600: #2563eb;
-  --accent-700: #1d4ed8;
-  --accent-800: #1e40af;
-  --accent-900: #1e3a8a;
-  --accent-950: #172554;
-  --accent-base: #2563EB;
+  --accent-50:  #eeeefd;
+  --accent-100: #e4e4fc;
+  --accent-200: #cfd0f9;
+  --accent-300: #b0b2f4;
+  --accent-400: #8689ff;
+  --accent-500: #6b6eee;
+  --accent-600: #5457e0;
+  --accent-700: #4346c4;
+  --accent-800: #36389c;
+  --accent-900: #2b2e58;
+  --accent-950: #1d1f3d;
+  --accent-base: #5457E0;
 }
 
 /* === Tokens de diseño (C5) ===

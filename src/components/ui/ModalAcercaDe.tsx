@@ -272,7 +272,7 @@ function Apariencia({ modoOscuro }: { modoOscuro: boolean }) {
   )
 }
 
-function Disclaimer({ modoOscuro }: { modoOscuro: boolean }) {
+export function Disclaimer({ modoOscuro }: { modoOscuro: boolean }) {
   return (
     <div>
       <div
@@ -329,73 +329,90 @@ function Disclaimer({ modoOscuro }: { modoOscuro: boolean }) {
   )
 }
 
-function Privacidad({ modoOscuro }: { modoOscuro: boolean }) {
+export function Privacidad({ modoOscuro }: { modoOscuro: boolean }) {
   return (
     <div>
       <P modoOscuro={modoOscuro}>
-        <em>Última actualización: 16 de octubre de 2026.</em>
+        <em>Última actualización: 17 de octubre de 2026.</em>
       </P>
 
       <H modoOscuro={modoOscuro}>1. Quién es responsable</H>
       <P modoOscuro={modoOscuro}>
-        Prima Lex es un proyecto independiente creado por un estudiante de Derecho. Los datos de contacto formales se
-        publicarán antes de habilitar cuentas de usuario o pagos. Esta política se rige por la Ley 19.628 y por la Ley
-        21.719, que la reemplaza a partir del 1 de diciembre de 2026, y se actualizará cuando cambie lo que
-        recopilamos.
+        Prima Lex es un proyecto independiente creado por un estudiante de Derecho. Esta política se rige por la Ley
+        19.628 y por la Ley 21.719, que la reemplaza a partir del 1 de diciembre de 2026, y se actualizará cuando cambie
+        lo que recopilamos. Para ejercer tus derechos puedes hacerlo directamente desde la aplicación (ver sección 8).
       </P>
 
-      <H modoOscuro={modoOscuro}>2. Qué guardamos en tu dispositivo</H>
+      <H modoOscuro={modoOscuro}>2. Sin cuenta: todo queda en tu dispositivo</H>
       <P modoOscuro={modoOscuro}>
-        Lo que creas en Prima Lex (ramos, evaluaciones, apuntes, colecciones, mapas mentales, progreso de estudio y
-        preferencias) se guarda en el almacenamiento local de tu navegador. No se envía a un servidor propio ni se
-        sincroniza entre dispositivos. Si borras los datos del sitio, se pierden: usa la opción de respaldo para
-        guardar una copia.
+        No necesitas cuenta para usar Prima Lex. Lo que creas (ramos, evaluaciones, tareas, apuntes, colecciones, mapas
+        mentales, sesiones de enfoque, progreso de estudio y preferencias) se guarda en el almacenamiento local de tu
+        navegador y no se envía a nuestros servidores. Si borras los datos del sitio, se pierden: usa la opción de
+        respaldo para guardar una copia.
       </P>
 
-      <H modoOscuro={modoOscuro}>3. Correo electrónico (opcional)</H>
+      <H modoOscuro={modoOscuro}>3. Con cuenta: qué recibimos y para qué</H>
       <P modoOscuro={modoOscuro}>
-        No necesitas cuenta para usar la plataforma. Si verificas tu correo para ampliar el límite diario de los juegos
-        de práctica, enviamos un enlace de verificación a través del proveedor de correo Resend. No mantenemos una
-        base de datos de correos: la dirección queda guardada en tu navegador y se envía al servidor solo para
-        verificarla y contar tus usos del día.
+        Puedes crear una cuenta con Google, con Microsoft o con un enlace enviado a tu correo. Según el método,
+        recibimos de ese proveedor tu <strong>correo electrónico</strong>, tu <strong>nombre</strong> y tu{' '}
+        <strong>foto de perfil</strong> (si la tienes) y un identificador interno. No recibimos tu contraseña ni acceso
+        a tu correo, tus archivos o tus contactos: solo pedimos los permisos básicos de identidad (openid, email y
+        profile). Usamos estos datos únicamente para identificarte, mostrar tu perfil y sincronizar tus datos entre
+        tus dispositivos.
       </P>
 
-      <H modoOscuro={modoOscuro}>4. Inteligencia artificial</H>
+      <H modoOscuro={modoOscuro}>4. Copia de tus datos en la nube</H>
+      <P modoOscuro={modoOscuro}>
+        Al iniciar sesión, una copia de lo que creas en Prima Lex (la misma que incluye el respaldo) se guarda en
+        la base de datos de nuestro proveedor de infraestructura, Supabase, y se actualiza cuando cambias algo. Cada
+        persona solo puede leer y modificar su propia copia mediante reglas de acceso por usuario. La copia{' '}
+        <strong>no está cifrada de extremo a extremo</strong>: el proveedor la almacena protegida en tránsito y en
+        reposo, pero no es ilegible para quien administra el servicio. No la usamos para otros fines, no la vendemos y
+        no la compartimos con terceros con fines comerciales o publicitarios.
+      </P>
+
+      <H modoOscuro={modoOscuro}>5. Correo para los juegos de práctica (opcional)</H>
+      <P modoOscuro={modoOscuro}>
+        Si verificas tu correo para ampliar el límite diario de los juegos de práctica, enviamos un enlace de
+        verificación a través del proveedor de correo Resend. En ese caso la dirección queda guardada en tu navegador
+        y se envía al servidor solo para verificarla y contar tus usos del día.
+      </P>
+
+      <H modoOscuro={modoOscuro}>6. Inteligencia artificial</H>
       <P modoOscuro={modoOscuro}>
         Los juegos Pasapalabra y Ahorcado piden palabras y definiciones al modelo de Anthropic a través de un servidor
         intermediario que protege la credencial. Esa solicitud indica el área del derecho y el formato del juego; no
-        incluye tus apuntes ni datos personales. El tratamiento por parte del proveedor se rige por sus condiciones.
+        incluye tus apuntes ni datos personales.
       </P>
 
-      <H modoOscuro={modoOscuro}>5. Datos técnicos del servidor</H>
+      <H modoOscuro={modoOscuro}>7. Datos técnicos y terceros que intervienen</H>
       <P modoOscuro={modoOscuro}>
-        Para evitar abusos, el servidor mantiene en memoria un contador temporal de usos por dirección IP y por correo
-        verificado, que se descarta automáticamente. El proveedor de alojamiento (Vercel) puede registrar datos
-        técnicos de conexión, como la dirección IP, según sus propias políticas.
+        Para evitar abusos, el servidor mantiene en memoria un contador temporal de usos por dirección IP, que se
+        descarta automáticamente. Intervienen como proveedores: Vercel (alojamiento; puede registrar datos técnicos de
+        conexión como la IP), Supabase (cuentas y base de datos), Google y Microsoft (solo si eliges entrar con ellos),
+        Resend (correo) y Anthropic (juegos). Cada uno trata los datos según sus propias políticas. No usamos cookies de
+        seguimiento ni analítica de terceros, y no vendemos datos.
       </P>
 
-      <H modoOscuro={modoOscuro}>6. Sin seguimiento ni venta de datos</H>
+      <H modoOscuro={modoOscuro}>8. Tus derechos y cómo ejercerlos</H>
       <P modoOscuro={modoOscuro}>
-        No usamos cookies de seguimiento ni herramientas de analítica de terceros, y no vendemos ni cedemos datos a
-        terceros con fines comerciales o publicitarios.
+        Tienes derecho a acceder a tus datos, rectificarlos, suprimirlos, oponerte a su tratamiento y llevártelos.
+        En la práctica: lo que ves en la aplicación es lo que guardamos de ti; puedes descargarlo con la opción de
+        respaldo; y puedes <strong>eliminar tu cuenta y la copia en la nube</strong> en cualquier momento desde tu
+        perfil (botón «Eliminar mi cuenta»). La eliminación es inmediata e irreversible y no toca lo que tienes en tu
+        dispositivo. Cerrar sesión solo deja de sincronizar.
       </P>
 
-      <H modoOscuro={modoOscuro}>7. Borrar tus datos</H>
+      <H modoOscuro={modoOscuro}>9. Menores de edad</H>
       <P modoOscuro={modoOscuro}>
-        Puedes eliminar todo lo guardado en tu dispositivo desde la configuración del navegador (Privacidad → Borrar
-        datos del sitio). La eliminación es inmediata e irreversible. Para quitar tu correo, cierra sesión desde el
-        botón de registro.
-      </P>
-
-      <H modoOscuro={modoOscuro}>8. Menores de edad</H>
-      <P modoOscuro={modoOscuro}>
-        La plataforma no solicita datos personales de menores ni realiza perfilado.
+        Prima Lex está pensada para personas mayores de 18 años, estudiantes de educación superior. No solicitamos
+        datos personales de menores ni realizamos perfilado.
       </P>
     </div>
   )
 }
 
-function Terminos({ modoOscuro }: { modoOscuro: boolean }) {
+export function Terminos({ modoOscuro }: { modoOscuro: boolean }) {
   return (
     <div>
       <P modoOscuro={modoOscuro}>
@@ -463,7 +480,14 @@ function Terminos({ modoOscuro }: { modoOscuro: boolean }) {
       <H modoOscuro={modoOscuro}>9. Modificaciones</H>
       <P modoOscuro={modoOscuro}>
         Estos Términos pueden actualizarse. La versión vigente es siempre la publicada en esta sección, con su fecha.
-        Antes de ofrecer cuentas o planes de pago se publicarán condiciones específicas.
+        Antes de ofrecer planes de pago se publicarán condiciones específicas.
+      </P>
+
+      <H modoOscuro={modoOscuro}>10. Cuentas</H>
+      <P modoOscuro={modoOscuro}>
+        Crear una cuenta es opcional. Eres responsable de la seguridad de tu acceso (tu cuenta de Google, de Microsoft
+        o tu correo). Podemos suspender cuentas que incumplan estos Términos. Puedes eliminar tu cuenta cuando
+        quieras desde tu perfil; el tratamiento de tus datos se describe en la Política de privacidad.
       </P>
     </div>
   )
