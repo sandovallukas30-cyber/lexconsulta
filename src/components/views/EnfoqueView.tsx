@@ -8,6 +8,7 @@ import { CalificarSesion } from '../ui/CalificarSesion'
 import { EnfoqueEstadisticas } from '../enfoque/EnfoqueEstadisticas'
 import { EnfoqueHistorial } from '../enfoque/EnfoqueHistorial'
 import { PanelAmbiente } from '../enfoque/PanelAmbiente'
+import { useSala } from '../../store/useSala'
 import { SelectorRamo } from '../ui/SelectorRamo'
 import { colorRamo, hoyISO, nombreRamo } from '../../services/tareasPlan'
 import {
@@ -184,6 +185,9 @@ function Temporizador() {
         )}
         <button onClick={() => setConcentracion(true)} className="boton boton-suave boton-chico">
           <i className="ti ti-arrows-maximize" aria-hidden="true" /> Modo concentración
+        </button>
+        <button onClick={() => useSala.getState().abrir()} className="boton boton-suave boton-chico" title="Estudia con un video de YouTube y el temporizador a la vista">
+          <i className="ti ti-brand-youtube" aria-hidden="true" /> Sala de estudio
         </button>
       </div>
 

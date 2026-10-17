@@ -3,9 +3,29 @@ import { persist } from 'zustand/middleware'
 import type { Sonido } from '../services/ambiente'
 import type { FondoId } from '../services/fondos'
 
-/** Preferencias del ambiente de enfoque (fondo animado y sonido). Propias de
- *  cada dispositivo: no van en el respaldo. El sonido sigue al temporizador
- *  desde cualquier pantalla (ver useMotorSonido). */
+/** Un video o transmisión favorito para la sala de estudio. */
+export interface Emisora {
+  id: string
+  nombre: string
+  url: string
+}
+
+export type DisposicionSala = 'lado' | 'abajo' | 'arriba' | 'flotante' | 'minimo'
+export type TamanoVideo = 'ajustado' | 'mediano' | 'pequeno'
+
+/** Lo último que usaste en la sala de estudio. */
+export interface PrefsSala {
+  material: 'video' | 'apunte'
+  video: string
+  /** `ramoId:apunteId` */
+  apunte: string
+  disposicion: DisposicionSala
+  tamano: TamanoVideo
+}
+
+/** Preferencias del ambiente de enfoque (fondo animado, sonido, sala de
+ *  estudio). Propias de cada dispositivo: no van en el respaldo. El sonido
+ *  sigue al temporizador desde cualquier pantalla (ver useMotorSonido). */
 export interface EnfoqueLocal {
   sonido: Sonido
   /** 0 a 1 */
@@ -15,6 +35,8 @@ export interface EnfoqueLocal {
   fondo: FondoId
   /** Al elegir un fondo, también pone su sonido. */
   sonidoDeFondo: boolean
+  emisoras: Emisora[]
+  sala: PrefsSala
   set: (p: Partial<Omit<EnfoqueLocal, 'set'>>) => void
 }
 
@@ -26,11 +48,21 @@ export const useEnfoqueLocal = create<EnfoqueLocal>()(
       soloEnfocando: true,
       fondo: 'ninguno',
       sonidoDeFondo: true,
+      emisoras: [],
+      sala: { material: 'video', video: '', apunte: '', disposicion: 'lado', tamano: 'ajustado' },
       set: (p) => set(p),
     }),
     {
       name: 'prima-lex-enfoque-local-v1',
-      partialize: (s) => ({ sonido: s.sonido, volumen: s.volumen, soloEnfocando: s.soloEnfocando, fondo: s.fondo, sonidoDeFondo: s.sonidoDeFondo }),
+      partialize: (s) => ({
+        sonido: s.sonido, volumen: s.volumen, soloEnfocando: s.soloEnfocando, fondo: s.fondo, sonidoDeFondo: s.sonidoDeFondo,
+        emisoras: s.emisoras, sala: s.sala,
+      }),
+      // guardados de antes de la sala: se completan con los valores por defecto
+      merge: (guardado, actual) => {
+        const g = (guardado ?? {}) as Partial<EnfoqueLocal>
+        return { ...actual, ...g, sala: { ...actual.sala, ...(g.sala ?? {}) }, emisoras: Array.isArray(g.emisoras) ? g.emisoras : [] }
+      },
     }
   )
 )

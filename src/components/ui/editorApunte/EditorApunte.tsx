@@ -454,7 +454,7 @@ export default function EditorApunte({ titulo, contenido, tema: temaLectura, tam
         )}
 
         <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto">
-          <div ref={setColumna} className={`relative ${estado.ancho ? 'max-w-4xl' : 'max-w-2xl'} mx-auto px-5 sm:px-8 py-10`}>
+          <div ref={setColumna} className={`ancho-lectura relative ${estado.ancho ? 'max-w-4xl' : 'max-w-2xl'} mx-auto px-5 sm:px-8 py-10`}>
             <textarea
               ref={refTitulo}
               value={titulo}

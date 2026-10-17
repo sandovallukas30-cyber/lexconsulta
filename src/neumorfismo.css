@@ -248,3 +248,16 @@ input[type='checkbox']:not(.sin-neu):checked::after { content: ''; width: 10px; 
 .pt-\[15vh\] { padding-top: calc(15vh / var(--zoom, 1)); }
 .pt-\[12vh\] { padding-top: calc(12vh / var(--zoom, 1)); }
 .pt-\[10vh\] { padding-top: calc(10vh / var(--zoom, 1)); }
+
+/* Anchos de las pantallas: ocupan el espacio disponible en vez de quedar
+   como una columna angosta en el centro (sobre todo con la interfaz
+   «pequeña»). Tope: 1560 px visuales, sea cual sea el zoom. Las columnas de
+   lectura de apuntes (ancho-lectura) conservan su medida cómoda. */
+main :is(.max-w-3xl, .max-w-4xl, .max-w-5xl, .max-w-6xl, .max-w-7xl).mx-auto:not(.ancho-lectura) {
+  max-width: min(100%, calc(1560px / var(--zoom, 1)));
+}
+/* la tarjeta del artículo y las columnas de lectura se ensanchan con el zoom,
+   para que al achicar la interfaz no queden como una tira angosta */
+main .ancho-lectura.max-w-2xl { max-width: calc(42rem / var(--zoom, 1)); }
+main .ancho-lectura.max-w-4xl { max-width: calc(56rem / var(--zoom, 1)); }
+main :is(.max-w-3xl):is([class*='sm:mx-auto']) { max-width: calc(48rem / var(--zoom, 1)); }

@@ -8,6 +8,7 @@ import { AnimatePresence } from 'framer-motion'
 import { useStore } from './store/useStore'
 import { useAplicarAjustes } from './hooks/useAplicarAjustes'
 import { useRecordatorios } from './hooks/useRecordatorios'
+import { useSala, PARAM_SALA } from './store/useSala'
 import { avisar } from './store/useAvisos'
 import { aplicarTema } from './theme'
 import { Omnibar } from './components/ui/Omnibar'
@@ -44,6 +45,8 @@ function CargandoVista({ modoOscuro }: { modoOscuro: boolean }) {
   )
 }
 
+const SalaEstudio = lazy(() => import('./components/enfoque/SalaEstudio').then((m) => ({ default: m.SalaEstudio })))
+
 function App() {
   useMotorEnfoque()
   useAplicarAjustes()
@@ -59,6 +62,20 @@ function App() {
   const setVistaActiva = useStore((s) => s.setVistaActiva)
   const VistaComponente = vistaActiva === 'admin' && !esAdmin(usuarioEmail) ? vistas.modulos : vistas[vistaActiva]
   const [modalRegistroAbierto, setModalRegistroAbierto] = useState(false)
+  const salaAbierta = useSala((s) => s.abierta)
+
+  // enlace compartido de la sala de estudio (?sala=<video>): abre la sala con ese video
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const video = params.get(PARAM_SALA)
+    if (video === null) return
+    params.delete(PARAM_SALA)
+    const q = params.toString()
+    window.history.replaceState(null, '', window.location.pathname + (q ? `?${q}` : '') + window.location.hash)
+    setVistaActiva('enfoque')
+    useSala.getState().abrir(video.slice(0, 500))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   const [coleccionParaImportar, setColeccionParaImportar] = useState<ColeccionCompartida | null>(null)
 
   // Detecta un link de Colección compartida (?colImportar=...) al entrar a
@@ -126,6 +143,11 @@ function App() {
           <RightSidebar />
         </div>
       </div>
+      {salaAbierta && (
+        <Suspense fallback={null}>
+          <SalaEstudio />
+        </Suspense>
+      )}
       <Avisos />
       <PanelAtajos />
       <ModalRegistro abierto={modalRegistroAbierto} onCerrar={() => setModalRegistroAbierto(false)} />
