@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { ModalRespaldo } from '../ui/ModalRespaldo'
 import { useStore } from '../../store/useStore'
@@ -286,9 +286,13 @@ export function ModulosView() {
   const ramos = useStore((s) => s.ramos)
   const [tabInicial, setTabInicial] = useState<Tab | undefined>(undefined)
   const [evaluacionEnfocada, setEvaluacionEnfocada] = useState<string | undefined>(undefined)
-  const [modalAbierto, setModalAbierto] = useState(false)
+  // si Hoy pidió "Crear mi primer ramo", el modal abre al montar
+  const [modalAbierto, setModalAbierto] = useState(() => useStore.getState().nuevoRamoPendiente)
   const [ramoEditando, setRamoEditando] = useState<Ramo | null>(null)
   const [respaldoAbierto, setRespaldoAbierto] = useState(false)
+  useEffect(() => {
+    useStore.getState().limpiarNuevoRamo()
+  }, [])
 
   const modulosOrdenados = [...MODULOS].sort((a, b) => a.orden - b.orden)
   const moduloDeCatalogo = moduloActivoId ? MODULOS.find((m) => m.id === moduloActivoId) : undefined

@@ -4,7 +4,7 @@ import { eliminarDeListaConDeshacer } from '../../../services/deshacer'
 import type { EvaluacionModulo } from '../../../types'
 import { calcularPonderacionTotal } from '../../../services/modulosAcademico'
 import { formatearFechaCorta } from './utilidades'
-import { BotonAgregar, BotonEliminar, BotonesFormulario, CampoTexto, EstadoVacio, FechaConCountdown } from './comunes'
+import { BotonAgregar, BotonEliminar, BotonesFormulario, CampoTexto, EstadoVacio, FechaConCountdown, FormularioRapido } from './comunes'
 
 function calcularNotaNecesaria(evaluaciones: EvaluacionModulo[], objetivo: number) {
   let sumaPonderada = 0
@@ -134,14 +134,20 @@ export function TabExamenes({
       </div>
 
       {mostrarForm && (
-        <div ref={refForm} className={`p-4 rounded-tarjeta border mb-4 space-y-3 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+        <div ref={refForm}>
+        <FormularioRapido
+          onGuardar={guardar}
+          onCancelar={() => { setMostrarForm(false); setEditandoId(null); setError(null) }}
+          className={`p-4 rounded-tarjeta border mb-4 space-y-3 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}
+        >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <CampoTexto label="Nombre" valor={nombre} onChange={setNombre} modoOscuro={modoOscuro} placeholder="Ej: Solemne 1" />
+            <CampoTexto label="Nombre" valor={nombre} onChange={setNombre} modoOscuro={modoOscuro} placeholder="Ej: Solemne 1" foco />
             <CampoTexto label="Fecha" tipo="date" valor={fecha} onChange={setFecha} modoOscuro={modoOscuro} />
-            <CampoTexto label="Ponderación (%)" tipo="number" valor={ponderacion} onChange={setPonderacion} modoOscuro={modoOscuro} placeholder="Ej: 30" />
+            <CampoTexto label="Ponderación (%)" tipo="number" valor={ponderacion} onChange={setPonderacion} modoOscuro={modoOscuro} placeholder={`Queda ${Math.max(0, 100 - ponderacionCargada)}% por repartir`} />
             <CampoTexto label="Nota (opcional, escala 1-7)" tipo="number" valor={nota} onChange={setNota} modoOscuro={modoOscuro} placeholder="Déjalo vacío si aún no la rindes" />
           </div>
           <BotonesFormulario onCancelar={() => { setMostrarForm(false); setEditandoId(null); setError(null) }} onGuardar={guardar} modoOscuro={modoOscuro} error={error} />
+        </FormularioRapido>
         </div>
       )}
 

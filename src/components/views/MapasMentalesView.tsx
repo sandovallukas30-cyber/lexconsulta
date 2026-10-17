@@ -1643,7 +1643,7 @@ function MapaMentalDetalle({
 
         <button
           onClick={() => window.print()}
-          title="Exportar a PDF: abre el diálogo de impresión, elegí 'Guardar como PDF'"
+          title="Exportar a PDF: abre el diálogo de impresión, elige 'Guardar como PDF'"
           className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
             modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'
           }`}
@@ -1719,7 +1719,7 @@ function MapaMentalDetalle({
             <div className="text-center">
               <i className={`ti ti-hierarchy-2 text-4xl block mb-2 ${modoOscuro ? 'text-zinc-700' : 'text-zinc-300'}`} />
               <p className={`text-sm ${modoOscuro ? 'text-zinc-600' : 'text-zinc-400'}`}>
-                Usá los botones de forma arriba para agregar el primer nodo
+                Usa los botones de forma de arriba para agregar el primer nodo
               </p>
             </div>
           </div>
@@ -1945,14 +1945,14 @@ function NodoMental(props: NodeProps<NodoFlow>) {
             <>
               <ToolbarBtn
                 icono="ti-bold"
-                label="Negrita — seleccioná texto y hacé clic (sin selección, inserta las marcas en el cursor)"
+                label="Negrita — selecciona texto y haz clic (sin selección, inserta las marcas en el cursor)"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => envolverSeleccion('*')}
                 modoOscuro={modoOscuro}
               />
               <ToolbarBtn
                 icono="ti-underline"
-                label="Subrayado — seleccioná texto y hacé clic"
+                label="Subrayado — selecciona texto y haz clic"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => envolverSeleccion('_')}
                 modoOscuro={modoOscuro}

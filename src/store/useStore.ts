@@ -260,6 +260,10 @@ interface AppState {
   ramos: Ramo[]
   /** Tareas del plan personal (vista Tareas y Hoy). */
   tareasPlan: TareaPlan[]
+  /** Otra vista (Hoy) pide que Módulos abra directo el alta de ramo. No se persiste. */
+  nuevoRamoPendiente: boolean
+  pedirNuevoRamo: () => void
+  limpiarNuevoRamo: () => void
   agregarTareaPlan: (t: Pick<TareaPlan, 'titulo' | 'ramoId' | 'fecha' | 'prioridad'> & Partial<Pick<TareaPlan, 'subtareas'>>) => string
   actualizarTareaPlan: (id: string, cambios: Partial<Omit<TareaPlan, 'id'>>) => void
   alternarTareaPlan: (id: string) => void
@@ -404,6 +408,9 @@ export const useStore = create<AppState>()(
       academicoModulos: {},
       ramos: [],
       tareasPlan: [],
+      nuevoRamoPendiente: false,
+      pedirNuevoRamo: () => set({ nuevoRamoPendiente: true, vistaActiva: 'modulos', moduloActivoId: null }),
+      limpiarNuevoRamo: () => set({ nuevoRamoPendiente: false }),
       agregarTareaPlan: (t) => {
         const id = crypto.randomUUID()
         const ahora = Date.now()

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import type { SesionClase } from '../../../types'
 import { diasHasta, formatearCountdown, urgenciaDe } from '../../../services/modulosAcademico'
 import { colorUrgencia, formatearFechaCorta } from './utilidades'
@@ -72,8 +73,47 @@ export function BotonAgregar({ label, onClick }: { label: string; onClick: () =>
   )
 }
 
+/** Contenedor de un formulario rápido (A4 de la auditoría): enfoca el primer
+ *  campo al abrir (o el marcado con `foco`, y de nuevo cada vez que cambia
+ *  `reenfocar`), guarda con Enter desde cualquier campo de una línea y cancela
+ *  con Escape. No es un <form> a propósito: lo usan formularios con varios
+ *  campos y sin botón de envío oculto. */
+export function FormularioRapido({
+  onGuardar, onCancelar, className, children, reenfocar = 0,
+}: {
+  onGuardar: () => void
+  onCancelar: () => void
+  className?: string
+  children: React.ReactNode
+  reenfocar?: number
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = ref.current
+    const destino = el?.querySelector<HTMLElement>('[data-foco]') ?? el?.querySelector<HTMLElement>('input, textarea, select')
+    destino?.focus()
+  }, [reenfocar])
+  return (
+    <div
+      ref={ref}
+      className={className}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') {
+          e.stopPropagation()
+          onCancelar()
+        } else if (e.key === 'Enter' && !e.shiftKey && (e.target as HTMLElement).tagName === 'INPUT') {
+          e.preventDefault()
+          onGuardar()
+        }
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
 export function CampoTexto({
-  label, valor, onChange, tipo = 'text', modoOscuro, placeholder,
+  label, valor, onChange, tipo = 'text', modoOscuro, placeholder, foco,
 }: {
   label: string
   valor: string
@@ -81,11 +121,14 @@ export function CampoTexto({
   tipo?: string
   modoOscuro: boolean
   placeholder?: string
+  /** Es el campo que recibe el foco al abrir el formulario y al agregar otro. */
+  foco?: boolean
 }) {
   return (
     <label className="block">
       <span className={`block text-xs font-medium mb-1 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>{label}</span>
       <input
+        data-foco={foco ? '' : undefined}
         type={tipo}
         value={valor}
         placeholder={placeholder}

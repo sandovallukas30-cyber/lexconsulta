@@ -5,6 +5,7 @@ import { eliminarRamoConDeshacer } from '../../services/deshacer'
 import { avisar } from '../../store/useAvisos'
 import { MODULOS } from '../../data/modulos'
 import { ICONO_RAMO_DEFECTO } from '../../services/modulosAcademico'
+import { useDialogo } from '../../hooks/useDialogo'
 import type { Ramo } from '../../types'
 
 const VERDE = 'var(--accent-base)'
@@ -57,15 +58,23 @@ function estadoDesdeRamo(r: Ramo | null): ReturnType<typeof campoVacio> {
   }
 }
 
+/** ¿Tiene datos más allá del nombre? Si sí, "Más detalles" abre desplegado. */
+function tieneDetalles(r: Ramo | null): boolean {
+  return !!r && !!(r.semestre || r.codigoCurso || r.profesor || r.email || r.horario || r.sala || r.syllabusUrl || r.modulosVinculados.length)
+}
+
 export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
   const modoOscuro = useStore((s) => s.modoOscuro)
   const crearRamo = useStore((s) => s.crearRamo)
   const actualizarRamo = useStore((s) => s.actualizarRamo)
+  const ramosExistentes = useStore((s) => s.ramos.length)
 
   const [campos, setCampos] = useState(() => estadoDesdeRamo(ramoEditando))
   const [modulosVinculados, setModulosVinculados] = useState<string[]>(ramoEditando?.modulosVinculados ?? [])
   const [icono, setIcono] = useState<string>(ramoEditando?.icono ?? ICONO_RAMO_DEFECTO)
   const [color, setColor] = useState<string>(ramoEditando?.color ?? VERDE)
+  const [verDetalles, setVerDetalles] = useState(() => tieneDetalles(ramoEditando))
+  const dialogoRef = useDialogo<HTMLDivElement>(abierto, onCerrar)
 
   // Reinicia el formulario cada vez que se abre (crear nuevo o editar otro
   // ramo). Normalizado a '' en ambos lados -- comparar ramoEditando?.id
@@ -74,13 +83,18 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
   // cambia nunca) y dispara un loop infinito de re-renders.
   const idComparable = ramoEditando?.id ?? ''
   const [ultimoId, setUltimoId] = useState(idComparable)
-  if (abierto && idComparable !== ultimoId) {
+  const [estabaAbierto, setEstabaAbierto] = useState(abierto)
+  if (abierto && (idComparable !== ultimoId || !estabaAbierto)) {
     setUltimoId(idComparable)
+    setEstabaAbierto(true)
     setCampos(estadoDesdeRamo(ramoEditando))
     setModulosVinculados(ramoEditando?.modulosVinculados ?? [])
     setIcono(ramoEditando?.icono ?? ICONO_RAMO_DEFECTO)
-    setColor(ramoEditando?.color ?? VERDE)
+    // un ramo nuevo parte con un color distinto al del anterior
+    setColor(ramoEditando?.color ?? COLORES_RAMO[ramosExistentes % COLORES_RAMO.length])
+    setVerDetalles(tieneDetalles(ramoEditando))
   }
+  if (!abierto && estabaAbierto) setEstabaAbierto(false)
 
   if (!abierto) return null
 
@@ -127,6 +141,14 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
   }`
   const labelClase = `block text-xs font-medium mb-1 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`
 
+  // Enter en cualquier campo de una línea guarda (antes había que ir al botón)
+  const alTeclear = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && (e.target as HTMLElement).tagName === 'INPUT') {
+      e.preventDefault()
+      guardar()
+    }
+  }
+
   return (
     <AnimatePresence>
       <motion.div
@@ -138,143 +160,176 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
         onClick={onCerrar}
       >
         <motion.div
+          ref={dialogoRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="titulo-modal-ramo"
+          onKeyDown={alTeclear}
           initial={{ scale: 0.96, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.96, opacity: 0 }}
           transition={{ duration: 0.2 }}
           onClick={(e) => e.stopPropagation()}
-          className={`max-w-lg w-full max-h-[85vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col ${
+          className={`max-w-lg w-full max-h-[85vh] rounded-2xl shadow-flotante overflow-hidden flex flex-col ${
             modoOscuro ? 'bg-zinc-900' : 'bg-white'
           }`}
         >
           <div className={`px-6 py-4 border-b flex items-center justify-between ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
-            <h2 className={`text-lg font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
-              {ramoEditando ? 'Editar ramo' : 'Agregar ramo'}
+            <h2 id="titulo-modal-ramo" className={`text-lg font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+              {ramoEditando ? 'Editar ramo' : 'Nuevo ramo'}
             </h2>
-            <button onClick={onCerrar} className={`w-8 h-8 rounded-lg flex items-center justify-center ${modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'}`}>
-              <i className="ti ti-x text-lg" />
+            <button
+              onClick={onCerrar}
+              aria-label="Cerrar"
+              className={`w-8 h-8 rounded-lg flex items-center justify-center ${modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'}`}
+            >
+              <i className="ti ti-x text-lg" aria-hidden="true" />
             </button>
           </div>
 
-          <div className="px-6 py-4 overflow-y-auto space-y-3">
+          <div className="px-6 py-4 overflow-y-auto space-y-4">
             <div className="flex items-center gap-3">
               <div
                 className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{ background: color + '20' }}
               >
-                <i className={`ti ${icono} text-xl`} style={{ color }} />
+                <i className={`ti ${icono} text-xl`} style={{ color }} aria-hidden="true" />
               </div>
               <label className="block flex-1">
                 <span className={labelClase}>Nombre del ramo</span>
-                <input className={inputClase} value={campos.nombre} onChange={(e) => set('nombre')(e.target.value)} placeholder="Ej: Principios Fundamentales del Derecho Privado" />
+                <input
+                  data-autofocus
+                  className={inputClase}
+                  value={campos.nombre}
+                  onChange={(e) => set('nombre')(e.target.value)}
+                  placeholder="Ej: Derecho Civil I"
+                  maxLength={120}
+                />
               </label>
-            </div>
-
-            <div>
-              <span className={labelClase}>Ícono</span>
-              <div className="flex flex-wrap gap-1.5">
-                {ICONOS_RAMO.map((ic) => {
-                  const activo = ic === icono
-                  return (
-                    <button
-                      key={ic}
-                      type="button"
-                      onClick={() => setIcono(ic)}
-                      title={ic}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center border transition-colors"
-                      style={
-                        activo
-                          ? { background: color + '20', color, borderColor: color }
-                          : { borderColor: modoOscuro ? '#3f3f46' : '#e4e4e7', color: modoOscuro ? '#a1a1aa' : '#71717a' }
-                      }
-                    >
-                      <i className={`ti ${ic} text-sm`} />
-                    </button>
-                  )
-                })}
-              </div>
             </div>
 
             <div>
               <span className={labelClase}>Color</span>
-              <div className="flex flex-wrap gap-1.5">
-                {COLORES_RAMO.map((c) => (
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Color del ramo">
+                {COLORES_RAMO.map((c, i) => (
                   <button
                     key={c}
                     type="button"
                     onClick={() => setColor(c)}
-                    title={c}
+                    aria-label={`Color ${i + 1}`}
+                    aria-pressed={c === color}
                     className="w-7 h-7 rounded-full flex items-center justify-center transition-transform"
                     style={{
                       background: c,
                       transform: c === color ? 'scale(1.15)' : 'scale(1)',
-                      boxShadow: c === color ? `0 0 0 2px ${modoOscuro ? '#18181b' : '#ffffff'}, 0 0 0 4px ${c}` : 'none',
+                      boxShadow: c === color ? `0 0 0 2px ${modoOscuro ? '#121620' : '#ffffff'}, 0 0 0 4px ${c}` : 'none',
                     }}
                   >
-                    {c === color && <i className="ti ti-check text-xs text-white" />}
+                    {c === color && <i className="ti ti-check text-xs text-white" aria-hidden="true" />}
                   </button>
                 ))}
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="block">
-                <span className={labelClase}>Semestre</span>
-                <input className={inputClase} value={campos.semestre} onChange={(e) => set('semestre')(e.target.value)} placeholder="Ej: 2do 2026" />
-              </label>
-              <label className="block">
-                <span className={labelClase}>Código de curso</span>
-                <input className={inputClase} value={campos.codigoCurso} onChange={(e) => set('codigoCurso')(e.target.value)} placeholder="Ej: DPRI080-23" />
-              </label>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="block">
-                <span className={labelClase}>Profesor</span>
-                <input className={inputClase} value={campos.profesor} onChange={(e) => set('profesor')(e.target.value)} />
-              </label>
-              <label className="block">
-                <span className={labelClase}>Email</span>
-                <input className={inputClase} type="email" value={campos.email} onChange={(e) => set('email')(e.target.value)} />
-              </label>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="block">
-                <span className={labelClase}>Horario</span>
-                <input className={inputClase} value={campos.horario} onChange={(e) => set('horario')(e.target.value)} placeholder="Ej: Martes 10:00" />
-              </label>
-              <label className="block">
-                <span className={labelClase}>Sala</span>
-                <input className={inputClase} value={campos.sala} onChange={(e) => set('sala')(e.target.value)} />
-              </label>
-            </div>
-            <label className="block">
-              <span className={labelClase}>Syllabus (enlace, opcional)</span>
-              <input className={inputClase} value={campos.syllabusUrl} onChange={(e) => set('syllabusUrl')(e.target.value)} placeholder="https://..." />
-            </label>
 
-            <div>
-              <span className={labelClase}>Módulos vinculados</span>
-              <div className="flex flex-wrap gap-1.5">
-                {MODULOS.map((m) => {
-                  const activo = modulosVinculados.includes(m.id)
-                  return (
-                    <button
-                      key={m.id}
-                      type="button"
-                      onClick={() => toggleModulo(m.id)}
-                      className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md border transition-colors"
-                      style={
-                        activo
-                          ? { background: m.color + '20', color: m.color, borderColor: m.color }
-                          : { borderColor: modoOscuro ? '#3f3f46' : '#e4e4e7', color: modoOscuro ? '#a1a1aa' : '#71717a' }
-                      }
-                    >
-                      <i className={`ti ${m.icono} text-xs`} />
-                      {m.nombre}
-                    </button>
-                  )
-                })}
+            <button
+              type="button"
+              onClick={() => setVerDetalles((v) => !v)}
+              aria-expanded={verDetalles}
+              className={`flex items-center gap-1.5 text-xs font-semibold ${modoOscuro ? 'text-zinc-300' : 'text-zinc-600'}`}
+            >
+              <i className={`ti ti-chevron-right text-sm transition-transform ${verDetalles ? 'rotate-90' : ''}`} aria-hidden="true" />
+              Más detalles (profesor, horario, ícono…)
+            </button>
+
+            {verDetalles && (
+              <div className="space-y-3">
+                <div>
+                  <span className={labelClase}>Ícono</span>
+                  <div className="flex flex-wrap gap-1.5" role="group" aria-label="Ícono del ramo">
+                    {ICONOS_RAMO.map((ic) => {
+                      const activo = ic === icono
+                      return (
+                        <button
+                          key={ic}
+                          type="button"
+                          onClick={() => setIcono(ic)}
+                          aria-label={`Ícono ${ic.replace('ti-', '')}`}
+                          aria-pressed={activo}
+                          className="w-8 h-8 rounded-lg flex items-center justify-center border transition-colors"
+                          style={
+                            activo
+                              ? { background: color + '20', color, borderColor: color }
+                              : { borderColor: modoOscuro ? '#323c4e' : '#e0e5ed', color: modoOscuro ? '#8d97aa' : '#5a6579' }
+                          }
+                        >
+                          <i className={`ti ${ic} text-sm`} aria-hidden="true" />
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="block">
+                    <span className={labelClase}>Semestre</span>
+                    <input className={inputClase} value={campos.semestre} onChange={(e) => set('semestre')(e.target.value)} placeholder="Ej: 2do 2026" />
+                  </label>
+                  <label className="block">
+                    <span className={labelClase}>Código de curso</span>
+                    <input className={inputClase} value={campos.codigoCurso} onChange={(e) => set('codigoCurso')(e.target.value)} placeholder="Ej: DPRI080-23" />
+                  </label>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="block">
+                    <span className={labelClase}>Profesor</span>
+                    <input className={inputClase} value={campos.profesor} onChange={(e) => set('profesor')(e.target.value)} />
+                  </label>
+                  <label className="block">
+                    <span className={labelClase}>Email del profesor</span>
+                    <input className={inputClase} type="email" value={campos.email} onChange={(e) => set('email')(e.target.value)} />
+                  </label>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="block">
+                    <span className={labelClase}>Horario</span>
+                    <input className={inputClase} value={campos.horario} onChange={(e) => set('horario')(e.target.value)} placeholder="Ej: Martes 10:00" />
+                  </label>
+                  <label className="block">
+                    <span className={labelClase}>Sala</span>
+                    <input className={inputClase} value={campos.sala} onChange={(e) => set('sala')(e.target.value)} />
+                  </label>
+                </div>
+                <label className="block">
+                  <span className={labelClase}>Syllabus (enlace, opcional)</span>
+                  <input className={inputClase} value={campos.syllabusUrl} onChange={(e) => set('syllabusUrl')(e.target.value)} placeholder="https://..." />
+                </label>
+
+                <div>
+                  <span className={labelClase}>Áreas del derecho que toca</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {MODULOS.map((m) => {
+                      const activo = modulosVinculados.includes(m.id)
+                      return (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => toggleModulo(m.id)}
+                          aria-pressed={activo}
+                          className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md border transition-colors"
+                          style={
+                            activo
+                              ? { background: m.color + '20', color: m.color, borderColor: m.color }
+                              : { borderColor: modoOscuro ? '#323c4e' : '#e0e5ed', color: modoOscuro ? '#8d97aa' : '#5a6579' }
+                          }
+                        >
+                          <i className={`ti ${m.icono} text-xs`} aria-hidden="true" />
+                          {m.nombre}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           <div className={`px-6 py-4 border-t flex items-center justify-between gap-2 ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
@@ -282,8 +337,10 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
               <button onClick={eliminar} className="text-xs font-medium text-red-600 hover:underline">Eliminar ramo</button>
             ) : <span />}
             <div className="flex gap-2">
-              <button onClick={onCerrar} className={`px-3 py-1.5 rounded-lg text-xs ${modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'}`}>Cancelar</button>
-              <button onClick={guardar} className="px-3 py-1.5 rounded-lg text-xs font-medium text-white" style={{ background: VERDE }}>Guardar</button>
+              <button onClick={onCerrar} className="boton boton-fantasma boton-chico">Cancelar</button>
+              <button onClick={guardar} disabled={!campos.nombre.trim()} className="boton boton-primario boton-chico">
+                {ramoEditando ? 'Guardar' : 'Crear ramo'}
+              </button>
             </div>
           </div>
         </motion.div>

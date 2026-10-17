@@ -946,7 +946,7 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
         {coleccion.articulos.length > 0 && (
           <button
             onClick={() => window.print()}
-            title="Exportar a PDF: abre el diálogo de impresión, elegí 'Guardar como PDF'"
+            title="Exportar a PDF: abre el diálogo de impresión, elige 'Guardar como PDF'"
             className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
               modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'
             }`}
@@ -1303,7 +1303,7 @@ function ModalVincularMapaMental({
         <div className="px-5 py-4 max-h-72 overflow-y-auto">
           {mapasMentales.length === 0 ? (
             <p className={`text-sm text-center py-6 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
-              Todavía no tenés ningún mapa mental creado.
+              Todavía no tienes ningún mapa mental creado.
             </p>
           ) : (
             <div className="space-y-1">

@@ -105,9 +105,9 @@ export function HoyView() {
         {sinNada && (
           <div className={`rounded-tarjeta border border-dashed p-5 text-center ${modoOscuro ? 'border-zinc-700' : 'border-zinc-300'}`}>
             <p className={`text-sm mb-3 ${suave}`}>Empieza agregando los ramos que cursas este semestre. Con eso, Hoy te muestra clases, evaluaciones y repaso.</p>
-            <button onClick={() => setVistaActiva('modulos')} className="boton boton-primario">
-              <i className="ti ti-school" aria-hidden="true" />
-              Agregar mis ramos
+            <button onClick={() => useStore.getState().pedirNuevoRamo()} className="boton boton-primario">
+              <i className="ti ti-plus" aria-hidden="true" />
+              Crear mi primer ramo
             </button>
           </div>
         )}
@@ -157,6 +157,7 @@ export function HoyView() {
             </form>
           </Tarjeta>
 
+          {!sinNada && (<>
           <Tarjeta titulo="Clases de hoy" icono="ti-calendar-event">
             {clasesHoy.length === 0 ? (
               <p className={`text-sm py-2 ${suave}`}>
@@ -209,7 +210,7 @@ export function HoyView() {
                             {nombreRamo(x.moduloId, ramos) ?? 'Ramo'} · {x.evaluacion.ponderacion}% de la nota
                           </span>
                         </span>
-                        <span className={`text-xs font-semibold flex-shrink-0 ${u === 'urgente' ? 'text-red-600' : u === 'proximo' ? 'text-amber-600' : suave}`}>
+                        <span className={`text-xs font-semibold flex-shrink-0 ${u === 'urgente' ? 'text-red-600' : u === 'proximo' ? 'text-amber-700' : suave}`}>
                           {formatearCountdown(x.dias)}
                         </span>
                       </button>
@@ -236,6 +237,7 @@ export function HoyView() {
             </div>
             <p className={`text-xs mt-3 ${suave}`}>Cuenta estudiar con apuntes, tarjetas o Práctica, o terminar una tarea.</p>
           </Tarjeta>
+          </>)}
         </div>
       </div>
     </div>

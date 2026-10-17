@@ -3,7 +3,8 @@ import { useStore } from '../../../store/useStore'
 import { eliminarDeListaConDeshacer } from '../../../services/deshacer'
 import type { SesionClase } from '../../../types'
 import { VERDE, formatearFechaCorta } from './utilidades'
-import { BotonAgregar, BotonEliminar, BotonesFormulario, CampoTexto, EstadoVacio, FechaConCountdown } from './comunes'
+import { BotonAgregar, BotonEliminar, BotonesFormulario, CampoTexto, EstadoVacio, FechaConCountdown, FormularioRapido } from './comunes'
+import { hoyISO, sumarDiasISO } from '../../../services/tareasPlan'
 
 export function TabClases({ moduloId, clases, modoOscuro }: { moduloId: string; clases: SesionClase[]; modoOscuro: boolean }) {
   const setClasesModulo = useStore((s) => s.setClasesModulo)
@@ -12,12 +13,14 @@ export function TabClases({ moduloId, clases, modoOscuro }: { moduloId: string; 
   const [fecha, setFecha] = useState('')
   const [tema, setTema] = useState('')
   const [notas, setNotas] = useState('')
+  const [reenfocar, setReenfocar] = useState(0)
 
   const ordenadas = [...clases].sort((a, b) => a.fecha.localeCompare(b.fecha))
 
   const iniciarNuevo = () => {
     setEditandoId(null)
-    setFecha('')
+    // fecha por defecto: una semana después de la última clase cargada (o hoy)
+    setFecha(ordenadas.length > 0 ? sumarDiasISO(ordenadas[ordenadas.length - 1].fecha, 7) : hoyISO())
     setTema('')
     setNotas('')
     setMostrarForm(true)
@@ -38,6 +41,13 @@ export function TabClases({ moduloId, clases, modoOscuro }: { moduloId: string; 
     } else {
       const nueva: SesionClase = { id: crypto.randomUUID(), fecha, tema: tema.trim(), notas: notas.trim() || undefined, completada: false }
       setClasesModulo(moduloId, [...clases, nueva])
+      // seguir cargando: el formulario queda abierto con la fecha de la
+      // semana siguiente y el foco en el tema
+      setFecha(sumarDiasISO(fecha, 7))
+      setTema('')
+      setNotas('')
+      setReenfocar((n) => n + 1)
+      return
     }
     setMostrarForm(false)
     setEditandoId(null)
@@ -64,14 +74,24 @@ export function TabClases({ moduloId, clases, modoOscuro }: { moduloId: string; 
       </div>
 
       {mostrarForm && (
-        <div className={`p-4 rounded-tarjeta border mb-4 space-y-3 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+        <FormularioRapido
+          onGuardar={guardar}
+          onCancelar={() => { setMostrarForm(false); setEditandoId(null) }}
+          reenfocar={reenfocar}
+          className={`p-4 rounded-tarjeta border mb-4 space-y-3 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}
+        >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <CampoTexto label="Fecha" tipo="date" valor={fecha} onChange={setFecha} modoOscuro={modoOscuro} />
-            <CampoTexto label="Tema" valor={tema} onChange={setTema} modoOscuro={modoOscuro} placeholder="Ej: Teoría del acto jurídico" />
+            <CampoTexto label="Tema" valor={tema} onChange={setTema} modoOscuro={modoOscuro} placeholder="Ej: Teoría del acto jurídico" foco />
           </div>
           <CampoTexto label="Notas (opcional)" valor={notas} onChange={setNotas} modoOscuro={modoOscuro} placeholder="Lo que quieras recordar de esta sesión" />
           <BotonesFormulario onCancelar={() => { setMostrarForm(false); setEditandoId(null) }} onGuardar={guardar} modoOscuro={modoOscuro} />
-        </div>
+          {!editandoId && (
+            <p className={`text-[11px] ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
+              Enter guarda y deja listo el formulario para la clase de la semana siguiente. Esc cierra.
+            </p>
+          )}
+        </FormularioRapido>
       )}
 
       {ordenadas.length === 0 ? (

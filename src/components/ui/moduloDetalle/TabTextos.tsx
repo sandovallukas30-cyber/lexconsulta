@@ -3,7 +3,7 @@ import { useStore } from '../../../store/useStore'
 import { eliminarDeListaConDeshacer } from '../../../services/deshacer'
 import type { SesionClase, TextoObligatorio } from '../../../types'
 import { VERDE } from './utilidades'
-import { BotonAgregar, BotonEliminar, BotonesFormulario, CampoSelectClase, CampoTexto, EstadoVacio, EtiquetaArticulo, EtiquetaClase } from './comunes'
+import { BotonAgregar, BotonEliminar, BotonesFormulario, FormularioRapido, CampoSelectClase, CampoTexto, EstadoVacio, EtiquetaArticulo, EtiquetaClase } from './comunes'
 
 export function TabTextos({ moduloId, textos, clases, modoOscuro }: { moduloId: string; textos: TextoObligatorio[]; clases: SesionClase[]; modoOscuro: boolean }) {
   const setTextosModulo = useStore((s) => s.setTextosModulo)
@@ -78,7 +78,11 @@ export function TabTextos({ moduloId, textos, clases, modoOscuro }: { moduloId: 
       </div>
 
       {mostrarForm && (
-        <div className={`p-4 rounded-tarjeta border mb-4 space-y-3 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+        <FormularioRapido
+          onGuardar={guardar}
+          onCancelar={() => { setMostrarForm(false); setEditandoId(null) }}
+          className={`p-4 rounded-tarjeta border mb-4 space-y-3 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}
+        >
           <CampoTexto label="Título" valor={titulo} onChange={setTitulo} modoOscuro={modoOscuro} placeholder="Ej: Tratado de las obligaciones, T. I" />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <CampoTexto label="Autor (opcional)" valor={autor} onChange={setAutor} modoOscuro={modoOscuro} placeholder="Ej: René Abeliuk" />
@@ -89,7 +93,7 @@ export function TabTextos({ moduloId, textos, clases, modoOscuro }: { moduloId: 
             <CampoSelectClase label="Lectura para la clase (opcional)" valor={claseId} onChange={setClaseId} clases={clases} modoOscuro={modoOscuro} />
           )}
           <BotonesFormulario onCancelar={() => { setMostrarForm(false); setEditandoId(null) }} onGuardar={guardar} modoOscuro={modoOscuro} />
-        </div>
+        </FormularioRapido>
       )}
 
       {textos.length === 0 ? (

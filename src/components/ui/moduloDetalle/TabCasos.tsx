@@ -3,7 +3,7 @@ import { useStore } from '../../../store/useStore'
 import { eliminarDeListaConDeshacer } from '../../../services/deshacer'
 import type { BriefCaso, SesionClase } from '../../../types'
 import { formatearFechaCorta } from './utilidades'
-import { BotonAgregar, BotonEliminar, BotonesFormulario, CampoArea, CampoSelectClase, CampoTexto, EstadoVacio, EtiquetaArticulo, EtiquetaClase } from './comunes'
+import { BotonAgregar, BotonEliminar, BotonesFormulario, FormularioRapido, CampoArea, CampoSelectClase, CampoTexto, EstadoVacio, EtiquetaArticulo, EtiquetaClase } from './comunes'
 
 function campoBriefVacio() {
   return { caratula: '', tribunal: '', fecha: '', hechos: '', cuestionJuridica: '', normaAplicable: '', analisis: '', conclusion: '', claseId: '', articuloRelacionado: '' }
@@ -108,7 +108,11 @@ export function TabCasos({ moduloId, briefs, clases, modoOscuro }: { moduloId: s
       </div>
 
       {mostrarForm && (
-        <div className={`p-4 rounded-tarjeta border mb-4 space-y-3 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+        <FormularioRapido
+          onGuardar={guardar}
+          onCancelar={() => { setMostrarForm(false); setEditandoId(null) }}
+          className={`p-4 rounded-tarjeta border mb-4 space-y-3 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}
+        >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <CampoTexto label="Carátula / rol" valor={campos.caratula} onChange={set('caratula')} modoOscuro={modoOscuro} placeholder="Ej: Rol 12.345-2023, Corte Suprema" />
             <CampoTexto label="Tribunal (opcional)" valor={campos.tribunal} onChange={set('tribunal')} modoOscuro={modoOscuro} />
@@ -124,7 +128,7 @@ export function TabCasos({ moduloId, briefs, clases, modoOscuro }: { moduloId: s
             <CampoSelectClase label="Clase a la que pertenece (opcional)" valor={campos.claseId} onChange={set('claseId')} clases={clases} modoOscuro={modoOscuro} />
           )}
           <BotonesFormulario onCancelar={() => { setMostrarForm(false); setEditandoId(null) }} onGuardar={guardar} modoOscuro={modoOscuro} />
-        </div>
+        </FormularioRapido>
       )}
 
       {ordenados.length === 0 ? (

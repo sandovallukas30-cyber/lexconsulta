@@ -74,7 +74,7 @@ interface Props {
  *
  * Pensado también para apuntes LARGOS (un cuaderno entero pegado desde
  * Notion): índice de títulos para saltar de sección, barra de progreso, y
- * recuerda por apunte hasta dónde llegaste y qué tamaño de letra usás.
+ * recuerda por apunte hasta dónde llegaste y qué tamaño de letra usas.
  */
 export function ModoLecturaApunte({ abierto, apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, editarAlAbrir = false, resaltarAlAbrir }: Props) {
   return (

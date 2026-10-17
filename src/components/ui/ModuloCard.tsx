@@ -80,7 +80,7 @@ export function ModuloCard({ modulo, progreso, modoOscuro, onClick }: ModuloCard
             <div className={`${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
               <span className="font-medium" style={{ color: modulo.color }}>
                 {porcentaje}%
-              </span>
+              </span>{' '}
               dominio
             </div>
           </div>

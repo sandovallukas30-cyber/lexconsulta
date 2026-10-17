@@ -86,3 +86,11 @@ export function progresoSubtareas(t: TareaPlan): { hechas: number; total: number
 }
 
 export const ETIQUETA_PRIORIDAD: Record<PrioridadTarea, string> = { alta: 'Alta', media: 'Media', baja: 'Baja' }
+
+/** Suma `dias` a una fecha YYYY-MM-DD (en hora local, sin saltos por el huso). */
+export function sumarDiasISO(iso: string, dias: number): string {
+  const [a, m, d] = iso.split('-').map(Number)
+  const f = new Date(a, m - 1, d)
+  f.setDate(f.getDate() + dias)
+  return fechaLocalISO(f)
+}
