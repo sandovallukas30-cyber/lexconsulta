@@ -5,9 +5,13 @@ import type { SesionClase } from '../../../types'
 import { VERDE, formatearFechaCorta } from './utilidades'
 import { BotonAgregar, BotonEliminar, BotonesFormulario, CampoTexto, EstadoVacio, FechaConCountdown, FormularioRapido } from './comunes'
 import { hoyISO, sumarDiasISO } from '../../../services/tareasPlan'
+import { GenerarClases } from './GenerarClases'
 
 export function TabClases({ moduloId, clases, modoOscuro }: { moduloId: string; clases: SesionClase[]; modoOscuro: boolean }) {
   const setClasesModulo = useStore((s) => s.setClasesModulo)
+  const ramo = useStore((s) => s.ramos.find((r) => r.id === moduloId))
+  const hayHorario = (ramo?.bloques?.length ?? 0) > 0
+  const [generando, setGenerando] = useState(false)
   const [mostrarForm, setMostrarForm] = useState(false)
   const [editandoId, setEditandoId] = useState<string | null>(null)
   const [fecha, setFecha] = useState('')
@@ -70,8 +74,18 @@ export function TabClases({ moduloId, clases, modoOscuro }: { moduloId: string; 
     <div>
       <div className="flex justify-between items-center mb-3">
         <h2 className={`text-sm font-semibold ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>Cronograma de clases</h2>
-        <BotonAgregar label="Agregar clase" onClick={iniciarNuevo} modoOscuro={modoOscuro} />
+        <div className="flex items-center gap-2">
+          {hayHorario && (
+            <button onClick={() => { setGenerando(true); setMostrarForm(false) }} className="boton boton-borde boton-chico">
+              <i className="ti ti-wand text-sm" aria-hidden="true" />
+              Generar semestre
+            </button>
+          )}
+          <BotonAgregar label="Agregar clase" onClick={() => { setGenerando(false); iniciarNuevo() }} modoOscuro={modoOscuro} />
+        </div>
       </div>
+
+      {generando && <GenerarClases moduloId={moduloId} clases={clases} modoOscuro={modoOscuro} onCerrar={() => setGenerando(false)} />}
 
       {mostrarForm && (
         <FormularioRapido
@@ -98,8 +112,11 @@ export function TabClases({ moduloId, clases, modoOscuro }: { moduloId: string; 
         <EstadoVacio
           icono="ti-calendar-event"
           texto="Aún no has agregado sesiones de clase."
-          detalle="Agrega el cronograma del semestre: verás cuánto falta para cada clase y podrás vincular apuntes y lecturas."
-          acciones={[{ label: 'Agregar clase', icono: 'ti-plus', onClick: iniciarNuevo }]}
+          detalle={hayHorario ? 'Tienes tu horario definido: genera todas las clases del semestre de una vez.' : ramo ? 'Tip: define tu horario en Editar ramo y generas todas las clases del semestre de una vez.' : 'Agrega el cronograma del semestre: verás cuánto falta para cada clase y podrás vincular apuntes y lecturas.'}
+          acciones={[
+            ...(hayHorario ? [{ label: 'Generar las clases del semestre', icono: 'ti-wand', onClick: () => setGenerando(true) }] : []),
+            { label: 'Agregar clase', icono: 'ti-plus', onClick: iniciarNuevo },
+          ]}
           modoOscuro={modoOscuro}
         />
       ) : (
@@ -119,6 +136,7 @@ export function TabClases({ moduloId, clases, modoOscuro }: { moduloId: string; 
                   ) : (
                     <FechaConCountdown fecha={c.fecha} modoOscuro={modoOscuro} />
                   )}
+                  {c.hora && <span className={`text-xs font-mono ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>{c.hora}</span>}
                   <button onClick={() => iniciarEdicion(c)} className={`text-sm font-medium text-left hover:underline ${c.completada ? 'line-through opacity-60' : ''} ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>
                     {c.tema}
                   </button>

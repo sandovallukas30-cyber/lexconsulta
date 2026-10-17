@@ -593,6 +593,8 @@ export interface ProgresoModulo {
 export interface SesionClase {
   id: string
   fecha: string // YYYY-MM-DD
+  /** Hora de inicio HH:MM (viene del horario del ramo al generar las clases). */
+  hora?: string
   tema: string
   notas?: string
   completada: boolean
@@ -690,9 +692,20 @@ export interface DatosAcademicosModulo {
  *  código y semestre) -- a diferencia de Modulo, que es un área del derecho
  *  fija y permanente del catálogo. Un Ramo se vincula a uno o más Módulos
  *  (ej. "Historia del Derecho Chileno" podría tocar Civil y Constitucional). */
+/** Un bloque semanal de clase de un ramo. */
+export interface BloqueHorario {
+  /** 0 = lunes … 6 = domingo */
+  dia: number
+  /** HH:MM */
+  inicio: string
+  fin?: string
+}
+
 export interface Ramo {
   id: string
   nombre: string
+  /** Horario estructurado: permite generar las clases del semestre. */
+  bloques?: BloqueHorario[]
   semestre?: string
   codigoCurso?: string
   profesor?: string

@@ -174,7 +174,7 @@ export function HoyView() {
                       <span className="w-2 h-8 rounded-full flex-shrink-0" style={{ background: colorRamo(e.moduloId, ramos) }} aria-hidden="true" />
                       <span className="min-w-0">
                         <span className={`block text-sm font-medium truncate ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>{e.titulo}</span>
-                        <span className={`block text-xs ${suave}`}>{nombreRamo(e.moduloId, ramos) ?? 'Ramo'}</span>
+                        <span className={`block text-xs ${suave}`}>{e.hora ? `${e.hora} · ` : ''}{nombreRamo(e.moduloId, ramos) ?? 'Ramo'}</span>
                       </span>
                     </button>
                   </li>

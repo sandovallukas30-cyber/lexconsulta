@@ -92,6 +92,8 @@ export interface EventoProximo {
   fecha: string
   titulo: string
   detalle?: string
+  /** HH:MM de inicio (solo clases generadas desde el horario). */
+  hora?: string
 }
 
 /** Junta clases pendientes y evaluaciones sin nota de TODOS los módulos,
@@ -101,13 +103,13 @@ export function obtenerProximosEventos(academicoModulos: Record<string, DatosAca
   const eventos: EventoProximo[] = []
   for (const [moduloId, datos] of Object.entries(academicoModulos)) {
     for (const c of datos.clases) {
-      if (!c.completada) eventos.push({ tipo: 'clase', moduloId, fecha: c.fecha, titulo: c.tema })
+      if (!c.completada) eventos.push({ tipo: 'clase', moduloId, fecha: c.fecha, titulo: c.tema, hora: c.hora })
     }
     for (const e of datos.evaluaciones) {
       if (e.nota === null) eventos.push({ tipo: 'examen', moduloId, fecha: e.fecha, titulo: e.nombre, detalle: `${e.ponderacion}% de la nota` })
     }
   }
-  return eventos.sort((a, b) => a.fecha.localeCompare(b.fecha))
+  return eventos.sort((a, b) => a.fecha.localeCompare(b.fecha) || (a.hora ?? '').localeCompare(b.hora ?? ''))
 }
 
 /** Colecciones que tocan un código dado -- una Colección no declara a qué

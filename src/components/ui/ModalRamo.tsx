@@ -6,7 +6,8 @@ import { avisar } from '../../store/useAvisos'
 import { MODULOS } from '../../data/modulos'
 import { ICONO_RAMO_DEFECTO } from '../../services/modulosAcademico'
 import { useDialogo } from '../../hooks/useDialogo'
-import type { Ramo } from '../../types'
+import { DIAS_LARGOS, formatearHorario } from '../../services/horario'
+import type { BloqueHorario, Ramo } from '../../types'
 
 const VERDE = 'var(--accent-base)'
 
@@ -60,7 +61,7 @@ function estadoDesdeRamo(r: Ramo | null): ReturnType<typeof campoVacio> {
 
 /** ¿Tiene datos más allá del nombre? Si sí, "Más detalles" abre desplegado. */
 function tieneDetalles(r: Ramo | null): boolean {
-  return !!r && !!(r.semestre || r.codigoCurso || r.profesor || r.email || r.horario || r.sala || r.syllabusUrl || r.modulosVinculados.length)
+  return !!r && !!((r.bloques?.length ?? 0) > 0 || r.semestre || r.codigoCurso || r.profesor || r.email || r.horario || r.sala || r.syllabusUrl || r.modulosVinculados.length)
 }
 
 export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
@@ -74,6 +75,7 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
   const [icono, setIcono] = useState<string>(ramoEditando?.icono ?? ICONO_RAMO_DEFECTO)
   const [color, setColor] = useState<string>(ramoEditando?.color ?? VERDE)
   const [verDetalles, setVerDetalles] = useState(() => tieneDetalles(ramoEditando))
+  const [bloques, setBloques] = useState<BloqueHorario[]>(ramoEditando?.bloques ?? [])
   const dialogoRef = useDialogo<HTMLDivElement>(abierto, onCerrar)
 
   // Reinicia el formulario cada vez que se abre (crear nuevo o editar otro
@@ -93,6 +95,7 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
     // un ramo nuevo parte con un color distinto al del anterior
     setColor(ramoEditando?.color ?? COLORES_RAMO[ramosExistentes % COLORES_RAMO.length])
     setVerDetalles(tieneDetalles(ramoEditando))
+    setBloques(ramoEditando?.bloques ?? [])
   }
   if (!abierto && estabaAbierto) setEstabaAbierto(false)
 
@@ -114,7 +117,9 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
       codigoCurso: limpiar(campos.codigoCurso),
       profesor: limpiar(campos.profesor),
       email: limpiar(campos.email),
-      horario: limpiar(campos.horario),
+      bloques: bloques.length > 0 ? bloques : undefined,
+      // el texto del horario se deriva de los bloques; si no hay, se respeta el que ya tenía
+      horario: bloques.length > 0 ? formatearHorario(bloques) : limpiar(campos.horario),
       sala: limpiar(campos.sala),
       syllabusUrl: limpiar(campos.syllabusUrl),
       modulosVinculados,
@@ -288,16 +293,66 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
                     <input className={inputClase} type="email" value={campos.email} onChange={(e) => set('email')(e.target.value)} />
                   </label>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <label className="block">
-                    <span className={labelClase}>Horario</span>
-                    <input className={inputClase} value={campos.horario} onChange={(e) => set('horario')(e.target.value)} placeholder="Ej: Martes 10:00" />
-                  </label>
-                  <label className="block">
-                    <span className={labelClase}>Sala</span>
-                    <input className={inputClase} value={campos.sala} onChange={(e) => set('sala')(e.target.value)} />
-                  </label>
+                <div>
+                  <span className={labelClase}>Horario de clases</span>
+                  {bloques.length === 0 && ramoEditando?.horario && (
+                    <p className={`text-[11px] mb-1.5 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
+                      Tenías escrito «{ramoEditando.horario}». Define los bloques para poder generar las clases del semestre.
+                    </p>
+                  )}
+                  <div className="space-y-2">
+                    {bloques.map((b, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <select
+                          aria-label="Día"
+                          value={b.dia}
+                          onChange={(e) => setBloques((l) => l.map((x, j) => (j === i ? { ...x, dia: Number(e.target.value) } : x)))}
+                          className={inputClase}
+                        >
+                          {DIAS_LARGOS.map((n, d) => (
+                            <option key={n} value={d}>{n}</option>
+                          ))}
+                        </select>
+                        <input
+                          type="time"
+                          aria-label="Hora de inicio"
+                          value={b.inicio}
+                          onChange={(e) => setBloques((l) => l.map((x, j) => (j === i ? { ...x, inicio: e.target.value } : x)))}
+                          className={inputClase}
+                        />
+                        <input
+                          type="time"
+                          aria-label="Hora de término"
+                          value={b.fin ?? ''}
+                          onChange={(e) => setBloques((l) => l.map((x, j) => (j === i ? { ...x, fin: e.target.value || undefined } : x)))}
+                          className={inputClase}
+                        />
+                        <button
+                          type="button"
+                          aria-label="Quitar bloque"
+                          onClick={() => setBloques((l) => l.filter((_, j) => j !== i))}
+                          className="boton boton-fantasma boton-chico boton-icono"
+                        >
+                          <i className="ti ti-x" aria-hidden="true" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setBloques((l) => [...l, { dia: Math.min(6, l.length > 0 ? (l[l.length - 1].dia + 2) % 5 : 0), inicio: '08:30', fin: '09:50' }])
+                    }
+                    className="boton boton-borde boton-chico mt-2"
+                  >
+                    <i className="ti ti-plus text-sm" aria-hidden="true" />
+                    Agregar bloque
+                  </button>
                 </div>
+                <label className="block">
+                  <span className={labelClase}>Sala</span>
+                  <input className={inputClase} value={campos.sala} onChange={(e) => set('sala')(e.target.value)} />
+                </label>
                 <label className="block">
                   <span className={labelClase}>Syllabus (enlace, opcional)</span>
                   <input className={inputClase} value={campos.syllabusUrl} onChange={(e) => set('syllabusUrl')(e.target.value)} placeholder="https://..." />
