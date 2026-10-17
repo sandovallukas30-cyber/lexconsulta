@@ -36,7 +36,7 @@ function Tarjeta({
 }) {
   const modoOscuro = useStore((s) => s.modoOscuro)
   return (
-    <section className={`rounded-tarjeta border p-4 shadow-tarjeta ${modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+    <section className={`rounded-tarjeta border p-4 shadow-tarjeta ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
       <div className="flex items-center gap-2 mb-2">
         <i className={`ti ${icono} text-base`} style={{ color: 'var(--accent-texto)' }} aria-hidden="true" />
         <h2 className={`text-sm font-semibold flex-1 ${modoOscuro ? 'text-zinc-200' : 'text-zinc-800'}`}>{titulo}</h2>

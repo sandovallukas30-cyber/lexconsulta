@@ -9,7 +9,7 @@
 // El fondo de la app (blanco/negro) NO se ve afectado; solo cambian los
 // detalles.
 
-export type TemaColorId = 'esmeralda' | 'indigo' | 'borgona' | 'violeta' | 'ambar' | 'pizarra'
+export type TemaColorId = 'azul' | 'esmeralda' | 'indigo' | 'borgona' | 'violeta' | 'ambar' | 'pizarra'
 
 export interface PaletaAcento {
   50: string
@@ -35,6 +35,25 @@ export interface TemaColor {
 }
 
 export const TEMAS: TemaColor[] = [
+  {
+    id: 'azul',
+    nombre: 'Azul',
+    descripcion: 'Fresco y limpio — el tono de Orbis',
+    paleta: {
+      50: '#eff6ff',
+      100: '#dbeafe',
+      200: '#bfdbfe',
+      300: '#93c5fd',
+      400: '#60a5fa',
+      500: '#3b82f6',
+      600: '#2563eb',
+      700: '#1d4ed8',
+      800: '#1e40af',
+      900: '#1e3a8a',
+      950: '#172554',
+      base: '#2563EB',
+    },
+  },
   {
     id: 'esmeralda',
     nombre: 'Esmeralda',

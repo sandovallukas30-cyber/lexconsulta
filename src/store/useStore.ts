@@ -386,7 +386,7 @@ export const useStore = create<AppState>()(
       recordsPasapalabra: {},
       partidaAhorcado: null,
       statsAhorcado: {},
-      temaColor: 'esmeralda' as TemaColorId,
+      temaColor: 'azul' as TemaColorId,
       consultaActivaId: null,
       codigoExploradorActivo: null,
       articuloExploradorPendiente: null,
@@ -1141,7 +1141,7 @@ export const useStore = create<AppState>()(
     {
       name: 'prima-lex-storage-v3',
       storage: crearAlmacenamiento(),
-      version: 35,
+      version: 36,
       partialize: (s) => ({
         perfil: s.perfil,
         codigos: s.codigos,
@@ -1308,6 +1308,12 @@ export const useStore = create<AppState>()(
         if (version < 35) {
           // v35: aparece el plan personal (Tareas y Hoy).
           if (!Array.isArray(state.tareasPlan)) state = { ...state, tareasPlan: [] }
+        }
+        if (version < 36) {
+          // v36: rediseño fresco con acento azul por defecto. Quien tenía el
+          // verde de antes (el valor por defecto) pasa al azul; las demás
+          // elecciones de color se respetan.
+          if (state.temaColor === 'esmeralda') state = { ...state, temaColor: 'azul' }
         }
         return state as never
       },

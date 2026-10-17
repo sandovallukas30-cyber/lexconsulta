@@ -42,8 +42,8 @@ export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
 
   return (
     <header
-      className={`h-14 sm:h-16 px-3 sm:px-6 flex items-center justify-between gap-2 border-b flex-shrink-0 ${
-        modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
+      className={`h-14 sm:h-16 px-3 sm:px-6 flex items-center justify-between gap-2 flex-shrink-0 ${
+        modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'
       }`}
     >
       <div className="flex items-center gap-2 sm:gap-4 min-w-0">
@@ -54,18 +54,16 @@ export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
         >
           <i className="ti ti-menu-2 text-xl" />
         </button>
-        <h2 className={`text-base sm:text-lg font-semibold truncate ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+        <h2 className={`text-lg font-bold tracking-tight truncate md:hidden ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
           {titulos[vistaActiva]}
         </h2>
         <div
-          className={`hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium border truncate ${
-            modoOscuro
-              ? 'bg-amber-950/30 border-amber-900/60 text-amber-300'
-              : 'bg-amber-50 border-amber-200 text-amber-800'
+          className={`hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium truncate ${
+            modoOscuro ? 'bg-zinc-800 text-zinc-400' : 'bg-zinc-200/60 text-zinc-600'
           }`}
           title="Esta plataforma no constituye asesoría legal. Consulta siempre con un profesional para decisiones jurídicas."
         >
-          <i className="ti ti-alert-triangle text-xs flex-shrink-0" />
+          <i className="ti ti-info-circle text-xs flex-shrink-0" />
           <span className="truncate lg:hidden">Orientación educativa</span>
           <span className="truncate hidden lg:inline">Orientación educativa · No reemplaza asesoría legal profesional</span>
         </div>

@@ -120,12 +120,12 @@ export function Sidebar() {
         inert={esMovil && !menuMovilAbierto ? true : undefined}
         className={`flex flex-col border-r overflow-hidden ${
           esMovil ? 'fixed inset-y-0 left-0 z-[70] shadow-2xl' : 'relative flex-shrink-0'
-        } ${modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}
+        } ${modoOscuro ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-100 border-zinc-200'}`}
       >
         <div
-          className={`flex items-center border-b ${
-            colapsado ? 'justify-center px-2 py-4' : 'justify-between px-4 py-4'
-          } ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}
+          className={`flex items-center ${
+            colapsado ? 'justify-center px-2 py-4' : 'justify-between px-4 pt-5 pb-3'
+          }`}
         >
           {colapsado ? (
             <button
@@ -143,17 +143,20 @@ export function Sidebar() {
             </button>
           ) : (
             <>
-              <div className="flex-1 min-w-0">
-                <h1
-                  className={`text-xl font-serif font-bold leading-tight ${
-                    modoOscuro ? 'text-white' : 'text-zinc-900'
-                  }`}
+              <div className="flex-1 min-w-0 flex items-center gap-2.5">
+                <span
+                  className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: VERDE }}
+                  aria-hidden="true"
                 >
-                  Prima<span style={{ color: 'var(--accent-texto)' }}> Lex</span>
-                </h1>
-                <p className={`text-[11px] mt-0.5 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                  Tu cuaderno de Derecho
-                </p>
+                  <i className="ti ti-scale text-lg text-white" />
+                </span>
+                <div className="min-w-0">
+                  <h1 className={`text-lg font-extrabold leading-tight tracking-tight ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+                    Prima Lex
+                  </h1>
+                  <p className={`text-[11px] ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>Tu cuaderno de Derecho</p>
+                </div>
               </div>
               <button
                 onClick={toggleSidebar}
@@ -299,25 +302,16 @@ function BotonNav({
       // C8: bajar el código de la vista antes del clic (~100-300 ms antes)
       onPointerEnter={() => precargarVista(item.id)}
       onFocus={() => precargarVista(item.id)}
-      className={`w-full min-h-control rounded-control text-sm font-medium transition-colors text-left relative flex items-center ${
+      className={`w-full min-h-control rounded-control text-sm transition-colors text-left relative flex items-center ${
         colapsado ? 'justify-center px-0' : 'gap-3 px-3'
       } ${
         activo
-          ? modoOscuro
-            ? 'bg-zinc-800 text-white'
-            : 'bg-[var(--accent-50)] text-[var(--accent-900)]'
+          ? 'font-semibold text-[var(--accent-texto)] bg-[color-mix(in_srgb,var(--accent-base)_11%,transparent)]'
           : modoOscuro
-          ? 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
-          : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+          ? 'font-medium text-zinc-400 hover:bg-zinc-800 hover:text-white'
+          : 'font-medium text-zinc-600 hover:bg-zinc-200/70 hover:text-zinc-900'
       }`}
     >
-      {activo && (
-        <motion.div
-          layoutId="sidebar-active"
-          className="absolute left-0 top-2 bottom-2 w-1 rounded-r"
-          style={{ background: VERDE }}
-        />
-      )}
       <i className={`ti ${item.icono} text-xl flex-shrink-0`} />
       <AnimatePresence initial={false}>
         {!colapsado && (

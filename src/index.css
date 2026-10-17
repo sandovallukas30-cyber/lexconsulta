@@ -3,22 +3,22 @@
    primer pintado de TODA la app (C8). */
 @import "tailwindcss";
 
-/* === Paleta de acento (tema esmeralda por defecto) ===
+/* === Paleta de acento (tema azul por defecto) ===
    Los valores reales los sobreescribe JS al cargar el tema persistido del usuario.
    Si JS no corre, esta paleta garantiza que la app sigue luciendo como siempre. */
 :root {
-  --accent-50:  #ecfdf5;
-  --accent-100: #d1fae5;
-  --accent-200: #a7f3d0;
-  --accent-300: #6ee7b7;
-  --accent-400: #34d399;
-  --accent-500: #10b981;
-  --accent-600: #0F6E56;
-  --accent-700: #0F6E56;
-  --accent-800: #065f46;
-  --accent-900: #064e3b;
-  --accent-950: #022c22;
-  --accent-base: #0F6E56;
+  --accent-50:  #eff6ff;
+  --accent-100: #dbeafe;
+  --accent-200: #bfdbfe;
+  --accent-300: #93c5fd;
+  --accent-400: #60a5fa;
+  --accent-500: #3b82f6;
+  --accent-600: #2563eb;
+  --accent-700: #1d4ed8;
+  --accent-800: #1e40af;
+  --accent-900: #1e3a8a;
+  --accent-950: #172554;
+  --accent-base: #2563EB;
 }
 
 /* === Tokens de diseño (C5) ===
@@ -27,11 +27,38 @@
    rounded-panel, shadow-tarjeta, shadow-flotante, h-control, min-h-control,
    px-gutter, ease-estandar. */
 @theme {
-  --radius-control: 0.5rem;   /* botones, campos, chips */
-  --radius-tarjeta: 0.75rem;  /* tarjetas y filas de listas */
-  --radius-panel: 1rem;       /* modales, paneles, tarjeta del artículo */
-  --shadow-tarjeta: 0 1px 2px rgb(0 0 0 / 0.05), 0 1px 3px rgb(0 0 0 / 0.04);
-  --shadow-flotante: 0 12px 32px -12px rgb(0 0 0 / 0.28), 0 4px 12px -4px rgb(0 0 0 / 0.12);
+  /* Tipografía: Figtree en toda la app (los títulos que antes usaban
+     font-serif ahora también), como en Orbis: limpia y redondeada. */
+  --font-sans: 'Figtree Variable', 'Figtree', 'Segoe UI Variable', 'Segoe UI', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Figtree Variable', 'Figtree', 'Segoe UI Variable', 'Segoe UI', ui-sans-serif, system-ui, sans-serif;
+
+  /* Grises con un matiz azulado frío (reemplazan al zinc neutro de Tailwind).
+     Claro: 50 = fondo de página, 100 = barra lateral, 200 = bordes. Oscuro:
+     950 = fondo, 900 = barra lateral, 800 = tarjetas y bordes. */
+  --color-zinc-50: #f4f6fa;
+  --color-zinc-100: #ebeef4;
+  --color-zinc-200: #e0e5ed;
+  --color-zinc-300: #c9d0dc;
+  --color-zinc-400: #8d97aa;
+  --color-zinc-500: #5a6579;
+  --color-zinc-600: #465165;
+  --color-zinc-700: #323c4e;
+  --color-zinc-800: #1c2230;
+  --color-zinc-900: #121620;
+  --color-zinc-950: #0a0d14;
+
+  /* Esquinas más suaves en toda la app. */
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --radius-control: 0.75rem;  /* botones, campos, chips */
+  --radius-tarjeta: 1rem;     /* tarjetas y filas de listas */
+  --radius-panel: 1.5rem;     /* modales, paneles, tarjeta del artículo */
+
+  /* Sombras difusas en vez de bordes duros. */
+  --shadow-tarjeta: 0 1px 2px rgb(16 24 40 / 0.04), 0 6px 20px rgb(16 24 40 / 0.06);
+  --shadow-flotante: 0 12px 40px rgb(16 24 40 / 0.16), 0 2px 8px rgb(16 24 40 / 0.06);
   --spacing-control: 2.5rem;    /* alto de botones de barra: 40 px */
   --spacing-control-sm: 2rem;   /* botones de ícono dentro de filas */
   --spacing-gutter: 1rem;       /* margen lateral en móvil */
@@ -271,9 +298,13 @@ html, body, #root { height: 100%; width: 100%; overflow: hidden; }
   background-clip: padding-box;
 }
 
-/* Firefox */
-* { scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.2) transparent; }
-.dark * { scrollbar-color: rgba(255,255,255,0.15) transparent; }
+/* Firefox y Chrome moderno. Dentro de @layer base: una regla sin capa le gana a
+   cualquier utilidad de Tailwind, y las barras de pestañas que se ocultan con
+   [scrollbar-width:none] seguían mostrando su barra. */
+@layer base {
+  * { scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.2) transparent; }
+  .dark * { scrollbar-color: rgba(255,255,255,0.15) transparent; }
+}
 
 /* Respeta la preferencia de movimiento reducido del sistema operativo.
    Framer Motion se controla por separado con <MotionConfig reducedMotion="user"> en main.tsx;

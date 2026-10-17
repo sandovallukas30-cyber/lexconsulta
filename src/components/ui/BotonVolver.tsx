@@ -12,7 +12,7 @@ export function BotonVolver({ ocultarSi }: { ocultarSi?: (l: Lugar) => boolean }
       onClick={volverAtras}
       title={`Volver a ${etiqueta}`}
       aria-label={`Volver a ${etiqueta}`}
-      className="boton boton-fantasma boton-chico gap-1 max-sm:boton-icono min-w-0"
+      className="boton boton-fantasma boton-chico gap-1 max-sm:boton-icono min-w-0 shrink"
     >
       <i className="ti ti-arrow-left text-sm" aria-hidden />
       <span className="hidden sm:inline truncate max-w-[12rem]">{etiqueta}</span>

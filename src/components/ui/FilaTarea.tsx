@@ -40,7 +40,7 @@ export function FilaTarea({ tarea, onAbrir, abierta }: Props) {
         aria-checked={tarea.hecha}
         aria-label={`${tarea.hecha ? 'Marcar como pendiente' : 'Marcar como hecha'}: ${tarea.titulo}`}
         onClick={() => alternar(tarea.id)}
-        className="mt-0.5 w-[22px] h-[22px] rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors"
+        className="sin-tactil relative mt-0.5 w-[22px] h-[22px] min-w-0 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors before:content-[''] before:absolute before:-inset-2.5"
         style={
           tarea.hecha
             ? { background: 'var(--accent-base)', borderColor: 'var(--accent-base)' }

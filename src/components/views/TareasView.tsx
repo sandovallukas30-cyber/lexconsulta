@@ -31,7 +31,7 @@ function useClases() {
   const modoOscuro = useStore((s) => s.modoOscuro)
   return {
     modoOscuro,
-    tarjeta: modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200',
+    tarjeta: modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200',
     campo: `h-control px-3 rounded-control border text-sm outline-none campo-foco ${
       modoOscuro
         ? 'bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500'
@@ -272,6 +272,14 @@ export function TareasView() {
   return (
     <div className={`h-full overflow-y-auto ${c.modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
       <div className="max-w-3xl mx-auto p-4 sm:p-6 space-y-5">
+        <header>
+          <h1 className={`text-2xl font-bold tracking-tight ${c.titulo}`}>Tareas</h1>
+          <p className={`text-sm mt-1 ${c.suave}`}>
+            {cuentas.todas === 0
+              ? 'Anota lo que tienes pendiente y ponle fecha.'
+              : `${cuentas.todas} ${cuentas.todas === 1 ? 'pendiente' : 'pendientes'}${cuentas.hoy > 0 ? ` · ${cuentas.hoy} para hoy` : ''}`}
+          </p>
+        </header>
         <NuevaTarea onCreada={() => setFiltro((f) => (f === 'hechas' ? 'todas' : f))} />
 
         <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrar tareas">
