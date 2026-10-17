@@ -66,18 +66,13 @@ export type CategoriaCodigo =
   | 'tratados'
 
 export type VistaId =
-  | 'consultar'
-  | 'situacion'
   | 'modulos'
   | 'canvas'
-  | 'mapa'
   | 'explorador'
   | 'colecciones'
   | 'mapasmentales'
-  | 'historial'
   | 'admin'
   | 'practica'
-  | 'plazos'
 
 /** Tema propio del modo lectura del Explorador -- independiente del claro/
  * oscuro general de la app. "papel" es un tercer tema cálido pensado solo

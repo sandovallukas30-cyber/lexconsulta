@@ -9,7 +9,7 @@ import type { CodigoTipo, VistaId } from '../types'
  *
  *  Se engancha con `useStore.subscribe`, no dentro de cada acción: la vista
  *  cambia desde muchos lugares (setVistaActiva, abrirArticuloEnExplorador,
- *  abrirApunte, cargarConsulta…) y todos quedan cubiertos. El callback corre
+ *  abrirApunte…) y todos quedan cubiertos. El callback corre
  *  SINCRÓNICAMENTE al cambiar el store, antes de que React pinte la vista
  *  nueva: el DOM todavía es el de la vista que se deja y su scroll se puede
  *  leer. */
@@ -24,17 +24,12 @@ const MAX_PILA = 20
 export const useNavegacion = create<{ pila: Lugar[] }>(() => ({ pila: [] }))
 
 const NOMBRES_VISTA: Partial<Record<VistaId, string>> = {
-  consultar: 'Consultar',
-  situacion: 'Situación',
   modulos: 'Módulos',
   mapasmentales: 'Mapas mentales',
   canvas: 'Canvas',
-  mapa: 'Mapa',
   explorador: 'Explorador',
   colecciones: 'Colecciones',
-  historial: 'Historial',
   practica: 'Práctica',
-  plazos: 'Plazos',
 }
 
 /** "Derecho Civil I", "Explorador · Código Civil", "Colecciones". */

@@ -8,7 +8,7 @@ import type { CodigoTipo } from '../../types'
 
 
 interface ResultadoBusqueda {
-  tipo: 'articulo' | 'apunte' | 'consulta' | 'favorito'
+  tipo: 'articulo' | 'apunte' | 'favorito'
   id: string
   titulo: string
   subtitulo?: string
@@ -26,14 +26,12 @@ interface Props {
 export function Omnibar({ onClose }: Props) {
   const modoOscuro = useStore((s) => s.modoOscuro)
   const codigos = useStore((s) => s.codigos)
-  const historial = useStore((s) => s.historial)
   const favoritos = useStore((s) => s.favoritos)
   const abrirArticuloEnExplorador = useStore((s) => s.abrirArticuloEnExplorador)
   const setVistaActiva = useStore((s) => s.setVistaActiva)
   const academicoModulos = useStore((s) => s.academicoModulos)
   const ramos = useStore((s) => s.ramos)
   const abrirApunte = useStore((s) => s.abrirApunte)
-  const cargarConsulta = useStore((s) => s.cargarConsulta)
   const setOmnibarAbierto = useStore((s) => s.setOmnibarAbierto)
   const agregarVisitado = useStore((s) => s.agregarVisitado)
 
@@ -98,20 +96,6 @@ export function Omnibar({ onClose }: Props) {
       })
     }
 
-    // Buscar en historial de consultas
-    const consultasMatches = historial.filter((h) =>
-      h.titulo.toLowerCase().includes(q) ||
-      h.mensajes.some((m) => m.contenido.toLowerCase().includes(q))
-    )
-    for (const consulta of consultasMatches.slice(0, 3)) {
-      nuevoResultados.push({
-        tipo: 'consulta',
-        id: consulta.id,
-        titulo: consulta.titulo,
-        subtitulo: new Date(consulta.fecha).toLocaleDateString('es-CL'),
-      })
-    }
-
     // Buscar en favoritos
     const favoritosMatches = favoritos.filter((f) =>
       f.titulo.toLowerCase().includes(q)
@@ -126,7 +110,7 @@ export function Omnibar({ onClose }: Props) {
     }
 
     return nuevoResultados
-  }, [consulta, codigos, historial, favoritos, academicoModulos, ramos])
+  }, [consulta, codigos, favoritos, academicoModulos, ramos])
 
   // El resultado elegido con las flechas siempre visible dentro de la lista
   useEffect(() => {
@@ -168,11 +152,8 @@ export function Omnibar({ onClose }: Props) {
       case 'apunte':
         if (resultado.moduloId && resultado.articulo) abrirApunte(resultado.moduloId, resultado.articulo, busqueda)
         break
-      case 'consulta':
-        cargarConsulta(resultado.id)
-        break
       case 'favorito':
-        setVistaActiva('historial')
+        setVistaActiva('explorador')
         break
     }
     setOmnibarAbierto(false)
@@ -267,9 +248,6 @@ export function Omnibar({ onClose }: Props) {
                     )}
                     {resultado.tipo === 'apunte' && (
                       <i className="ti ti-notes text-lg" style={{ color: 'var(--accent-texto)' }} />
-                    )}
-                    {resultado.tipo === 'consulta' && (
-                      <i className="ti ti-messages text-lg" style={{ color: 'var(--accent-texto)' }} />
                     )}
                     {resultado.tipo === 'favorito' && (
                       <i className="ti ti-bookmark text-lg" style={{ color: 'var(--accent-texto)' }} />

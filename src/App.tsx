@@ -37,13 +37,13 @@ function App() {
   const importarColeccion = useStore((s) => s.importarColeccion)
   const setColeccionActiva = useStore((s) => s.setColeccionActiva)
   const setVistaActiva = useStore((s) => s.setVistaActiva)
-  const VistaComponente = vistaActiva === 'admin' && !esAdmin(usuarioEmail) ? vistas.consultar : vistas[vistaActiva]
+  const VistaComponente = vistaActiva === 'admin' && !esAdmin(usuarioEmail) ? vistas.modulos : vistas[vistaActiva]
   const [modalRegistroAbierto, setModalRegistroAbierto] = useState(false)
   const [coleccionParaImportar, setColeccionParaImportar] = useState<ColeccionCompartida | null>(null)
 
   // Detecta un link de Colección compartida (?colImportar=...) al entrar a
   // la app — a nivel raíz, no dentro de ColeccionesView, porque la vista
-  // por defecto es Consultar: si esto viviera adentro de esa vista, un link
+  // por defecto es Módulos: si esto viviera adentro de esa vista, un link
   // abierto por alguien que nunca usó la app antes (el caso típico al
   // compartir) nunca lo detectaría. No importa directo: primero se
   // confirma con el usuario (ModalConfirmarImportacion), para que abrir el

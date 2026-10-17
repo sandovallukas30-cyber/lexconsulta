@@ -14,21 +14,10 @@ interface ItemMenu {
   label: string
 }
 
-// Separadas en dos grupos -- uso práctico/profesional primero (resolver algo
-// concreto: preguntar, diagnosticar una situación, calcular un plazo, ver lo
-// ya consultado) y herramientas de estudio después (Canvas en adelante). El
-// divisor fino entre ambas se dibuja aparte, no es un ItemMenu más.
-const itemsProfesionales: ItemMenu[] = [
-  { id: 'consultar', icono: 'ti-messages', label: 'Consultar' },
-  { id: 'situacion', icono: 'ti-list-numbers', label: 'Situación' },
-  { id: 'plazos', icono: 'ti-calendar-time', label: 'Plazos' },
-  { id: 'historial', icono: 'ti-history', label: 'Historial' },
-]
-
+// Menú centrado en estudiantes: herramientas de estudio.
 const itemsAcademicos: ItemMenu[] = [
   { id: 'modulos', icono: 'ti-layout-grid', label: 'Módulos' },
   { id: 'canvas', icono: 'ti-affiliate', label: 'Canvas' },
-  { id: 'mapa', icono: 'ti-network', label: 'Mapa' },
   { id: 'explorador', icono: 'ti-book-2', label: 'Explorador' },
   { id: 'colecciones', icono: 'ti-stack-2', label: 'Colecciones' },
   { id: 'mapasmentales', icono: 'ti-hierarchy-2', label: 'Mapas mentales' },
@@ -176,21 +165,6 @@ export function Sidebar() {
 
         <nav className={`flex-1 py-4 overflow-y-auto ${colapsado ? 'px-2' : 'px-3'}`}>
           <div className="space-y-0.5">
-            {itemsProfesionales.map((item) => (
-              <BotonNav
-                key={item.id}
-                item={item}
-                activo={vistaActiva === item.id}
-                colapsado={colapsado}
-                modoOscuro={modoOscuro}
-                onClick={() => irA(item.id)}
-              />
-            ))}
-          </div>
-
-          <DivisorDifuminado modoOscuro={modoOscuro} />
-
-          <div className="space-y-0.5">
             {grupoAcademico.map((item) => (
               <BotonNav
                 key={item.id}
@@ -337,24 +311,5 @@ function BotonNav({
         )}
       </AnimatePresence>
     </button>
-  )
-}
-
-/** Separa las funciones de uso práctico/profesional (arriba) de las de
- * estudio (abajo): una línea fina que no toca las paredes del sidebar y se
- * difumina en las puntas -- un `<hr>` normal se ve como un corte duro de
- * pared a pared, esto en cambio lee como una pausa suave entre dos grupos,
- * no como una frontera. El margen horizontal (mx-3 / mx-4) es a propósito
- * menor que el ancho útil del nav para que nunca llegue a tocar los bordes. */
-function DivisorDifuminado({ modoOscuro }: { modoOscuro: boolean }) {
-  const color = modoOscuro ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.12)'
-  return (
-    <div
-      aria-hidden="true"
-      className="h-px my-3 mx-3"
-      style={{
-        background: `linear-gradient(to right, transparent, ${color} 25%, ${color} 75%, transparent)`,
-      }}
-    />
   )
 }

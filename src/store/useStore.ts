@@ -105,9 +105,6 @@ interface AppState {
    * que `plazosCriticos` es texto libre sin estructura para autocompletar
    * cantidad/unidad con certeza. Mismo patrón que
    * articuloExploradorPendiente: se consume y se limpia de inmediato. */
-  busquedaPlazoPendiente: string | null
-  abrirBusquedaEnPlazos: (texto: string) => void
-  limpiarBusquedaPlazoPendiente: () => void
 
   setPerfil: (perfil: PerfilUsuario) => void
   setVistaActiva: (vista: VistaId) => void
@@ -118,8 +115,6 @@ interface AppState {
   agregarConsulta: (consulta: ConsultaHistorial) => void
   actualizarConsulta: (id: string, mensajes: Mensaje[]) => void
   eliminarConsulta: (id: string) => void
-  cargarConsulta: (id: string) => void
-  nuevaConsulta: () => void
   valorarMensaje: (
     consultaId: string,
     mensajeId: string,
@@ -359,7 +354,7 @@ export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
       perfil: null,
-      vistaActiva: 'consultar',
+      vistaActiva: 'modulos',
       codigos: codigosIniciales,
       jurisprudencia: JURISPRUDENCIA_SEED,
       historial: [],
@@ -387,7 +382,6 @@ export const useStore = create<AppState>()(
       consultaActivaId: null,
       codigoExploradorActivo: null,
       articuloExploradorPendiente: null,
-      busquedaPlazoPendiente: null,
       codigoMapaActivo: null,
       omnibarAbierto: false,
       rightSidebarAbierto: false,
@@ -449,8 +443,6 @@ export const useStore = create<AppState>()(
           historial: s.historial.filter((h) => h.id !== id),
           consultaActivaId: s.consultaActivaId === id ? null : s.consultaActivaId,
         })),
-      cargarConsulta: (id) => set({ consultaActivaId: id, vistaActiva: 'consultar' }),
-      nuevaConsulta: () => set({ consultaActivaId: null }),
       valorarMensaje: (consultaId, mensajeId, valoracion, comentario) =>
         set((s) => ({
           historial: s.historial.map((h) => {
@@ -779,8 +771,6 @@ export const useStore = create<AppState>()(
       abrirArticuloEnExplorador: (codigo, articulo) =>
         set({ vistaActiva: 'explorador', codigoExploradorActivo: codigo, articuloExploradorPendiente: articulo }),
       limpiarArticuloExploradorPendiente: () => set({ articuloExploradorPendiente: null }),
-      abrirBusquedaEnPlazos: (texto) => set({ vistaActiva: 'plazos', busquedaPlazoPendiente: texto }),
-      limpiarBusquedaPlazoPendiente: () => set({ busquedaPlazoPendiente: null }),
       setCodigoMapa: (tipo) => set({ codigoMapaActivo: tipo }),
       abrirModalPerfil: () => set({ modalPerfilAbierto: true }),
       cerrarModalPerfil: () => set({ modalPerfilAbierto: false }),
@@ -1110,7 +1100,7 @@ export const useStore = create<AppState>()(
     {
       name: 'prima-lex-storage-v3',
       storage: crearAlmacenamiento(),
-      version: 32,
+      version: 33,
       partialize: (s) => ({
         perfil: s.perfil,
         codigos: s.codigos,
@@ -1258,7 +1248,15 @@ export const useStore = create<AppState>()(
           // v32: se empiezan a guardar la última vista, el módulo y el código
           // abiertos y el último artículo por código. No hay nada que
           // transformar: en un estado anterior faltan y quedan los valores
-          // iniciales (Consultar, sin módulo ni código).
+          // iniciales (sin módulo ni código).
+        }
+        if (version < 33) {
+          // v33: se retiran Consultar, Situación, Plazos, Mapa e Historial
+          // (la app se centra en estudiantes). Quien tenía guardada una de
+          // esas vistas como última abierta vuelve a Módulos; los datos
+          // viejos (historial, favoritos) quedan guardados sin usarse.
+          const validas = ['modulos', 'canvas', 'explorador', 'colecciones', 'mapasmentales', 'admin', 'practica']
+          if (!validas.includes(String(state.vistaActiva))) state = { ...state, vistaActiva: 'modulos' }
         }
         return state as never
       },

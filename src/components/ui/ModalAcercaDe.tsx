@@ -147,54 +147,35 @@ function Acerca({ modoOscuro }: { modoOscuro: boolean }) {
     <div>
       <H modoOscuro={modoOscuro}>Objetivo</H>
       <P modoOscuro={modoOscuro}>
-        Acercar el derecho chileno a estudiantes, profesionales y ciudadanos mediante una plataforma que combina los
-        textos legales oficiales con un asistente de inteligencia artificial que explica, conecta y aplica las normas
-        en lenguaje claro.
+        Una plataforma de estudio para estudiantes de Derecho en Chile: los textos legales oficiales, tus apuntes
+        y tus ramos, y herramientas para repasar, todo en un mismo lugar.
       </P>
 
       <H modoOscuro={modoOscuro}>Funciones disponibles</H>
       <ul className={`text-sm space-y-2 mb-4 ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>
-        <Feat icono="ti-messages" titulo="Consultar">
-          Chat con IA sobre cualquier tema legal. Respuestas con citas exactas de artículos expandibles.
-        </Feat>
-        <Feat icono="ti-list-numbers" titulo="Situación concreta">
-          Cuestionario guiado por área (despido, acoso, vacaciones, etc.) que entrega diagnóstico, plazos críticos,
-          pasos de acción y marco legal aplicable.
-        </Feat>
-        <Feat icono="ti-affiliate" titulo="Canvas jurídico">
-          Genera automáticamente un mapa conceptual sobre un tema: definición, artículos relevantes y caso didáctico.
-          Editable y conectable.
+        <Feat icono="ti-layout-grid" titulo="Módulos y ramos">
+          Organiza tus ramos con clases, evaluaciones y calculadora de notas, textos, apuntes y casos.
         </Feat>
         <Feat icono="ti-book-2" titulo="Explorador">
           Navega los códigos artículo por artículo con búsqueda rápida (Ctrl+K), índice jerárquico y modernización
           opcional del lenguaje antiguo.
         </Feat>
-        <Feat icono="ti-network" titulo="Mapa de relaciones">
-          Visualiza cómo los artículos se conectan: qué artículo menciona a cuál y de qué sección forma parte.
+        <Feat icono="ti-stack-2" titulo="Colecciones">
+          Agrupa artículos, escribe notas y repásalos con tarjetas de repetición espaciada.
         </Feat>
-        <Feat icono="ti-history" titulo="Historial">
-          Todas tus consultas quedan guardadas localmente y son retomables.
+        <Feat icono="ti-puzzle" titulo="Práctica">
+          Pasapalabra jurídico por área para memorizar conceptos y términos.
+        </Feat>
+        <Feat icono="ti-hierarchy-2" titulo="Mapas mentales y Canvas">
+          Esquemas de los temas que estás estudiando, editables y conectables.
         </Feat>
       </ul>
 
-      <H modoOscuro={modoOscuro}>Normas indexadas (23)</H>
+      <H modoOscuro={modoOscuro}>Normas indexadas</H>
       <P modoOscuro={modoOscuro}>
-        <strong>Fundamentales y tratados:</strong> Constitución · Pacto Internacional DCP · Pacto Internacional DESC.
-        <br />
-        <strong>Códigos:</strong> Civil · Penal · Trabajo · Tributario · Comercio · Procedimiento Civil ·
-        Procesal Penal · Orgánico de Tribunales · Minería · Aguas · Sanitario · Justicia Militar.
-        <br />
-        <strong>Leyes especiales:</strong> Ley 19.880 (Proc. Administrativo) · Ley 16.744 (Accidentes del Trabajo) ·
-        Ley 20.000 (Drogas) · Ley 21.643 (Karin) · Ley 20.720 (Insolvencia) · Ley 19.968 (Tribunales de Familia) ·
-        Ley 20.285 (Transparencia) · Ley 20.084 (Resp. Penal Adolescente).
-        <br />
-        <strong>+10.500 artículos</strong> oficiales de la Biblioteca del Congreso Nacional de Chile (leychile.cl).
-      </P>
-
-      <H modoOscuro={modoOscuro}>Próximamente</H>
-      <P modoOscuro={modoOscuro}>
-        Módulo de Comparación de normas · Panel de administración de jurisprudencia · Tratados internacionales ·
-        Otras leyes especiales prioritarias.
+        Constitución, tratados internacionales, los principales códigos y decenas de leyes especiales, con
+        los textos oficiales de la Biblioteca del Congreso Nacional de Chile (leychile.cl). Puedes activar o
+        desactivar las normas desde el botón Códigos del menú.
       </P>
 
       <H modoOscuro={modoOscuro}>Versión</H>

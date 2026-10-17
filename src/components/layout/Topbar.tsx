@@ -5,18 +5,13 @@ interface TopbarProps {
 }
 
 const titulos: Record<string, string> = {
-  consultar: 'Consultar',
-  situacion: 'Situación concreta',
   modulos: 'Módulos',
   mapasmentales: 'Mapas mentales',
   canvas: 'Canvas jurídico',
-  mapa: 'Mapa de normas',
   explorador: 'Explorador de códigos',
   colecciones: 'Colecciones',
-  historial: 'Historial',
   admin: 'Administración',
   practica: 'Práctica · Pasapalabra',
-  plazos: 'Calculadora de plazos',
 }
 
 // Los límites del servidor (api/anthropic.ts) están temporalmente muy altos
