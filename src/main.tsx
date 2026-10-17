@@ -2,6 +2,8 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { MotionConfig } from 'framer-motion'
 import '@fontsource-variable/figtree'
+// íconos Tabler servidos por la propia app (antes venían de un CDN con @latest)
+import '@tabler/icons-webfont/dist/tabler-icons.min.css'
 import './index.css'
 import App from './App.tsx'
 // historial de "Volver" y scroll por vista (se engancha al store)
@@ -15,6 +17,16 @@ if (import.meta.env.DEV) {
   const w = window as unknown as { __store: typeof useStore; __enfoque: typeof useEnfoque }
   w.__store = useStore
   w.__enfoque = useEnfoque
+}
+
+// Service worker: la app abre sin conexión. Solo en producción (en desarrollo
+// el caché estorbaría al recargar con cambios).
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      // sin service worker la app funciona igual, solo que no abre sin conexión
+    })
+  })
 }
 
 // Detectar si estamos en la página de verificación

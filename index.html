@@ -3,15 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
-    <title>Prima Lex</title>
-    <!-- Íconos (Tabler): antes era un @import dentro del CSS de la app, así
-         que el navegador recién lo descubría después de bajar ese CSS y ambos
-         bloqueaban el primer pintado. Ahora se pide en paralelo y sin
-         bloquear (los íconos aparecen apenas llega la fuente). -->
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-    <link rel="preload" as="style" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" onload="this.onload=null;this.rel='stylesheet'" />
-    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" /></noscript>
+    <title>Prima Lex — tu semestre de Derecho, ordenado</title>
+    <meta name="description" content="Organiza tu semestre de Derecho: tareas, calendario, enfoque Pomodoro, notas y asistencia por ramo, apuntes, mapas mentales y los códigos chilenos al alcance." />
+    <meta name="theme-color" content="#2563eb" />
+    <meta name="application-name" content="Prima Lex" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Prima Lex" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="es_CL" />
+    <meta property="og:site_name" content="Prima Lex" />
+    <meta property="og:title" content="Prima Lex — tu semestre de Derecho, ordenado" />
+    <meta property="og:description" content="Tareas, calendario, enfoque, notas y asistencia por ramo, apuntes y los códigos chilenos en un solo lugar." />
+    <meta property="og:image" content="https://primalex.vercel.app/og.png" />
+    <meta property="og:url" content="https://primalex.vercel.app/" />
+    <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body>
     <div id="root"></div>
