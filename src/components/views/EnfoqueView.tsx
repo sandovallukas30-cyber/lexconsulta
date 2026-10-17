@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
-import { motion } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { useEnfoque, esFlow, msEnfocados, msMostrados } from '../../store/useEnfoque'
 import { useAhora } from '../../hooks/useMotorEnfoque'
 import { AnilloProgreso } from '../ui/AnilloProgreso'
+import { Segmentado } from '../ui/Segmentado'
 import { SelectorRamo } from '../ui/SelectorRamo'
 import { colorRamo, hoyISO, nombreRamo } from '../../services/tareasPlan'
 import {
@@ -33,48 +33,6 @@ function useEstilos() {
     suave: modoOscuro ? 'text-zinc-400' : 'text-zinc-500',
     titulo: modoOscuro ? 'text-white' : 'text-zinc-900',
   }
-}
-
-/** Control segmentado con la píldora que se desliza (como en Orbis). */
-function Segmentado<T extends string>({
-  id, opciones, valor, onChange, deshabilitado, etiqueta,
-}: {
-  id: string
-  opciones: { valor: T; texto: string }[]
-  valor: T
-  onChange: (v: T) => void
-  deshabilitado?: boolean
-  etiqueta: string
-}) {
-  const e = useEstilos()
-  return (
-    <div role="group" aria-label={etiqueta} className={`inline-flex p-1 rounded-control gap-0.5 ${e.modoOscuro ? 'bg-zinc-800' : 'bg-zinc-100'}`}>
-      {opciones.map((o) => {
-        const activo = o.valor === valor
-        return (
-          <button
-            key={o.valor}
-            type="button"
-            aria-pressed={activo}
-            disabled={deshabilitado && !activo}
-            onClick={() => onChange(o.valor)}
-            className={`sin-tactil relative h-8 px-3 rounded-[10px] text-[13px] font-semibold transition-colors disabled:opacity-40 ${
-              activo ? e.titulo : e.suave
-            }`}
-          >
-            {activo && (
-              <motion.span
-                layoutId={`pildora-${id}`}
-                className={`absolute inset-0 rounded-[10px] shadow-tarjeta ${e.modoOscuro ? 'bg-zinc-700' : 'bg-white'}`}
-                transition={{ type: 'spring', stiffness: 500, damping: 38 }}
-              />
-            )}
-            <span className="relative">{o.texto}</span>
-          </button>
-        )
-      })}
-    </div>
-  )
 }
 
 function Paso({

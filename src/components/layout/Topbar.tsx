@@ -9,6 +9,7 @@ const titulos: Record<string, string> = {
   hoy: 'Hoy',
   tareas: 'Tareas',
   enfoque: 'Enfoque',
+  calendario: 'Calendario',
   modulos: 'Módulos',
   mapasmentales: 'Mapas mentales',
   explorador: 'Explorador de códigos',

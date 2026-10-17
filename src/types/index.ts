@@ -69,6 +69,7 @@ export type VistaId =
   | 'hoy'
   | 'tareas'
   | 'enfoque'
+  | 'calendario'
   | 'modulos'
   | 'explorador'
   | 'colecciones'

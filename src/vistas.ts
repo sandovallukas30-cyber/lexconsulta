@@ -13,6 +13,7 @@ const cargadores: Record<VistaId, Cargador> = {
   hoy: () => import('./components/views/HoyView').then((m) => ({ default: m.HoyView })),
   tareas: () => import('./components/views/TareasView').then((m) => ({ default: m.TareasView })),
   enfoque: () => import('./components/views/EnfoqueView').then((m) => ({ default: m.EnfoqueView })),
+  calendario: () => import('./components/views/CalendarioView').then((m) => ({ default: m.CalendarioView })),
   modulos: () => import('./components/views/ModulosView').then((m) => ({ default: m.ModulosView })),
   explorador: () => import('./components/views/ExploradorView').then((m) => ({ default: m.ExploradorView })),
   colecciones: () => import('./components/views/ColeccionesView').then((m) => ({ default: m.ColeccionesView })),
