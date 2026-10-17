@@ -1526,7 +1526,7 @@ function ModoLecturaOverlay({
                     className="w-8 h-8 rounded-md flex items-center justify-center"
                     style={{ color: VERDE }}
                   >
-                    <i className="ti ti-player-pause-filled text-base" />
+                    <i className="ti ti-player-pause text-base" />
                   </button>
                 )}
                 {voz.estado === 'pausado' && (
@@ -1536,7 +1536,7 @@ function ModoLecturaOverlay({
                     className="w-8 h-8 rounded-md flex items-center justify-center"
                     style={{ color: VERDE }}
                   >
-                    <i className="ti ti-player-play-filled text-base" />
+                    <i className="ti ti-player-play text-base" />
                   </button>
                 )}
                 {voz.estado !== 'inactivo' && (
@@ -1545,7 +1545,7 @@ function ModoLecturaOverlay({
                     title="Detener"
                     className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${tema.text} ${tema.chipHover}`}
                   >
-                    <i className="ti ti-player-stop-filled text-base" />
+                    <i className="ti ti-player-stop text-base" />
                   </button>
                 )}
               </div>

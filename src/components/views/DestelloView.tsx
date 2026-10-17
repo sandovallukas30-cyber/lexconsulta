@@ -24,7 +24,7 @@ export function DestelloView() {
             <SelectorCodigo
               titulo="Destello Legal"
               descripcion="Quiz rápidos con preguntas sobre artículos y conceptos clave"
-              icono="ti-lightning-2"
+              icono="ti-bolt"
               onElegir={(tipo) => flujo.elegirCodigo(tipo as CodigoTipo)}
             />
           </motion.div>

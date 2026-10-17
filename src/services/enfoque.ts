@@ -20,6 +20,14 @@ export interface SesionFoco {
   tipo: Tecnica
   /** YYYY-MM-DD local del inicio */
   fecha: string
+  /** Cómo te concentraste, de 1 a 5 (se pide al terminar la sesión). */
+  calidad?: number
+  nota?: string
+  /** Veces que apretaste «Me distraje». */
+  distracciones?: number
+  /** Fondo y sonido con que trabajaste (para saber qué ambiente te funciona). */
+  fondo?: string
+  sonido?: string
 }
 
 /** 25:00, 04:07 o, pasada la hora, 1:05:09. */

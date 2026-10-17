@@ -1,9 +1,13 @@
-import { useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import { useStore } from '../../store/useStore'
 import { useEnfoque, esFlow, msEnfocados, msMostrados } from '../../store/useEnfoque'
 import { useAhora } from '../../hooks/useMotorEnfoque'
 import { AnilloProgreso } from '../ui/AnilloProgreso'
 import { Segmentado } from '../ui/Segmentado'
+import { CalificarSesion } from '../ui/CalificarSesion'
+import { EnfoqueEstadisticas } from '../enfoque/EnfoqueEstadisticas'
+import { EnfoqueHistorial } from '../enfoque/EnfoqueHistorial'
+import { PanelAmbiente } from '../enfoque/PanelAmbiente'
 import { SelectorRamo } from '../ui/SelectorRamo'
 import { colorRamo, hoyISO, nombreRamo } from '../../services/tareasPlan'
 import {
@@ -18,6 +22,8 @@ import {
   type Modo,
   type Tecnica,
 } from '../../services/enfoque'
+
+const ModoConcentracion = lazy(() => import('../enfoque/ModoConcentracion').then((m) => ({ default: m.ModoConcentracion })))
 
 const COLOR_MODO: Record<Modo, string> = { foco: 'var(--accent-base)', corto: '#16a34a', largo: '#0d9488' }
 const DIA_INICIAL = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
@@ -80,6 +86,7 @@ function Temporizador() {
   const s = useEnfoque()
   const tareas = useStore((st) => st.tareasPlan)
   const [verAjustes, setVerAjustes] = useState(false)
+  const [concentracion, setConcentracion] = useState(false)
   const corriendo = s.estado === 'corriendo'
   const ahora = useAhora(corriendo)
   const flow = esFlow(s)
@@ -169,6 +176,19 @@ function Temporizador() {
         )}
       </div>
 
+      <div className="flex items-center justify-center gap-2 mt-4 flex-wrap">
+        {s.modo === 'foco' && s.inicioSesion !== null && (
+          <button onClick={s.distraje} className="boton boton-fantasma boton-chico" title="Anota cuando te distraes: alimenta tus patrones">
+            <i className="ti ti-bolt" aria-hidden="true" /> Me distraje{s.distracciones > 0 ? ` · ${s.distracciones}` : ''}
+          </button>
+        )}
+        <button onClick={() => setConcentracion(true)} className="boton boton-suave boton-chico">
+          <i className="ti ti-arrows-maximize" aria-hidden="true" /> Modo concentración
+        </button>
+      </div>
+
+      <div className="w-full max-w-md mt-4"><CalificarSesion /></div>
+
       <div className="flex items-center gap-1.5 mt-5" aria-label={`Ciclo: ${s.ciclo % s.ajustes.cada} de ${s.ajustes.cada} enfoques`} role="img">
         {Array.from({ length: s.ajustes.cada }).map((_, i) => (
           <span
@@ -233,6 +253,14 @@ function Temporizador() {
           Ajustes
         </button>
       </div>
+
+      <PanelAmbiente />
+
+      {concentracion && (
+        <Suspense fallback={null}>
+          <ModoConcentracion onCerrar={() => setConcentracion(false)} />
+        </Suspense>
+      )}
 
       {verAjustes && (
         <div className={`w-full max-w-sm mt-2 divide-y ${e.modoOscuro ? 'divide-zinc-800' : 'divide-zinc-100'}`}>
@@ -404,8 +432,11 @@ function SesionesDeHoy() {
   )
 }
 
+type Pestana = 'temporizador' | 'estadisticas' | 'historial'
+
 export function EnfoqueView() {
   const e = useEstilos()
+  const [pestana, setPestana] = useState<Pestana>('temporizador')
   return (
     <div className={`h-full overflow-y-auto ${e.modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
       <div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-5">
@@ -413,15 +444,30 @@ export function EnfoqueView() {
           <h1 className={`text-2xl font-bold tracking-tight ${e.titulo}`}>Enfoque</h1>
           <p className={`text-sm mt-1 ${e.suave}`}>Estudia en bloques con descansos. El reloj sigue corriendo aunque cambies de sección.</p>
         </header>
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
-          <div className="lg:col-span-3">
-            <Temporizador />
+        <Segmentado<Pestana>
+          id="enfoque-pestana"
+          etiqueta="Secciones de Enfoque"
+          valor={pestana}
+          onChange={setPestana}
+          opciones={[
+            { valor: 'temporizador', texto: 'Temporizador' },
+            { valor: 'estadisticas', texto: 'Estadísticas' },
+            { valor: 'historial', texto: 'Historial' },
+          ]}
+        />
+        {pestana === 'temporizador' && (
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
+            <div className="lg:col-span-3">
+              <Temporizador />
+            </div>
+            <div className="lg:col-span-2 space-y-4">
+              <Resumen />
+              <SesionesDeHoy />
+            </div>
           </div>
-          <div className="lg:col-span-2 space-y-4">
-            <Resumen />
-            <SesionesDeHoy />
-          </div>
-        </div>
+        )}
+        {pestana === 'estadisticas' && <EnfoqueEstadisticas />}
+        {pestana === 'historial' && <EnfoqueHistorial />}
       </div>
     </div>
   )

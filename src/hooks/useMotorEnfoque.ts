@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { useEnfoqueLocal } from '../store/useEnfoqueLocal'
+import { detenerSonido, ponerSonido, ponerVolumen, type Sonido } from '../services/ambiente'
 import { useEnfoque, esFlow, msMostrados } from '../store/useEnfoque'
 import { mmss, NOMBRE_MODO } from '../services/enfoque'
 
@@ -18,6 +20,7 @@ export function useAhora(activo: boolean, cada = 250): number {
  *  vista que estés (suena, guarda la sesión) y pone el tiempo en el título de
  *  la pestaña. */
 export function useMotorEnfoque() {
+  useMotorSonido()
   const corriendo = useEnfoque((s) => s.estado === 'corriendo')
 
   useEffect(() => {
@@ -40,9 +43,43 @@ export function useMotorEnfoque() {
     s.estado === 'detenido' ? null : `${mmss(msMostrados(s, ahora))} · ${esFlow(s) ? 'Flowtime' : NOMBRE_MODO[s.modo]}`
   )
   useEffect(() => {
-    document.title = titulo ? `${titulo} — Prima Lex` : 'Prima Lex'
+    document.title = titulo ? `${titulo} — Prima Lex` : TITULO_APP
     return () => {
-      document.title = 'Prima Lex'
+      document.title = TITULO_APP
     }
   }, [titulo])
+}
+
+const TITULO_APP = 'Prima Lex — tu semestre de Derecho, ordenado'
+
+/** El sonido ambiente sigue al temporizador desde cualquier pantalla: suena
+ *  mientras corre un enfoque (o siempre, si se apagó «solo enfocando»). */
+function useMotorSonido() {
+  useEffect(() => {
+    let sonando: Sonido | null = null
+    const aplicar = () => {
+      const e = useEnfoque.getState()
+      const l = useEnfoqueLocal.getState()
+      const debe = l.sonido !== 'apagado' && (!l.soloEnfocando || (e.estado === 'corriendo' && e.modo === 'foco'))
+      if (!debe) {
+        if (sonando) {
+          detenerSonido()
+          sonando = null
+        }
+        return
+      }
+      if (sonando !== l.sonido) {
+        ponerSonido(l.sonido, l.volumen)
+        sonando = l.sonido
+      } else ponerVolumen(l.volumen)
+    }
+    const a = useEnfoque.subscribe(aplicar)
+    const b = useEnfoqueLocal.subscribe(aplicar)
+    aplicar()
+    return () => {
+      a()
+      b()
+      detenerSonido()
+    }
+  }, [])
 }

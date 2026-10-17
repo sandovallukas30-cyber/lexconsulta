@@ -25,6 +25,10 @@ export interface AjustesUI {
   animaciones: boolean
   /** Pequeñas celebraciones al cumplir tareas y enfoques. */
   celebraciones: boolean
+  /** Resumen diario y avisos de evaluaciones (mientras la app esté abierta). */
+  recordatorios: boolean
+  /** Hora del resumen (0-23). */
+  horaResumen: number
   set: (p: Partial<Omit<AjustesUI, 'set'>>) => void
 }
 
@@ -36,11 +40,13 @@ export const useAjustes = create<AjustesUI>()(
       contraste: false,
       animaciones: true,
       celebraciones: true,
+      recordatorios: false,
+      horaResumen: 8,
       set: (p) => set(p),
     }),
     {
       name: 'prima-lex-ajustes-v1',
-      partialize: (s) => ({ zoom: s.zoom, estilo: s.estilo, contraste: s.contraste, animaciones: s.animaciones, celebraciones: s.celebraciones }),
+      partialize: (s) => ({ zoom: s.zoom, estilo: s.estilo, contraste: s.contraste, animaciones: s.animaciones, celebraciones: s.celebraciones, recordatorios: s.recordatorios, horaResumen: s.horaResumen }),
     }
   )
 )

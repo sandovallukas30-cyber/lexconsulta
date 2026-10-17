@@ -1,0 +1,166 @@
+/* Enfoque: modo concentración, fondos animados y respiración (port de Orbis).
+   Todo con prefijo enf- para no chocar con el resto de la app. */
+
+/* ───────── Fondo animado ───────── */
+.enf-fondo { position: absolute; inset: 0; overflow: hidden; border-radius: inherit; z-index: 0; pointer-events: none; }
+.enf-fondo::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, rgba(0, 0, 0, .34), rgba(0, 0, 0, 0) 68%), linear-gradient(180deg, rgba(0, 0, 0, .12), rgba(0, 0, 0, 0) 30%); }
+.enf-fondo-svg { width: 100%; height: 100%; display: block; }
+.enf-fondo-foto { position: absolute; inset: 0; background-size: cover; background-position: center; }
+.enf-fondo.enf-pausado *, .enf-fondo.enf-pausado { animation-play-state: paused !important; }
+.enf-fondo.enf-cierre::before { content: ""; position: absolute; inset: 0; z-index: 2; background: radial-gradient(circle at 50% 55%, rgba(255, 226, 160, .55), rgba(255, 226, 160, 0) 60%); animation: enf-fx-cierre 5s ease-out forwards; }
+@keyframes enf-fx-cierre { 0% { opacity: 0; transform: scale(.6); } 25% { opacity: 1; } 100% { opacity: 0; transform: scale(1.5); } }
+
+/* ───────── Escenas ───────── */
+@keyframes enf-fx-brilla { 0%, 100% { opacity: .2; } 50% { opacity: 1; } }
+@keyframes enf-fx-fugaz { 0%, 86% { opacity: 0; transform: translate(0, 0); } 88% { opacity: 1; } 100% { opacity: 0; transform: translate(-90px, 50px); } }
+@keyframes enf-fx-balanceo { from { transform: rotate(-.5deg) translateX(-6px); } to { transform: rotate(.5deg) translateX(6px); } }
+@keyframes enf-fx-flota { 0% { transform: translate(0, 0); opacity: 0; } 15% { opacity: 1; } 50% { transform: translate(calc(var(--dx) * .5), calc(var(--dy) * .5)); opacity: .35; } 85% { opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)); opacity: 0; } }
+@keyframes enf-fx-deriva { from { transform: translateX(-60px); } to { transform: translateX(60px); } }
+@keyframes enf-fx-ola-mov { from { transform: translateX(0); } to { transform: translateX(calc(-1 * var(--per, 200px))); } }
+@keyframes enf-fx-espuma { 0%, 100% { opacity: .35; transform: translateY(2px); } 50% { opacity: .85; transform: translateY(-5px); } }
+@keyframes enf-fx-reflejo { 0%, 100% { opacity: .15; transform: scaleX(.8); } 50% { opacity: .75; transform: scaleX(1.1); } }
+@keyframes enf-fx-vela { 0% { transform: translateX(-30px) skewX(-3deg); opacity: .55; } 100% { transform: translateX(30px) skewX(3deg); opacity: 1; } }
+@keyframes enf-fx-ave { from { transform: translateX(-80px); } to { transform: translateX(900px); } }
+@keyframes enf-fx-rayo { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+.enf-fx-estrella { animation: enf-fx-brilla 3.5s ease-in-out infinite; }
+.enf-fx-fugaz { transform-box: fill-box; animation: enf-fx-fugaz 11s linear infinite; opacity: 0; }
+.enf-fx-fugaz-2 { animation-duration: 17s; animation-delay: 6s; }
+.enf-fx-capa { transform-box: fill-box; transform-origin: 50% 100%; animation: enf-fx-balanceo 9s ease-in-out infinite alternate; }
+.enf-fx-capa-2 { animation-duration: 7s; animation-delay: -2s; }
+.enf-fx-capa-3 { animation-duration: 5.5s; animation-delay: -4s; }
+.enf-fx-luciernaga { animation: enf-fx-flota 9s ease-in-out infinite; opacity: 0; filter: drop-shadow(0 0 4px #f6ff9a); }
+.enf-fx-bruma { animation: enf-fx-deriva 22s ease-in-out infinite alternate; }
+.enf-fx-bruma-2 { animation-duration: 30s; animation-direction: alternate-reverse; }
+.enf-fx-rayos { animation: enf-fx-rayo 8s ease-in-out infinite; }
+.enf-fx-nubes { animation: enf-fx-deriva 40s ease-in-out infinite alternate; }
+.enf-fx-aves { animation: enf-fx-ave 60s linear infinite; }
+.enf-fx-ola { animation: enf-fx-ola-mov linear infinite; }
+.enf-fx-ola-1 { --per: 200px; animation-duration: 14s; }
+.enf-fx-ola-2 { --per: 260px; animation-duration: 10s; animation-direction: reverse; }
+.enf-fx-ola-3 { --per: 340px; animation-duration: 7s; }
+.enf-fx-espuma { transform-box: fill-box; animation: enf-fx-espuma 6s ease-in-out infinite; }
+.enf-fx-reflejo { transform-box: fill-box; transform-origin: center; animation: enf-fx-reflejo 3.2s ease-in-out infinite; }
+.enf-fx-vela { transform-box: fill-box; animation: enf-fx-vela 11s ease-in-out infinite alternate; }
+.enf-fx-vela-2 { animation-duration: 15s; animation-delay: -4s; }
+.enf-fx-vela-3 { animation-duration: 19s; animation-delay: -8s; }
+.enf-fx-aurora { filter: blur(10px); }
+
+@keyframes enf-fx-cae { from { transform: translateY(0); } to { transform: translateY(740px); } }
+@keyframes enf-fx-resbala { 0% { transform: translateY(0); opacity: 0; } 8% { opacity: 1; } 35% { transform: translateY(120px); } 48% { transform: translateY(124px); } 85% { opacity: 1; } 100% { transform: translateY(420px); opacity: 0; } }
+@keyframes enf-fx-bokeh { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+@keyframes enf-fx-relampago { 0%, 90%, 100% { opacity: 0; } 91% { opacity: .22; } 93% { opacity: .04; } 95% { opacity: .3; } 98% { opacity: 0; } }
+@keyframes enf-fx-ventana { 0%, 100% { opacity: .9; } 50% { opacity: .15; } }
+@keyframes enf-fx-antena { 0%, 100% { opacity: 1; } 50% { opacity: .1; } }
+@keyframes enf-fx-avion-vuela { from { transform: translateX(-20px); } to { transform: translateX(840px); } }
+@keyframes enf-fx-llama { 0%, 100% { opacity: .85; } 40% { opacity: .6; } 70% { opacity: .95; } }
+@keyframes enf-fx-vapor { 0% { transform: translateY(0); opacity: 0; } 25% { opacity: .75; } 100% { transform: translateY(-60px); opacity: 0; } }
+@keyframes enf-fx-estrella-mov { from { transform: translateX(-10px); } to { transform: translateX(820px); } }
+@keyframes enf-fx-hoja { 0% { transform: translate(0, -40px) rotate(0); } 25% { transform: translate(34px, 170px) rotate(90deg); } 50% { transform: translate(-24px, 340px) rotate(190deg); } 75% { transform: translate(30px, 520px) rotate(280deg); } 100% { transform: translate(-10px, 720px) rotate(360deg); } }
+.enf-fx-gota { animation: enf-fx-cae linear infinite; }
+.enf-fx-resbala { animation: enf-fx-resbala ease-in-out infinite; }
+.enf-fx-bokeh { transform-box: fill-box; transform-origin: center; animation: enf-fx-bokeh 7s ease-in-out infinite; filter: blur(7px); }
+.enf-fx-relampago { animation: enf-fx-relampago 22s linear infinite; }
+.enf-fx-ventana { animation: enf-fx-ventana 30s ease-in-out infinite; }
+.enf-fx-antena { animation: enf-fx-antena 1.6s steps(1) infinite; }
+.enf-fx-avion { animation: enf-fx-avion-vuela 70s linear infinite; }
+.enf-fx-llama { transform-box: fill-box; transform-origin: center; animation: enf-fx-llama 4.5s ease-in-out infinite; }
+.enf-fx-vapor { animation: enf-fx-vapor 4s ease-in infinite; }
+.enf-fx-vapor-2 { animation-delay: 1.3s; } .enf-fx-vapor-3 { animation-delay: 2.6s; }
+.enf-fx-estrella-mov { animation: enf-fx-estrella-mov linear infinite; }
+.enf-fx-deriva-lenta { animation: enf-fx-deriva 60s ease-in-out infinite alternate; }
+.enf-fx-hoja { transform-box: fill-box; transform-origin: center; animation: enf-fx-hoja linear infinite; }
+/* Animaciones apagadas (ajuste de la app o preferencia del sistema): las escenas quedan quietas */
+.enf-fondo.enf-quieto *, .enf-fondo.enf-quieto { animation: none !important; transition: none !important; }
+.enf-fondo.enf-quieto .enf-fx-luciernaga { opacity: .8; }
+@media (prefers-reduced-motion: reduce) { .enf-fondo *, .enf-fondo { animation: none !important; transition: none !important; } .enf-fx-luciernaga { opacity: .8; } }
+
+/* ───────── Pantalla de concentración ───────── */
+.enf-foco { position: fixed; inset: 0; z-index: 90; background: var(--neu-bg); color: var(--neu-ink); display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 12px; padding: 28px 32px; overflow: hidden; animation: enf-aparece .25s ease-out; }
+@keyframes enf-aparece { from { opacity: 0; } to { opacity: 1; } }
+.enf-foco-salir { position: absolute; top: 20px; right: 24px; z-index: 9; width: 44px; height: 44px; padding: 0; font-size: 20px; }
+.enf-foco-centro { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 0; width: 100%; }
+.enf-sobretitulo { margin-bottom: 14px; font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--neu-ink2); }
+.enf-reloj { font-family: var(--font-head); font-weight: 700; line-height: 1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; color: var(--neu-ink); }
+.enf-foco-tarea { margin-top: 22px; padding: 8px 18px; border-radius: 999px; background: var(--neu-card); box-shadow: var(--neu-chica); color: var(--neu-ink); font-weight: 600; max-width: 70vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.enf-controles { display: flex; gap: 14px; align-items: center; justify-content: center; flex-wrap: wrap; margin: 26px 0 8px; }
+.enf-redondo { width: 52px; height: 52px; padding: 0; border-radius: 50%; font-size: 20px; }
+.enf-principal { height: 60px; padding: 0 40px; border-radius: 30px; font-size: 16px; gap: 8px; }
+.enf-principal i { font-size: 20px; }
+.enf-fila { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }
+.enf-calificar { margin-top: 14px; width: min(420px, 90vw); }
+
+/* Pie con ramo, tarea y acceso a las opciones */
+.enf-pie { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; width: 100%; max-width: 980px; padding: 16px 20px; }
+.enf-campo { flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.enf-etiqueta { font-family: var(--font-head); font-size: 12px; font-weight: 600; color: var(--neu-ink2); }
+.enf-input { width: 100%; height: 40px; padding: 0 12px; font-size: 14px; min-width: 0; }
+.enf-mas { margin-left: auto; }
+.enf-mas.is-on { box-shadow: var(--neu-presionada-chica); }
+
+/* Panel lateral: fondo, sonido e ideas */
+.enf-panel { position: fixed; top: 0; right: 0; bottom: 0; width: min(400px, 100vw); z-index: 8; padding: 18px; border-radius: 0; display: flex; flex-direction: column; gap: 16px; overflow: auto; animation: enf-panel-entra .25s ease-out; }
+@keyframes enf-panel-entra { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: none; } }
+.enf-panel-cab { display: flex; justify-content: space-between; align-items: center; }
+.enf-panel .enf-campo { flex: none; }
+.enf-fila-idea { display: flex; gap: 8px; }
+.enf-sonidos { display: flex; flex-wrap: wrap; gap: 6px; }
+.enf-volumen { display: flex; align-items: center; gap: 8px; margin-top: 4px; color: var(--neu-ink2); }
+.enf-volumen input { flex: 1; min-width: 0; }
+@media (min-width: 900px) { .enf-foco:has(.enf-panel) .enf-foco-centro { transform: translateX(-190px); transition: transform .3s ease; } }
+
+/* Selector de fondo */
+.enf-fondo-bloque { display: flex; flex-direction: column; gap: 10px; align-items: center; width: 100%; }
+.enf-fondo-selector { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 8px; }
+.enf-fondo-muestra { display: flex; flex-direction: column; align-items: center; gap: 5px; background: none; border: 0; box-shadow: none; padding: 4px; cursor: pointer; color: var(--neu-ink2); font-size: 12px; border-radius: 14px; }
+.enf-fondo-vista { width: 38px; height: 38px; border-radius: 12px; box-shadow: inset 0 0 0 1px rgba(128, 128, 128, .3); transition: transform .15s, box-shadow .15s; }
+.enf-fondo-muestra:hover .enf-fondo-vista { transform: translateY(-2px); }
+.enf-fondo-muestra.is-on { color: var(--neu-ink); font-weight: 700; }
+.enf-fondo-muestra.is-on .enf-fondo-vista { box-shadow: 0 0 0 2px var(--neu-bg), 0 0 0 4px var(--accent-base); }
+.enf-fondo-muestra:focus-visible { outline: 2px solid var(--accent-base); outline-offset: 2px; }
+.enf-fondo-opciones { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center; font-size: 13px; }
+.enf-fondo-opcion { display: inline-flex; gap: 8px; align-items: center; cursor: pointer; }
+
+/* Respiración guiada */
+.enf-resp { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 14px; }
+.enf-resp-circulo { width: 96px; height: 96px; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--accent-base) 45%, transparent), color-mix(in srgb, var(--accent-base) 12%, transparent)); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent-base) 50%, transparent); transition-property: transform; transition-timing-function: ease-in-out; }
+.enf-resp-compacta .enf-resp-circulo { width: 70px; height: 70px; }
+.enf-resp-texto { display: flex; gap: 8px; align-items: baseline; min-height: 22px; color: var(--neu-ink); }
+.enf-resp-texto span, .enf-resp-ciclos { color: var(--neu-ink2); font-variant-numeric: tabular-nums; font-size: 13px; }
+
+@media (max-width: 640px) {
+  .enf-foco { padding: 18px 14px; }
+  .enf-foco-salir { top: 12px; right: 12px; }
+  .enf-mas { margin-left: 0; width: 100%; }
+  .enf-principal { padding: 0 28px; }
+}
+@media (max-height: 700px) { .enf-sobretitulo { margin-bottom: 6px; } .enf-controles { margin-top: 14px; } .enf-resp-circulo { width: 56px; height: 56px; } }
+
+/* ───────── Con fondo animado: textos y controles en claro ─────────
+   Se reasignan las variables neumórficas dentro de la pantalla; las sombras se
+   redefinen aquí porque las variables compuestas se resuelven donde se declaran. */
+.enf-foco.enf-con-fondo {
+  --neu-bg: rgba(8, 12, 28, .42); --neu-bg2: rgba(8, 12, 28, .42); --neu-bg3: rgba(255, 255, 255, .14); --neu-card: rgba(8, 12, 28, .42);
+  --neu-sd: rgba(0, 0, 0, .3); --neu-sl: rgba(255, 255, 255, .24); --neu-line: rgba(255, 255, 255, .28);
+  --neu-ink: #fff; --neu-ink2: rgba(255, 255, 255, .86); --neu-ink3: rgba(255, 255, 255, .62);
+  --neu-ok: #7be0ae; --neu-warn: #ffd07a; --neu-danger: #ff9a98;
+  --accent-base: #fff; --accent-400: #fff; --accent-texto: #fff;
+  --neu-elevada: 0 8px 24px rgba(0, 0, 0, .3), inset 0 0 0 1px rgba(255, 255, 255, .2);
+  --neu-plana: 0 3px 10px rgba(0, 0, 0, .28), inset 0 0 0 1px rgba(255, 255, 255, .2);
+  --neu-chica: inset 0 0 0 1px rgba(255, 255, 255, .24);
+  --neu-presionada: inset 0 0 0 1px rgba(255, 255, 255, .3);
+  --neu-presionada-chica: inset 0 0 0 1px rgba(255, 255, 255, .3);
+  background: #0b1020;
+  color: #fff;
+  color-scheme: dark;
+}
+.enf-con-fondo .enf-foco-centro .enf-reloj { text-shadow: 0 2px 12px rgba(0, 0, 0, .5); }
+.enf-con-fondo .boton-primario { background: #fff; color: #10162b; box-shadow: 0 4px 14px rgba(0, 0, 0, .35); }
+.enf-con-fondo .boton-suave, .enf-con-fondo .boton-fantasma, .enf-con-fondo .enf-pie, .enf-con-fondo .enf-panel { backdrop-filter: blur(6px); }
+.enf-con-fondo .boton-fantasma { color: #fff; text-shadow: 0 1px 5px rgba(0, 0, 0, .7); }
+.enf-con-fondo .enf-sobretitulo, .enf-con-fondo .enf-fondo-muestra, .enf-con-fondo .enf-fondo-opcion { text-shadow: 0 1px 5px rgba(0, 0, 0, .75); }
+.enf-con-fondo .enf-fondo-muestra { color: #fff; }
+.enf-con-fondo .enf-fondo-muestra.is-on .enf-fondo-vista { box-shadow: 0 0 0 2px rgba(8, 12, 28, .6), 0 0 0 4px #fff; }
+.enf-con-fondo .enf-panel { background: rgba(8, 12, 28, .62); }
+.enf-con-fondo select option { color: #10162b; background: #fff; }
+.enf-con-fondo input[type="checkbox"]:checked::after { border-color: #fff; }
+.enf-con-fondo .enf-foco-tarea { background: rgba(8, 12, 28, .42); backdrop-filter: blur(6px); }

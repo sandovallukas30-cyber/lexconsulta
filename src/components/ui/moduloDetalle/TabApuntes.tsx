@@ -464,7 +464,7 @@ export function TabApuntes({
           <div>
             {sucio && (
               <p className={`text-[11px] mb-2 flex items-center gap-1 ${modoOscuro ? 'text-amber-400' : 'text-amber-700'}`} role="status">
-                <i className="ti ti-point-filled text-xs" /> Cambios sin guardar · Ctrl+S para guardar
+                <i className="ti ti-point text-xs" /> Cambios sin guardar · Ctrl+S para guardar
               </p>
             )}
             <BotonesFormulario onCancelar={cancelarFormulario} onGuardar={guardar} modoOscuro={modoOscuro} />

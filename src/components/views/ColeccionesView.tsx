@@ -570,7 +570,7 @@ const ESTADO_SIGUIENTE: Record<EstadoRepaso, EstadoRepaso> = {
 const ESTADO_INFO: Record<EstadoRepaso, { icono: string; label: string; colorLight: string; colorDark: string }> = {
   pendiente: { icono: 'ti-circle', label: 'Pendiente', colorLight: 'text-zinc-400', colorDark: 'text-zinc-600' },
   repasando: { icono: 'ti-circle-half-2', label: 'Repasando', colorLight: 'text-amber-600', colorDark: 'text-amber-400' },
-  dominado: { icono: 'ti-circle-check-filled', label: 'Dominado', colorLight: 'text-emerald-600', colorDark: 'text-emerald-400' },
+  dominado: { icono: 'ti-circle-check', label: 'Dominado', colorLight: 'text-emerald-600', colorDark: 'text-emerald-400' },
 }
 
 /** Vista imprimible de una Colección completa (botón "Exportar a PDF" ->

@@ -30,7 +30,7 @@ const AREAS: { id: AreaPractica; nombre: string; icono: string; descripcion: str
   { id: 'constitucional', nombre: 'Constitucional', icono: 'ti-building-bank', descripcion: 'Constitución y derechos fundamentales' },
   { id: 'comercial', nombre: 'Comercial', icono: 'ti-building-store', descripcion: 'Sociedades, títulos de crédito, insolvencia' },
   { id: 'tributario', nombre: 'Tributario', icono: 'ti-receipt-tax', descripcion: 'Código Tributario, impuestos, SII' },
-  { id: 'administrativo', nombre: 'Administrativo', icono: 'ti-building-government', descripcion: 'Procedimiento administrativo, transparencia, sanitario' },
+  { id: 'administrativo', nombre: 'Administrativo', icono: 'ti-building-bank', descripcion: 'Procedimiento administrativo, transparencia, sanitario' },
   { id: 'recursos_naturales', nombre: 'Minería y Aguas', icono: 'ti-mountain', descripcion: 'Código de Minería y Código de Aguas' },
 ]
 

@@ -2,6 +2,7 @@ import { useStore } from '../../store/useStore'
 import type { TareaPlan } from '../../types'
 import { colorRamo, etiquetaFecha, nombreRamo, progresoSubtareas } from '../../services/tareasPlan'
 import { horasMin } from '../../services/enfoque'
+import { celebrar } from '../../services/celebrar'
 
 const COLOR_PRIORIDAD = { alta: '#dc2626', media: '#d97706', baja: '#a1a1aa' } as const
 
@@ -40,7 +41,10 @@ export function FilaTarea({ tarea, onAbrir, abierta }: Props) {
         role="checkbox"
         aria-checked={tarea.hecha}
         aria-label={`${tarea.hecha ? 'Marcar como pendiente' : 'Marcar como hecha'}: ${tarea.titulo}`}
-        onClick={() => alternar(tarea.id)}
+        onClick={(ev) => {
+          if (!tarea.hecha) celebrar(ev.currentTarget)
+          alternar(tarea.id)
+        }}
         className="sin-tactil relative mt-0.5 w-[26px] h-[26px] min-w-0 rounded-[9px] flex items-center justify-center flex-shrink-0 transition-shadow before:content-[''] before:absolute before:-inset-2.5"
         style={{ background: 'var(--neu-bg)', boxShadow: tarea.hecha ? 'var(--neu-presionada-chica)' : 'var(--neu-chica)' }}
       >

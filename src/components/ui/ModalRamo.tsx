@@ -30,7 +30,7 @@ const ICONOS_RAMO = [
   'ti-notebook',
   'ti-users-group',
   'ti-world',
-  'ti-landmark',
+  'ti-building-bank',
 ]
 
 const COLORES_RAMO = [VERDE, '#dc2626', '#9333ea', '#0891b2', '#ea580c', '#7c3aed', '#0284c7', '#059669', '#d97706']

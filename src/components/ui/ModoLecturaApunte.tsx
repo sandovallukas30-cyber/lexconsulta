@@ -379,12 +379,12 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
             )}
             {voz.estado === 'reproduciendo' && (
               <button onClick={voz.pausar} title="Pausar" className="w-8 h-8 rounded-md flex items-center justify-center" style={{ color: VERDE }}>
-                <i className="ti ti-player-pause-filled text-base" />
+                <i className="ti ti-player-pause text-base" />
               </button>
             )}
             {voz.estado === 'pausado' && (
               <button onClick={voz.reanudar} title="Reanudar" className="w-8 h-8 rounded-md flex items-center justify-center" style={{ color: VERDE }}>
-                <i className="ti ti-player-play-filled text-base" />
+                <i className="ti ti-player-play text-base" />
               </button>
             )}
             {voz.estado !== 'inactivo' && (
@@ -393,7 +393,7 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
                 title="Detener"
                 className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${tema.text} ${tema.chipHover}`}
               >
-                <i className="ti ti-player-stop-filled text-base" />
+                <i className="ti ti-player-stop text-base" />
               </button>
             )}
           </div>

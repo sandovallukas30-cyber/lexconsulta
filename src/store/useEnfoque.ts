@@ -3,6 +3,8 @@ import { persist } from 'zustand/middleware'
 import { useStore } from './useStore'
 import { avisar } from './useAvisos'
 import { agregarActividadHoy } from '../services/actividadEstudio'
+import { useEnfoqueLocal } from './useEnfoqueLocal'
+import { celebrar } from '../services/celebrar'
 import { descansoSugerido, fechaDeMs, horasMin, NOMBRE_MODO, type Modo, type SesionFoco, type Tecnica } from '../services/enfoque'
 
 /** Estado del Pomodoro/Flowtime. Store propio y persistido aparte (no infla el
@@ -45,11 +47,18 @@ interface Reloj {
   tareaId: string | null
   /** Enfoques completados en el ciclo actual. */
   ciclo: number
+  /** Veces que apretaste «Me distraje» en la sesión en curso. */
+  distracciones: number
 }
 
 interface EstadoEnfoque extends Reloj {
   ajustes: AjustesEnfoque
   sesiones: SesionFoco[]
+  /** Sesión recién guardada que espera que le pongas una calificación. */
+  calificar: { id: string; minutos: number } | null
+  distraje: () => void
+  calificarSesion: (valor: number, nota: string) => void
+  omitirCalificacion: () => void
   iniciar: () => void
   pausar: () => void
   reiniciar: () => void
@@ -64,6 +73,20 @@ interface EstadoEnfoque extends Reloj {
   tick: () => void
   eliminarSesion: (id: string) => void
   registrarManual: (minutos: number) => void
+  /** Sesión que no se hizo con el temporizador (con día, hora y datos a elección). */
+  agregarSesion: (d: DatosSesion) => void
+  editarSesion: (id: string, d: DatosSesion) => void
+}
+
+export interface DatosSesion {
+  fecha: string
+  /** milisegundos desde 1970; sin hora = se pone al mediodía del día elegido */
+  inicio?: number
+  minutos: number
+  ramoId: string | null
+  tareaId: string | null
+  calidad?: number
+  nota?: string
 }
 
 const MIN = 60_000
@@ -74,7 +97,7 @@ const durMs = (a: AjustesEnfoque, m: Modo) => (m === 'foco' ? a.foco : m === 'co
 function relojInicial(a: AjustesEnfoque): Reloj {
   return {
     modo: 'foco', tecnica: 'pomodoro', estado: 'detenido', finAt: null, restanteMs: durMs(a, 'foco'), totalMs: durMs(a, 'foco'),
-    inicioRun: null, acumuladoMs: 0, inicioSesion: null, ramoId: null, tareaId: null, ciclo: 0,
+    inicioRun: null, acumuladoMs: 0, inicioSesion: null, ramoId: null, tareaId: null, ciclo: 0, distracciones: 0,
   }
 }
 
@@ -138,11 +161,16 @@ export const useEnfoque = create<EstadoEnfoque>()(
         const m = Math.round(minutos)
         if (m < 1) return null
         const inicio = s.inicioSesion ?? Date.now() - m * MIN
+        const ambiente = useEnfoqueLocal.getState()
         const sesion: SesionFoco = {
           id: `ses-${inicio}`, inicio, minutos: m, ramoId: s.ramoId, tareaId: s.tareaId, tipo: s.tecnica, fecha: fechaDeMs(inicio),
+          ...(s.distracciones ? { distracciones: s.distracciones } : {}),
+          ...(ambiente.fondo !== 'ninguno' ? { fondo: ambiente.fondo } : {}),
+          ...(ambiente.sonido !== 'apagado' ? { sonido: ambiente.sonido } : {}),
         }
         if (s.sesiones.some((x) => x.id === sesion.id)) return sesion
-        set({ sesiones: [sesion, ...s.sesiones].slice(0, MAX_SESIONES) })
+        // queda pendiente de calificar: «¿cómo te fue?» alimenta los patrones de Estadísticas
+        set({ sesiones: [sesion, ...s.sesiones].slice(0, MAX_SESIONES), calificar: { id: sesion.id, minutos: sesion.minutos } })
         // el tiempo cuenta como un día de estudio y como tiempo de la tarea
         const principal = useStore.getState()
         useStore.setState({ diasActividadEstudio: agregarActividadHoy(principal.diasActividadEstudio) })
@@ -163,7 +191,7 @@ export const useEnfoque = create<EstadoEnfoque>()(
         const total = s.tecnica === 'flowtime' ? descansoSugerido(minutos) * MIN : durMs(s.ajustes, modo)
         const auto = s.ajustes.autoSiguiente
         set({
-          modo, ciclo: nuevoCiclo, totalMs: total, restanteMs: total, acumuladoMs: 0, inicioRun: null, inicioSesion: null,
+          modo, ciclo: nuevoCiclo, totalMs: total, restanteMs: total, acumuladoMs: 0, inicioRun: null, inicioSesion: null, distracciones: 0,
           estado: auto ? 'corriendo' : 'detenido', finAt: auto ? Date.now() + total : null,
         })
         if (sonarAviso) {
@@ -196,6 +224,26 @@ export const useEnfoque = create<EstadoEnfoque>()(
         ...relojInicial(AJUSTES_DEFECTO),
         ajustes: AJUSTES_DEFECTO,
         sesiones: [],
+        calificar: null,
+
+        distraje: () => {
+          const s = get()
+          if (s.modo !== 'foco' || s.inicioSesion === null) return
+          set({ distracciones: s.distracciones + 1 })
+        },
+
+        calificarSesion: (valor, nota) => {
+          const s = get()
+          if (!s.calificar) return
+          const id = s.calificar.id
+          const n = nota.trim().slice(0, 200)
+          set({
+            calificar: null,
+            sesiones: s.sesiones.map((x) => (x.id === id ? { ...x, calidad: valor, ...(n ? { nota: n } : {}) } : x)),
+          })
+        },
+
+        omitirCalificacion: () => set({ calificar: null }),
 
         iniciar: () => {
           const s = get()
@@ -221,7 +269,7 @@ export const useEnfoque = create<EstadoEnfoque>()(
         reiniciar: () => {
           const s = get()
           const total = durMs(s.ajustes, s.modo)
-          set({ estado: 'detenido', finAt: null, restanteMs: total, totalMs: total, inicioRun: null, acumuladoMs: 0, inicioSesion: null })
+          set({ estado: 'detenido', finAt: null, restanteMs: total, totalMs: total, inicioRun: null, acumuladoMs: 0, inicioSesion: null, distracciones: 0 })
         },
 
         terminar: () => {
@@ -273,6 +321,7 @@ export const useEnfoque = create<EstadoEnfoque>()(
             const m = s.totalMs / MIN
             const guardada = guardarSesion(m)
             avisar.exito(guardada ? `¡Enfoque listo! ${horasMin(guardada.minutos)} guardados.` : '¡Enfoque listo!')
+            celebrar(null, true)
             alDescanso(m, true)
           } else {
             avisar.info(`${NOMBRE_MODO[s.modo]} terminado`)
@@ -286,6 +335,47 @@ export const useEnfoque = create<EstadoEnfoque>()(
           if (!sesion) return
           set({ sesiones: s.sesiones.filter((x) => x.id !== id) })
           avisar.conDeshacer('Sesión eliminada', () => set((e) => ({ sesiones: e.sesiones.some((x) => x.id === id) ? e.sesiones : [sesion, ...e.sesiones].sort((a, b) => b.inicio - a.inicio) })))
+        },
+
+        agregarSesion: (d) => {
+          const s = get()
+          const m = Math.round(d.minutos)
+          if (m < 1) return
+          const [a, mes, dia] = d.fecha.split('-').map(Number)
+          const inicio = d.inicio ?? new Date(a, mes - 1, dia, 12, 0).getTime()
+          let id = `ses-${inicio}`
+          while (s.sesiones.some((x) => x.id === id)) id += 'b'
+          const sesion: SesionFoco = {
+            id, inicio, minutos: m, ramoId: d.ramoId, tareaId: d.tareaId, tipo: 'pomodoro', fecha: d.fecha,
+            ...(d.calidad ? { calidad: d.calidad } : {}), ...(d.nota ? { nota: d.nota } : {}),
+          }
+          set({ sesiones: [sesion, ...s.sesiones].sort((x, y) => y.inicio - x.inicio).slice(0, MAX_SESIONES) })
+          const principal = useStore.getState()
+          useStore.setState({ diasActividadEstudio: agregarActividadHoy(principal.diasActividadEstudio) })
+          if (d.tareaId) {
+            const t = principal.tareasPlan.find((x) => x.id === d.tareaId)
+            if (t) principal.actualizarTareaPlan(t.id, { minutosEnfocados: (t.minutosEnfocados ?? 0) + m })
+          }
+          avisar.exito(`Sesión registrada: ${horasMin(m)}`)
+        },
+
+        editarSesion: (id, d) => {
+          const s = get()
+          const m = Math.round(d.minutos)
+          if (m < 1) return
+          const [a, mes, dia] = d.fecha.split('-').map(Number)
+          set({
+            sesiones: s.sesiones.map((x) =>
+              x.id !== id
+                ? x
+                : {
+                    ...x,
+                    minutos: m, ramoId: d.ramoId, tareaId: d.tareaId, fecha: d.fecha,
+                    inicio: d.inicio ?? (d.fecha === x.fecha ? x.inicio : new Date(a, mes - 1, dia, 12, 0).getTime()),
+                    calidad: d.calidad || undefined, nota: d.nota || undefined,
+                  }
+            ),
+          })
         },
 
         registrarManual: (minutos) => {
@@ -307,7 +397,7 @@ export const useEnfoque = create<EstadoEnfoque>()(
       partialize: (s) => ({
         modo: s.modo, tecnica: s.tecnica, estado: s.estado, finAt: s.finAt, restanteMs: s.restanteMs, totalMs: s.totalMs,
         inicioRun: s.inicioRun, acumuladoMs: s.acumuladoMs, inicioSesion: s.inicioSesion, ramoId: s.ramoId, tareaId: s.tareaId,
-        ciclo: s.ciclo, ajustes: s.ajustes, sesiones: s.sesiones,
+        ciclo: s.ciclo, distracciones: s.distracciones, ajustes: s.ajustes, sesiones: s.sesiones, calificar: s.calificar,
       }),
       // un reloj que quedó corriendo hace mucho (cerraron el navegador) se
       // descarta sin guardar nada; uno que terminó hace poco lo cierra el motor

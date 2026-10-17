@@ -82,6 +82,39 @@ export function AjustesInterfaz() {
       </section>
 
       <section>
+        <h3 className={titulo} style={{ color: 'var(--neu-ink)' }}>Avisos</h3>
+        <Interruptor
+          activo={a.recordatorios}
+          onChange={(v) => {
+            a.set({ recordatorios: v })
+            // el permiso se pide con un gesto del usuario
+            if (v && typeof Notification !== 'undefined' && Notification.permission === 'default') void Notification.requestPermission()
+          }}
+          etiqueta="Resumen del día y avisos de evaluaciones"
+          descripcion="Una vez al día: tus clases y tareas de hoy, y las evaluaciones a 3 días, la víspera y el mismo día. Solo llega mientras Prima Lex esté abierta."
+        />
+        <label className="flex items-center gap-3 text-sm mt-2" style={{ color: 'var(--neu-ink2)', opacity: a.recordatorios ? 1 : 0.5 }}>
+          Hora del resumen
+          <select
+            disabled={!a.recordatorios}
+            value={a.horaResumen}
+            onChange={(e) => a.set({ horaResumen: Number(e.target.value) })}
+            aria-label="Hora del resumen del día"
+            className="h-control px-3 text-sm"
+          >
+            {[6, 7, 8, 9, 10, 11, 12, 18, 20].map((h) => (
+              <option key={h} value={h}>{String(h).padStart(2, '0')}:00</option>
+            ))}
+          </select>
+        </label>
+        {a.recordatorios && typeof Notification !== 'undefined' && Notification.permission === 'denied' && (
+          <p className="text-xs mt-2" style={{ color: 'var(--neu-danger)' }}>
+            El navegador bloqueó las notificaciones; el resumen aparecerá como aviso dentro de la app.
+          </p>
+        )}
+      </section>
+
+      <section>
         <h3 className={titulo} style={{ color: 'var(--neu-ink)' }}>Animaciones y efectos</h3>
         <Interruptor
           activo={a.animaciones}
