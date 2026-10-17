@@ -1,5 +1,7 @@
 import { useStore } from '../../store/useStore'
 import { MiniEnfoque } from './MiniEnfoque'
+import { BotonCuenta } from '../ui/ModalCuenta'
+import { cuentasDisponibles } from '../../services/supabase'
 
 interface TopbarProps {
   onAbrirRegistro?: () => void
@@ -68,6 +70,7 @@ export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
 
       <div className="flex items-center gap-2">
         <MiniEnfoque />
+        {cuentasDisponibles && <BotonCuenta />}
         <button
           onClick={toggleModoOscuro}
           className="boton boton-suave boton-icono"

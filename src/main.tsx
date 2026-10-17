@@ -12,12 +12,14 @@ import { Raiz } from './Raiz.tsx'
 import './services/navegacion'
 import { useStore } from './store/useStore'
 import { useEnfoque } from './store/useEnfoque'
+import { useCuenta } from './store/useCuenta'
 
 // Solo en desarrollo: acceso al store desde la consola / pruebas automatizadas.
 if (import.meta.env.DEV) {
   const w = window as unknown as { __store: typeof useStore; __enfoque: typeof useEnfoque }
   w.__store = useStore
   w.__enfoque = useEnfoque
+  ;(w as unknown as { __cuenta: typeof useCuenta }).__cuenta = useCuenta
 }
 
 // Service worker: la app abre sin conexión. Solo en producción (en desarrollo

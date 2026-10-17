@@ -49,7 +49,10 @@ export interface ArchivoRespaldo {
   datos: DatosRespaldo
 }
 
-export type ModoImportacion = 'reemplazar' | 'combinar'
+/** `nube`: como combinar, pero entre dos versiones del mismo elemento gana la
+ *  más reciente (tareas, apuntes, colecciones, mapas, repaso). Lo usa la
+ *  sincronización de la cuenta. */
+export type ModoImportacion = 'reemplazar' | 'combinar' | 'nube'
 
 export interface ResumenRespaldo {
   ramos: number
@@ -244,10 +247,30 @@ function unirPorId<T extends { id: string }>(locales: T[], entrantes: T[]): T[] 
   return [...locales, ...entrantes.filter((x) => !ids.has(x.id))]
 }
 
-function combinarAcademicos(
+/** Cuándo se tocó por última vez un elemento (0 si no guarda fecha). */
+const tocado = (x: object): number => {
+  const o = x as { actualizada?: number; fechaModificacion?: number }
+  return o.actualizada ?? o.fechaModificacion ?? 0
+}
+
+/** Como unirPorId, pero si el elemento está en los dos lados se queda con el
+ *  tocado más recientemente (empate: el local). */
+export function unirPorIdReciente<T extends { id: string }>(locales: T[], entrantes: T[]): T[] {
+  const entrantePorId = new Map(entrantes.map((x) => [x.id, x]))
+  const ids = new Set(locales.map((x) => x.id))
+  const base = locales.map((l) => {
+    const e = entrantePorId.get(l.id)
+    return e && tocado(e) > tocado(l) ? e : l
+  })
+  return [...base, ...entrantes.filter((x) => !ids.has(x.id))]
+}
+
+export function combinarAcademicos(
   locales: Record<string, DatosAcademicosModulo>,
-  entrantes: Record<string, DatosAcademicosModulo>
+  entrantes: Record<string, DatosAcademicosModulo>,
+  reciente = false
 ): Record<string, DatosAcademicosModulo> {
+  const unirNotas = reciente ? unirPorIdReciente : unirPorId
   const out: Record<string, DatosAcademicosModulo> = { ...locales }
   for (const [id, e] of Object.entries(entrantes)) {
     const l = out[id]
@@ -256,7 +279,7 @@ function combinarAcademicos(
           clases: unirPorId(l.clases, e.clases),
           evaluaciones: unirPorId(l.evaluaciones, e.evaluaciones),
           textos: unirPorId(l.textos, e.textos),
-          apuntes: unirPorId(l.apuntes, e.apuntes),
+          apuntes: unirNotas(l.apuntes, e.apuntes),
           cuadernos: unirPorId(l.cuadernos ?? [], e.cuadernos),
           briefs: unirPorId(l.briefs ?? [], e.briefs),
         }
@@ -342,17 +365,32 @@ function aplicarSinVerificar(respaldo: ArchivoRespaldo, modo: ModoImportacion) {
     subrayados[clave] = Array.from(new Set([...(subrayados[clave] ?? []), ...frases]))
   }
   const progresoModulos = { ...d.progresoModulos, ...s.progresoModulos }
+  const nube = modo === 'nube'
+  const unir = nube ? unirPorIdReciente : unirPorId
+  // repaso y posición de lectura: en la nube gana lo más reciente de cada tarjeta/apunte
+  const repasoApuntes = { ...d.repasoApuntes, ...s.repasoApuntes }
+  const posicionLectura = { ...d.posicionLectura, ...s.posicionLectura }
+  if (nube) {
+    for (const [id, e] of Object.entries(d.repasoApuntes)) {
+      const l = s.repasoApuntes[id]
+      if (l && e.ultimo > l.ultimo) repasoApuntes[id] = e
+    }
+    for (const [id, e] of Object.entries(d.posicionLectura)) {
+      const l = s.posicionLectura[id]
+      if (l && e.fecha > l.fecha) posicionLectura[id] = e
+    }
+  }
   useStore.setState({
     ramos: unirPorId(s.ramos, d.ramos),
-    academicoModulos: combinarAcademicos(s.academicoModulos, d.academicoModulos),
+    academicoModulos: combinarAcademicos(s.academicoModulos, d.academicoModulos, nube),
     progresoModulos,
     diasActividadEstudio: Array.from(new Set([...s.diasActividadEstudio, ...d.diasActividadEstudio])).sort(),
-    colecciones: unirPorId(s.colecciones, d.colecciones),
+    colecciones: unir(s.colecciones, d.colecciones),
     subrayados,
-    mapasMentales: unirPorId(s.mapasMentales, d.mapasMentales),
-    repasoApuntes: { ...d.repasoApuntes, ...s.repasoApuntes },
-    posicionLectura: { ...d.posicionLectura, ...s.posicionLectura },
-    tareasPlan: unirPorId(s.tareasPlan, d.tareasPlan),
+    mapasMentales: unir(s.mapasMentales, d.mapasMentales),
+    repasoApuntes,
+    posicionLectura,
+    tareasPlan: unir(s.tareasPlan, d.tareasPlan),
   })
   useEnfoque.setState((e) => ({ sesiones: unirPorId(e.sesiones, d.sesionesFoco).sort((x, y) => y.inicio - x.inicio) }))
 }

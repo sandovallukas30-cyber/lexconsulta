@@ -8,6 +8,8 @@ import { AnimatePresence } from 'framer-motion'
 import { useStore } from './store/useStore'
 import { useAplicarAjustes } from './hooks/useAplicarAjustes'
 import { useRecordatorios } from './hooks/useRecordatorios'
+import { useCuentaInit } from './hooks/useCuentaInit'
+import { ModalCuenta } from './components/ui/ModalCuenta'
 import { useSala, PARAM_SALA } from './store/useSala'
 import { avisar } from './store/useAvisos'
 import { aplicarTema } from './theme'
@@ -51,6 +53,7 @@ function App() {
   useMotorEnfoque()
   useAplicarAjustes()
   useRecordatorios()
+  useCuentaInit()
   const vistaActiva = useStore((s) => s.vistaActiva)
   const usuarioEmail = useStore((s) => s.usuarioEmail)
   const modoOscuro = useStore((s) => s.modoOscuro)
@@ -148,6 +151,7 @@ function App() {
           <SalaEstudio />
         </Suspense>
       )}
+      <ModalCuenta />
       <Avisos />
       <PanelAtajos />
       <ModalRegistro abierto={modalRegistroAbierto} onCerrar={() => setModalRegistroAbierto(false)} />
