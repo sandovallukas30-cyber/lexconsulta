@@ -132,7 +132,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({ success: true, message: 'Email de verificación enviado', email: emailLimpio })
   } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error)
+    console.error('send-verification:', error instanceof Error ? error.message : String(error))
     return res.status(500).json({ error: 'Error al enviar email' })
   }
 }

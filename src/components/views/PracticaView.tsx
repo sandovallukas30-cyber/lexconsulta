@@ -5,7 +5,7 @@ import { generarRosco, esRespuestaCorrecta } from '../../services/pasapalabra'
 import { generarPalabraAhorcado, ERRORES_MAXIMOS } from '../../services/ahorcado'
 import { useDestello } from '../../hooks/useDestello'
 import { obtenerCodigosConPreguntas } from '../../data/destelloPreguntas'
-import type { AreaPractica, EntradaRosco, PartidaPasapalabra, PartidaAhorcado, CodigoTipo } from '../../types'
+import type { AreaPractica, EntradaRosco, PartidaPasapalabra, PartidaAhorcado, CodigoActivo, CodigoTipo } from '../../types'
 
 const LETRAS_TECLADO = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'Ñ', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
 
@@ -1466,7 +1466,7 @@ function QuizJuridicoWrapper({
 }: {
   flujo: ReturnType<typeof useDestello>
   modoOscuro: boolean
-  codigos: any[]
+  codigos: CodigoActivo[]
   onVolverAlMenu: () => void
 }) {
   return (
@@ -1829,7 +1829,7 @@ function PantallaResultadoQuiz({
   puntos: number
   racha: number
   codigo: CodigoTipo | null
-  codigoMeta: any
+  codigoMeta?: CodigoActivo
   modoOscuro: boolean
   onJugarDeNuevo: () => void
 }) {

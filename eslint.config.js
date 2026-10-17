@@ -18,5 +18,16 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser,
     },
+    rules: {
+      // Reglas nuevas de eslint-plugin-react-hooks 7 pensadas para el React
+      // Compiler (que esta app no usa). Señalan patrones válidos y muy
+      // extendidos (setState dentro de un efecto, Date.now() al renderizar…);
+      // se dejan como aviso para no tapar los errores reales.
+      'react-hooks/set-state-in-effect': 'warn',
+      'react-hooks/purity': 'warn',
+      'react-hooks/immutability': 'warn',
+      'react-hooks/refs': 'warn',
+      'react-hooks/preserve-manual-memoization': 'warn',
+    },
   },
 ])

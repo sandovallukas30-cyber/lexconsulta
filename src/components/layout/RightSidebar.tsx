@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { useEsMovil } from '../../hooks/useEsMovil'
+import type { CodigoTipo } from '../../types'
 
 
 export function RightSidebar() {
@@ -22,7 +23,7 @@ export function RightSidebar() {
     }
   }
 
-  const handleAbrirArticulo = (articulo: string, codigo: any) => {
+  const handleAbrirArticulo = (articulo: string, codigo: CodigoTipo) => {
     setCodigoExplorador(codigo)
     setVistaActiva('explorador')
     agregarVisitado(articulo, codigo)

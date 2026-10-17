@@ -324,3 +324,15 @@ html, body, #root { height: 100%; width: 100%; overflow: hidden; }
   65% { transform: scale(1.25); opacity: 1; }
   100% { transform: scale(1); }
 }
+
+/* Esqueleto de carga: aparece solo si la vista tarda más de ~150 ms (así no
+   parpadea cuando carga al tiro) y late suave mientras espera. */
+@keyframes esqueleto-aparece { from { opacity: 0 } to { opacity: 1 } }
+@keyframes esqueleto-late { 0%, 100% { opacity: 1 } 50% { opacity: .55 } }
+.esqueleto-contenedor { animation: esqueleto-aparece .2s ease .15s both; }
+.esqueleto-bloque {
+  border-radius: var(--radius-tarjeta);
+  background: var(--color-zinc-200);
+  animation: esqueleto-late 1.4s ease-in-out infinite;
+}
+.dark .esqueleto-bloque, [data-tema="oscuro"] .esqueleto-bloque { background: var(--color-zinc-800); }

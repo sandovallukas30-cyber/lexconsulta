@@ -61,7 +61,7 @@ export function ModalRegistro({ abierto, onCerrar }: ModalRegistroProps) {
         setVerificationLink(data.verificationLink)
       }
       setEstado('enviado')
-    } catch (err) {
+    } catch {
       setError('Error al conectar con el servidor')
       setCargando(false)
     }

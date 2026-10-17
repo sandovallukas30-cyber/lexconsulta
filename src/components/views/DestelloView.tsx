@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { useDestello } from '../../hooks/useDestello'
 import { SelectorCodigo } from '../ui/SelectorCodigo'
-import type { CodigoTipo } from '../../types'
+import type { CodigoActivo, CodigoTipo } from '../../types'
 
 const VERDE = 'var(--accent-base)'
 
@@ -324,7 +324,7 @@ function PantallaResultado({
   errores: number
   puntos: number
   racha: number
-  codigoMeta: any
+  codigoMeta?: CodigoActivo
   modoOscuro: boolean
   onJugarDeNuevo: () => void
 }) {

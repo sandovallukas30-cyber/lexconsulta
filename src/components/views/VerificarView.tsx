@@ -50,7 +50,7 @@ export function VerificarView() {
             window.location.href = '/'
           }, 2000)
         }
-      } catch (error) {
+      } catch {
         setEstado('error')
         setMensaje('Error al verificar email')
       }

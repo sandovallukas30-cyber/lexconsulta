@@ -23,8 +23,23 @@ const ModalConfirmarImportacion = lazy(() =>
 )
 
 /** Mientras baja el chunk de la vista: el mismo fondo, sin saltos. */
+/** Mientras llega el código de la vista: un esqueleto con la forma de la
+ *  pantalla (título, tarjetas) que aparece solo si la espera se nota. */
 function CargandoVista({ modoOscuro }: { modoOscuro: boolean }) {
-  return <div className={`h-full ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`} aria-busy="true" aria-label="Cargando" />
+  return (
+    <div className={`h-full overflow-hidden ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`} role="status" aria-busy="true" aria-label="Cargando">
+      <div className="esqueleto-contenedor max-w-3xl mx-auto px-6 py-8 space-y-5">
+        <div className="esqueleto-bloque h-8 w-56" />
+        <div className="esqueleto-bloque h-4 w-80 max-w-full" />
+        <div className="esqueleto-bloque h-24 w-full" />
+        <div className="grid grid-cols-2 gap-4">
+          <div className="esqueleto-bloque h-32" />
+          <div className="esqueleto-bloque h-32" />
+        </div>
+        <div className="esqueleto-bloque h-20 w-full" />
+      </div>
+    </div>
+  )
 }
 
 function App() {
