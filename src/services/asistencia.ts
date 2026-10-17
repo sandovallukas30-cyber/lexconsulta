@@ -30,7 +30,8 @@ export function resumenAsistencia(clases: SesionClase[], min: number = ASISTENCI
   const registradas = clases.filter((c) => c.asistio !== undefined)
   const presentes = registradas.filter((c) => c.asistio).length
   const faltas = registradas.length - presentes
-  const maxFaltas = Math.floor(total * (1 - min / 100))
+  // con enteros: `total * (1 - min / 100)` da 3,9999… para 20 clases y 80 % y pierde una falta
+  const maxFaltas = Math.floor((total * (100 - min)) / 100)
   const margen = maxFaltas - faltas
   const pct = registradas.length > 0 ? Math.round((presentes / registradas.length) * 100) : null
   const margenConfiable = total >= MIN_CLASES_PARA_MARGEN
