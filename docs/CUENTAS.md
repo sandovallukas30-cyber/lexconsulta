@@ -28,7 +28,7 @@ En **Authentication → URL Configuration**:
 2. **APIs y servicios → Pantalla de consentimiento de OAuth**:
    - Tipo de usuario: **Externo**.
    - Nombre de la app: `Prima Lex`; correo de asistencia: el tuyo.
-   - Dominios autorizados: `primalex.vercel.app` y `supabase.co`.
+   - **Dominios autorizados: déjalo vacío.** Google no acepta `supabase.co` ni `vercel.app` (son dominios compartidos, no tuyos) y para los permisos básicos no se necesita. Esa lista solo sirve para verificar los enlaces de privacidad y términos si algún día pides verificación.
    - Permisos (scopes): `openid`, `email`, `profile` (son los básicos; no piden verificación).
    - Al terminar, presiona **Publicar aplicación** (estado «En producción»). Si la dejas en «Prueba», solo podrán entrar los correos que agregues a mano.
 3. **Credenciales → Crear credenciales → ID de cliente de OAuth**:
