@@ -48,7 +48,7 @@ export function FilaTarea({ tarea, onAbrir, abierta }: Props) {
             : { borderColor: modoOscuro ? '#52525b' : '#a1a1aa' }
         }
       >
-        {tarea.hecha && <i className="ti ti-check text-xs text-white" aria-hidden="true" />}
+        {tarea.hecha && <i className="ti ti-check text-xs text-white animate-[pop_0.3s_ease-out]" aria-hidden="true" />}
       </button>
 
       <div className="flex-1 min-w-0">

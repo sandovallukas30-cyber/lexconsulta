@@ -6,11 +6,14 @@ import { VERDE, formatearFechaCorta } from './utilidades'
 import { BotonAgregar, BotonEliminar, BotonesFormulario, CampoTexto, EstadoVacio, FechaConCountdown, FormularioRapido } from './comunes'
 import { hoyISO, sumarDiasISO } from '../../../services/tareasPlan'
 import { GenerarClases } from './GenerarClases'
+import { ASISTENCIA_MIN_DEFECTO, resumenAsistencia } from '../../../services/asistencia'
 
 export function TabClases({ moduloId, clases, modoOscuro }: { moduloId: string; clases: SesionClase[]; modoOscuro: boolean }) {
   const setClasesModulo = useStore((s) => s.setClasesModulo)
   const ramo = useStore((s) => s.ramos.find((r) => r.id === moduloId))
   const hayHorario = (ramo?.bloques?.length ?? 0) > 0
+  const asistencia = resumenAsistencia(clases, ramo?.asistenciaMin ?? ASISTENCIA_MIN_DEFECTO)
+  const hoy = hoyISO()
   const [generando, setGenerando] = useState(false)
   const [mostrarForm, setMostrarForm] = useState(false)
   const [editandoId, setEditandoId] = useState<string | null>(null)
@@ -61,6 +64,11 @@ export function TabClases({ moduloId, clases, modoOscuro }: { moduloId: string; 
     setClasesModulo(moduloId, clases.map((c) => (c.id === id ? { ...c, completada: !c.completada } : c)))
   }
 
+  /** Fui / Falté: tocar de nuevo el mismo botón lo deja sin registrar. */
+  const marcarAsistencia = (id: string, valor: boolean) => {
+    setClasesModulo(moduloId, clases.map((c) => (c.id === id ? { ...c, asistio: c.asistio === valor ? undefined : valor, completada: valor ? true : c.completada } : c)))
+  }
+
   const eliminar = (id: string) => {
     eliminarDeListaConDeshacer(
       id,
@@ -108,6 +116,8 @@ export function TabClases({ moduloId, clases, modoOscuro }: { moduloId: string; 
         </FormularioRapido>
       )}
 
+      {ordenadas.length > 0 && <PanelAsistencia r={asistencia} modoOscuro={modoOscuro} />}
+
       {ordenadas.length === 0 ? (
         <EstadoVacio
           icono="ti-calendar-event"
@@ -142,12 +152,48 @@ export function TabClases({ moduloId, clases, modoOscuro }: { moduloId: string; 
                   </button>
                 </div>
                 {c.notas && <p className={`text-xs mt-1 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>{c.notas}</p>}
+                {c.fecha <= hoy && (
+                  <div className="flex gap-1.5 mt-1.5" role="group" aria-label="Asistencia">
+                    <button onClick={() => marcarAsistencia(c.id, true)} aria-pressed={c.asistio === true} className="boton boton-chico boton-suave">
+                      Fui
+                    </button>
+                    <button
+                      onClick={() => marcarAsistencia(c.id, false)}
+                      aria-pressed={c.asistio === false}
+                      className={`boton boton-chico ${c.asistio === false ? '' : 'boton-suave'}`}
+                      style={c.asistio === false ? { background: '#dc2626', color: '#fff' } : undefined}
+                    >
+                      Falté
+                    </button>
+                  </div>
+                )}
               </div>
               <BotonEliminar onClick={() => eliminar(c.id)} modoOscuro={modoOscuro} />
             </div>
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+function PanelAsistencia({ r, modoOscuro }: { r: ReturnType<typeof resumenAsistencia>; modoOscuro: boolean }) {
+  const suave = modoOscuro ? 'text-zinc-400' : 'text-zinc-500'
+  const color = r.estado === 'riesgo' ? 'text-red-600' : r.estado === 'cuidado' ? (modoOscuro ? 'text-amber-400' : 'text-amber-700') : r.estado === 'bien' ? (modoOscuro ? 'text-emerald-400' : 'text-emerald-700') : suave
+  let linea: string
+  if (r.pct === null) linea = 'Marca «Fui» o «Falté» en cada clase para llevar tu asistencia.'
+  else if (!r.margenConfiable) linea = `Carga todo el cronograma del semestre para saber cuántas faltas te quedan (mínimo ${r.min}%).`
+  else if (r.margen >= 0) linea = `Te ${r.margen === 1 ? 'queda' : 'quedan'} ${r.margen} ${r.margen === 1 ? 'falta' : 'faltas'} para mantener el ${r.min}% de asistencia.`
+  else linea = `Ya superaste el límite de faltas por ${-r.margen} (mínimo ${r.min}%).`
+  return (
+    <div className={`flex items-center gap-4 p-4 rounded-tarjeta border mb-4 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+      <div className={`text-2xl font-bold tabular-nums ${color}`}>{r.pct === null ? '—' : `${r.pct}%`}</div>
+      <div className="min-w-0">
+        <div className={`text-sm font-semibold ${modoOscuro ? 'text-zinc-200' : 'text-zinc-800'}`}>
+          Asistencia{r.registradas > 0 ? ` · fuiste a ${r.presentes} de ${r.registradas}` : ''}
+        </div>
+        <div className={`text-xs ${r.estado === 'riesgo' ? 'text-red-600 font-medium' : suave}`}>{linea}</div>
+      </div>
     </div>
   )
 }

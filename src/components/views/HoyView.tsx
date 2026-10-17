@@ -72,10 +72,25 @@ export function HoyView() {
 
   const paraHoy = useMemo(() => filtrarTareas(tareas, 'hoy'), [tareas])
   const hechasHoy = useMemo(() => tareas.filter((t) => t.hecha && t.hechaEn === hoy).length, [tareas, hoy])
-  const clasesHoy = useMemo(
-    () => obtenerProximosEventos(academico).filter((e) => e.tipo === 'clase' && diasHasta(e.fecha) === 0),
-    [academico]
-  )
+  const setClasesModulo = useStore((st) => st.setClasesModulo)
+  // todas las clases de hoy, también las ya vistas: así se puede marcar la asistencia
+  const clasesHoy = useMemo(() => {
+    const out: { moduloId: string; id: string; tema: string; hora?: string; asistio?: boolean; completada: boolean }[] = []
+    for (const [moduloId, d] of Object.entries(academico)) {
+      for (const c of d.clases) if (c.fecha === hoy) out.push({ moduloId, id: c.id, tema: c.tema, hora: c.hora, asistio: c.asistio, completada: c.completada })
+    }
+    return out.sort((a, b) => (a.hora ?? '99:99').localeCompare(b.hora ?? '99:99'))
+  }, [academico, hoy])
+  const marcarAsistencia = (moduloId: string, claseId: string, valor: boolean) => {
+    const lista = useStore.getState().academicoModulos[moduloId]?.clases ?? []
+    setClasesModulo(moduloId, lista.map((c) => (c.id === claseId ? { ...c, asistio: c.asistio === valor ? undefined : valor, completada: valor ? true : c.completada } : c)))
+  }
+  // qué sigue: la próxima clase o evaluación, lo que ocurra antes
+  const siguiente = useMemo(() => {
+    const ahoraHM = new Date().toTimeString().slice(0, 5)
+    const lista = obtenerProximosEventos(academico).filter((e) => e.fecha > hoy || (e.fecha === hoy && (e.tipo === 'examen' || !e.hora || e.hora >= ahoraHM)))
+    return lista[0] ?? null
+  }, [academico, hoy])
   const evaluaciones = useMemo(() => evaluacionesPendientes(academico).proximas.slice(0, 3), [academico])
   const tarjetas = useMemo(() => contarTarjetasVencidas(colecciones), [colecciones])
   const racha = calcularRachaEstudio(dias)
@@ -109,7 +124,45 @@ export function HoyView() {
             {resumen.length > 0 ? resumen.join(' · ') : 'Hoy no tienes nada pendiente registrado.'}
             {hechasHoy > 0 && ` · ${hechasHoy} ${hechasHoy === 1 ? 'hecha' : 'hechas'} hoy`}
           </p>
+          {hechasHoy + paraHoy.length > 0 && (
+            <div className="mt-3 max-w-sm">
+              <div className="flex justify-between text-xs mb-1">
+                <span className={paraHoy.length === 0 ? 'font-semibold' : suave} style={paraHoy.length === 0 ? { color: 'var(--accent-texto)' } : undefined}>
+                  {paraHoy.length === 0 ? 'Terminaste todo lo de hoy' : `${hechasHoy} de ${hechasHoy + paraHoy.length} hechas`}
+                </span>
+                <span className={suave}>{Math.round((hechasHoy / (hechasHoy + paraHoy.length)) * 100)}%</span>
+              </div>
+              <div className={`h-2 rounded-full overflow-hidden ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-200'}`} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((hechasHoy / (hechasHoy + paraHoy.length)) * 100)} aria-label="Avance de tus tareas de hoy">
+                <div className="h-full rounded-full transition-all duration-500" style={{ width: `${(hechasHoy / (hechasHoy + paraHoy.length)) * 100}%`, background: 'var(--accent-base)' }} />
+              </div>
+            </div>
+          )}
         </header>
+
+        {siguiente && (
+          <button
+            onClick={() => abrirModulo(siguiente.moduloId)}
+            className={`w-full flex items-center gap-4 p-4 rounded-tarjeta border text-left shadow-tarjeta transition-colors ${
+              modoOscuro ? 'bg-zinc-800/60 border-zinc-800 hover:bg-zinc-800' : 'bg-white border-zinc-200 hover:bg-zinc-50'
+            }`}
+          >
+            <span className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'color-mix(in srgb, var(--accent-base) 12%, transparent)' }}>
+              <i className={`ti ${siguiente.tipo === 'clase' ? 'ti-school' : 'ti-clipboard-check'} text-xl`} style={{ color: 'var(--accent-texto)' }} aria-hidden="true" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className={`block text-xs font-semibold uppercase tracking-wide ${suave}`}>Lo que sigue</span>
+              <span className={`block text-base font-bold truncate ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+                {siguiente.tipo === 'examen' ? 'Evaluación: ' : ''}
+                {siguiente.titulo}
+              </span>
+              <span className={`block text-xs truncate ${suave}`}>
+                {nombreRamo(siguiente.moduloId, ramos) ?? 'Ramo'} · {siguiente.fecha === hoy ? 'hoy' : formatearCountdown(diasHasta(siguiente.fecha)).toLowerCase()}
+                {siguiente.hora ? ` a las ${siguiente.hora}` : ''}
+              </span>
+            </span>
+            <i className={`ti ti-chevron-right ${suave}`} aria-hidden="true" />
+          </button>
+        )}
 
         {sinNada && (
           <div className={`rounded-tarjeta border border-dashed p-5 text-center ${modoOscuro ? 'border-zinc-700' : 'border-zinc-300'}`}>
@@ -190,18 +243,28 @@ export function HoyView() {
               </p>
             ) : (
               <ul className="space-y-1">
-                {clasesHoy.map((e, i) => (
-                  <li key={`${e.moduloId}-${i}`}>
-                    <button
-                      onClick={() => abrirModulo(e.moduloId)}
-                      className={`w-full flex items-center gap-3 p-2 rounded-control text-left ${modoOscuro ? 'hover:bg-zinc-800' : 'hover:bg-zinc-50'}`}
-                    >
+                {clasesHoy.map((e) => (
+                  <li key={e.id} className={`flex items-center gap-2 rounded-control ${modoOscuro ? 'hover:bg-zinc-800' : 'hover:bg-zinc-50'}`}>
+                    <button onClick={() => abrirModulo(e.moduloId)} className="flex-1 min-w-0 flex items-center gap-3 p-2 text-left">
                       <span className="w-2 h-8 rounded-full flex-shrink-0" style={{ background: colorRamo(e.moduloId, ramos) }} aria-hidden="true" />
                       <span className="min-w-0">
-                        <span className={`block text-sm font-medium truncate ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>{e.titulo}</span>
+                        <span className={`block text-sm font-medium truncate ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>{e.tema}</span>
                         <span className={`block text-xs ${suave}`}>{e.hora ? `${e.hora} · ` : ''}{nombreRamo(e.moduloId, ramos) ?? 'Ramo'}</span>
                       </span>
                     </button>
+                    <span className="flex gap-1 pr-2 flex-shrink-0" role="group" aria-label={`Asistencia a ${e.tema}`}>
+                      <button onClick={() => marcarAsistencia(e.moduloId, e.id, true)} aria-pressed={e.asistio === true} className="boton boton-chico boton-suave">
+                        Fui
+                      </button>
+                      <button
+                        onClick={() => marcarAsistencia(e.moduloId, e.id, false)}
+                        aria-pressed={e.asistio === false}
+                        className={`boton boton-chico ${e.asistio === false ? '' : 'boton-suave'}`}
+                        style={e.asistio === false ? { background: '#dc2626', color: '#fff' } : undefined}
+                      >
+                        Falté
+                      </button>
+                    </span>
                   </li>
                 ))}
               </ul>

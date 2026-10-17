@@ -61,7 +61,7 @@ function estadoDesdeRamo(r: Ramo | null): ReturnType<typeof campoVacio> {
 
 /** ¿Tiene datos más allá del nombre? Si sí, "Más detalles" abre desplegado. */
 function tieneDetalles(r: Ramo | null): boolean {
-  return !!r && !!((r.bloques?.length ?? 0) > 0 || r.semestre || r.codigoCurso || r.profesor || r.email || r.horario || r.sala || r.syllabusUrl || r.modulosVinculados.length)
+  return !!r && !!((r.bloques?.length ?? 0) > 0 || r.asistenciaMin || r.semestre || r.codigoCurso || r.profesor || r.email || r.horario || r.sala || r.syllabusUrl || r.modulosVinculados.length)
 }
 
 export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
@@ -76,6 +76,7 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
   const [color, setColor] = useState<string>(ramoEditando?.color ?? VERDE)
   const [verDetalles, setVerDetalles] = useState(() => tieneDetalles(ramoEditando))
   const [bloques, setBloques] = useState<BloqueHorario[]>(ramoEditando?.bloques ?? [])
+  const [asistenciaMin, setAsistenciaMin] = useState(ramoEditando?.asistenciaMin ? String(ramoEditando.asistenciaMin) : '')
   const dialogoRef = useDialogo<HTMLDivElement>(abierto, onCerrar)
 
   // Reinicia el formulario cada vez que se abre (crear nuevo o editar otro
@@ -96,6 +97,7 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
     setColor(ramoEditando?.color ?? COLORES_RAMO[ramosExistentes % COLORES_RAMO.length])
     setVerDetalles(tieneDetalles(ramoEditando))
     setBloques(ramoEditando?.bloques ?? [])
+    setAsistenciaMin(ramoEditando?.asistenciaMin ? String(ramoEditando.asistenciaMin) : '')
   }
   if (!abierto && estabaAbierto) setEstabaAbierto(false)
 
@@ -118,6 +120,7 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
       profesor: limpiar(campos.profesor),
       email: limpiar(campos.email),
       bloques: bloques.length > 0 ? bloques : undefined,
+      asistenciaMin: Number(asistenciaMin) >= 1 && Number(asistenciaMin) <= 100 ? Math.round(Number(asistenciaMin)) : undefined,
       // el texto del horario se deriva de los bloques; si no hay, se respeta el que ya tenía
       horario: bloques.length > 0 ? formatearHorario(bloques) : limpiar(campos.horario),
       sala: limpiar(campos.sala),
@@ -349,10 +352,24 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
                     Agregar bloque
                   </button>
                 </div>
-                <label className="block">
-                  <span className={labelClase}>Sala</span>
-                  <input className={inputClase} value={campos.sala} onChange={(e) => set('sala')(e.target.value)} />
-                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="block">
+                    <span className={labelClase}>Sala</span>
+                    <input className={inputClase} value={campos.sala} onChange={(e) => set('sala')(e.target.value)} />
+                  </label>
+                  <label className="block">
+                    <span className={labelClase}>Asistencia mínima (%)</span>
+                    <input
+                      className={inputClase}
+                      type="number"
+                      min={1}
+                      max={100}
+                      value={asistenciaMin}
+                      onChange={(e) => setAsistenciaMin(e.target.value)}
+                      placeholder="75"
+                    />
+                  </label>
+                </div>
                 <label className="block">
                   <span className={labelClase}>Syllabus (enlace, opcional)</span>
                   <input className={inputClase} value={campos.syllabusUrl} onChange={(e) => set('syllabusUrl')(e.target.value)} placeholder="https://..." />

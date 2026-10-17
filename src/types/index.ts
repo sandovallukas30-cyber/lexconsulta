@@ -597,6 +597,8 @@ export interface SesionClase {
   fecha: string // YYYY-MM-DD
   /** Hora de inicio HH:MM (viene del horario del ramo al generar las clases). */
   hora?: string
+  /** Asistencia: true = fui, false = falté, sin valor = sin registrar. */
+  asistio?: boolean
   tema: string
   notas?: string
   completada: boolean
@@ -708,6 +710,8 @@ export interface Ramo {
   nombre: string
   /** Horario estructurado: permite generar las clases del semestre. */
   bloques?: BloqueHorario[]
+  /** % mínimo de asistencia que exige el ramo (por defecto 75). */
+  asistenciaMin?: number
   semestre?: string
   codigoCurso?: string
   profesor?: string

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { ModalRespaldo } from '../ui/ModalRespaldo'
+import { ResumenSemestre } from '../ui/ResumenSemestre'
 import { useStore } from '../../store/useStore'
 import { MODULOS } from '../../data/modulos'
 import { ModuloCard } from '../ui/ModuloCard'
@@ -376,6 +377,8 @@ export function ModulosView() {
 
         <div className="mt-8 space-y-8">
           <DashboardHoy modoOscuro={modoOscuro} />
+
+          <ResumenSemestre onAbrirRamo={(id) => abrirModulo(id, 'examenes')} />
 
           <MisRamos
             modoOscuro={modoOscuro}

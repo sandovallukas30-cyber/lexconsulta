@@ -3,6 +3,7 @@ import { useStore } from '../../../store/useStore'
 import { eliminarDeListaConDeshacer } from '../../../services/deshacer'
 import type { EvaluacionModulo } from '../../../types'
 import { calcularPonderacionTotal } from '../../../services/modulosAcademico'
+import { formatoNota, NOTA_APROBAR, simular } from '../../../services/notas'
 import { formatearFechaCorta } from './utilidades'
 import { BotonAgregar, BotonEliminar, BotonesFormulario, CampoTexto, EstadoVacio, FechaConCountdown, FormularioRapido } from './comunes'
 
@@ -235,8 +236,67 @@ export function TabExamenes({
               </p>
             )}
           </div>
+          <Simulador evaluaciones={evaluaciones} modoOscuro={modoOscuro} />
         </>
       )}
+    </div>
+  )
+}
+
+/** "¿Y si saco…?": notas hipotéticas en lo pendiente y qué nota final resultaría. */
+function Simulador({ evaluaciones, modoOscuro }: { evaluaciones: EvaluacionModulo[]; modoOscuro: boolean }) {
+  const pendientes = evaluaciones.filter((e) => e.nota === null).sort((a, b) => a.fecha.localeCompare(b.fecha))
+  const [hip, setHip] = useState<Record<string, string>>({})
+  if (pendientes.length === 0) return null
+  const nums: Record<string, number> = {}
+  for (const [id, v] of Object.entries(hip)) {
+    const n = Number(v.replace(',', '.'))
+    if (v.trim() !== '' && Number.isFinite(n)) nums[id] = Math.min(7, Math.max(1, n))
+  }
+  const r = simular(evaluaciones, nums)
+  const suave = modoOscuro ? 'text-zinc-400' : 'text-zinc-500'
+  return (
+    <div className={`p-4 rounded-tarjeta border mt-3 ${modoOscuro ? 'bg-zinc-800/40 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+      <span className={`text-xs font-semibold ${modoOscuro ? 'text-zinc-300' : 'text-zinc-600'}`}>¿Y si saco…?</span>
+      <ul className="mt-2 space-y-1.5">
+        {pendientes.map((e) => (
+          <li key={e.id} className="flex items-center gap-3">
+            <span className={`flex-1 min-w-0 text-sm truncate ${modoOscuro ? 'text-zinc-200' : 'text-zinc-800'}`}>
+              {e.nombre} <span className={`text-xs ${suave}`}>({e.ponderacion}%)</span>
+            </span>
+            <input
+              type="number"
+              inputMode="decimal"
+              min={1}
+              max={7}
+              step={0.1}
+              aria-label={`Nota hipotética en ${e.nombre}`}
+              placeholder="nota"
+              value={hip[e.id] ?? ''}
+              onChange={(ev) => setHip((h) => ({ ...h, [e.id]: ev.target.value }))}
+              className={`w-20 rounded-control px-2 py-1.5 text-sm text-center border outline-none campo-foco ${
+                modoOscuro ? 'bg-zinc-800 border-zinc-700 text-white' : 'bg-white border-zinc-200 text-zinc-900'
+              }`}
+            />
+          </li>
+        ))}
+      </ul>
+      <p className={`text-sm mt-3 font-medium ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+        {r.final !== null ? (
+          <>
+            Nota final:{' '}
+            <span className={r.final >= NOTA_APROBAR ? 'text-emerald-600' : 'text-red-600'}>
+              {formatoNota(r.final)} · {r.final >= NOTA_APROBAR ? 'aprobado' : 'reprobado'}
+            </span>
+          </>
+        ) : r.promedio !== null && Object.keys(nums).length > 0 ? (
+          <>
+            Promedio con esas notas: {formatoNota(r.promedio)} <span className={`font-normal text-xs ${suave}`}>(cubre el {Math.round(r.pesoCubierto)}% de la nota)</span>
+          </>
+        ) : (
+          <span className={`font-normal text-xs ${suave}`}>Escribe una nota en cada evaluación pendiente y ves cómo quedaría tu promedio.</span>
+        )}
+      </p>
     </div>
   )
 }
