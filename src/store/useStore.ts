@@ -52,6 +52,7 @@ import type {
   EstadoTarjetaRepaso,
 } from '../types'
 import { siguienteEstado } from '../services/tarjetasApunte'
+import type { NotaRepaso } from '../services/fsrs'
 import { confirmarSalida } from '../services/guardiaCambios'
 import { agregarActividadHoy, fechaLocalISO } from '../services/actividadEstudio'
 import { aplicarResultadoPracticaATodos, aplicarResultadoQuizATodos } from '../services/progresoModulos'
@@ -290,7 +291,7 @@ interface AppState {
 
   /** Progreso del repaso de tarjetas de apuntes (B5), por id de tarjeta. */
   repasoApuntes: Record<string, EstadoTarjetaRepaso>
-  registrarRepasoTarjeta: (id: string, resultado: 'sabia' | 'no_sabia') => void
+  registrarRepasoTarjeta: (id: string, nota: NotaRepaso) => void
 
   /** Hasta dónde se leyó cada apunte (0-1 del alto total), para ofrecer
    *  "Retomar donde quedaste" (C1). Antes vivía suelto en localStorage con
@@ -1119,9 +1120,9 @@ export const useStore = create<AppState>()(
           ramos: s.ramos.some((r) => r.id === ramo.id) ? s.ramos : [...s.ramos, ramo],
           academicoModulos: datos ? { ...s.academicoModulos, [ramo.id]: datos } : s.academicoModulos,
         })),
-      registrarRepasoTarjeta: (id, resultado) =>
+      registrarRepasoTarjeta: (id, nota) =>
         set((s) => ({
-          repasoApuntes: { ...s.repasoApuntes, [id]: siguienteEstado(s.repasoApuntes[id], resultado) },
+          repasoApuntes: { ...s.repasoApuntes, [id]: siguienteEstado(s.repasoApuntes[id], nota) },
           diasActividadEstudio: agregarActividadHoy(s.diasActividadEstudio),
         })),
       recordarArticuloExplorador: (tipo, articulo) =>

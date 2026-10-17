@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useStore } from '../../store/useStore'
+import { textosIntervalo, type NotaRepaso } from '../../services/fsrs'
 import {
+  aEstadoFSRS,
   estaPendiente,
   generarTarjetas,
   ordenarParaSesion,
@@ -20,8 +22,9 @@ interface Props {
 }
 
 /** Modo repaso de un apunte (B5): tarjetas generadas por reglas desde su
- *  texto, "la sabía / no la sabía", y las falladas vuelven unas tarjetas
- *  más adelante en la misma sesión (y mañana en la programación Leitner). */
+ *  texto, calificadas Otra vez / Difícil / Bien / Fácil. La repetición
+ *  espaciada es FSRS (services/fsrs.ts): cada botón muestra cuándo vuelve la
+ *  tarjeta, y las que fallas reaparecen unas tarjetas más adelante. */
 export function RepasoApunte({ apunte, onCerrar }: Props) {
   const modoOscuro = useStore((s) => s.modoOscuro)
   const estados = useStore((s) => s.repasoApuntes)
@@ -39,22 +42,21 @@ export function RepasoApunte({ apunte, onCerrar }: Props) {
   const [volteada, setVolteada] = useState(false)
   const [sabidas, setSabidas] = useState<Set<string>>(() => new Set())
   const [falladas, setFalladas] = useState<Set<string>>(() => new Set())
-  // Solo la PRIMERA respuesta de cada tarjeta en la sesión cuenta para la
-  // programación: acertar una fallada 3 tarjetas después es reaprendizaje,
-  // no debe subirla de caja (si no, "no la sabía" nunca volvería mañana).
-  const [registradas, setRegistradas] = useState<Set<string>>(() => new Set())
+  // Cada respuesta se registra en FSRS (una fallada que luego aciertas sale
+  // del aprendizaje). Para el resumen solo cuenta la PRIMERA de cada tarjeta.
+  const [vistas, setVistas] = useState<Set<string>>(() => new Set())
 
   const actual = cola[indice]
   const terminado = indice >= cola.length
 
-  const responder = (resultado: 'sabia' | 'no_sabia') => {
+  const intervalos = useMemo(() => (actual ? textosIntervalo(aEstadoFSRS(estados[actual.id])) : null), [actual, estados])
+
+  const responder = (nota: NotaRepaso) => {
     if (!actual || !volteada) return
-    const primera = !registradas.has(actual.id)
-    if (primera) {
-      registrar(actual.id, resultado)
-      setRegistradas((s) => new Set(s).add(actual.id))
-    }
-    if (resultado === 'sabia') {
+    const primera = !vistas.has(actual.id)
+    registrar(actual.id, nota)
+    if (primera) setVistas((s) => new Set(s).add(actual.id))
+    if (nota > 1) {
       if (primera) setSabidas((s) => new Set(s).add(actual.id))
     } else {
       setFalladas((s) => new Set(s).add(actual.id))
@@ -75,7 +77,7 @@ export function RepasoApunte({ apunte, onCerrar }: Props) {
     setVolteada(false)
     setSabidas(new Set())
     setFalladas(new Set())
-    setRegistradas(new Set())
+    setVistas(new Set())
   }
 
   useEffect(() => {
@@ -88,8 +90,9 @@ export function RepasoApunte({ apunte, onCerrar }: Props) {
       if (e.key === ' ' || e.key === 'Enter') {
         e.preventDefault()
         setVolteada((v) => !v)
-      } else if (e.key === 'ArrowRight' || e.key === '2') responder('sabia')
-      else if (e.key === 'ArrowLeft' || e.key === '1') responder('no_sabia')
+      } else if (e.key === 'ArrowLeft') responder(1)
+      else if (e.key === 'ArrowRight') responder(3)
+      else if (e.key >= '1' && e.key <= '4') responder(Number(e.key) as NotaRepaso)
     }
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
@@ -152,8 +155,8 @@ export function RepasoApunte({ apunte, onCerrar }: Props) {
             <i className="ti ti-circle-check text-5xl mb-3 inline-block" style={{ color: VERDE }} />
             <p className={`text-xl font-serif font-bold mb-1 ${texto}`}>¡Repaso terminado!</p>
             <p className={`text-sm mb-6 ${suave}`}>
-              Sabías {sabidas.size} de {unicas} a la primera
-              {falladas.size > 0 ? ` · ${falladas.size} para reforzar (vuelve${falladas.size === 1 ? '' : 'n'} mañana)` : ''}
+              Recordaste {sabidas.size} de {unicas} a la primera
+              {falladas.size > 0 ? ` · ${falladas.size} para reforzar (vuelve${falladas.size === 1 ? '' : 'n'} pronto)` : ''}
             </p>
             <div className="flex flex-col sm:flex-row gap-2 justify-center">
               {(() => {
@@ -222,27 +225,26 @@ export function RepasoApunte({ apunte, onCerrar }: Props) {
               </motion.button>
             </AnimatePresence>
 
-            <div className="grid grid-cols-2 gap-3 mt-4">
-              <button
-                onClick={() => responder('no_sabia')}
-                disabled={!volteada}
-                className={`min-h-[52px] rounded-xl text-sm font-semibold border transition-opacity disabled:opacity-40 ${
-                  modoOscuro ? 'border-red-900 text-red-300 hover:bg-red-950/40' : 'border-red-200 text-red-700 hover:bg-red-50'
-                }`}
-              >
-                <i className="ti ti-x mr-1" /> No la sabía
-              </button>
-              <button
-                onClick={() => responder('sabia')}
-                disabled={!volteada}
-                className="min-h-[52px] rounded-xl text-sm font-semibold text-white transition-opacity disabled:opacity-40"
-                style={{ background: VERDE }}
-              >
-                <i className="ti ti-check mr-1" /> La sabía
-              </button>
+            <div className="grid grid-cols-4 gap-2 sm:gap-3 mt-4">
+              {([
+                [1, 'Otra vez', modoOscuro ? 'border-red-900 text-red-300 hover:bg-red-950/40' : 'border-red-200 text-red-700 hover:bg-red-50'],
+                [2, 'Difícil', modoOscuro ? 'border-amber-900 text-amber-300 hover:bg-amber-950/40' : 'border-amber-200 text-amber-700 hover:bg-amber-50'],
+                [3, 'Bien', modoOscuro ? 'border-emerald-900 text-emerald-300 hover:bg-emerald-950/40' : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'],
+                [4, 'Fácil', modoOscuro ? 'border-sky-900 text-sky-300 hover:bg-sky-950/40' : 'border-sky-200 text-sky-700 hover:bg-sky-50'],
+              ] as [NotaRepaso, string, string][]).map(([nota, nombre, color]) => (
+                <button
+                  key={nota}
+                  onClick={() => responder(nota)}
+                  disabled={!volteada}
+                  className={`min-h-[56px] rounded-xl text-sm font-semibold border transition-opacity disabled:opacity-40 flex flex-col items-center justify-center ${color}`}
+                >
+                  {nombre}
+                  <span className="text-[11px] font-normal opacity-80 tabular-nums">{intervalos?.[nota]}</span>
+                </button>
+              ))}
             </div>
             <p className={`hidden sm:block text-center text-[11px] mt-3 ${suave}`}>
-              Espacio: voltear · ←/1: no la sabía · →/2: la sabía · Esc: salir
+              Espacio: voltear · 1 Otra vez · 2 Difícil · 3 Bien · 4 Fácil · Esc: salir
             </p>
           </div>
         )}

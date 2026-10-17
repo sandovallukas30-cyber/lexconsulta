@@ -1,5 +1,6 @@
 import type { ApunteModulo, EstadoTarjetaRepaso } from '../types'
 import { normalizarTexto, quitarMarcas } from './apunteFormato'
+import { resultados, TARJETA_NUEVA, type EstadoFSRS, type NotaRepaso } from './fsrs'
 
 /** Tarjetas de repaso generadas POR REGLAS a partir del texto de un apunte
  *  (B5) -- sin IA, igual que el resto del formato de apuntes:
@@ -108,21 +109,42 @@ export function tarjetasDe(apunte: Pick<ApunteModulo, 'id' | 'contenido'>): Tarj
 }
 
 // ---------------------------------------------------------------------------
-// Programación (Leitner de 5 cajas, igual que el repaso de Colecciones)
+// Programación (FSRS-5; antes Leitner de 5 cajas)
 // ---------------------------------------------------------------------------
 
+/** Intervalos de las cajas del repaso anterior: sirven para continuar desde
+ *  ahí las tarjetas que se habían estudiado antes de FSRS. */
 const DIAS_POR_CAJA: Record<number, number> = { 1: 1, 2: 3, 3: 7, 4: 14, 5: 30 }
-const DIA_MS = 24 * 60 * 60 * 1000
 
-export function siguienteEstado(previo: EstadoTarjetaRepaso | undefined, resultado: 'sabia' | 'no_sabia', ahora = Date.now()): EstadoTarjetaRepaso {
-  const caja = resultado === 'sabia' ? Math.min(5, (previo?.caja ?? 0) + 1) : 1
+export function aEstadoFSRS(e: EstadoTarjetaRepaso | undefined): EstadoFSRS {
+  if (!e) return TARJETA_NUEVA
+  if (e.fase !== undefined && e.estabilidad !== undefined) {
+    return { fase: e.fase, estabilidad: e.estabilidad, dificultad: e.dificultad ?? 5, ultima: e.ultimo, olvidos: e.olvidos ?? 0 }
+  }
+  return { fase: 'repaso', estabilidad: DIAS_POR_CAJA[e.caja] ?? 1, dificultad: 5, ultima: e.ultimo, olvidos: 0 }
+}
+
+/** Caja aproximada al intervalo en días (para ordenar y para el respaldo). */
+function cajaPorDias(dias: number | null): number {
+  if (dias === null || dias <= 1) return 1
+  if (dias <= 3) return 2
+  if (dias <= 7) return 3
+  if (dias <= 14) return 4
+  return 5
+}
+
+export function siguienteEstado(previo: EstadoTarjetaRepaso | undefined, nota: NotaRepaso, ahora = Date.now()): EstadoTarjetaRepaso {
+  const r = resultados(aEstadoFSRS(previo), ahora)[nota]
   return {
-    caja,
-    // "no la sabía" vuelve mañana (y además antes, dentro de la misma sesión)
-    proximo: ahora + (DIAS_POR_CAJA[caja] ?? 1) * DIA_MS,
-    aciertos: (previo?.aciertos ?? 0) + (resultado === 'sabia' ? 1 : 0),
-    fallos: (previo?.fallos ?? 0) + (resultado === 'no_sabia' ? 1 : 0),
+    caja: cajaPorDias(r.dias),
+    proximo: r.vence,
+    aciertos: (previo?.aciertos ?? 0) + (nota > 1 ? 1 : 0),
+    fallos: (previo?.fallos ?? 0) + (nota === 1 ? 1 : 0),
     ultimo: ahora,
+    fase: r.estado.fase,
+    estabilidad: r.estado.estabilidad,
+    dificultad: r.estado.dificultad,
+    olvidos: r.estado.olvidos,
   }
 }
 

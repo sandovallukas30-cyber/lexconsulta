@@ -675,12 +675,20 @@ export interface BriefCaso {
  *  apunte (ver services/tarjetasApunte.ts). Se guarda por id de tarjeta,
  *  aparte del apunte, para que editar el texto no toque el progreso. */
 export interface EstadoTarjetaRepaso {
+  /** Caja 1-5 aproximada al intervalo actual (venía del repaso Leitner; se
+   *  mantiene para ordenar y para los datos guardados antes de FSRS). */
   caja: number
   /** epoch ms desde el que vuelve a estar "para hoy" */
   proximo: number
   aciertos: number
   fallos: number
   ultimo: number
+  /** Repaso FSRS (services/fsrs.ts). Ausentes en tarjetas guardadas con el
+   *  repaso anterior: se parte de la caja que tenían. */
+  fase?: 'nueva' | 'aprendiendo' | 'repaso'
+  estabilidad?: number
+  dificultad?: number
+  olvidos?: number
 }
 
 export interface DatosAcademicosModulo {
