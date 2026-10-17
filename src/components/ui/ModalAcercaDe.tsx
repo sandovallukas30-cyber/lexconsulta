@@ -1,3 +1,4 @@
+import { AjustesInterfaz } from './AjustesInterfaz'
 import { useDialogo } from '../../hooks/useDialogo'
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -206,6 +207,7 @@ function Apariencia({ modoOscuro }: { modoOscuro: boolean }) {
   const setTema = useStore((s) => s.setTemaColor)
   return (
     <div>
+      <AjustesInterfaz />
       <H modoOscuro={modoOscuro}>Color de acento</H>
       <P modoOscuro={modoOscuro}>
         Elige el color que la app usa para los detalles: botones, citas resaltadas, íconos del sidebar y bordes

@@ -17,6 +17,7 @@
   --neu-sd: #c3cbe0; /* sombra oscura */
   --neu-sl: #ffffff; /* sombra clara */
   --neu-line: #d7dcee;
+  --neu-card: var(--neu-bg);
   --neu-ink: #1f2344;
   --neu-ink2: #5b6283;
   --neu-ink3: #8a92b0;
@@ -65,15 +66,15 @@ h1, h2, h3, h4, button, .boton, [role='tab'], [class*='font-bold'], [class*='fon
 h1, h2, h3 { letter-spacing: -0.01em; }
 
 /* ---------- utilidades neumórficas ---------- */
-.neu-raised { background: var(--neu-bg); border-radius: 22px; box-shadow: var(--neu-elevada); border-color: transparent; }
+.neu-raised { background: var(--neu-card); border-radius: 22px; box-shadow: var(--neu-elevada); border-color: transparent; }
 .neu-flat { background: var(--neu-bg2); border-radius: 16px; box-shadow: var(--neu-plana); border-color: transparent; }
-.neu-pressed { background: var(--neu-bg); border-radius: 16px; box-shadow: var(--neu-presionada); border-color: transparent; }
-.neu-chip { border-radius: 999px; box-shadow: var(--neu-chica); background: var(--neu-bg); }
+.neu-pressed { background: var(--neu-card); border-radius: 16px; box-shadow: var(--neu-presionada); border-color: transparent; }
+.neu-chip { border-radius: 999px; box-shadow: var(--neu-chica); background: var(--neu-card); }
 
 /* ---------- tarjetas y paneles de toda la app ---------- */
 /* una tarjeta = un contenedor con radio de tarjeta/panel y fondo propio */
 :is(.rounded-tarjeta, .rounded-panel, .rounded-2xl, .rounded-xl):is(.bg-white, .bg-zinc-800, .bg-zinc-900, [class*='bg-zinc-800/'], [class*='bg-zinc-900/'], .bg-zinc-50, .bg-zinc-100):not(.sin-neu):not(input):not(textarea):not(select) {
-  background-color: var(--neu-bg);
+  background-color: var(--neu-card);
   border-color: transparent;
   box-shadow: var(--neu-plana);
 }
@@ -82,13 +83,13 @@ h1, h2, h3 { letter-spacing: -0.01em; }
 
 /* botones y controles chicos con fondo propio (Respaldo, Agregar ramo…) */
 :is(button, a, label, .rounded-control, .rounded-lg, .rounded-md):is(.bg-white, .bg-zinc-100, [class*='bg-zinc-800']):not(.sin-neu):not(.boton):not(input):not(textarea):not(select):not([role='tab']):not([class*='w-1']):not([class*='w-2']):not(.rounded-full) {
-  background-color: var(--neu-bg);
+  background-color: var(--neu-card);
   border-color: transparent;
   box-shadow: var(--neu-chica);
 }
 
 /* modales y paneles flotantes */
-[role='dialog'] { background-color: var(--neu-bg); }
+[role='dialog'] { background-color: var(--neu-card); }
 [role='dialog'] .shadow-2xl, [role='dialog'].shadow-2xl { box-shadow: 14px 14px 30px rgba(10, 14, 40, 0.28), -8px -8px 20px var(--neu-sl); }
 
 /* bordes: más suaves, del tono del fondo */
@@ -100,7 +101,7 @@ h1, h2, h3 { letter-spacing: -0.01em; }
 input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not(.bg-transparent):not(.sin-neu),
 textarea:not(.bg-transparent):not(.sin-neu),
 select:not(.bg-transparent):not(.sin-neu) {
-  background-color: var(--neu-bg);
+  background-color: var(--neu-card);
   border-color: transparent;
   border-radius: 14px;
   box-shadow: var(--neu-presionada-chica);
@@ -119,7 +120,7 @@ input[type='checkbox']:not(.sin-neu) {
   -webkit-appearance: none;
   width: 22px; height: 22px;
   border-radius: 8px;
-  background: var(--neu-bg);
+  background: var(--neu-card);
   box-shadow: var(--neu-chica);
   display: inline-grid; place-content: center;
   cursor: pointer;
@@ -131,7 +132,7 @@ input[type='checkbox']:not(.sin-neu):checked::after { content: ''; width: 10px; 
 /* ---------- botones ---------- */
 .boton { border-radius: 14px; font-family: var(--font-head); font-weight: 600; }
 .boton-suave, .boton-borde {
-  background: var(--neu-bg);
+  background: var(--neu-card);
   color: var(--neu-ink);
   border-color: transparent;
   box-shadow: var(--neu-chica);
@@ -144,27 +145,27 @@ input[type='checkbox']:not(.sin-neu):checked::after { content: ''; width: 10px; 
 }
 :root[data-tema='oscuro'] .boton-primario, :root[data-tema='oscuro'] .boton[aria-pressed='true'] { background: var(--accent-400); color: #171a30; }
 @media (hover: hover) {
-  .boton-suave:hover:not(:disabled), .boton-borde:hover:not(:disabled) { background: var(--neu-bg); color: var(--accent-texto); box-shadow: var(--neu-plana); }
+  .boton-suave:hover:not(:disabled), .boton-borde:hover:not(:disabled) { background: var(--neu-card); color: var(--accent-texto); box-shadow: var(--neu-plana); }
   .boton-fantasma:hover:not(:disabled) { background: var(--neu-bg3); color: var(--neu-ink); }
 }
 .boton:active:not(:disabled) { box-shadow: var(--neu-presionada-chica); transform: none; }
 .boton-primario:active:not(:disabled) { filter: brightness(0.95); box-shadow: inset 3px 3px 7px rgba(0, 0, 0, 0.25); }
-:root[data-tema='oscuro'] .boton-suave, :root[data-tema='oscuro'] .boton-borde { background: var(--neu-bg); color: var(--neu-ink); }
+:root[data-tema='oscuro'] .boton-suave, :root[data-tema='oscuro'] .boton-borde { background: var(--neu-card); color: var(--neu-ink); }
 :root[data-tema='oscuro'] .boton-fantasma { color: var(--neu-ink2); }
 @media (hover: hover) {
-  :root[data-tema='oscuro'] .boton-suave:hover:not(:disabled), :root[data-tema='oscuro'] .boton-borde:hover:not(:disabled) { background: var(--neu-bg); color: var(--accent-texto); }
+  :root[data-tema='oscuro'] .boton-suave:hover:not(:disabled), :root[data-tema='oscuro'] .boton-borde:hover:not(:disabled) { background: var(--neu-card); color: var(--accent-texto); }
   :root[data-tema='oscuro'] .boton-fantasma:hover:not(:disabled) { background: var(--neu-bg3); color: #fff; }
 }
 
 /* ---------- chips y etiquetas redondeadas ---------- */
-.rounded-full:is(.bg-zinc-100, .bg-zinc-200, [class*='bg-zinc-200/'], .bg-zinc-800):not(button):not(.sin-neu):not([class*='w-']) { background-color: var(--neu-bg); box-shadow: var(--neu-chica); }
+.rounded-full:is(.bg-zinc-100, .bg-zinc-200, [class*='bg-zinc-200/'], .bg-zinc-800):not(button):not(.sin-neu):not([class*='w-']) { background-color: var(--neu-card); box-shadow: var(--neu-chica); }
 
 /* ---------- barras de progreso: canal hundido ---------- */
 [role='progressbar'] { background-color: var(--neu-bg3) !important; box-shadow: var(--neu-presionada-chica); }
 [role='progressbar'] > * { box-shadow: 1px 1px 4px color-mix(in srgb, var(--accent-base) 45%, transparent); }
 
 /* ---------- fondo de la app y scroll ---------- */
-.dark, .dark main { background-color: var(--neu-bg); }
+.dark, .dark main { background-color: var(--neu-card); }
 *::-webkit-scrollbar-thumb { background: var(--neu-sd); background-clip: padding-box; }
 *::-webkit-scrollbar-thumb:hover { background-color: var(--neu-ink3); background-clip: padding-box; }
 .dark *::-webkit-scrollbar-thumb { background: var(--neu-sl); background-clip: padding-box; }
@@ -172,3 +173,78 @@ input[type='checkbox']:not(.sin-neu):checked::after { content: ''; width: 10px; 
 /* texto de énfasis en tinta del tema (claro) */
 :root[data-tema='claro'] .text-zinc-900 { color: var(--neu-ink); }
 :root[data-tema='claro'] .text-zinc-500, :root[data-tema='claro'] .text-zinc-400 { color: var(--neu-ink2); }
+
+/* ============================================================================
+   Ajustes de la interfaz (useAjustes): estilo plano, alto contraste y sin
+   animaciones. Se activan con atributos en <html>.
+   ============================================================================ */
+
+/* Plano: tarjetas blancas sobre fondo gris claro, sombras suaves (el estilo de antes) */
+:root[data-estilo='plano'] {
+  --neu-bg: #f4f6fa;
+  --neu-card: #ffffff;
+  --neu-bg2: #f4f6fa;
+  --neu-bg3: #e6eaf3;
+  --neu-line: #e0e5ed;
+  --neu-sd: rgba(16, 24, 40, 0.1);
+  --neu-sl: rgba(255, 255, 255, 0);
+  --neu-elevada: 0 1px 2px rgb(16 24 40 / 0.04), 0 8px 24px rgb(16 24 40 / 0.07);
+  --neu-plana: 0 1px 2px rgb(16 24 40 / 0.05), 0 3px 10px rgb(16 24 40 / 0.05);
+  --neu-chica: 0 1px 2px rgb(16 24 40 / 0.1);
+  --neu-presionada: inset 0 0 0 1px var(--neu-line);
+  --neu-presionada-chica: inset 0 0 0 1px var(--neu-line);
+}
+:root[data-estilo='plano'][data-tema='oscuro'] {
+  --neu-bg: #14172a;
+  --neu-card: #1c2032;
+  --neu-bg2: #1c2032;
+  --neu-bg3: #0f1120;
+  --neu-line: #2d3356;
+  --neu-sd: rgba(0, 0, 0, 0.5);
+  --neu-elevada: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.35);
+  --neu-plana: 0 1px 2px rgb(0 0 0 / 0.3), 0 3px 10px rgb(0 0 0 / 0.25);
+  --neu-chica: 0 1px 2px rgb(0 0 0 / 0.4);
+}
+
+/* Alto contraste: sin relieve, con bordes y textos más fuertes */
+:root[data-contraste='si'] {
+  --neu-elevada: none;
+  --neu-plana: none;
+  --neu-chica: none;
+  --neu-presionada: none;
+  --neu-presionada-chica: none;
+  --neu-ink2: var(--neu-ink);
+  --neu-ink3: var(--neu-ink2);
+  --neu-line: var(--neu-ink2);
+}
+:root[data-contraste='si'] :is(.neu-raised, .neu-flat, .neu-pressed, .neu-chip, .boton-suave, .boton-borde, [role='dialog']),
+:root[data-contraste='si'] :is(.rounded-tarjeta, .rounded-panel, .rounded-2xl, .rounded-xl):is(.bg-white, .bg-zinc-800, .bg-zinc-900, [class*='bg-zinc-800/'], [class*='bg-zinc-900/']):not(.sin-neu),
+:root[data-contraste='si'] :is(input:not([type='checkbox']):not([type='radio']):not([type='range']), textarea, select):not(.bg-transparent) {
+  border: 1.5px solid var(--neu-ink2) !important;
+}
+:root[data-contraste='si'] .text-zinc-400, :root[data-contraste='si'] .text-zinc-500 { color: var(--neu-ink) !important; }
+
+/* Sin animaciones */
+:root[data-animaciones='no'] *, :root[data-animaciones='no'] *::before, :root[data-animaciones='no'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Zoom de la interfaz (useAjustes): las unidades vh/vw no se encogen con el
+   zoom del documento, así que se compensan para que modales y pantallas no
+   se salgan de la ventana. */
+.h-screen { height: calc(100vh / var(--zoom, 1)); }
+.w-screen { width: calc(100vw / var(--zoom, 1)); }
+.h-\[100dvh\] { height: calc(100dvh / var(--zoom, 1)); }
+.max-h-\[85vh\] { max-height: calc(85vh / var(--zoom, 1)); }
+.max-h-\[88vh\] { max-height: calc(88vh / var(--zoom, 1)); }
+.max-h-\[85dvh\] { max-height: calc(85dvh / var(--zoom, 1)); }
+.max-h-\[75vh\] { max-height: calc(75vh / var(--zoom, 1)); }
+.max-h-\[70vh\] { max-height: calc(70vh / var(--zoom, 1)); }
+.max-h-\[60vh\] { max-height: calc(60vh / var(--zoom, 1)); }
+.pt-\[20vh\] { padding-top: calc(20vh / var(--zoom, 1)); }
+.pt-\[15vh\] { padding-top: calc(15vh / var(--zoom, 1)); }
+.pt-\[12vh\] { padding-top: calc(12vh / var(--zoom, 1)); }
+.pt-\[10vh\] { padding-top: calc(10vh / var(--zoom, 1)); }

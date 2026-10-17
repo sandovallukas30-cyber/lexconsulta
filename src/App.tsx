@@ -6,6 +6,7 @@ import type { ColeccionCompartida } from './types'
 import { useState, useEffect, lazy, Suspense } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { useStore } from './store/useStore'
+import { useAplicarAjustes } from './hooks/useAplicarAjustes'
 import { avisar } from './store/useAvisos'
 import { aplicarTema } from './theme'
 import { Omnibar } from './components/ui/Omnibar'
@@ -44,6 +45,7 @@ function CargandoVista({ modoOscuro }: { modoOscuro: boolean }) {
 
 function App() {
   useMotorEnfoque()
+  useAplicarAjustes()
   const vistaActiva = useStore((s) => s.vistaActiva)
   const usuarioEmail = useStore((s) => s.usuarioEmail)
   const modoOscuro = useStore((s) => s.modoOscuro)
