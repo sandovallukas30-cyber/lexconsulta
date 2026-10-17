@@ -12,7 +12,6 @@ export function RightSidebar() {
   const setCodigoExplorador = useStore((s) => s.setCodigoExplorador)
   const setVistaActiva = useStore((s) => s.setVistaActiva)
   const agregarVisitado = useStore((s) => s.agregarVisitado)
-  const setCanvasActivo = useStore((s) => s.setCanvasActivo)
 
   const MOBILE_BREAKPOINT = 768
   const esMovil = useEsMovil()
@@ -141,21 +140,6 @@ export function RightSidebar() {
             Acciones
           </h3>
           <div className="space-y-1.5">
-            <button
-              onClick={() => {
-                setCanvasActivo(null)
-                setVistaActiva('canvas')
-                cerrarEnMobile()
-              }}
-              className={`w-full flex items-center gap-2 px-3 py-2 rounded text-xs transition-colors font-medium ${
-                modoOscuro
-                  ? 'text-zinc-300 hover:bg-zinc-800 hover:text-white'
-                  : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900'
-              }`}
-            >
-              <i className="ti ti-affiliate text-sm" style={{ color: 'var(--accent-texto)' }} />
-              <span>Nuevo canvas</span>
-            </button>
             <button
               onClick={() => {
                 setVistaActiva('practica')

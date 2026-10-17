@@ -7,7 +7,6 @@ interface TopbarProps {
 const titulos: Record<string, string> = {
   modulos: 'Módulos',
   mapasmentales: 'Mapas mentales',
-  canvas: 'Canvas jurídico',
   explorador: 'Explorador de códigos',
   colecciones: 'Colecciones',
   admin: 'Administración',
@@ -22,11 +21,9 @@ const titulos: Record<string, string> = {
 const MOSTRAR_CONTADOR_CONSULTAS = false
 
 export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
-  const perfil = useStore((s) => s.perfil)
   const vistaActiva = useStore((s) => s.vistaActiva)
   const modoOscuro = useStore((s) => s.modoOscuro)
   const toggleModoOscuro = useStore((s) => s.toggleModoOscuro)
-  const abrirModalPerfil = useStore((s) => s.abrirModalPerfil)
   const usuarioEmail = useStore((s) => s.usuarioEmail)
   const usuarioRegistrado = useStore((s) => s.usuarioRegistrado)
   const consultasRestantesStore = useStore((s) => s.consultasRestantes)
@@ -123,14 +120,6 @@ export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
           </button>
         )}
 
-        <button
-          onClick={abrirModalPerfil}
-          aria-label={`Perfil: ${perfil ?? 'sin elegir'}`}
-          className="boton boton-suave gap-2 font-normal"
-        >
-          <i className={`ti ${perfil === 'profesional' ? 'ti-briefcase' : 'ti-user'} text-base`} />
-          <span className="capitalize hidden sm:inline">{perfil ?? 'Seleccionar perfil'}</span>
-        </button>
       </div>
     </header>
   )

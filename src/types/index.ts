@@ -67,7 +67,6 @@ export type CategoriaCodigo =
 
 export type VistaId =
   | 'modulos'
-  | 'canvas'
   | 'explorador'
   | 'colecciones'
   | 'mapasmentales'

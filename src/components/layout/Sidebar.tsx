@@ -17,7 +17,6 @@ interface ItemMenu {
 // Menú centrado en estudiantes: herramientas de estudio.
 const itemsAcademicos: ItemMenu[] = [
   { id: 'modulos', icono: 'ti-layout-grid', label: 'Módulos' },
-  { id: 'canvas', icono: 'ti-affiliate', label: 'Canvas' },
   { id: 'explorador', icono: 'ti-book-2', label: 'Explorador' },
   { id: 'colecciones', icono: 'ti-stack-2', label: 'Colecciones' },
   { id: 'mapasmentales', icono: 'ti-hierarchy-2', label: 'Mapas mentales' },

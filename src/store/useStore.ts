@@ -1100,7 +1100,7 @@ export const useStore = create<AppState>()(
     {
       name: 'prima-lex-storage-v3',
       storage: crearAlmacenamiento(),
-      version: 33,
+      version: 34,
       partialize: (s) => ({
         perfil: s.perfil,
         codigos: s.codigos,
@@ -1257,6 +1257,11 @@ export const useStore = create<AppState>()(
           // viejos (historial, favoritos) quedan guardados sin usarse.
           const validas = ['modulos', 'canvas', 'explorador', 'colecciones', 'mapasmentales', 'admin', 'practica']
           if (!validas.includes(String(state.vistaActiva))) state = { ...state, vistaActiva: 'modulos' }
+        }
+        if (version < 34) {
+          // v34: se retira Canvas (queda Mapas mentales). Quien lo tenía como
+          // última vista vuelve a Módulos; los canvas guardados quedan sin uso.
+          if (state.vistaActiva === 'canvas') state = { ...state, vistaActiva: 'modulos' }
         }
         return state as never
       },

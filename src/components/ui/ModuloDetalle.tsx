@@ -53,16 +53,11 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEdit
   const setVistaActiva = useStore((s) => s.setVistaActiva)
   const setColeccionActiva = useStore((s) => s.setColeccionActiva)
   const colecciones = useStore((s) => s.colecciones)
-  const canvases = useStore((s) => s.canvases)
   const mapasMentales = useStore((s) => s.mapasMentales)
-  const actualizarCanvas = useStore((s) => s.actualizarCanvas)
   const actualizarMapaMental = useStore((s) => s.actualizarMapaMental)
-  const setCanvasActivo = useStore((s) => s.setCanvasActivo)
   const setMapaMentalActivo = useStore((s) => s.setMapaMentalActivo)
   const datos = useStore((s) => s.academicoModulos[modulo.id]) ?? { clases: [], evaluaciones: [], textos: [], apuntes: [], cuadernos: [], briefs: [] }
   const coleccionesModulo = coleccionesDeModulo(colecciones, modulo.codigoRelacionado)
-  const canvasesModulo = canvases.filter((c) => c.moduloId === modulo.id)
-  const canvasesDisponibles = canvases.filter((c) => c.moduloId !== modulo.id)
   const mapasModulo = mapasMentales.filter((m) => m.moduloId === modulo.id)
   const mapasDisponibles = mapasMentales.filter((m) => m.moduloId !== modulo.id)
 
@@ -75,11 +70,6 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEdit
   const abrirColeccion = (id: string) => {
     setColeccionActiva(id)
     setVistaActiva('colecciones')
-  }
-
-  const abrirCanvas = (id: string) => {
-    setCanvasActivo(id)
-    setVistaActiva('canvas')
   }
 
   const abrirMapaMental = (id: string) => {
@@ -192,10 +182,6 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEdit
             onIrA={setTab}
             colecciones={coleccionesModulo}
             onAbrirColeccion={abrirColeccion}
-            canvases={canvasesModulo}
-            canvasesDisponibles={canvasesDisponibles}
-            onAbrirCanvas={abrirCanvas}
-            onVincularCanvas={(id) => actualizarCanvas(id, { moduloId: modulo.id })}
             mapas={mapasModulo}
             mapasDisponibles={mapasDisponibles}
             onAbrirMapa={abrirMapaMental}

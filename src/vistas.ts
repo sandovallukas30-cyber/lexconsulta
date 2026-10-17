@@ -11,7 +11,6 @@ type Cargador = () => Promise<{ default: ComponentType }>
 
 const cargadores: Record<VistaId, Cargador> = {
   modulos: () => import('./components/views/ModulosView').then((m) => ({ default: m.ModulosView })),
-  canvas: () => import('./components/views/CanvasView').then((m) => ({ default: m.CanvasView })),
   explorador: () => import('./components/views/ExploradorView').then((m) => ({ default: m.ExploradorView })),
   colecciones: () => import('./components/views/ColeccionesView').then((m) => ({ default: m.ColeccionesView })),
   mapasmentales: () => import('./components/views/MapasMentalesView').then((m) => ({ default: m.MapasMentalesView })),

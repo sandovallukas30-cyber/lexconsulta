@@ -26,7 +26,6 @@ export const useNavegacion = create<{ pila: Lugar[] }>(() => ({ pila: [] }))
 const NOMBRES_VISTA: Partial<Record<VistaId, string>> = {
   modulos: 'Módulos',
   mapasmentales: 'Mapas mentales',
-  canvas: 'Canvas',
   explorador: 'Explorador',
   colecciones: 'Colecciones',
   practica: 'Práctica',

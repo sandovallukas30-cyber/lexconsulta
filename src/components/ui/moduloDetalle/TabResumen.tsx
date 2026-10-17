@@ -1,10 +1,9 @@
-import type { SesionClase, EvaluacionModulo, TextoObligatorio, ApunteModulo, BriefCaso, Coleccion, Canvas, MapaMental } from '../../../types'
+import type { SesionClase, EvaluacionModulo, TextoObligatorio, ApunteModulo, BriefCaso, Coleccion, MapaMental } from '../../../types'
 import { diasHasta, formatearCountdown } from '../../../services/modulosAcademico'
 import { type Tab } from './utilidades'
 
 export function TabResumen({
   datos, modoOscuro, onIrA, colecciones, onAbrirColeccion,
-  canvases, canvasesDisponibles, onAbrirCanvas, onVincularCanvas,
   mapas, mapasDisponibles, onAbrirMapa, onVincularMapa,
 }: {
   datos: { clases: SesionClase[]; evaluaciones: EvaluacionModulo[]; textos: TextoObligatorio[]; apuntes: ApunteModulo[]; briefs: BriefCaso[] }
@@ -12,10 +11,6 @@ export function TabResumen({
   onIrA: (tab: Tab) => void
   colecciones: Coleccion[]
   onAbrirColeccion: (id: string) => void
-  canvases: Canvas[]
-  canvasesDisponibles: Canvas[]
-  onAbrirCanvas: (id: string) => void
-  onVincularCanvas: (id: string) => void
   mapas: MapaMental[]
   mapasDisponibles: MapaMental[]
   onAbrirMapa: (id: string) => void
@@ -103,17 +98,6 @@ export function TabResumen({
       )}
 
       <VinculoModuloSeccion
-        titulo="Canvas de este módulo"
-        icono="ti-affiliate"
-        vinculados={canvases.map((c) => ({ id: c.id, label: c.nombre }))}
-        disponibles={canvasesDisponibles.map((c) => ({ id: c.id, label: c.nombre }))}
-        placeholder="Vincular un Canvas existente..."
-        onAbrir={onAbrirCanvas}
-        onVincular={onVincularCanvas}
-        modoOscuro={modoOscuro}
-      />
-
-      <VinculoModuloSeccion
         titulo="Mapas mentales de este módulo"
         icono="ti-hierarchy-2"
         vinculados={mapas.map((m) => ({ id: m.id, label: m.titulo }))}
@@ -127,7 +111,7 @@ export function TabResumen({
   )
 }
 
-/** Sección "X de este módulo" reutilizada por Canvas y Mapas mentales:
+/** Sección "X de este módulo" usada por Mapas mentales:
  *  lista lo ya vinculado (abre directo) y, si hay candidatos sin vincular,
  *  ofrece un select que vincula al elegir -- mismo patrón que Colecciones,
  *  pero estos dos sí necesitan una acción de vincular porque no se infieren

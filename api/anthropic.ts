@@ -9,24 +9,21 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 
-const ALLOWED_MODELS = new Set([
-  'claude-sonnet-4-5',
-  'claude-sonnet-4-6',
-  'claude-haiku-4-5-20251001',
-])
+// Solo Haiku: los únicos usos de IA que quedan (Pasapalabra y Ahorcado) generan
+// palabras y definiciones, y Haiku alcanza y es el modelo más barato.
+const ALLOWED_MODELS = new Set(['claude-haiku-4-5-20251001'])
 
 // ============ Rate limiting ============
 
 const VENTANA_MS = 24 * 60 * 60 * 1000 // 24 horas (1 día)
-// Límites por usuario/IP temporalmente muy altos: por ahora solo el dueño del
-// proyecto usa la app, así que no tiene sentido que se autolimite a 3-10/día.
-// Quedan como valores altos (no removidos) para volver fácil a los originales
-// (3 / 10 / 50 / 500, en comentario al lado de cada uno) el día que la app
-// tenga tráfico real de otras personas.
-const LIMITE_SIN_REGISTRO = 1000 // antes: 3 consultas/día para usuarios sin registrar
-const LIMITE_CON_REGISTRO = 1000 // antes: 10 consultas/día para usuarios registrados
-const LIMITE_POR_IP_MAXIMA = 1200 // antes: 50 — protección contra abuso por IP (fallback)
-const LIMITE_GLOBAL = 2000 // antes: 500 — requests totales por día (techo de gasto, red de seguridad si el link se filtra)
+// Topes por día. Cada partida de Pasapalabra o Ahorcado = 1 request a Haiku
+// (centavos de dólar): el techo global acota el gasto máximo diario.
+// El conteo vive en memoria de cada instancia de Vercel, así que es una red de
+// seguridad aproximada, no una cuota exacta.
+const LIMITE_SIN_REGISTRO = 10 // partidas/día sin verificar email
+const LIMITE_CON_REGISTRO = 30 // partidas/día con email verificado
+const LIMITE_POR_IP_MAXIMA = 60 // protección contra abuso por IP (fallback)
+const LIMITE_GLOBAL = 400 // requests totales por día (techo de gasto)
 const MAX_CHARS_INPUT = 60_000 // tamaño máximo del prompt (sistema + mensajes)
 
 // Map<clave, [timestamp, ...]>. Cada timestamp = 1 request reciente.

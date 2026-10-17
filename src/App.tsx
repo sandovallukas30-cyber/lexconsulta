@@ -1,6 +1,5 @@
 import { Sidebar } from './components/layout/Sidebar'
 import { Topbar } from './components/layout/Topbar'
-import { ModalPerfil } from './components/ui/ModalPerfil'
 import { ModalRegistro } from './components/ui/ModalRegistro'
 import { PARAM_IMPORTAR, decodificarColeccion } from './services/compartirColeccion'
 import type { ColeccionCompartida } from './types'
@@ -108,7 +107,6 @@ function App() {
           <RightSidebar />
         </div>
       </div>
-      <ModalPerfil />
       <Avisos />
       <PanelAtajos />
       <ModalRegistro abierto={modalRegistroAbierto} onCerrar={() => setModalRegistroAbierto(false)} />
