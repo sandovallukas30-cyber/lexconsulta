@@ -265,11 +265,11 @@ export function HoyView() {
                     <button onClick={() => abrirModulo(e.moduloId)} className="flex-1 min-w-0 flex items-center gap-3 p-2 text-left">
                       <span className="w-2 h-8 rounded-full flex-shrink-0" style={{ background: colorRamo(e.moduloId, ramos) }} aria-hidden="true" />
                       <span className="min-w-0">
-                        <span className={`block text-sm font-medium truncate ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>{e.tema}</span>
+                        <span className={`block text-sm font-medium truncate ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>{e.tema || nombreRamo(e.moduloId, ramos) || 'Clase'}</span>
                         <span className={`block text-xs ${suave}`}>{e.hora ? `${e.hora} · ` : ''}{nombreRamo(e.moduloId, ramos) ?? 'Ramo'}{e.sala ? ` · ${e.sala}` : ''}</span>
                       </span>
                     </button>
-                    <span className="flex gap-1 pr-2 flex-shrink-0" role="group" aria-label={`Asistencia a ${e.tema}`}>
+                    <span className="flex gap-1 pr-2 flex-shrink-0" role="group" aria-label={`Asistencia a ${e.tema || nombreRamo(e.moduloId, ramos) || 'la clase'}`}>
                       <button onClick={() => marcarAsistencia(e.moduloId, e.id, true)} aria-pressed={e.asistio === true} className="boton boton-chico boton-suave">
                         Fui
                       </button>
