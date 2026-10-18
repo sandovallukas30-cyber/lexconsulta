@@ -21,7 +21,11 @@ export function MiniEnfoque() {
       aria-label={`${esFlow(s) ? 'Flowtime' : NOMBRE_MODO[s.modo]} ${corriendo ? 'en marcha' : 'en pausa'}: ${mmss(msMostrados(s, ahora))}. Ir a Enfoque`}
       className="boton boton-borde gap-2 font-semibold tabular-nums"
     >
-      <span className={`w-2 h-2 rounded-full ${corriendo ? 'animate-pulse' : ''}`} style={{ background: color }} aria-hidden="true" />
+      <i className={`ti ${s.modo === 'foco' ? 'ti-hourglass-high' : 'ti-coffee'} ${corriendo ? 'animate-pulse' : ''}`} style={{ color }} aria-hidden="true" />
+      <span className="hidden sm:inline text-xs font-bold" style={{ color: 'var(--neu-ink2)' }}>
+        {esFlow(s) ? 'Flowtime' : s.modo === 'foco' ? 'Enfoque' : 'Descanso'}
+        {corriendo ? '' : ' · en pausa'}
+      </span>
       {mmss(msMostrados(s, ahora))}
     </button>
   )

@@ -4,7 +4,6 @@ import { eliminarDeListaConDeshacer } from '../../../services/deshacer'
 import { avisar } from '../../../store/useAvisos'
 import { confirmarSalida, registrarGuardia } from '../../../services/guardiaCambios'
 import { ModoLecturaApunte } from '../ModoLecturaApunte'
-import { CampoContenidoApunte } from '../CampoContenidoApunte'
 import { markdownAApunte } from '../../../services/apunteArchivo'
 import { duplicarApunte } from '../../../services/accionesApunte'
 import { ModalMoverApunte } from './AccionesApunte'
@@ -160,17 +159,40 @@ export function TabApuntes({
     setBorrador(null)
   }
 
+  // «Nuevo apunte» ya no abre un formulario con símbolos de Markdown: crea el
+  // apunte y lo abre directo en el editor visual (negrita, listas, «/» para
+  // insertar bloques…). Si se cierra sin escribir nada, se descarta solo.
   const iniciarNuevo = () => {
     if (sucio && !confirmarSalida()) return
-    const cuaderno = filtro !== 'todos' && filtro !== 'sin-cuaderno' ? filtro : ''
+    const ahora = Date.now()
+    const nuevo: ApunteModulo = {
+      id: crypto.randomUUID(),
+      titulo: '',
+      contenido: '',
+      cuadernoId: filtro !== 'todos' && filtro !== 'sin-cuaderno' ? filtro : undefined,
+      fechaCreacion: ahora,
+      fechaModificacion: ahora,
+    }
+    setApuntesModulo(moduloId, [...apuntes, nuevo])
+    setMostrarForm(false)
     setEditandoId(null)
-    setTitulo('')
-    setContenido('')
-    setClaseId('')
-    setCuadernoId(cuaderno)
-    setArticuloRelacionado('')
-    setOriginal({ titulo: '', contenido: '', claseId: '', cuadernoId: cuaderno, articuloRelacionado: '' })
-    setMostrarForm(true)
+    setEditarAlAbrir(true)
+    setApunteLeyendo(nuevo)
+  }
+
+  /** Al cerrar un apunte: si quedó vacío y nunca se tocó, se borra; si tiene texto pero sin título, se le pone uno. */
+  const limpiarAlCerrar = (id: string) => {
+    const st = useStore.getState()
+    const lista = st.academicoModulos[moduloId]?.apuntes ?? []
+    const a = lista.find((x) => x.id === id)
+    if (!a) return
+    const vacio = a.contenido.trim() === ''
+    const sinTocar = a.fechaModificacion === a.fechaCreacion || a.titulo.trim() === ''
+    if (vacio && sinTocar && Date.now() - a.fechaCreacion < 6 * 3_600_000) {
+      st.setApuntesModulo(moduloId, lista.filter((x) => x.id !== id))
+    } else if (a.titulo.trim() === '') {
+      st.setApuntesModulo(moduloId, lista.map((x) => (x.id === id ? { ...x, titulo: 'Apunte sin título' } : x)))
+    }
   }
 
   const cancelarFormulario = () => {
@@ -420,7 +442,9 @@ export function TabApuntes({
           }}
           className={`p-4 rounded-tarjeta border mb-4 space-y-3 ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
           <CampoTexto label="Título" valor={titulo} onChange={setTitulo} modoOscuro={modoOscuro} placeholder="Ej: Clase 3 — Modos de extinguir" />
-          <CampoContenidoApunte valor={contenido} onChange={setContenido} modoOscuro={modoOscuro} />
+          <p className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
+            Aquí cambias las propiedades del apunte. Para escribir su contenido, ábrelo y presiona <b>Editar</b>.
+          </p>
           {clases.length > 0 && (
             <CampoSelectClase label="Clase a la que pertenece (opcional)" valor={claseId} onChange={setClaseId} clases={clases} modoOscuro={modoOscuro} />
           )}
@@ -510,8 +534,10 @@ export function TabApuntes({
         editarAlAbrir={editarAlAbrir}
         resaltarAlAbrir={resaltarAlAbrir}
         onCerrar={() => {
+          const id = apunteLeyendo?.id
           setApunteLeyendo(null)
           setResaltarAlAbrir(undefined)
+          if (id) limpiarAlCerrar(id)
         }}
         onEditar={() => apunteLeyendo && iniciarEdicion(apunteLeyendo)}
         onCambiar={(cambios) => apunteLeyendo && actualizarApunte(apunteLeyendo.id, cambios)}

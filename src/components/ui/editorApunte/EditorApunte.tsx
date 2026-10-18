@@ -7,6 +7,7 @@ import { NotasMargen } from '../NotasMargen'
 import { useEstadoGuardado, vaciarEscrituraPendiente } from '../../../store/almacenamiento'
 import { avisar } from '../../../store/useAvisos'
 import { crearExtensiones, ICONOS_RECUADRO } from './extensiones'
+import { MenuComandos } from './MenuComandos'
 import './editorApunte.css'
 
 const VERDE = 'var(--accent-base)'
@@ -140,11 +141,16 @@ export default function EditorApunte({ titulo, contenido, tema: temaLectura, tam
     }
   }, [])
 
+  const teclasMenu = useRef<(e: KeyboardEvent) => boolean>(() => false)
   const editor = useEditor({
     extensions: extensiones,
     content: docInicial,
     autofocus: 'start',
-    editorProps: { attributes: { class: 'ap-editor', spellcheck: 'true', 'aria-label': 'Contenido del apunte' } },
+    editorProps: {
+      attributes: { class: 'ap-editor', spellcheck: 'true', 'aria-label': 'Contenido del apunte' },
+      // el menú de «/» se queda con las flechas, Enter y Escape mientras está abierto
+      handleKeyDown: (_vista, e) => teclasMenu.current(e),
+    },
     onUpdate: ({ editor: ed }) => {
       pendiente.current = true
       setSinVolcar(true)
@@ -475,6 +481,7 @@ export default function EditorApunte({ titulo, contenido, tema: temaLectura, tam
               style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontSize: tamanoPx }}
             >
               <EditorContent editor={editor} />
+            <MenuComandos editor={editor} teclas={teclasMenu} />
             </div>
             <NotasMargen
               columna={columna}

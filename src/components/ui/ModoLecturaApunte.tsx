@@ -409,7 +409,8 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
             tamanoPx={TAMANOS_FUENTE[indiceTamano]}
             onTitulo={(t) => onCambiar({ titulo: t })}
             onContenido={(c) => onCambiar({ contenido: c })}
-            onTerminar={() => setEditando(false)}
+            // un apunte vacío no tiene nada que leer: se cierra de una vez (y se descarta si nunca se usó)
+            onTerminar={() => (apunte.contenido.trim() === '' ? onCerrar() : setEditando(false))}
           />
         </Suspense>
       ) : (

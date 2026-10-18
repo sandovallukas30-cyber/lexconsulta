@@ -110,3 +110,15 @@
 .ap-editor .tableWrapper { overflow-x: auto; }
 
 .ap-editor .ProseMirror-gapcursor:after { border-top-color: currentColor; }
+
+/* Apunte vacío: pista de cómo empezar (el menú de «/» inserta títulos, listas, recuadros y tablas) */
+.ap-editor > p:first-child:last-child:has(> br.ProseMirror-trailingBreak:only-child)::before {
+  content: 'Escribe aquí, o presiona / para insertar un título, una lista, un recuadro…';
+  float: left;
+  height: 0;
+  color: #9aa1bd;
+  pointer-events: none;
+}
+
+/* el cursor ya indica dónde se escribe: sin el marco de foco alrededor de toda la hoja */
+.ap-editor:focus-visible { outline: none; }
