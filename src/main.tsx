@@ -22,6 +22,26 @@ if (import.meta.env.DEV) {
   ;(w as unknown as { __cuenta: typeof useCuenta }).__cuenta = useCuenta
 }
 
+// Tras un despliegue nuevo, una pantalla que se carga con retraso puede pedir un
+// archivo que ya no existe: se limpia el caché de la app y se recarga una vez.
+window.addEventListener('vite:preloadError', (e) => {
+  e.preventDefault()
+  try {
+    const marca = Number(sessionStorage.getItem('prima-lex-recarga') ?? 0)
+    if (Date.now() - marca < 30_000) return
+    sessionStorage.setItem('prima-lex-recarga', String(Date.now()))
+  } catch {
+    /* sin sessionStorage: se recarga igual una vez por evento */
+  }
+  const recargar = () => window.location.reload()
+  if ('caches' in window) {
+    void caches
+      .keys()
+      .then((claves) => Promise.all(claves.filter((k) => k.startsWith('prima-lex-')).map((k) => caches.delete(k))))
+      .finally(recargar)
+  } else recargar()
+})
+
 // Service worker: la app abre sin conexión. Solo en producción (en desarrollo
 // el caché estorbaría al recargar con cambios).
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {

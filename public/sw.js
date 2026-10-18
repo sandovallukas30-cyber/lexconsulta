@@ -2,8 +2,10 @@
  *  - Páginas (navegación): primero la red; sin red, la última copia guardada.
  *  - /assets/* (nombres con hash, no cambian): primero la copia guardada.
  *  - Nunca toca /api/ ni la verificación de correo.
- *  Para forzar una actualización de todo, sube el número de VERSION. */
-const VERSION = 'v1'
+ *  Para forzar una actualización de todo, sube el número de VERSION.
+ * v2: nunca guarda una página HTML como si fuera un archivo de /assets/
+ * (el caché dañado de v1 se borra al activarse). */
+const VERSION = 'v2'
 const CACHE = `prima-lex-${VERSION}`
 
 self.addEventListener('install', (e) => {
@@ -17,6 +19,10 @@ self.addEventListener('activate', (e) => {
       .then(() => self.clients.claim())
   )
 })
+
+/** Un archivo de /assets/ nunca es una página HTML: si lo es, el servidor devolvió
+ *  la página de inicio en lugar de un archivo que ya no existe (despliegue nuevo). */
+const esPagina = (res) => (res.headers.get('content-type') || '').includes('text/html')
 
 const guardar = (req, res) => {
   if (res && res.ok && res.type === 'basic') {
@@ -43,7 +49,12 @@ self.addEventListener('fetch', (e) => {
   }
 
   if (url.pathname.startsWith('/assets/')) {
-    e.respondWith(caches.match(req).then((r) => r ?? fetch(req).then((res) => guardar(req, res))))
+    e.respondWith(
+      caches.match(req).then((r) => {
+        if (r && !esPagina(r)) return r
+        return fetch(req).then((res) => (esPagina(res) ? res : guardar(req, res)))
+      })
+    )
     return
   }
 
