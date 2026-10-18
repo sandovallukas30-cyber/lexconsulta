@@ -13,7 +13,6 @@ const haceCuanto = (ms: number | null): string => {
 
 const PROVEEDORES: { id: ProveedorCuenta; nombre: string; icono: string }[] = [
   { id: 'google', nombre: 'Continuar con Google', icono: 'ti-brand-google' },
-  { id: 'azure', nombre: 'Continuar con Microsoft', icono: 'ti-brand-windows' },
 ]
 
 const NOMBRE_PROVEEDOR: Record<string, string> = { google: 'Google', azure: 'Microsoft', email: 'enlace por correo' }

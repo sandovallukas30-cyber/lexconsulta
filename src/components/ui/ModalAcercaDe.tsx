@@ -353,7 +353,7 @@ export function Privacidad({ modoOscuro }: { modoOscuro: boolean }) {
 
       <H modoOscuro={modoOscuro}>3. Con cuenta: qué recibimos y para qué</H>
       <P modoOscuro={modoOscuro}>
-        Puedes crear una cuenta con Google, con Microsoft o con un enlace enviado a tu correo. Según el método,
+        Puedes crear una cuenta con Google o con un enlace enviado a tu correo. Según el método,
         recibimos de ese proveedor tu <strong>correo electrónico</strong>, tu <strong>nombre</strong> y tu{' '}
         <strong>foto de perfil</strong> (si la tienes) y un identificador interno. No recibimos tu contraseña ni acceso
         a tu correo, tus archivos o tus contactos: solo pedimos los permisos básicos de identidad (openid, email y
@@ -389,7 +389,7 @@ export function Privacidad({ modoOscuro }: { modoOscuro: boolean }) {
       <P modoOscuro={modoOscuro}>
         Para evitar abusos, el servidor mantiene en memoria un contador temporal de usos por dirección IP, que se
         descarta automáticamente. Intervienen como proveedores: Vercel (alojamiento; puede registrar datos técnicos de
-        conexión como la IP), Supabase (cuentas y base de datos), Google y Microsoft (solo si eliges entrar con ellos),
+        conexión como la IP), Supabase (cuentas y base de datos), Google (solo si eliges entrar con tu cuenta de Google),
         Resend (correo) y Anthropic (juegos). Cada uno trata los datos según sus propias políticas. No usamos cookies de
         seguimiento ni analítica de terceros, y no vendemos datos.
       </P>
@@ -485,7 +485,7 @@ export function Terminos({ modoOscuro }: { modoOscuro: boolean }) {
 
       <H modoOscuro={modoOscuro}>10. Cuentas</H>
       <P modoOscuro={modoOscuro}>
-        Crear una cuenta es opcional. Eres responsable de la seguridad de tu acceso (tu cuenta de Google, de Microsoft
+        Crear una cuenta es opcional. Eres responsable de la seguridad de tu acceso (tu cuenta de Google
         o tu correo). Podemos suspender cuentas que incumplan estos Términos. Puedes eliminar tu cuenta cuando
         quieras desde tu perfil; el tratamiento de tus datos se describe en la Política de privacidad.
       </P>

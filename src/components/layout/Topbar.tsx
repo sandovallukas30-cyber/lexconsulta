@@ -58,14 +58,6 @@ export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
         <h2 className={`text-lg font-bold tracking-tight truncate md:hidden ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
           {titulos[vistaActiva]}
         </h2>
-        <div
-          className="neu-chip hidden md:flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium truncate text-[var(--neu-ink2)]"
-          title="Esta plataforma no constituye asesoría legal. Consulta siempre con un profesional para decisiones jurídicas."
-        >
-          <i className="ti ti-info-circle text-xs flex-shrink-0" />
-          <span className="truncate lg:hidden">Orientación educativa</span>
-          <span className="truncate hidden lg:inline">Orientación educativa · No reemplaza asesoría legal profesional</span>
-        </div>
       </div>
 
       <div className="flex items-center gap-2">
