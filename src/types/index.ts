@@ -599,6 +599,8 @@ export interface SesionClase {
   hora?: string
   /** Asistencia: true = fui, false = falté, sin valor = sin registrar. */
   asistio?: boolean
+  /** Sala o lugar de la clase (viene del bloque del horario). */
+  sala?: string
   tema: string
   notas?: string
   completada: boolean
@@ -711,6 +713,8 @@ export interface BloqueHorario {
   /** HH:MM */
   inicio: string
   fin?: string
+  /** Sala o lugar de este bloque (puede cambiar de un día a otro). */
+  sala?: string
 }
 
 export interface Ramo {

@@ -74,9 +74,9 @@ export function HoyView() {
   const setClasesModulo = useStore((st) => st.setClasesModulo)
   // todas las clases de hoy, también las ya vistas: así se puede marcar la asistencia
   const clasesHoy = useMemo(() => {
-    const out: { moduloId: string; id: string; tema: string; hora?: string; asistio?: boolean; completada: boolean }[] = []
+    const out: { moduloId: string; id: string; tema: string; hora?: string; sala?: string; asistio?: boolean; completada: boolean }[] = []
     for (const [moduloId, d] of Object.entries(academico)) {
-      for (const c of d.clases) if (c.fecha === hoy) out.push({ moduloId, id: c.id, tema: c.tema, hora: c.hora, asistio: c.asistio, completada: c.completada })
+      for (const c of d.clases) if (c.fecha === hoy) out.push({ moduloId, id: c.id, tema: c.tema, hora: c.hora, sala: c.sala, asistio: c.asistio, completada: c.completada })
     }
     return out.sort((a, b) => (a.hora ?? '99:99').localeCompare(b.hora ?? '99:99'))
   }, [academico, hoy])
@@ -266,7 +266,7 @@ export function HoyView() {
                       <span className="w-2 h-8 rounded-full flex-shrink-0" style={{ background: colorRamo(e.moduloId, ramos) }} aria-hidden="true" />
                       <span className="min-w-0">
                         <span className={`block text-sm font-medium truncate ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>{e.tema}</span>
-                        <span className={`block text-xs ${suave}`}>{e.hora ? `${e.hora} · ` : ''}{nombreRamo(e.moduloId, ramos) ?? 'Ramo'}</span>
+                        <span className={`block text-xs ${suave}`}>{e.hora ? `${e.hora} · ` : ''}{nombreRamo(e.moduloId, ramos) ?? 'Ramo'}{e.sala ? ` · ${e.sala}` : ''}</span>
                       </span>
                     </button>
                     <span className="flex gap-1 pr-2 flex-shrink-0" role="group" aria-label={`Asistencia a ${e.tema}`}>

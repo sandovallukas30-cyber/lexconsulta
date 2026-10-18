@@ -330,6 +330,15 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
                           onChange={(e) => setBloques((l) => l.map((x, j) => (j === i ? { ...x, fin: e.target.value || undefined } : x)))}
                           className={inputClase}
                         />
+                        <input
+                          type="text"
+                          aria-label="Sala o lugar"
+                          placeholder="Sala o lugar"
+                          maxLength={80}
+                          value={b.sala ?? ''}
+                          onChange={(e) => setBloques((l) => l.map((x, j) => (j === i ? { ...x, sala: e.target.value || undefined } : x)))}
+                          className={`${inputClase} min-w-[120px] flex-1`}
+                        />
                         <button
                           type="button"
                           aria-label="Quitar bloque"

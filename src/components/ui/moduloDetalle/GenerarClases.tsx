@@ -32,7 +32,7 @@ export function GenerarClases({
   const generar = () => {
     if (nuevas.length === 0) return
     const previas = clases
-    const creadas: SesionClase[] = nuevas.map((n) => ({ id: crypto.randomUUID(), fecha: n.fecha, hora: n.hora, tema: '', completada: false }))
+    const creadas: SesionClase[] = nuevas.map((n) => ({ id: crypto.randomUUID(), fecha: n.fecha, hora: n.hora, ...(n.sala ? { sala: n.sala } : {}), tema: '', completada: false }))
     // numeradas por orden de fecha, contando también las que ya había
     const todas = [...previas, ...creadas].sort((a, b) => a.fecha.localeCompare(b.fecha) || (a.hora ?? '').localeCompare(b.hora ?? ''))
     const numeradas = todas.map((c, i) => (c.tema === '' ? { ...c, tema: `Clase ${i + 1}` } : c))

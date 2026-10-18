@@ -61,7 +61,7 @@ export function crearICS(estado: EstadoCalendario, desde: string, hasta: string,
         lineas.push(`DTSTART;VALUE=DATE:${sinGuiones(fecha)}`, `DTEND;VALUE=DATE:${sinGuiones(sumarDiasISO(fecha, 1))}`)
       }
       lineas.push(`SUMMARY:${escapar(it.tipo === 'clase' && ramo ? `${ramo}: ${it.titulo}` : titulo)}`)
-      if (it.detalle) lineas.push(`DESCRIPTION:${escapar(it.detalle)}`)
+      if (it.detalle) lineas.push(it.tipo === 'clase' ? `LOCATION:${escapar(it.detalle)}` : `DESCRIPTION:${escapar(it.detalle)}`)
       if (it.tipo === 'evaluacion') lineas.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${escapar(titulo)}`, 'TRIGGER:-P1D', 'END:VALARM')
       lineas.push('END:VEVENT')
       cantidad++

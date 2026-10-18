@@ -60,6 +60,7 @@ export function feriadosChile(anio: number): Set<string> {
 export interface ClaseGenerada {
   fecha: string
   hora: string
+  sala?: string
 }
 
 /** Una clase por cada bloque del horario entre `desde` y `hasta` (ambos
@@ -85,7 +86,7 @@ export function generarFechasClases(p: {
     if (!esFeriado && !p.fechasExistentes.has(iso)) {
       const dia = (cursor.getDay() + 6) % 7
       for (const b of [...p.bloques].filter((x) => x.dia === dia).sort(porDiaYHora)) {
-        out.push({ fecha: iso, hora: b.inicio })
+        out.push({ fecha: iso, hora: b.inicio, ...(b.sala ? { sala: b.sala } : {}) })
       }
     }
     cursor.setDate(cursor.getDate() + 1)

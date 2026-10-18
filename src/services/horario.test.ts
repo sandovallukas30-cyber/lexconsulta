@@ -56,6 +56,12 @@ describe('generarFechasClases', () => {
     expect(sin).toHaveLength(0)
   })
 
+  it('cada clase lleva la sala de su bloque', () => {
+    const conSala = [{ dia: 0, inicio: '08:30', sala: 'Auditorio 4' }, { dia: 2, inicio: '10:00', sala: 'Sala 206' }]
+    const r = generarFechasClases({ desde: '2026-10-12', hasta: '2026-10-14', bloques: conSala, omitirFeriados: false, fechasExistentes: new Set() })
+    expect(r.map((x) => x.sala)).toEqual(['Auditorio 4', 'Sala 206'])
+  })
+
   it('no repite fechas que ya tienen clase', () => {
     const r = generarFechasClases({ desde: '2026-10-12', hasta: '2026-10-19', bloques, omitirFeriados: false, fechasExistentes: new Set(['2026-10-12']) })
     expect(r.map((x) => x.fecha)).not.toContain('2026-10-12')

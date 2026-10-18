@@ -39,7 +39,7 @@ export function itemsPorFecha(e: EstadoCalendario, desde: string, hasta: string,
   }
   for (const [moduloId, d] of Object.entries(e.academicoModulos)) {
     for (const c of d.clases) {
-      meter({ id: `c-${c.id}`, tipo: 'clase', fecha: c.fecha, hora: c.hora, titulo: c.tema || 'Clase', ramoId: moduloId, hecha: c.completada })
+      meter({ id: `c-${c.id}`, tipo: 'clase', fecha: c.fecha, hora: c.hora, titulo: c.tema || 'Clase', ramoId: moduloId, hecha: c.completada, ...(c.sala ? { detalle: c.sala } : {}) })
     }
     for (const ev of d.evaluaciones) {
       meter({
