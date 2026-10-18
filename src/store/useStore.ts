@@ -240,8 +240,8 @@ interface AppState {
   /** Apunte a abrir en Modo Lectura la próxima vez que se monte su pestaña
    *  (desde el buscador del Omnibar). No persistido; se consume y se limpia.
    *  `resaltar` = texto buscado, para saltar a la primera coincidencia. */
-  apuntePendiente: { moduloId: string; apunteId: string; resaltar?: string } | null
-  abrirApunte: (moduloId: string, apunteId: string, resaltar?: string) => void
+  apuntePendiente: { moduloId: string; apunteId: string; resaltar?: string; editar?: boolean } | null
+  abrirApunte: (moduloId: string, apunteId: string, resaltar?: string, editar?: boolean) => void
   limpiarApuntePendiente: () => void
 
   /** Espacio de estudio personal por Módulo: clases, evaluaciones,
@@ -1044,8 +1044,8 @@ export const useStore = create<AppState>()(
         if (get().moduloActivoId !== id && !confirmarSalida()) return
         set({ moduloActivoId: id })
       },
-      abrirApunte: (moduloId, apunteId, resaltar) =>
-        set({ vistaActiva: 'modulos', moduloActivoId: moduloId, apuntePendiente: { moduloId, apunteId, resaltar } }),
+      abrirApunte: (moduloId, apunteId, resaltar, editar) =>
+        set({ vistaActiva: 'modulos', moduloActivoId: moduloId, apuntePendiente: { moduloId, apunteId, resaltar, ...(editar ? { editar: true } : {}) } }),
       limpiarApuntePendiente: () => set({ apuntePendiente: null }),
       setClasesModulo: (moduloId, clases) =>
         set((s) => ({

@@ -1,16 +1,15 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../../store/useStore'
 import { FilaTarea } from '../ui/FilaTarea'
+import { LoQueSigue } from '../hoy/LoQueSigue'
 import { AnilloProgreso } from '../ui/AnilloProgreso'
 import { useEnfoque, msMostrados } from '../../store/useEnfoque'
 import { useAhora } from '../../hooks/useMotorEnfoque'
 import { horasMin, minutosEnFecha, mmss } from '../../services/enfoque'
 import { calcularRachaEstudio, contarTarjetasVencidas } from '../../services/actividadEstudio'
 import {
-  diasHasta,
   evaluacionesPendientes,
   formatearCountdown,
-  obtenerProximosEventos,
   urgenciaDe,
 } from '../../services/modulosAcademico'
 import { colorRamo, filtrarTareas, hoyISO, nombreRamo } from '../../services/tareasPlan'
@@ -84,12 +83,6 @@ export function HoyView() {
     const lista = useStore.getState().academicoModulos[moduloId]?.clases ?? []
     setClasesModulo(moduloId, lista.map((c) => (c.id === claseId ? { ...c, asistio: c.asistio === valor ? undefined : valor, completada: valor ? true : c.completada } : c)))
   }
-  // qué sigue: la próxima clase o evaluación, lo que ocurra antes
-  const siguiente = useMemo(() => {
-    const ahoraHM = new Date().toTimeString().slice(0, 5)
-    const lista = obtenerProximosEventos(academico).filter((e) => e.fecha > hoy || (e.fecha === hoy && (e.tipo === 'examen' || !e.hora || e.hora >= ahoraHM)))
-    return lista[0] ?? null
-  }, [academico, hoy])
   const evaluaciones = useMemo(() => evaluacionesPendientes(academico).proximas.slice(0, 3), [academico])
   const tarjetas = useMemo(() => contarTarjetasVencidas(colecciones), [colecciones])
   const racha = calcularRachaEstudio(dias)
@@ -157,29 +150,7 @@ export function HoyView() {
           )}
         </header>
 
-        {siguiente && (
-          <button
-            onClick={() => abrirModulo(siguiente.moduloId)}
-            className="sin-neu w-full flex items-center gap-4 px-5 py-4 rounded-[22px] text-left transition-shadow hover:brightness-[1.02]"
-            style={{ background: 'color-mix(in srgb, var(--accent-base) 12%, var(--neu-bg))', boxShadow: 'var(--neu-elevada)' }}
-          >
-            <span className="w-12 h-12 rounded-[14px] flex items-center justify-center flex-shrink-0" style={{ background: 'var(--neu-bg)', boxShadow: 'var(--neu-plana)' }}>
-              <i className={`ti ${siguiente.tipo === 'clase' ? 'ti-school' : 'ti-clipboard-check'} text-xl`} style={{ color: 'var(--accent-texto)' }} aria-hidden="true" />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className={`block text-xs font-semibold uppercase tracking-wide ${suave}`}>Lo que sigue</span>
-              <span className={`block text-base font-bold truncate ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
-                {siguiente.tipo === 'examen' ? 'Evaluación: ' : ''}
-                {siguiente.titulo}
-              </span>
-              <span className={`block text-xs truncate ${suave}`}>
-                {nombreRamo(siguiente.moduloId, ramos) ?? 'Ramo'} · {siguiente.fecha === hoy ? 'hoy' : formatearCountdown(diasHasta(siguiente.fecha)).toLowerCase()}
-                {siguiente.hora ? ` a las ${siguiente.hora}` : ''}
-              </span>
-            </span>
-            <i className={`ti ti-chevron-right ${suave}`} aria-hidden="true" />
-          </button>
-        )}
+        <LoQueSigue />
 
         {sinNada && (
           <div className={`rounded-tarjeta border border-dashed p-5 text-center ${modoOscuro ? 'border-zinc-700' : 'border-zinc-300'}`}>

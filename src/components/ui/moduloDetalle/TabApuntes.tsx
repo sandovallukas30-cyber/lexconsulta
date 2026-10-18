@@ -66,7 +66,7 @@ export function TabApuntes({
     setPendienteVisto(apuntePendiente)
     const a = apuntes.find((x) => x.id === apuntePendiente.apunteId)
     if (a) {
-      setEditarAlAbrir(false)
+      setEditarAlAbrir(!!apuntePendiente.editar)
       setResaltarAlAbrir(apuntePendiente.resaltar)
       setApunteLeyendo(a)
     }
