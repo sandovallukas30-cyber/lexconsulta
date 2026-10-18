@@ -768,6 +768,8 @@ export interface TareaPlan {
   subtareas: SubtareaPlan[]
   /** Minutos de enfoque (Pomodoro) dedicados a esta tarea. */
   minutosEnfocados?: number
+  /** Si la creó un plan de estudio: `eval:<id de la evaluación>`. */
+  origen?: string
   creada: number
   actualizada: number
 }

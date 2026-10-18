@@ -265,7 +265,7 @@ interface AppState {
   nuevoRamoPendiente: boolean
   pedirNuevoRamo: () => void
   limpiarNuevoRamo: () => void
-  agregarTareaPlan: (t: Pick<TareaPlan, 'titulo' | 'ramoId' | 'fecha' | 'prioridad'> & Partial<Pick<TareaPlan, 'subtareas'>>) => string
+  agregarTareaPlan: (t: Pick<TareaPlan, 'titulo' | 'ramoId' | 'fecha' | 'prioridad'> & Partial<Pick<TareaPlan, 'subtareas' | 'origen'>>) => string
   actualizarTareaPlan: (id: string, cambios: Partial<Omit<TareaPlan, 'id'>>) => void
   alternarTareaPlan: (id: string) => void
   eliminarTareaPlan: (id: string) => TareaPlan | null

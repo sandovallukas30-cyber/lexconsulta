@@ -2,6 +2,9 @@ import { useMemo, useState } from 'react'
 import { useStore } from '../../store/useStore'
 import { FilaTarea } from '../ui/FilaTarea'
 import { LoQueSigue } from '../hoy/LoQueSigue'
+import { Mascota } from '../hoy/Mascota'
+import { Solemnes } from '../hoy/Solemnes'
+import { CompartirSemana } from '../hoy/CompartirSemana'
 import { AnilloProgreso } from '../ui/AnilloProgreso'
 import { useEnfoque, msMostrados } from '../../store/useEnfoque'
 import { useAhora } from '../../hooks/useMotorEnfoque'
@@ -9,8 +12,6 @@ import { horasMin, minutosEnFecha, mmss } from '../../services/enfoque'
 import { calcularRachaEstudio, contarTarjetasVencidas } from '../../services/actividadEstudio'
 import {
   evaluacionesPendientes,
-  formatearCountdown,
-  urgenciaDe,
 } from '../../services/modulosAcademico'
 import { colorRamo, filtrarTareas, hoyISO, nombreRamo } from '../../services/tareasPlan'
 
@@ -109,7 +110,8 @@ export function HoyView() {
   return (
     <div className="h-full overflow-y-auto">
       <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-5">
-        <header>
+        <header className="flex items-end justify-between gap-4 flex-wrap">
+          <div className="min-w-0">
           <p className={`text-sm ${suave}`}>{fechaLarga()}</p>
           <h1 className="text-[32px] font-extrabold leading-tight" style={{ color: 'var(--neu-ink)' }}>{saludo()}</h1>
           <div className="flex flex-wrap gap-2 mt-2.5">
@@ -135,8 +137,12 @@ export function HoyView() {
               </span>
             )}
           </div>
-          {hechasHoy + paraHoy.length > 0 && (
-            <div className="neu-raised mt-5 px-6 py-5">
+          </div>
+          <Mascota />
+        </header>
+
+        {hechasHoy + paraHoy.length > 0 && (
+            <div className="neu-raised px-6 py-5">
               <div className="flex justify-between text-[15px] mb-2.5">
                 <span className="font-bold" style={{ color: paraHoy.length === 0 ? 'var(--accent-texto)' : 'var(--neu-ink)' }}>
                   {paraHoy.length === 0 ? 'Terminaste todo lo de hoy' : `${hechasHoy} de ${hechasHoy + paraHoy.length} tareas hechas`}
@@ -148,7 +154,6 @@ export function HoyView() {
               </div>
             </div>
           )}
-        </header>
 
         <LoQueSigue />
 
@@ -260,7 +265,7 @@ export function HoyView() {
           </Tarjeta>
 
           <Tarjeta
-            titulo="Próximas evaluaciones"
+            titulo="Solemnes y evaluaciones"
             icono="ti-clipboard-check"
             derecha={
               <button onClick={() => setVistaActiva('modulos')} className={`text-xs font-medium ${suave} hover:underline`}>
@@ -268,33 +273,7 @@ export function HoyView() {
               </button>
             }
           >
-            {evaluaciones.length === 0 ? (
-              <p className={`text-sm py-2 ${suave}`}>No tienes evaluaciones próximas registradas.</p>
-            ) : (
-              <ul className="space-y-1">
-                {evaluaciones.map((x) => {
-                  const u = urgenciaDe(x.dias)
-                  return (
-                    <li key={`${x.moduloId}-${x.evaluacion.id}`}>
-                      <button
-                        onClick={() => abrirModulo(x.moduloId)}
-                        className={`w-full flex items-center gap-3 p-2 rounded-control text-left ${modoOscuro ? 'hover:bg-zinc-800' : 'hover:bg-zinc-50'}`}
-                      >
-                        <span className="min-w-0 flex-1">
-                          <span className={`block text-sm font-medium truncate ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>{x.evaluacion.nombre}</span>
-                          <span className={`block text-xs ${suave}`}>
-                            {nombreRamo(x.moduloId, ramos) ?? 'Ramo'} · {x.evaluacion.ponderacion}% de la nota
-                          </span>
-                        </span>
-                        <span className={`text-xs font-semibold flex-shrink-0 ${u === 'urgente' ? 'text-red-600' : u === 'proximo' ? 'text-amber-700' : suave}`}>
-                          {formatearCountdown(x.dias)}
-                        </span>
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
+            <Solemnes />
           </Tarjeta>
 
           <Tarjeta titulo="Repaso y constancia" icono="ti-flame">
@@ -312,6 +291,7 @@ export function HoyView() {
               </div>
             </div>
             <p className={`text-xs mt-3 ${suave}`}>Cuenta estudiar con apuntes, tarjetas o Práctica, o terminar una tarea.</p>
+            <CompartirSemana />
           </Tarjeta>
           </>)}
         </div>
