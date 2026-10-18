@@ -19,6 +19,7 @@ App web para estudiantes de Derecho en Chile (React 19 + TS + Vite + Tailwind 4 
 - Las vistas pesadas son `React.lazy` (`src/vistas.ts`); un deploy cambia los nombres de los chunks.
 - El service worker (`public/sw.js`) no debe cachear HTML; si se toca, recordar al usuario recargar dos veces.
 - El store persistido (`prima-lex-storage-v3`) migra encadenado: para cambiar la forma de los datos, sumar un bloque `if (version < N)` y subir `version`.
+- **Íconos Tabler recortados** (`src/assets/iconos/`, 24 KB en vez de 495). Si usas un `ti-…` nuevo: `npm i --no-save subset-font && node scripts/subset_iconos.mjs`; un test avisa si falta uno.
 - Zustand: no suscribirse a todo el store en componentes; selectores finos.
 - PowerShell, no Bash, para npm/docker; el puerto 5432 lo ocupa un Postgres nativo.
 
