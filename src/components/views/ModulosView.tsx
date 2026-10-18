@@ -400,7 +400,7 @@ export function ModulosView() {
               onClick={() => alternarCatalogo(!catalogoVisible)}
               aria-expanded={catalogoVisible}
               aria-controls="areas-del-derecho"
-              className="sin-neu sin-tactil w-full flex items-center gap-3 text-left mb-4"
+              className="sin-neu w-full min-h-[44px] flex items-center gap-3 text-left mb-2"
             >
               <i className={`ti ti-chevron-right transition-transform ${catalogoVisible ? 'rotate-90' : ''}`} style={{ color: 'var(--neu-ink2)' }} aria-hidden="true" />
               <span className={`text-sm font-semibold ${modoOscuro ? 'text-zinc-200' : 'text-zinc-800'}`}>Áreas del derecho</span>

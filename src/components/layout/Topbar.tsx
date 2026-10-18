@@ -51,11 +51,11 @@ export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
         <button
           onClick={() => setMenuMovilAbierto(true)}
           aria-label="Abrir menú"
-          className="boton boton-fantasma boton-icono -ml-1 md:hidden"
+          className="boton boton-fantasma boton-icono -ml-1 escritorio:hidden"
         >
           <i className="ti ti-menu-2 text-xl" />
         </button>
-        <h2 className={`text-lg font-bold tracking-tight truncate md:hidden ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+        <h2 className={`text-lg font-bold tracking-tight truncate escritorio:hidden ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
           {titulos[vistaActiva]}
         </h2>
       </div>

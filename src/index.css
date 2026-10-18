@@ -3,6 +3,10 @@
    primer pintado de TODA la app (C8). */
 @import "tailwindcss";
 
+/* Desde 1100 px el menú lateral va fijo; debajo (móvil y iPad vertical) es un
+   panel deslizable. Mismo corte que hooks/useEsMovil. */
+@custom-variant escritorio (@media (min-width: 1100px));
+
 /* === Paleta de acento (tema azul por defecto) ===
    Los valores reales los sobreescribe JS al cargar el tema persistido del usuario.
    Si JS no corre, esta paleta garantiza que la app sigue luciendo como siempre. */
@@ -272,6 +276,14 @@ html, body, #root { height: 100%; width: 100%; overflow: hidden; }
    cambian (min-height no aplica a elementos inline). */
 @media (pointer: coarse) {
   main button:not(.sin-tactil), header button, [role='dialog'] button:not(.sin-tactil) { min-height: 40px; }
+  main select, [role='dialog'] select { min-height: 40px; }
+  /* iOS hace zoom al enfocar un campo de menos de 16 px y deja la página desplazada */
+  input:not([type='checkbox']):not([type='radio']):not([type='range']), textarea, select { font-size: max(16px, 1em); }
+  /* sin el retraso de doble toque y sin rebote que arrastra la página entera */
+  button, [role='button'], [role='tab'], a, label, select, summary { touch-action: manipulation; }
+  html, body { overscroll-behavior-y: none; }
+  /* la ventana (PWA a pantalla completa) respeta las muescas y la barra de inicio */
+  body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
 }
 
 /* Coincidencia del buscador de apuntes (Omnibar → Modo Lectura) */

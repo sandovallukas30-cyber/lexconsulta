@@ -14,11 +14,10 @@ export function RightSidebar() {
   const setVistaActiva = useStore((s) => s.setVistaActiva)
   const agregarVisitado = useStore((s) => s.agregarVisitado)
 
-  const MOBILE_BREAKPOINT = 768
   const esMovil = useEsMovil()
 
   const cerrarEnMobile = () => {
-    if (window.innerWidth < MOBILE_BREAKPOINT && rightSidebarAbierto) {
+    if (esMovil && rightSidebarAbierto) {
       toggleRightSidebar()
     }
   }
