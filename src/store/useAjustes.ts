@@ -29,6 +29,8 @@ export interface AjustesUI {
   recordatorios: boolean
   /** Hora del resumen (0-23). */
   horaResumen: number
+  /** Áreas del derecho del catálogo en Módulos: null = automático (abiertas solo si aún no tienes ramos). */
+  catalogoAbierto: boolean | null
   set: (p: Partial<Omit<AjustesUI, 'set'>>) => void
 }
 
@@ -42,11 +44,12 @@ export const useAjustes = create<AjustesUI>()(
       celebraciones: true,
       recordatorios: false,
       horaResumen: 8,
+      catalogoAbierto: null,
       set: (p) => set(p),
     }),
     {
       name: 'prima-lex-ajustes-v1',
-      partialize: (s) => ({ zoom: s.zoom, estilo: s.estilo, contraste: s.contraste, animaciones: s.animaciones, celebraciones: s.celebraciones, recordatorios: s.recordatorios, horaResumen: s.horaResumen }),
+      partialize: (s) => ({ zoom: s.zoom, estilo: s.estilo, contraste: s.contraste, animaciones: s.animaciones, celebraciones: s.celebraciones, recordatorios: s.recordatorios, horaResumen: s.horaResumen, catalogoAbierto: s.catalogoAbierto }),
     }
   )
 )

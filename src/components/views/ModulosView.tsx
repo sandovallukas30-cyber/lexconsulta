@@ -11,6 +11,7 @@ import { ModalRamo } from '../ui/ModalRamo'
 import { diasHasta, evaluacionesPendientes, obtenerProximosEventos, formatearCountdown, urgenciaDe, moduloDesdeRamo, type EvaluacionPendiente, type Urgencia } from '../../services/modulosAcademico'
 import { calcularRachaEstudio, contarTarjetasVencidas } from '../../services/actividadEstudio'
 import type { Ramo } from '../../types'
+import { useAjustes } from '../../store/useAjustes'
 
 
 /** Color del chip de cuenta regresiva: ≤3 días rojo, ≤7 ámbar, más gris. */
@@ -296,6 +297,11 @@ export function ModulosView() {
   }, [])
 
   const modulosOrdenados = [...MODULOS].sort((a, b) => a.orden - b.orden)
+  // las áreas del catálogo no ocupan la pantalla de entrada: abiertas solo si aún no hay ramos propios, o si el usuario las abrió
+  const catalogoElegido = useAjustes((s) => s.catalogoAbierto)
+  const setCatalogoAbierto = useAjustes((s) => s.set)
+  const catalogoVisible = catalogoElegido ?? ramos.length === 0
+  const alternarCatalogo = (v: boolean) => setCatalogoAbierto({ catalogoAbierto: v })
   const moduloDeCatalogo = moduloActivoId ? MODULOS.find((m) => m.id === moduloActivoId) : undefined
   // Un Ramo propio se abre con el mismo moduloActivoId (su id de Ramo hace
   // de id de "módulo virtual" -- ver moduloDesdeRamo): si el id activo no
@@ -389,17 +395,33 @@ export function ModulosView() {
 
           <ProximasEvaluaciones modoOscuro={modoOscuro} onAbrir={abrirModulo} />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {modulosOrdenados.map((modulo) => (
-              <ModuloCard
-                key={modulo.id}
-                modulo={modulo}
-                progreso={progresoModulos[modulo.id]}
-                modoOscuro={modoOscuro}
-                onClick={() => abrirModulo(modulo.id)}
-              />
-            ))}
-          </div>
+          <section aria-label="Áreas del derecho">
+            <button
+              onClick={() => alternarCatalogo(!catalogoVisible)}
+              aria-expanded={catalogoVisible}
+              aria-controls="areas-del-derecho"
+              className="sin-neu sin-tactil w-full flex items-center gap-3 text-left mb-4"
+            >
+              <i className={`ti ti-chevron-right transition-transform ${catalogoVisible ? 'rotate-90' : ''}`} style={{ color: 'var(--neu-ink2)' }} aria-hidden="true" />
+              <span className={`text-sm font-semibold ${modoOscuro ? 'text-zinc-200' : 'text-zinc-800'}`}>Áreas del derecho</span>
+              <span className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
+                {catalogoVisible ? 'Ocultar' : `Ver las ${modulosOrdenados.length} áreas con sus códigos y temas`}
+              </span>
+            </button>
+            {catalogoVisible && (
+              <div id="areas-del-derecho" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {modulosOrdenados.map((modulo) => (
+                  <ModuloCard
+                    key={modulo.id}
+                    modulo={modulo}
+                    progreso={progresoModulos[modulo.id]}
+                    modoOscuro={modoOscuro}
+                    onClick={() => abrirModulo(modulo.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
         </div>
       </div>
 
