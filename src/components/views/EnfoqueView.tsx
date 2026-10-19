@@ -107,7 +107,7 @@ function BotonPanel({ icono, titulo, resumen, abierto, onClick }: { icono: strin
   )
 }
 
-function Temporizador() {
+function Temporizador({ concentracion }: { concentracion: boolean }) {
   const e = useEstilos()
   const s = useEnfoque()
   const tareas = useStore((st) => st.tareasPlan)
@@ -118,7 +118,6 @@ function Temporizador() {
   const sonidoId = useEnfoqueLocal((st) => st.sonido)
   const nombreFondo = infoFondo(esFondo(fondoId) ? fondoId : 'ninguno').nombre
   const nombreSonido = SONIDOS.find(([id]) => id === sonidoId)?.[1]
-  const [concentracion, setConcentracion] = useState(false)
   const corriendo = s.estado === 'corriendo'
   const ahora = useAhora(corriendo)
   const flow = esFlow(s)
@@ -217,12 +216,6 @@ function Temporizador() {
             <i className="ti ti-bolt" aria-hidden="true" /> Me distraje{s.distracciones > 0 ? ` · ${s.distracciones}` : ''}
           </button>
         )}
-        <button onClick={() => setConcentracion(true)} className="boton boton-suave boton-chico">
-          <i className="ti ti-arrows-maximize" aria-hidden="true" /> Modo concentración
-        </button>
-        <button onClick={() => useSala.getState().abrir()} className="boton boton-suave boton-chico" title="Estudia con un video de YouTube y el temporizador a la vista">
-          <i className="ti ti-brand-youtube" aria-hidden="true" /> Sala de estudio
-        </button>
       </div>
 
       <div className="w-full max-w-md mt-4"><CalificarSesion /></div>
@@ -311,12 +304,6 @@ function Temporizador() {
         <div className="w-full max-w-md mt-4">
           <ContenidoAmbiente />
         </div>
-      )}
-
-      {concentracion && (
-        <Suspense fallback={null}>
-          <ModoConcentracion onCerrar={() => setConcentracion(false)} />
-        </Suspense>
       )}
 
       {panel === 'ajustes' && (
@@ -490,11 +477,25 @@ function SesionesDeHoy() {
   )
 }
 
+/** Estadísticas e Historial con el mismo fondo animado que eligió la persona (si eligió uno).
+ *  Los paneles de esas pestañas ya usan los colores del sistema, así que se adaptan solos. */
+function ConFondo({ concentracion, children }: { concentracion: boolean; children: React.ReactNode }) {
+  const conFondo = useConFondo()
+  if (!conFondo) return <>{children}</>
+  return (
+    <div className="enf-tarjeta enf-con-fondo relative overflow-hidden rounded-tarjeta border p-3 sm:p-5">
+      {!concentracion && <FondoEnfoque vivo={false} />}
+      <div className="relative z-10">{children}</div>
+    </div>
+  )
+}
+
 type Pestana = 'temporizador' | 'estadisticas' | 'historial'
 
 export function EnfoqueView() {
   const e = useEstilos()
   const [pestana, setPestana] = useState<Pestana>('temporizador')
+  const [concentracion, setConcentracion] = useState(false)
   return (
     <div className={`h-full overflow-y-auto ${e.modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
       <div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-5">
@@ -502,21 +503,32 @@ export function EnfoqueView() {
           <h1 className={`text-2xl font-bold tracking-tight ${e.titulo}`}>Enfoque</h1>
           <p className={`text-sm mt-1 ${e.suave}`}>Estudia en bloques con descansos. El reloj sigue corriendo aunque cambies de sección.</p>
         </header>
-        <Segmentado<Pestana>
-          id="enfoque-pestana"
-          etiqueta="Secciones de Enfoque"
-          valor={pestana}
-          onChange={setPestana}
-          opciones={[
-            { valor: 'temporizador', texto: 'Temporizador' },
-            { valor: 'estadisticas', texto: 'Estadísticas' },
-            { valor: 'historial', texto: 'Historial' },
-          ]}
-        />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Segmentado<Pestana>
+            id="enfoque-pestana"
+            etiqueta="Secciones de Enfoque"
+            valor={pestana}
+            onChange={setPestana}
+            opciones={[
+              { valor: 'temporizador', texto: 'Temporizador' },
+              { valor: 'estadisticas', texto: 'Estadísticas' },
+              { valor: 'historial', texto: 'Historial' },
+            ]}
+          />
+          {/* accesos a pantalla completa: arriba a la derecha, donde se ven desde cualquier pestaña */}
+          <div className="flex items-center gap-2 ml-auto">
+            <button onClick={() => setConcentracion(true)} className="boton boton-suave" title="Pantalla completa con el temporizador y tu fondo">
+              <i className="ti ti-arrows-maximize" aria-hidden="true" /> Modo concentración
+            </button>
+            <button onClick={() => useSala.getState().abrir()} className="boton boton-suave" title="Estudia con un video de YouTube y el temporizador a la vista">
+              <i className="ti ti-brand-youtube" aria-hidden="true" /> Sala de estudio
+            </button>
+          </div>
+        </div>
         {pestana === 'temporizador' && (
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
             <div className="lg:col-span-3">
-              <Temporizador />
+              <Temporizador concentracion={concentracion} />
             </div>
             <div className="lg:col-span-2 space-y-4">
               <Resumen />
@@ -524,8 +536,21 @@ export function EnfoqueView() {
             </div>
           </div>
         )}
-        {pestana === 'estadisticas' && <EnfoqueEstadisticas />}
-        {pestana === 'historial' && <EnfoqueHistorial />}
+        {pestana === 'estadisticas' && (
+          <ConFondo concentracion={concentracion}>
+            <EnfoqueEstadisticas />
+          </ConFondo>
+        )}
+        {pestana === 'historial' && (
+          <ConFondo concentracion={concentracion}>
+            <EnfoqueHistorial />
+          </ConFondo>
+        )}
+        {concentracion && (
+          <Suspense fallback={null}>
+            <ModoConcentracion onCerrar={() => setConcentracion(false)} />
+          </Suspense>
+        )}
       </div>
     </div>
   )

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useStore } from '../../store/useStore'
 import { useEnfoque } from '../../store/useEnfoque'
 import type { SesionFoco } from '../../services/enfoque'
@@ -52,7 +53,8 @@ function SesionForm({ sesion, onClose }: { sesion?: SesionFoco; onClose: () => v
   }
 
   const etiqueta = 'block text-xs font-semibold mb-1'
-  return (
+  // en un portal: así no hereda los colores del fondo animado de la pestaña y se lee siempre igual
+  return createPortal(
     <div className="fixed inset-0 z-[80] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }} onClick={onClose}>
       <div
         ref={ref}
@@ -112,7 +114,8 @@ function SesionForm({ sesion, onClose }: { sesion?: SesionFoco; onClose: () => v
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
