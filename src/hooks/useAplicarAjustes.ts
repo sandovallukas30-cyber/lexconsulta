@@ -14,6 +14,23 @@ export function useAplicarAjustes() {
     const el = document.documentElement
     el.style.zoom = zoom === 1 ? '' : String(zoom)
     el.style.setProperty('--zoom', String(zoom))
+
+    // Cuánto se encogen las unidades vh/vw con el zoom depende del navegador (Safari del iPad y
+    // Chrome no coinciden). En vez de suponerlo, se mide: una caja de 100vw se compara con la ventana.
+    // --zoom-vu = 1 si las unidades ya vienen ajustadas, = zoom si no (lo que usa neumorfismo.css).
+    const medir = () => {
+      const sonda = document.createElement('div')
+      sonda.style.cssText = 'position:fixed;left:0;top:0;width:100vw;height:0;visibility:hidden;pointer-events:none'
+      document.body.appendChild(sonda)
+      const ancho = sonda.getBoundingClientRect().width
+      sonda.remove()
+      const r = window.innerWidth > 0 && ancho > 0 ? ancho / window.innerWidth : zoom
+      // entre 0,5 y 2: valores fuera de ese rango son una medición fallida
+      el.style.setProperty('--zoom-vu', String(r >= 0.5 && r <= 2 ? Math.round(r * 1000) / 1000 : zoom))
+    }
+    medir()
+    window.addEventListener('resize', medir)
+    return () => window.removeEventListener('resize', medir)
   }, [zoom])
 
   useEffect(() => {

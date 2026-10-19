@@ -130,7 +130,7 @@ function App() {
 
   return (
     <div
-      className={`flex h-screen w-screen overflow-hidden bg-[var(--neu-bg)] ${modoOscuro ? 'dark' : ''}`}
+      className={`flex h-full w-full overflow-hidden bg-[var(--neu-bg)] ${modoOscuro ? 'dark' : ''}`}
     >
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">

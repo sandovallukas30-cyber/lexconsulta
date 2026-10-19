@@ -61,7 +61,7 @@ export function VerificarView() {
 
   return (
     <div
-      className={`h-screen flex items-center justify-center ${
+      className={`h-full flex items-center justify-center ${
         modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'
       }`}
     >

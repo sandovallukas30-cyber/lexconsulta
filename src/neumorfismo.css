@@ -240,21 +240,22 @@ input[type='checkbox']:not(.sin-neu):checked::after { content: ''; width: 10px; 
 }
 
 /* Zoom de la interfaz (useAjustes): las unidades vh/vw no se encogen con el
-   zoom del documento, así que se compensan para que modales y pantallas no
-   se salgan de la ventana. */
-.h-screen { height: calc(100vh / var(--zoom, 1)); }
-.w-screen { width: calc(100vw / var(--zoom, 1)); }
-.h-\[100dvh\] { height: calc(100dvh / var(--zoom, 1)); }
-.max-h-\[85vh\] { max-height: calc(85vh / var(--zoom, 1)); }
-.max-h-\[88vh\] { max-height: calc(88vh / var(--zoom, 1)); }
-.max-h-\[85dvh\] { max-height: calc(85dvh / var(--zoom, 1)); }
-.max-h-\[75vh\] { max-height: calc(75vh / var(--zoom, 1)); }
-.max-h-\[70vh\] { max-height: calc(70vh / var(--zoom, 1)); }
-.max-h-\[60vh\] { max-height: calc(60vh / var(--zoom, 1)); }
-.pt-\[20vh\] { padding-top: calc(20vh / var(--zoom, 1)); }
-.pt-\[15vh\] { padding-top: calc(15vh / var(--zoom, 1)); }
-.pt-\[12vh\] { padding-top: calc(12vh / var(--zoom, 1)); }
-.pt-\[10vh\] { padding-top: calc(10vh / var(--zoom, 1)); }
+   zoom del documento (según el navegador), así que se compensan con --zoom-vu,
+   que la app mide al iniciar (useAplicarAjustes), para que modales y pantallas
+   no se salgan de la ventana. */
+.h-screen { height: calc(100vh / var(--zoom-vu, var(--zoom, 1))); }
+.w-screen { width: calc(100vw / var(--zoom-vu, var(--zoom, 1))); }
+.h-\[100dvh\] { height: calc(100dvh / var(--zoom-vu, var(--zoom, 1))); }
+.max-h-\[85vh\] { max-height: calc(85vh / var(--zoom-vu, var(--zoom, 1))); }
+.max-h-\[88vh\] { max-height: calc(88vh / var(--zoom-vu, var(--zoom, 1))); }
+.max-h-\[85dvh\] { max-height: calc(85dvh / var(--zoom-vu, var(--zoom, 1))); }
+.max-h-\[75vh\] { max-height: calc(75vh / var(--zoom-vu, var(--zoom, 1))); }
+.max-h-\[70vh\] { max-height: calc(70vh / var(--zoom-vu, var(--zoom, 1))); }
+.max-h-\[60vh\] { max-height: calc(60vh / var(--zoom-vu, var(--zoom, 1))); }
+.pt-\[20vh\] { padding-top: calc(20vh / var(--zoom-vu, var(--zoom, 1))); }
+.pt-\[15vh\] { padding-top: calc(15vh / var(--zoom-vu, var(--zoom, 1))); }
+.pt-\[12vh\] { padding-top: calc(12vh / var(--zoom-vu, var(--zoom, 1))); }
+.pt-\[10vh\] { padding-top: calc(10vh / var(--zoom-vu, var(--zoom, 1))); }
 
 /* Anchos de las pantallas: ocupan el espacio disponible en vez de quedar
    como una columna angosta en el centro (sobre todo con la interfaz
