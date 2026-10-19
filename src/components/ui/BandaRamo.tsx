@@ -1,8 +1,9 @@
 import type { DisenoRamo } from '../../types'
+import { colorTenue } from '../../services/disenoRamo'
 
 /** Franja de color de un ramo con un diseño suave encima (formas grandes y simples, sin burbujas).
  *  Se usa arriba de las fichas de Módulos y en la cabecera del ramo. El contenido va encima,
- *  con el color de texto que se calcule para el fondo (ver `textoSobre`). */
+ *  con el color de texto que se calcule para el fondo (siempre blanco: el color se suaviza con `colorTenue`). */
 
 function Dibujo({ diseno }: { diseno: DisenoRamo }) {
   switch (diseno) {
@@ -57,8 +58,8 @@ export function BandaRamo({
   children?: React.ReactNode
 }) {
   return (
-    <div className={`relative overflow-hidden ${className}`} style={{ background: color, ...style }}>
-      <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 120" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+    <div className={`relative overflow-hidden ${className}`} style={{ background: colorTenue(color), ...style }}>
+      <svg className="absolute inset-0 w-full h-full" style={{ opacity: 0.85 }} viewBox="0 0 400 120" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
         <Dibujo diseno={diseno} />
       </svg>
       <div className="relative h-full">{children}</div>

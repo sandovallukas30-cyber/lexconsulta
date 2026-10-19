@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import type { Ramo, Modulo } from '../../types'
 import { useStore } from '../../store/useStore'
 import { ICONO_RAMO_DEFECTO, diasHasta, formatearCountdown, urgenciaDe } from '../../services/modulosAcademico'
-import { disenoDe, profesoresDe, resumenProfesores, textoSobre } from '../../services/disenoRamo'
+import { disenoDe, profesoresDe, resumenProfesores } from '../../services/disenoRamo'
 import { formatoNota, resumenNotas } from '../../services/notas'
 import { hoyISO } from '../../services/tareasPlan'
 import { BandaRamo } from './BandaRamo'
@@ -48,7 +48,7 @@ export function RamoFicha({ ramo, modulos, onClick, onEditar }: Props) {
   const tareas = useStore((s) => s.tareasPlan)
   const color = ramo.color ?? VERDE
   const icono = ramo.icono ?? ICONO_RAMO_DEFECTO
-  const tinta = textoSobre(color)
+  const tinta = '#ffffff' // la franja es suave y oscura: el texto va siempre en blanco
   const profesores = profesoresDe(ramo)
 
   const resumen = useMemo(() => {

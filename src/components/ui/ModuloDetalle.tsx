@@ -3,7 +3,7 @@ import { useStore } from '../../store/useStore'
 import type { Modulo, Ramo } from '../../types'
 import { coleccionesDeModulo } from '../../services/modulosAcademico'
 import { confirmarSalida } from '../../services/guardiaCambios'
-import { disenoDe, profesoresDe, textoSobre } from '../../services/disenoRamo'
+import { disenoDe, profesoresDe } from '../../services/disenoRamo'
 import { VERDE, type Tab } from './moduloDetalle/utilidades'
 import { TabResumen } from './moduloDetalle/TabResumen'
 import { TabClases } from './moduloDetalle/TabClases'
@@ -104,7 +104,7 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEdit
     setVistaActiva('mapasmentales')
   }
 
-  const tinta = textoSobre(modulo.color)
+  const tinta = '#ffffff' // la franja es suave y oscura: el texto va siempre en blanco
   const profesores = ramo ? profesoresDe(ramo) : []
   const lugar = ramo ? [ramo.horario, ramo.sala].filter(Boolean).join(' · ') : ''
   const botonBanda = 'sin-neu inline-flex items-center gap-1.5 px-3 min-h-[40px] rounded-full text-xs font-bold transition-colors'
