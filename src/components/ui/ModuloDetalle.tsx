@@ -1,4 +1,3 @@
-import { BotonVolver } from './BotonVolver'
 import { useStore } from '../../store/useStore'
 import type { Modulo, Ramo } from '../../types'
 import { coleccionesDeModulo } from '../../services/modulosAcademico'
@@ -127,8 +126,6 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEdit
             <i className="ti ti-arrow-left text-sm" />
             Todos los módulos
           </button>
-          {/* si se llegó desde otra parte (Explorador, Omnibar, otro módulo) */}
-          <BotonVolver ocultarSi={(l) => l.vista === 'modulos' && l.moduloActivoId === null} />
         </nav>
 
         <BandaRamo color={modulo.color} diseno={disenoDe(ramo ?? { id: modulo.id })} className="rounded-tarjeta mb-6 shadow-tarjeta">

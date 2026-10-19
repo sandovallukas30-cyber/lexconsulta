@@ -7,7 +7,6 @@ import { useProgresoScroll } from '../../hooks/useProgresoScroll'
 import { useCodigo } from '../../hooks/useCodigo'
 import { useReferenciasFiltradas } from '../../hooks/useReferencias'
 import { SelectorCodigo } from '../ui/SelectorCodigo'
-import { BotonVolver } from '../ui/BotonVolver'
 import { EsquemaCodigo } from '../ui/EsquemaCodigo'
 import { ContenedorResaltable, ParrafoResaltado } from '../ui/TextoResaltable'
 import { useLecturaVoz } from '../../hooks/useLecturaVoz'
@@ -229,8 +228,6 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
           modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
         }`}
       >
-        <BotonVolver />
-
         <button
           onClick={onCambiarCodigo}
           className="boton boton-fantasma group px-2 gap-2 min-w-0 flex-shrink"
