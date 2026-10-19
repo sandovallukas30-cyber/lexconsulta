@@ -16,6 +16,13 @@ export const ZOOMS: [number, string][] = [
 
 export type EstiloUI = 'neumo' | 'plano'
 
+/** Tamaños del texto de los códigos: de 14 a 32 px, de 2 en 2 (17 es el de siempre). */
+export const TAMANO_CODIGO_DEFECTO = 17
+export const TAMANO_CODIGO_MIN = 14
+export const TAMANO_CODIGO_MAX = 32
+export const sumarTamanoCodigo = (actual: number, delta: number): number =>
+  Math.min(TAMANO_CODIGO_MAX, Math.max(TAMANO_CODIGO_MIN, Math.round(actual) + delta * 2))
+
 export interface AjustesUI {
   /** Escala de toda la interfaz (1 = normal). */
   zoom: number
@@ -30,6 +37,8 @@ export interface AjustesUI {
   recordatorios: boolean
   /** Hora del resumen (0-23). */
   horaResumen: number
+  /** Tamaño del texto de los artículos en el Explorador (px). Propio de cada dispositivo y aparte del zoom general. */
+  tamanoCodigo: number
   /** Áreas del derecho del catálogo en Módulos: null = automático (abiertas solo si aún no tienes ramos). */
   catalogoAbierto: boolean | null
   /** Mascota de Hoy (se elige y se viste en Configuración). */
@@ -51,6 +60,7 @@ export const useAjustes = create<AjustesUI>()(
       celebraciones: true,
       recordatorios: false,
       horaResumen: 8,
+      tamanoCodigo: TAMANO_CODIGO_DEFECTO,
       catalogoAbierto: null,
       mascotaActiva: true,
       mascotaTipo: 'lechuza',
@@ -61,7 +71,7 @@ export const useAjustes = create<AjustesUI>()(
     }),
     {
       name: 'prima-lex-ajustes-v1',
-      partialize: (s) => ({ zoom: s.zoom, estilo: s.estilo, contraste: s.contraste, animaciones: s.animaciones, celebraciones: s.celebraciones, recordatorios: s.recordatorios, horaResumen: s.horaResumen, catalogoAbierto: s.catalogoAbierto, mascotaActiva: s.mascotaActiva, mascotaTipo: s.mascotaTipo, mascotaNombre: s.mascotaNombre, mascotaColor: s.mascotaColor, mascotaAccesorio: s.mascotaAccesorio }),
+      partialize: (s) => ({ zoom: s.zoom, estilo: s.estilo, contraste: s.contraste, animaciones: s.animaciones, celebraciones: s.celebraciones, recordatorios: s.recordatorios, horaResumen: s.horaResumen, tamanoCodigo: s.tamanoCodigo, catalogoAbierto: s.catalogoAbierto, mascotaActiva: s.mascotaActiva, mascotaTipo: s.mascotaTipo, mascotaNombre: s.mascotaNombre, mascotaColor: s.mascotaColor, mascotaAccesorio: s.mascotaAccesorio }),
     }
   )
 )

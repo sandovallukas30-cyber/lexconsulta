@@ -133,6 +133,19 @@ input[type='checkbox']:not(.sin-neu) {
 input[type='checkbox']:not(.sin-neu):checked { box-shadow: var(--neu-presionada-chica); }
 input[type='checkbox']:not(.sin-neu):checked::after { content: ''; width: 10px; height: 6px; border-left: 2.5px solid var(--neu-ok); border-bottom: 2.5px solid var(--neu-ok); transform: rotate(-45deg) translate(1px, -1px); }
 
+/* Superficies de color (p. ej. la tarjeta «Lo que sigue»): el brillo blanco de los botones y recuadros que
+   van encima se veía como un halo sobre el fondo teñido. Dentro de ellas el relieve es más tenue. */
+.sobre-color {
+  --neu-sd: rgba(40, 36, 100, .16);
+  --neu-sl: rgba(255, 255, 255, .22);
+  --neu-plana: 2px 2px 6px var(--neu-sd), -1px -1px 4px var(--neu-sl);
+  --neu-chica: 2px 2px 5px var(--neu-sd), -1px -1px 3px var(--neu-sl);
+}
+:root[data-tema='oscuro'] .sobre-color {
+  --neu-sd: rgba(0, 0, 0, .35);
+  --neu-sl: rgba(255, 255, 255, .05);
+}
+
 /* ---------- botones ---------- */
 .boton { border-radius: 14px; font-family: var(--font-head); font-weight: 600; }
 .boton-suave, .boton-borde {

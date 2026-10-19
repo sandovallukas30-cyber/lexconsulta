@@ -1,3 +1,4 @@
+import { useAjustes, sumarTamanoCodigo, TAMANO_CODIGO_MIN, TAMANO_CODIGO_MAX } from '../../store/useAjustes'
 import { useState, useMemo, useEffect, useRef, useCallback, type ReactNode, type TouchEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -45,6 +46,9 @@ export function ExploradorView() {
 }
 
 function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: CodigoTipo; onCambiarCodigo: () => void }) {
+  const tamanoCodigo = useAjustes((s) => s.tamanoCodigo)
+  const ajustarTamano = useAjustes((s) => s.set)
+
   const modoOscuro = useStore((s) => s.modoOscuro)
   const modernizarLenguaje = useStore((s) => s.modernizarLenguaje)
   const toggleModernizar = useStore((s) => s.toggleModernizar)
@@ -301,6 +305,8 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
           modernizado={modernizarLenguaje}
           onModernizar={toggleModernizar}
           onImprimirCodigo={() => window.print()}
+          tamano={tamanoCodigo}
+          onTamano={(d) => ajustarTamano({ tamanoCodigo: sumarTamanoCodigo(tamanoCodigo, d) })}
         />
       </div>
 
@@ -371,8 +377,8 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
             >
               <div className="flex items-baseline justify-between gap-3 mb-6">
                 <h1
-                  className={`text-2xl sm:text-3xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}
-                  style={{ color: undefined }}
+                  className={`font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}
+                  style={{ fontSize: Math.round(tamanoCodigo * 1.75) }}
                 >
                   <span style={{ color: 'var(--accent-texto)' }}>{seleccionado.a}</span>
                 </h1>
@@ -615,13 +621,15 @@ function ArticulosImprimibles({ articulos, transformarTexto }: { articulos: Arti
 
 /** Menú «⋯» de la cabecera: lo que se usa poco (lenguaje moderno, imprimir el código completo). */
 function MenuMas({
-  modoOscuro, modernizable, modernizado, onModernizar, onImprimirCodigo,
+  modoOscuro, modernizable, modernizado, onModernizar, onImprimirCodigo, tamano, onTamano,
 }: {
   modoOscuro: boolean
   modernizable: boolean
   modernizado: boolean
   onModernizar: () => void
   onImprimirCodigo: () => void
+  tamano: number
+  onTamano: (delta: -1 | 1) => void
 }) {
   const [abierto, setAbierto] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -646,6 +654,20 @@ function MenuMas({
       </button>
       {abierto && (
         <div role="menu" className={`absolute right-0 top-full mt-2 w-72 p-1.5 rounded-2xl shadow-flotante border z-30 ${modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+          <div className="flex items-center gap-2 px-3 min-h-[52px]" role="group" aria-label="Tamaño del texto de los artículos">
+            <i className="ti ti-typography text-lg" aria-hidden="true" />
+            <span className="flex-1 text-sm font-semibold">Tamaño del texto</span>
+            <button type="button" onClick={() => onTamano(-1)} disabled={tamano <= TAMANO_CODIGO_MIN} aria-label="Texto más pequeño" className="boton boton-suave boton-icono">
+              <span className="text-xs font-bold" aria-hidden="true">A</span>
+              <i className="ti ti-minus text-[10px]" aria-hidden="true" />
+            </button>
+            <span className="w-8 text-center text-xs tabular-nums font-semibold" aria-live="polite">{tamano}</span>
+            <button type="button" onClick={() => onTamano(1)} disabled={tamano >= TAMANO_CODIGO_MAX} aria-label="Texto más grande" className="boton boton-suave boton-icono">
+              <span className="text-base font-bold" aria-hidden="true">A</span>
+              <i className="ti ti-plus text-[10px]" aria-hidden="true" />
+            </button>
+          </div>
+          <div className="h-px mx-2 my-1" style={{ background: 'var(--neu-line)' }} aria-hidden="true" />
           {modernizable && (
             <button role="menuitemcheckbox" aria-checked={modernizado} className={item} onClick={() => { onModernizar(); setAbierto(false) }}>
               <i className={`ti ${modernizado ? 'ti-language' : 'ti-language-off'} text-lg`} aria-hidden="true" />
@@ -1671,7 +1693,7 @@ function ArticuloTexto({
   modoOscuro,
   codigo,
   articulo,
-  tamanoFuente = 17,
+  tamanoFuente,
 }: {
   texto: string
   modoOscuro: boolean
@@ -1681,6 +1703,8 @@ function ArticuloTexto({
    *  Explorador); Modo Lectura lo sube para leer más cómodo. */
   tamanoFuente?: number
 }) {
+  const tamanoPropio = useAjustes((s) => s.tamanoCodigo)
+  const tamano = tamanoFuente ?? tamanoPropio
   const { principal, notas } = useMemo(() => separarNotas(texto), [texto])
   const parrafos = useMemo(
     () => principal.split(/\n{2,}/).map((p) => p.trim()).filter((p) => p.length > 0),
@@ -1709,7 +1733,7 @@ function ArticuloTexto({
               subrayados={frasesResaltadas}
               onQuitar={(frase) => quitarSubrayado(codigo, articulo, frase)}
               className="leading-[1.8] mb-4 last:mb-0"
-              style={{ fontSize: tamanoFuente, ...(i === 0 ? {} : { textIndent: '1.5rem' }) }}
+              style={{ fontSize: tamano, ...(i === 0 ? {} : { textIndent: '1.5rem' }) }}
             />
           ))}
         </div>

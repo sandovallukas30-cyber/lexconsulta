@@ -1,3 +1,4 @@
+import { sumarTamanoCodigo, TAMANO_CODIGO_DEFECTO, TAMANO_CODIGO_MIN, TAMANO_CODIGO_MAX } from '../../store/useAjustes'
 import { useAjustes, ZOOMS, prefiereMenosMovimiento, type EstiloUI } from '../../store/useAjustes'
 import { Segmentado } from './Segmentado'
 import { DibujoMascota } from '../hoy/Mascota'
@@ -60,6 +61,26 @@ export function AjustesInterfaz() {
         </div>
         <p className="text-xs mt-2" style={{ color: 'var(--neu-ink2)' }}>
           Agranda o achica todo: texto, botones y espacios. Es propio de cada dispositivo: el celular y el computador pueden tener tamaños distintos.
+        </p>
+      </section>
+
+      <section>
+        <h3 className={titulo} style={{ color: 'var(--neu-ink)' }}>Tamaño del texto de los códigos</h3>
+        <div className="flex items-center gap-3">
+          <button onClick={() => a.set({ tamanoCodigo: sumarTamanoCodigo(a.tamanoCodigo, -1) })} disabled={a.tamanoCodigo <= TAMANO_CODIGO_MIN} aria-label="Texto de los códigos más pequeño" className="boton boton-suave boton-icono">
+            <i className="ti ti-minus" aria-hidden="true" />
+          </button>
+          <span className="w-12 text-center text-sm font-bold tabular-nums" style={{ color: 'var(--neu-ink)' }} aria-live="polite">{a.tamanoCodigo}</span>
+          <button onClick={() => a.set({ tamanoCodigo: sumarTamanoCodigo(a.tamanoCodigo, 1) })} disabled={a.tamanoCodigo >= TAMANO_CODIGO_MAX} aria-label="Texto de los códigos más grande" className="boton boton-suave boton-icono">
+            <i className="ti ti-plus" aria-hidden="true" />
+          </button>
+          <button onClick={() => a.set({ tamanoCodigo: TAMANO_CODIGO_DEFECTO })} disabled={a.tamanoCodigo === TAMANO_CODIGO_DEFECTO} className="boton boton-fantasma boton-chico">Restablecer</button>
+        </div>
+        <p className="mt-3 rounded-xl p-3" style={{ background: 'var(--neu-bg3)', color: 'var(--neu-ink)', fontFamily: 'var(--font-serif)', fontSize: a.tamanoCodigo, lineHeight: 1.7 }}>
+          Las personas nacen libres e iguales en dignidad y derechos.
+        </p>
+        <p className="text-xs mt-2" style={{ color: 'var(--neu-ink2)' }}>
+          Solo cambia las leyes en el Explorador, y va aparte del tamaño de la interfaz: puedes dejar todo pequeño y leer los códigos más grandes. También lo encuentras en el menú «⋯» del Explorador.
         </p>
       </section>
 

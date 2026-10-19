@@ -44,7 +44,7 @@ export function LoQueSigue() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         aria-label="Estás en clase"
-        className="rounded-[22px] px-5 py-5 flex flex-col sm:flex-row sm:items-center gap-4"
+        className="sobre-color rounded-[22px] px-5 py-5 flex flex-col sm:flex-row sm:items-center gap-4"
         style={{ background: 'color-mix(in srgb, var(--accent-base) 20%, var(--neu-bg))', boxShadow: 'var(--neu-elevada)' }}
       >
         <span className="w-14 h-14 rounded-[16px] flex items-center justify-center flex-shrink-0" style={{ background: 'var(--neu-bg)', boxShadow: 'var(--neu-plana)' }}>
@@ -90,7 +90,7 @@ export function LoQueSigue() {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       aria-label="Lo que sigue"
-      className="rounded-[22px] px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-4"
+      className="sobre-color rounded-[22px] px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-4"
       style={{ background: 'color-mix(in srgb, var(--accent-base) 12%, var(--neu-bg))', boxShadow: 'var(--neu-elevada)' }}
     >
       <span className="w-12 h-12 rounded-[14px] flex items-center justify-center flex-shrink-0" style={{ background: 'var(--neu-bg)', boxShadow: 'var(--neu-plana)' }}>
