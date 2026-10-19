@@ -477,15 +477,20 @@ function SesionesDeHoy() {
   )
 }
 
-/** Estadísticas e Historial con el mismo fondo animado que eligió la persona (si eligió uno).
- *  Los paneles de esas pestañas ya usan los colores del sistema, así que se adaptan solos. */
-function ConFondo({ concentracion, children }: { concentracion: boolean; children: React.ReactNode }) {
+/** Estadísticas e Historial: el fondo elegido aparece solo como una franja arriba (un detalle),
+ *  y los paneles de abajo quedan como siempre, limpios y fáciles de leer. */
+function ConFondo({ concentracion, titulo, children }: { concentracion: boolean; titulo: string; children: React.ReactNode }) {
   const conFondo = useConFondo()
   if (!conFondo) return <>{children}</>
   return (
-    <div className="enf-tarjeta enf-con-fondo relative overflow-hidden rounded-tarjeta border p-3 sm:p-5">
-      {!concentracion && <FondoEnfoque vivo={false} />}
-      <div className="relative z-10">{children}</div>
+    <div className="space-y-4">
+      <div className="enf-tarjeta enf-con-fondo relative overflow-hidden rounded-tarjeta border h-24 sm:h-28">
+        {!concentracion && <FondoEnfoque vivo={false} />}
+        <div className="relative z-10 h-full flex items-end p-4 sm:p-5">
+          <span className="text-lg sm:text-xl font-bold text-white" style={{ textShadow: '0 2px 10px rgba(0,0,0,.55)' }}>{titulo}</span>
+        </div>
+      </div>
+      {children}
     </div>
   )
 }
@@ -537,12 +542,12 @@ export function EnfoqueView() {
           </div>
         )}
         {pestana === 'estadisticas' && (
-          <ConFondo concentracion={concentracion}>
+          <ConFondo concentracion={concentracion} titulo="Estadísticas">
             <EnfoqueEstadisticas />
           </ConFondo>
         )}
         {pestana === 'historial' && (
-          <ConFondo concentracion={concentracion}>
+          <ConFondo concentracion={concentracion} titulo="Historial">
             <EnfoqueHistorial />
           </ConFondo>
         )}
