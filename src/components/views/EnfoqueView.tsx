@@ -477,24 +477,6 @@ function SesionesDeHoy() {
   )
 }
 
-/** Estadísticas e Historial: el fondo elegido aparece solo como una franja arriba (un detalle),
- *  y los paneles de abajo quedan como siempre, limpios y fáciles de leer. */
-function ConFondo({ concentracion, titulo, children }: { concentracion: boolean; titulo: string; children: React.ReactNode }) {
-  const conFondo = useConFondo()
-  if (!conFondo) return <>{children}</>
-  return (
-    <div className="space-y-4">
-      <div className="enf-tarjeta enf-con-fondo relative overflow-hidden rounded-tarjeta border h-24 sm:h-28">
-        {!concentracion && <FondoEnfoque vivo={false} />}
-        <div className="relative z-10 h-full flex items-end p-4 sm:p-5">
-          <span className="text-lg sm:text-xl font-bold text-white" style={{ textShadow: '0 2px 10px rgba(0,0,0,.55)' }}>{titulo}</span>
-        </div>
-      </div>
-      {children}
-    </div>
-  )
-}
-
 type Pestana = 'temporizador' | 'estadisticas' | 'historial'
 
 export function EnfoqueView() {
@@ -541,16 +523,8 @@ export function EnfoqueView() {
             </div>
           </div>
         )}
-        {pestana === 'estadisticas' && (
-          <ConFondo concentracion={concentracion} titulo="Estadísticas">
-            <EnfoqueEstadisticas />
-          </ConFondo>
-        )}
-        {pestana === 'historial' && (
-          <ConFondo concentracion={concentracion} titulo="Historial">
-            <EnfoqueHistorial />
-          </ConFondo>
-        )}
+        {pestana === 'estadisticas' && <EnfoqueEstadisticas />}
+        {pestana === 'historial' && <EnfoqueHistorial />}
         {concentracion && (
           <Suspense fallback={null}>
             <ModoConcentracion onCerrar={() => setConcentracion(false)} />
