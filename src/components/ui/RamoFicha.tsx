@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import type { Ramo, Modulo } from '../../types'
 import { useStore } from '../../store/useStore'
 import { ICONO_RAMO_DEFECTO, diasHasta, formatearCountdown, urgenciaDe } from '../../services/modulosAcademico'
-import { disenoDe, profesoresDe, resumenProfesores } from '../../services/disenoRamo'
+import { disenoDe, profesoresDe, resumenProfesores, tintaPastel } from '../../services/disenoRamo'
 import { formatoNota, resumenNotas } from '../../services/notas'
 import { hoyISO } from '../../services/tareasPlan'
 import { BandaRamo } from './BandaRamo'
@@ -48,7 +48,7 @@ export function RamoFicha({ ramo, modulos, onClick, onEditar }: Props) {
   const tareas = useStore((s) => s.tareasPlan)
   const color = ramo.color ?? VERDE
   const icono = ramo.icono ?? ICONO_RAMO_DEFECTO
-  const tinta = '#ffffff' // la franja es suave y oscura: el texto va siempre en blanco
+  const tinta = tintaPastel(color) // la franja es pastel: el texto va en un tono oscuro del mismo color
   const profesores = profesoresDe(ramo)
 
   const resumen = useMemo(() => {
@@ -152,7 +152,7 @@ export function RamoFicha({ ramo, modulos, onClick, onEditar }: Props) {
         title="Editar ramo"
         aria-label={`Editar ramo ${ramo.nombre}`}
         className="sin-neu absolute top-2 right-2 w-10 h-10 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
-        style={{ background: 'rgba(0,0,0,.28)', color: '#fff', backdropFilter: 'blur(4px)' }}
+        style={{ background: 'rgba(255,255,255,.65)', color: tinta, backdropFilter: 'blur(4px)' }}
       >
         <i className="ti ti-pencil text-sm" aria-hidden="true" />
       </button>

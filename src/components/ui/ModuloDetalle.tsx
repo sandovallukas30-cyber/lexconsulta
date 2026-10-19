@@ -3,7 +3,7 @@ import { useStore } from '../../store/useStore'
 import type { Modulo, Ramo } from '../../types'
 import { coleccionesDeModulo } from '../../services/modulosAcademico'
 import { confirmarSalida } from '../../services/guardiaCambios'
-import { disenoDe, profesoresDe } from '../../services/disenoRamo'
+import { disenoDe, profesoresDe, tintaPastel } from '../../services/disenoRamo'
 import { VERDE, type Tab } from './moduloDetalle/utilidades'
 import { TabResumen } from './moduloDetalle/TabResumen'
 import { TabClases } from './moduloDetalle/TabClases'
@@ -104,11 +104,11 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEdit
     setVistaActiva('mapasmentales')
   }
 
-  const tinta = '#ffffff' // la franja es suave y oscura: el texto va siempre en blanco
+  const tinta = tintaPastel(modulo.color) // la franja es pastel: el texto va en un tono oscuro del mismo color
   const profesores = ramo ? profesoresDe(ramo) : []
   const lugar = ramo ? [ramo.horario, ramo.sala].filter(Boolean).join(' · ') : ''
   const botonBanda = 'sin-neu inline-flex items-center gap-1.5 px-3 min-h-[40px] rounded-full text-xs font-bold transition-colors'
-  const estiloBotonBanda = { background: tinta === '#ffffff' ? 'rgba(255,255,255,.22)' : 'rgba(31,35,68,.14)', color: tinta }
+  const estiloBotonBanda = { background: 'rgba(255,255,255,.6)', color: tinta }
 
   // contadores en el selector corto de las secciones de dos pantallas
   const cuentas: Partial<Record<Tab, number>> = {
@@ -137,7 +137,7 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEdit
               <div className="flex items-center gap-3.5 min-w-0">
                 <span
                   className="w-12 h-12 sm:w-14 sm:h-14 rounded-[18px] flex items-center justify-center flex-shrink-0"
-                  style={{ background: tinta === '#ffffff' ? 'rgba(255,255,255,.22)' : 'rgba(31,35,68,.12)' }}
+                  style={{ background: 'rgba(255,255,255,.6)' }}
                 >
                   <i className={`ti ${modulo.icono} text-2xl sm:text-3xl`} aria-hidden="true" />
                 </span>
@@ -170,7 +170,7 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEdit
                 {profesores.length > 0 && (
                   <ul className="flex flex-wrap items-center gap-1.5" aria-label="Profesores">
                     {profesores.map((nombre) => (
-                      <li key={nombre} className="inline-flex items-center gap-1.5 pl-2 pr-3 py-1 rounded-full font-semibold" style={{ background: tinta === '#ffffff' ? 'rgba(255,255,255,.2)' : 'rgba(31,35,68,.1)' }}>
+                      <li key={nombre} className="inline-flex items-center gap-1.5 pl-2 pr-3 py-1 rounded-full font-semibold" style={{ background: 'rgba(255,255,255,.6)' }}>
                         <i className="ti ti-user text-sm" aria-hidden="true" />
                         {nombre}
                       </li>

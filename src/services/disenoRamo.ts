@@ -84,18 +84,20 @@ function deHsl(h: number, s: number, l: number): string {
   return `#${[f(0), f(8), f(4)].map((v) => Math.round(v * 255).toString(16).padStart(2, '0')).join('')}`
 }
 
-const CONTRASTE_MIN = 4.6
+/** Versión pastel del color de un ramo para la franja de su ficha y su cabecera: clara y alegre, con el
+ *  mismo tono que el color elegido (el color del ramo en sí no se toca; solo cambia cómo se pinta la franja).
+ *  Los grises quedan grises. Si el color no es un #rrggbb (p. ej. una variable CSS), se mezcla con blanco. */
+export function colorPastel(color: string): string {
+  if (!/^#[0-9a-fA-F]{6}$/.test(color)) return `color-mix(in srgb, ${color} 30%, #ffffff)`
+  const [h, s0] = aHsl(color)
+  const s = s0 < 0.08 ? s0 : Math.min(Math.max(s0 * 0.85, 0.5), 0.78)
+  return deHsl(h, s, 0.85)
+}
 
-/** Versión suave del color de un ramo para la franja de su ficha y su cabecera: menos saturada y
- *  lo bastante oscura para que el texto blanco se lea siempre (el color elegido para el ramo no se
- *  toca; solo cambia cómo se pinta la franja). Si el color no es un #rrggbb (p. ej. una variable
- *  CSS), se mezcla con una tinta oscura para lograr el mismo efecto. */
-export function colorTenue(color: string): string {
-  if (!/^#[0-9a-fA-F]{6}$/.test(color)) return `color-mix(in srgb, ${color} 72%, #2a2f55)`
-  const [h, s0, l0] = aHsl(color)
-  const s = Math.min(s0 * 0.58, 0.5)
-  let l = Math.min(Math.max(l0, 0.3), 0.46)
-  // si todavía no llega al contraste del texto blanco, se oscurece de a poco
-  while (l > 0.2 && 1.05 / (luz(deHsl(h, s, l)) + 0.05) < CONTRASTE_MIN) l -= 0.01
-  return deHsl(h, s, l)
+/** Texto que va sobre la franja pastel: un tono muy oscuro del mismo color (se lee bien y no es negro duro). */
+export function tintaPastel(color: string): string {
+  if (!/^#[0-9a-fA-F]{6}$/.test(color)) return '#1f2344'
+  const [h, s0] = aHsl(color)
+  const s = s0 < 0.08 ? s0 : Math.min(Math.max(s0 * 0.6, 0.35), 0.6)
+  return deHsl(h, s, 0.2)
 }
