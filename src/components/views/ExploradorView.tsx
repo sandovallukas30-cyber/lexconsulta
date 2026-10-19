@@ -278,29 +278,16 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
           <span className="hidden md:inline">Modo lectura</span>
         </button>
 
-        {necesitaModernizacion(tipoActivo) && (
-          <button
-            onClick={toggleModernizar}
-            title={modernizarLenguaje ? 'Mostrar texto original (siglo XIX)' : 'Modernizar lenguaje antiguo'}
-            aria-label={modernizarLenguaje ? 'Mostrar texto original' : 'Modernizar lenguaje antiguo'}
-            aria-pressed={modernizarLenguaje}
-            className="boton boton-suave max-lg:boton-icono"
-          >
-            <i className={`ti ${modernizarLenguaje ? 'ti-language' : 'ti-language-off'} text-base`} />
-            <span className="hidden lg:inline">Lenguaje moderno</span>
-          </button>
-        )}
-
-
         <button
           onClick={() => setBusquedaAbierta(true)}
           aria-label="Buscar o ir a un artículo (Ctrl+K)"
-          className="boton boton-suave max-sm:boton-icono font-normal sm:min-w-[220px]"
+          title="Buscar o ir a un artículo"
+          className="boton boton-suave max-xl:boton-icono font-normal xl:min-w-[220px]"
         >
           <i className="ti ti-search text-base" />
-          <span className="hidden sm:inline flex-1 text-left">Buscar o ir a artículo…</span>
+          <span className="hidden xl:inline flex-1 text-left">Buscar o ir a artículo…</span>
           <kbd
-            className={`hidden sm:inline text-[10px] px-1.5 py-0.5 rounded font-mono ${
+            className={`hidden xl:inline text-[10px] px-1.5 py-0.5 rounded font-mono ${
               modoOscuro ? 'bg-zinc-900 text-zinc-500' : 'bg-white text-zinc-400 border border-zinc-200'
             }`}
           >
@@ -308,14 +295,13 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
           </kbd>
         </button>
 
-        <button
-          onClick={() => window.print()}
-          title="Imprimir el código COMPLETO o guardarlo como PDF (para un solo artículo, usa el ícono junto al artículo)"
-          aria-label="Imprimir o guardar el código completo como PDF"
-          className="boton boton-fantasma boton-icono max-sm:hidden"
-        >
-          <i className="ti ti-printer text-base" />
-        </button>
+        <MenuMas
+          modoOscuro={modoOscuro}
+          modernizable={necesitaModernizacion(tipoActivo)}
+          modernizado={modernizarLenguaje}
+          onModernizar={toggleModernizar}
+          onImprimirCodigo={() => window.print()}
+        />
       </div>
 
       <VistaImprimibleCodigo codigo={codigo} tipo={tipoActivo} transformarTexto={transformarTexto} />
@@ -328,39 +314,44 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
         />
       )}
 
-      {seleccionado && (
+      {/* Ruta dentro del código + posición: una sola franja (el progreso es su borde inferior).
+          El nombre del código ya está arriba, no se repite. */}
+      <div className={`relative flex-shrink-0 border-b ${modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+        {seleccionado && (
+          <div className={`px-4 sm:px-6 py-2 text-xs flex items-center gap-1.5 overflow-x-auto ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
+            {[
+              seleccionado.libro && `Libro ${seleccionado.libro}`,
+              seleccionado.titulo && `Título ${seleccionado.titulo}`,
+              seleccionado.capitulo && `Cap. ${seleccionado.capitulo}`,
+              seleccionado.parrafo && `Párrafo ${seleccionado.parrafo}`,
+            ]
+              .filter((x): x is string => !!x)
+              .map((parte) => (
+                <span key={parte} className="inline-flex items-center gap-1.5 min-w-0">
+                  <span className="truncate max-w-[16rem]" title={parte}>{parte}</span>
+                  <Sep />
+                </span>
+              ))}
+            <span className="font-semibold whitespace-nowrap" style={{ color: 'var(--accent-texto)' }}>
+              {seleccionado.a}
+            </span>
+          </div>
+        )}
+        {/* Posición dentro del código (C1): con 2.566 artículos, "12 de 2566" solo no da idea de cuánto falta */}
         <div
-          className={`px-4 sm:px-6 py-2.5 border-b text-xs flex items-center gap-1.5 overflow-x-auto ${
-            modoOscuro ? 'bg-zinc-900 border-zinc-800 text-zinc-400' : 'bg-white border-zinc-200 text-zinc-500'
-          }`}
+          className={`h-[3px] ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-100'} ${seleccionado ? 'absolute left-0 right-0 bottom-0' : ''}`}
+          role="progressbar"
+          aria-label="Posición en el código"
+          aria-valuemin={1}
+          aria-valuemax={arts.length}
+          aria-valuenow={indiceActual + 1}
+          title={`Artículo ${indiceActual + 1} de ${arts.length}`}
         >
-          <span className="text-zinc-500 whitespace-nowrap flex-shrink-0">{codigo.codigo}</span>
-          {seleccionado.libro && <><Sep /><span className="truncate">Libro {seleccionado.libro}</span></>}
-          {seleccionado.titulo && <><Sep /><span className="truncate">Título {seleccionado.titulo}</span></>}
-          {seleccionado.capitulo && <><Sep /><span className="truncate">Cap. {seleccionado.capitulo}</span></>}
-          {seleccionado.parrafo && <><Sep /><span className="truncate">Párrafo {seleccionado.parrafo}</span></>}
-          <Sep />
-          <span className="font-semibold whitespace-nowrap" style={{ color: 'var(--accent-texto)' }}>
-            {seleccionado.a}
-          </span>
+          <div
+            className="h-full transition-[width] duration-200 ease-out"
+            style={{ width: `${arts.length > 1 ? ((indiceActual + 1) / arts.length) * 100 : 100}%`, background: VERDE }}
+          />
         </div>
-      )}
-
-      {/* Posición dentro del código (C1): con 2.566 artículos, "12 de 2566"
-          solo no da idea de cuánto falta */}
-      <div
-        className={`h-[3px] flex-shrink-0 ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-100'}`}
-        role="progressbar"
-        aria-label="Posición en el código"
-        aria-valuemin={1}
-        aria-valuemax={arts.length}
-        aria-valuenow={indiceActual + 1}
-        title={`Artículo ${indiceActual + 1} de ${arts.length}`}
-      >
-        <div
-          className="h-full transition-[width] duration-200 ease-out"
-          style={{ width: `${arts.length > 1 ? ((indiceActual + 1) / arts.length) * 100 : 100}%`, background: VERDE }}
-        />
       </div>
 
       <div ref={refArticulo} className="flex-1 overflow-y-auto">
@@ -436,11 +427,15 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
             align="left"
           />
 
-          <Carrusel
-            arts={cercanos}
-            actualId={seleccionado?.a}
-            onSelect={(a) => setSeleccionadoId(a)}
-          />
+          {/* los artículos vecinos solo en pantallas grandes: en tablet bastan Anterior y Siguiente */}
+          <div className="flex sm:hidden xl:flex flex-1 min-w-0">
+            <Carrusel
+              arts={cercanos}
+              actualId={seleccionado?.a}
+              onSelect={(a) => setSeleccionadoId(a)}
+            />
+          </div>
+          <div className="hidden sm:block xl:hidden flex-1" aria-hidden="true" />
 
           <NavBtn
             disabled={!siguiente}
@@ -615,6 +610,56 @@ function ArticulosImprimibles({ articulos, transformarTexto }: { articulos: Arti
         </div>
       ))}
     </>
+  )
+}
+
+/** Menú «⋯» de la cabecera: lo que se usa poco (lenguaje moderno, imprimir el código completo). */
+function MenuMas({
+  modoOscuro, modernizable, modernizado, onModernizar, onImprimirCodigo,
+}: {
+  modoOscuro: boolean
+  modernizable: boolean
+  modernizado: boolean
+  onModernizar: () => void
+  onImprimirCodigo: () => void
+}) {
+  const [abierto, setAbierto] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!abierto) return
+    const fuera = (e: Event) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setAbierto(false)
+    }
+    const tecla = (e: KeyboardEvent) => e.key === 'Escape' && setAbierto(false)
+    document.addEventListener('pointerdown', fuera)
+    document.addEventListener('keydown', tecla)
+    return () => {
+      document.removeEventListener('pointerdown', fuera)
+      document.removeEventListener('keydown', tecla)
+    }
+  }, [abierto])
+  const item = `sin-neu w-full flex items-center gap-3 px-3 min-h-[48px] text-left text-sm font-semibold rounded-xl ${modoOscuro ? 'hover:bg-zinc-800 text-zinc-100' : 'hover:bg-zinc-100 text-zinc-800'}`
+  return (
+    <div className="relative" ref={ref}>
+      <button onClick={() => setAbierto((v) => !v)} aria-label="Más opciones" aria-expanded={abierto} aria-haspopup="menu" className="boton boton-suave boton-icono">
+        <i className="ti ti-dots text-lg" aria-hidden="true" />
+      </button>
+      {abierto && (
+        <div role="menu" className={`absolute right-0 top-full mt-2 w-72 p-1.5 rounded-2xl shadow-flotante border z-30 ${modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+          {modernizable && (
+            <button role="menuitemcheckbox" aria-checked={modernizado} className={item} onClick={() => { onModernizar(); setAbierto(false) }}>
+              <i className={`ti ${modernizado ? 'ti-language' : 'ti-language-off'} text-lg`} aria-hidden="true" />
+              <span className="flex-1">Lenguaje moderno</span>
+              {modernizado && <i className="ti ti-check text-base" style={{ color: 'var(--accent-texto)' }} aria-hidden="true" />}
+            </button>
+          )}
+          <button role="menuitem" className={item} onClick={() => { onImprimirCodigo(); setAbierto(false) }}>
+            <i className="ti ti-printer text-lg" aria-hidden="true" />
+            <span className="flex-1">Imprimir el código completo</span>
+          </button>
+        </div>
+      )}
+    </div>
   )
 }
 
