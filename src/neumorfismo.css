@@ -15,7 +15,7 @@
   --neu-bg2: #eef1f9;
   --neu-bg3: #dde3f1;
   --neu-sd: #c3cbe0; /* sombra oscura */
-  --neu-sl: #ffffff; /* sombra clara */
+  --neu-sl: rgba(255, 255, 255, 0.55); /* sombra clara (brillo): tenue, para que no se vea como un halo */
   --neu-line: #d7dcee;
   --neu-card: var(--neu-bg);
   --neu-ink: #1f2344;
@@ -49,9 +49,9 @@
 
 /* sombras como variables para reutilizarlas */
 :root {
-  --neu-elevada: 9px 9px 18px var(--neu-sd), -9px -9px 18px var(--neu-sl);
-  --neu-plana: 4px 4px 9px var(--neu-sd), -4px -4px 9px var(--neu-sl);
-  --neu-chica: 3px 3px 6px var(--neu-sd), -3px -3px 6px var(--neu-sl);
+  --neu-elevada: 8px 8px 16px var(--neu-sd), -6px -6px 12px var(--neu-sl);
+  --neu-plana: 4px 4px 9px var(--neu-sd), -3px -3px 7px var(--neu-sl);
+  --neu-chica: 3px 3px 6px var(--neu-sd), -2px -2px 5px var(--neu-sl);
   --neu-presionada: inset 5px 5px 10px var(--neu-sd), inset -5px -5px 10px var(--neu-sl);
   --neu-presionada-chica: inset 3px 3px 6px var(--neu-sd), inset -3px -3px 6px var(--neu-sl);
 }
