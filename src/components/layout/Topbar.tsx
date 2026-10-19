@@ -1,7 +1,5 @@
 import { useStore } from '../../store/useStore'
 import { MiniEnfoque } from './MiniEnfoque'
-import { BotonCuenta } from '../ui/ModalCuenta'
-import { cuentasDisponibles } from '../../services/supabase'
 
 interface TopbarProps {
   onAbrirRegistro?: () => void
@@ -30,7 +28,6 @@ const MOSTRAR_CONTADOR_CONSULTAS = false
 export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
   const vistaActiva = useStore((s) => s.vistaActiva)
   const modoOscuro = useStore((s) => s.modoOscuro)
-  const toggleModoOscuro = useStore((s) => s.toggleModoOscuro)
   const usuarioEmail = useStore((s) => s.usuarioEmail)
   const usuarioRegistrado = useStore((s) => s.usuarioRegistrado)
   const consultasRestantesStore = useStore((s) => s.consultasRestantes)
@@ -46,7 +43,13 @@ export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
   const pocasConsultas = restantes <= 2 && restantes > 0
 
   return (
-    <header className="h-14 sm:h-[72px] px-3 sm:px-8 pt-3 flex items-center justify-between gap-2 flex-shrink-0">
+    <>
+    {/* Con el menú fijo (pantallas grandes) no hay franja superior: el contenido empieza arriba del todo y
+        solo flota, si hay un temporizador en marcha, su píldora. La cuenta y el modo oscuro están al pie del menú. */}
+    <div className="hidden escritorio:block absolute top-3 right-6 z-30">
+      <MiniEnfoque />
+    </div>
+    <header className="escritorio:hidden h-14 sm:h-[72px] px-3 sm:px-8 pt-3 flex items-center justify-between gap-2 flex-shrink-0">
       <div className="flex items-center gap-2 sm:gap-4 min-w-0">
         <button
           onClick={() => setMenuMovilAbierto(true)}
@@ -62,16 +65,6 @@ export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
 
       <div className="flex items-center gap-2">
         <MiniEnfoque />
-        {cuentasDisponibles && <BotonCuenta />}
-        <button
-          onClick={toggleModoOscuro}
-          className="boton boton-suave boton-icono"
-          title={modoOscuro ? 'Modo claro' : 'Modo oscuro'}
-          aria-label={modoOscuro ? 'Activar modo claro' : 'Activar modo oscuro'}
-        >
-          <i className={`ti ${modoOscuro ? 'ti-sun' : 'ti-moon'} text-lg`} />
-        </button>
-
         {MOSTRAR_CONTADOR_CONSULTAS && onAbrirRegistro && (
           <button
             onClick={onAbrirRegistro}
@@ -115,5 +108,6 @@ export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
 
       </div>
     </header>
+    </>
   )
 }

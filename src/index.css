@@ -34,7 +34,8 @@
   /* Tipografía: Figtree en toda la app (los títulos que antes usaban
      font-serif ahora también), como en Orbis: limpia y redondeada. */
   --font-sans: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', 'Segoe UI Variable', 'Segoe UI', ui-sans-serif, system-ui, sans-serif;
-  --font-serif: 'Sora Variable', 'Sora', 'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, sans-serif;
+  /* Serifa de siempre para los textos jurídicos (títulos y números de artículos): Georgia y compañía */
+  --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
 
   /* Grises con un matiz azulado frío (reemplazan al zinc neutro de Tailwind).
      Claro: 50 = fondo de página, 100 = barra lateral, 200 = bordes. Oscuro:

@@ -6,6 +6,8 @@ import { ModalCodigos } from '../ui/ModalCodigos'
 import { ModalAcercaDe } from '../ui/ModalAcercaDe'
 import { esAdmin } from '../../config/admin'
 import { useEsMovil } from '../../hooks/useEsMovil'
+import { BotonCuenta } from '../ui/ModalCuenta'
+import { cuentasDisponibles } from '../../services/supabase'
 import type { VistaId } from '../../types'
 
 interface ItemMenu {
@@ -40,6 +42,7 @@ export function Sidebar() {
   const codigos = useStore((s) => s.codigos)
   const usuarioEmail = useStore((s) => s.usuarioEmail)
   const modoOscuro = useStore((s) => s.modoOscuro)
+  const toggleModoOscuro = useStore((s) => s.toggleModoOscuro)
   const colapsadoEscritorio = useStore((s) => s.sidebarColapsado)
   const toggleSidebarEscritorio = useStore((s) => s.toggleSidebar)
   const menuMovilAbierto = useStore((s) => s.menuMovilAbierto)
@@ -273,6 +276,22 @@ export function Sidebar() {
               )}
             </AnimatePresence>
           </button>
+
+          {/* cuenta y modo oscuro: al pie del menú, fuera de la franja superior */}
+          <div
+            className={`mt-2 pt-2 border-t flex items-center ${colapsado ? 'flex-col gap-2' : 'justify-between gap-2 px-1'}`}
+            style={{ borderColor: 'var(--neu-line)' }}
+          >
+            {cuentasDisponibles && <BotonCuenta compacto={colapsado} />}
+            <button
+              onClick={toggleModoOscuro}
+              className="boton boton-suave boton-icono"
+              title={modoOscuro ? 'Modo claro' : 'Modo oscuro'}
+              aria-label={modoOscuro ? 'Activar modo claro' : 'Activar modo oscuro'}
+            >
+              <i className={`ti ${modoOscuro ? 'ti-sun' : 'ti-moon'} text-lg`} aria-hidden="true" />
+            </button>
+          </div>
         </div>
       </motion.aside>
 

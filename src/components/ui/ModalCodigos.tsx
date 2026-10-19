@@ -91,7 +91,7 @@ export function ModalCodigos({ abierto, onCerrar }: Props) {
             aria-modal="true"
             aria-label="Códigos y normas"
             onClick={(e) => e.stopPropagation()}
-            className={`max-w-2xl w-full max-h-[85vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col ${
+            className={`zona-juridica max-w-2xl w-full max-h-[85vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col ${
               modoOscuro ? 'bg-zinc-900' : 'bg-white'
             }`}
           >

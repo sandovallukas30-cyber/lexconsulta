@@ -30,8 +30,8 @@ function Avatar({ nombre, url, grande }: { nombre: string; url: string | null; g
   )
 }
 
-/** Botón de la barra superior: «Entrar» o la foto de la cuenta. */
-export function BotonCuenta() {
+/** Botón de la cuenta (al pie del menú lateral): «Entrar» o la foto de la cuenta. `compacto` = solo ícono. */
+export function BotonCuenta({ compacto = false }: { compacto?: boolean }) {
   const perfil = useCuenta((s) => s.perfil)
   const listo = useCuenta((s) => s.listo)
   const abrir = useCuenta((s) => s.abrirModal)
@@ -41,8 +41,9 @@ export function BotonCuenta() {
       <Avatar nombre={perfil.nombre} url={perfil.avatar} />
     </button>
   ) : (
-    <button onClick={abrir} className="boton boton-suave boton-chico">
-      <i className="ti ti-user-circle" aria-hidden="true" /> Entrar
+    <button onClick={abrir} aria-label="Entrar a tu cuenta" title="Entrar a tu cuenta" className={`boton boton-suave ${compacto ? 'boton-icono' : 'boton-chico'}`}>
+      <i className="ti ti-user-circle" aria-hidden="true" />
+      {!compacto && ' Entrar'}
     </button>
   )
 }

@@ -133,10 +133,10 @@ function App() {
       className={`flex h-full w-full overflow-hidden bg-[var(--neu-bg)] ${modoOscuro ? 'dark' : ''}`}
     >
       <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden relative">
         <Topbar onAbrirRegistro={() => setModalRegistroAbierto(true)} />
         <div className="flex-1 flex overflow-hidden">
-          <main className="flex-1 overflow-y-auto">
+          <main data-vista={vistaActiva} className="flex-1 overflow-y-auto">
             <LimiteError key={vistaActiva} modoOscuro={modoOscuro}>
               <Suspense fallback={<CargandoVista modoOscuro={modoOscuro} />}>
                 <VistaComponente />
