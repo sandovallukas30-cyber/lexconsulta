@@ -381,7 +381,8 @@ export const useStore = create<AppState>()(
       coleccionActivaId: null,
       modoOscuro: false,
       modoLecturaTema: 'claro',
-      sidebarColapsado: false,
+      // en tablet (menos de 1280 px) el menú arranca compacto para dejar sitio al contenido; se puede abrir con el botón
+      sidebarColapsado: typeof window !== 'undefined' && window.innerWidth < 1280,
       menuMovilAbierto: false,
       modernizarLenguaje: false,
       modalPerfilAbierto: false,

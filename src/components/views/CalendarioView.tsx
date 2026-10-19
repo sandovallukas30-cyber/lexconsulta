@@ -98,7 +98,7 @@ function CeldaDia({
     <button
       onClick={onElegir}
       aria-pressed={seleccionada}
-      className={`sin-tactil text-left min-h-[58px] sm:min-h-[92px] p-1 sm:p-1.5 rounded-control flex flex-col gap-1 transition-colors border ${
+      className={`sin-tactil text-left min-h-[58px] sm:min-h-[76px] xl:min-h-[92px] p-1 sm:p-1.5 rounded-control flex flex-col gap-1 transition-colors border ${
         seleccionada
           ? 'border-[var(--accent-base)] bg-[color-mix(in_srgb,var(--accent-base)_8%,transparent)]'
           : e.modoOscuro
@@ -115,7 +115,8 @@ function CeldaDia({
       >
         {dia}
       </span>
-      <span className="hidden sm:flex flex-col gap-0.5 min-w-0 w-full">
+      {/* en pantallas grandes, el título de cada cosa; en tablet y móvil, puntos de color (el detalle está en el panel del día) */}
+      <span className="hidden xl:flex flex-col gap-0.5 min-w-0 w-full">
         {items.slice(0, 3).map((it) => (
           <span key={it.id} className={e.texto}>
             <Etiqueta it={it} />
@@ -124,9 +125,9 @@ function CeldaDia({
         {items.length > 3 && <span className={`text-[11px] px-1 ${e.suave}`}>+{items.length - 3} más</span>}
       </span>
       {/* móvil: solo puntos */}
-      <span className="flex sm:hidden gap-0.5 flex-wrap px-0.5">
+      <span className="flex xl:hidden gap-1 flex-wrap px-0.5">
         {items.slice(0, 4).map((it) => (
-          <span key={it.id} className="w-1.5 h-1.5 rounded-full" style={{ background: it.tipo === 'evaluacion' ? '#dc2626' : 'var(--accent-base)', opacity: it.hecha ? 0.4 : 1 }} />
+          <span key={it.id} className="w-2 h-2 rounded-full" style={{ background: it.tipo === 'evaluacion' ? '#dc2626' : 'var(--accent-base)', opacity: it.hecha ? 0.4 : 1 }} />
         ))}
         {hayEval && <span className="sr-only">Hay una evaluación</span>}
       </span>
