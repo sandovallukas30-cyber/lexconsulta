@@ -333,7 +333,7 @@ export function Privacidad({ modoOscuro }: { modoOscuro: boolean }) {
   return (
     <div>
       <P modoOscuro={modoOscuro}>
-        <em>Última actualización: 17 de octubre de 2026.</em>
+        <em>Última actualización: 19 de octubre de 2026.</em>
       </P>
 
       <H modoOscuro={modoOscuro}>1. Quién es responsable</H>
@@ -391,7 +391,10 @@ export function Privacidad({ modoOscuro }: { modoOscuro: boolean }) {
         descarta automáticamente. Intervienen como proveedores: Vercel (alojamiento; puede registrar datos técnicos de
         conexión como la IP), Supabase (cuentas y base de datos), Google (solo si eliges entrar con tu cuenta de Google),
         Resend (correo) y Anthropic (juegos). Cada uno trata los datos según sus propias políticas. No usamos cookies de
-        seguimiento ni analítica de terceros, y no vendemos datos.
+        seguimiento ni analítica de terceros, y no vendemos datos. Para detectar fallos, la aplicación envía a nuestro
+        propio servidor avisos técnicos <strong>anónimos</strong>: el tipo de error, la sección abierta, la versión de la
+        aplicación, el tipo de pantalla y la velocidad de carga. No incluyen tu nombre, tu correo ni tus apuntes, no
+        se asocian a tu cuenta y no se usan para identificarte.
       </P>
 
       <H modoOscuro={modoOscuro}>8. Tus derechos y cómo ejercerlos</H>

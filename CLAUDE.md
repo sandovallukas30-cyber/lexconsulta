@@ -20,6 +20,8 @@ App web para estudiantes de Derecho en Chile (React 19 + TS + Vite + Tailwind 4 
 - El service worker (`public/sw.js`) no debe cachear HTML; si se toca, recordar al usuario recargar dos veces.
 - El store persistido (`prima-lex-storage-v3`) migra encadenado: para cambiar la forma de los datos, sumar un bloque `if (version < N)` y subir `version`.
 - **Íconos Tabler recortados** (`src/assets/iconos/`, 24 KB en vez de 495). Si usas un `ti-…` nuevo: `npm i --no-save subset-font && node scripts/subset_iconos.mjs`; un test avisa si falta uno.
+- **CSP estricta** en `vercel.json`: si agregas una fuente, API o iframe de otro dominio, hay que permitirlo ahí (connect-src, frame-src, img-src…) o el navegador lo bloquea. Prueba con la app compilada. Nada de Google Fonts: las fuentes van con la app (@fontsource).
+- **Avisos técnicos anónimos** (`services/reporteTecnico.ts` → `api/reportar.ts`): errores y Core Web Vitals, sin datos personales; se leen en los logs de Vercel (`[reporte]`). Si cambia lo que se envía, actualizar la sección 7 de Privacidad.
 - Zustand: no suscribirse a todo el store en componentes; selectores finos.
 - PowerShell, no Bash, para npm/docker; el puerto 5432 lo ocupa un Postgres nativo.
 

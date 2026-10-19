@@ -195,7 +195,7 @@ html, body, #root { height: 100%; width: 100%; overflow: hidden; }
    los nodos que el sans-serif por defecto. Con clase propia (no en :root)
    para no cambiar la tipografía del resto de la app. */
 .fuente-mapa-mental, .fuente-mapa-mental input, .fuente-mapa-mental textarea {
-  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif;
 }
 
 /* Exportar a PDF (Ctrl+P / "Guardar como PDF" del navegador). Las tres

@@ -31,15 +31,10 @@ import { eliminarMapaMentalConDeshacer } from '../../services/deshacer'
 import type { MapaMental, NodoMapaMental, ConexionMapaMental, FormaNodoMental, TamanoTextoMental } from '../../types'
 import { MAPAS_MENTALES_PLANTILLA } from '../../data/mapasMentalesPlantilla'
 
-// Inter solo para Mapas mentales (.fuente-mapa-mental): se pide al cargar
-// esta vista, no en el arranque de la app (C8).
-if (typeof document !== 'undefined' && !document.getElementById('fuente-inter')) {
-  const link = document.createElement('link')
-  link.id = 'fuente-inter'
-  link.rel = 'stylesheet'
-  link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
-  document.head.appendChild(link)
-}
+// Inter solo para Mapas mentales (.fuente-mapa-mental). Va con la propia app
+// (antes se pedía a Google Fonts, que recibía la IP de cada estudiante); como
+// esta vista es lazy, la fuente no pesa en el arranque (C8).
+import '@fontsource-variable/inter'
 
 const VERDE = 'var(--accent-base)'
 /** Paleta CON significado fijo, no un selector de color libre: la idea es
@@ -916,7 +911,7 @@ function VistaImprimibleMapaMental({ mapa }: { mapa: MapaMental }) {
         .imprimir-mapa-mental-svg h1 { font-size: 20px; margin: 0 0 4px; font-family: inherit; }
         .imprimir-mapa-mental-svg .imm-meta { font-size: 11px; color: #666; margin-bottom: 16px; }
         .imprimir-mapa-mental-svg svg { display: block; }
-        .imprimir-mapa-mental-svg text { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; }
+        .imprimir-mapa-mental-svg text { font-family: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif; }
       `}</style>
       <h1>{mapa.titulo}</h1>
       <p className="imm-meta">{mapa.nodos.length} nodo{mapa.nodos.length === 1 ? '' : 's'} · Prima Lex</p>

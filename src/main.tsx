@@ -11,6 +11,7 @@ import { Raiz } from './Raiz.tsx'
 // historial de "Volver" y scroll por vista (se engancha al store)
 import './services/navegacion'
 import { useStore } from './store/useStore'
+import { iniciarReporteTecnico } from './services/reporteTecnico'
 import { useEnfoque } from './store/useEnfoque'
 import { useCuenta } from './store/useCuenta'
 
@@ -51,6 +52,9 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
     })
   })
 }
+
+// avisos técnicos anónimos (errores y velocidad); solo en producción
+iniciarReporteTecnico(() => useStore.getState().vistaActiva)
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
