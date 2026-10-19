@@ -3,7 +3,8 @@ import crypto from 'crypto'
 import { Resend } from 'resend'
 
 function validarEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  // 254 caracteres es el máximo de una dirección real (RFC 5321)
+  return email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
 
 // ============ Rate limiting (previene email bombing / agotar cuota de Resend) ============

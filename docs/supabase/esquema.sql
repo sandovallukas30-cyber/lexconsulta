@@ -71,6 +71,11 @@ drop policy if exists "borrar mis datos" on public.datos_usuario;
 create policy "borrar mis datos" on public.datos_usuario
   for delete to authenticated using (auth.uid() = user_id);
 
+-- Tope de tamaño por copia (5 MB): evita que una cuenta llene la base con un JSON gigante.
+-- Un respaldo normal pesa cientos de KB. Se puede volver a ejecutar sin problema.
+alter table public.datos_usuario drop constraint if exists contenido_tamano;
+alter table public.datos_usuario add constraint contenido_tamano check (pg_column_size(contenido) <= 5000000) not valid;
+
 -- Más adelante, cuando la sincronización sea Pro, se exige el plan en las
 -- políticas de insert/update, por ejemplo:
 --   with check (auth.uid() = user_id and exists (select 1 from public.perfiles p where p.id = auth.uid() and p.plan = 'pro'))

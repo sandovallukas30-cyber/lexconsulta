@@ -24,7 +24,11 @@ const LIMITE_SIN_REGISTRO = 10 // partidas/día sin verificar email
 const LIMITE_CON_REGISTRO = 30 // partidas/día con email verificado
 const LIMITE_POR_IP_MAXIMA = 60 // protección contra abuso por IP (fallback)
 const LIMITE_GLOBAL = 400 // requests totales por día (techo de gasto)
-const MAX_CHARS_INPUT = 60_000 // tamaño máximo del prompt (sistema + mensajes)
+// Tamaño máximo del prompt (sistema + mensajes) y de la respuesta. Los juegos usan
+// ~5.000 caracteres y 3.500 tokens como mucho: más margen solo serviría para que
+// alguien use este proxy como un Haiku gratis de propósito general.
+const MAX_CHARS_INPUT = 12_000
+const MAX_TOKENS_SALIDA = 3600
 
 // Map<clave, [timestamp, ...]>. Cada timestamp = 1 request reciente.
 const registro = new Map<string, number[]>()
@@ -174,7 +178,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (typeof model !== 'string' || !ALLOWED_MODELS.has(model)) {
     return res.status(400).json({ error: 'Modelo no permitido' })
   }
-  if (typeof max_tokens !== 'number' || max_tokens < 1 || max_tokens > 4000) {
+  if (typeof max_tokens !== 'number' || max_tokens < 1 || max_tokens > MAX_TOKENS_SALIDA) {
     return res.status(400).json({ error: 'max_tokens inválido' })
   }
   if (!Array.isArray(messages) || messages.length === 0) {
