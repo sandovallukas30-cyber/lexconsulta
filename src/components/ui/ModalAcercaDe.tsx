@@ -152,6 +152,9 @@ function P({ children, modoOscuro }: { children: React.ReactNode; modoOscuro: bo
 function Acerca({ modoOscuro }: { modoOscuro: boolean }) {
   return (
     <div>
+      <p className={`text-xs mb-3 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
+        Versión {typeof __VERSION_APP__ === 'string' ? __VERSION_APP__ : 'local'} · pantalla {window.innerWidth}×{window.innerHeight}
+      </p>
       <H modoOscuro={modoOscuro}>Objetivo</H>
       <P modoOscuro={modoOscuro}>
         Una plataforma de estudio para estudiantes de Derecho en Chile: los textos legales oficiales, tus apuntes
