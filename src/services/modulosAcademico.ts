@@ -1,3 +1,4 @@
+import { profesoresDe, resumenProfesores } from './disenoRamo'
 import type { Coleccion, CodigoTipo, DatosAcademicosModulo, EvaluacionModulo, Modulo, Ramo } from '../types'
 import { MODULOS } from '../data/modulos'
 
@@ -142,7 +143,7 @@ export function coleccionesDeModulo(colecciones: Coleccion[], codigoRelacionado:
  *  un Módulo sin codigoRelacionado. */
 export function moduloDesdeRamo(ramo: Ramo, modulosVinculados: Modulo[]): Modulo {
   const primero = modulosVinculados[0]
-  const detalle = [ramo.profesor, ramo.horario].filter(Boolean).join(' · ')
+  const detalle = [resumenProfesores(profesoresDe(ramo), 3), ramo.horario].filter(Boolean).join(' · ')
   return {
     id: ramo.id,
     nombre: ramo.nombre,

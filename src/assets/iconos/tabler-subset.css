@@ -36,6 +36,7 @@
 .ti-calendar-event:before{content:"\ea52"}
 .ti-cards:before{content:"\f510"}
 .ti-certificate:before{content:"\ed76"}
+.ti-chart-line:before{content:"\ea5c"}
 .ti-check:before{content:"\ea5e"}
 .ti-checkbox:before{content:"\eba6"}
 .ti-chevron-down:before{content:"\ea5f"}
@@ -115,6 +116,7 @@
 .ti-logout:before{content:"\eba8"}
 .ti-mail:before{content:"\eae5"}
 .ti-mail-check:before{content:"\f939"}
+.ti-map-pin:before{content:"\eae8"}
 .ti-maximize:before{content:"\eaea"}
 .ti-menu-2:before{content:"\ec42"}
 .ti-message-2:before{content:"\eaec"}
@@ -179,6 +181,7 @@
 .ti-typography:before{content:"\ebc5"}
 .ti-underline:before{content:"\eba2"}
 .ti-upload:before{content:"\eb47"}
+.ti-user:before{content:"\eb4d"}
 .ti-user-check:before{content:"\eb49"}
 .ti-user-circle:before{content:"\ef68"}
 .ti-user-exclamation:before{content:"\ec12"}

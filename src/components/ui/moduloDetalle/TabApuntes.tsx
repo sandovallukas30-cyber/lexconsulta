@@ -17,13 +17,16 @@ import { VERDE } from './utilidades'
 import { BotonAgregar, BotonesFormulario, CampoSelectClase, CampoTexto, EstadoVacio } from './comunes'
 
 export function TabApuntes({
-  moduloId, apuntes, clases, cuadernos, modoOscuro,
+  moduloId, apuntes, clases, cuadernos, modoOscuro, crearAlEntrar, onCreadoAlEntrar,
 }: {
   moduloId: string
   apuntes: ApunteModulo[]
   clases: SesionClase[]
   cuadernos: CuadernoApuntes[]
   modoOscuro: boolean
+  /** Crear un apunte nuevo apenas se abre esta pantalla (botón «Nuevo apunte» del Resumen). */
+  crearAlEntrar?: boolean
+  onCreadoAlEntrar?: () => void
 }) {
   const setApuntesModulo = useStore((s) => s.setApuntesModulo)
   const setCuadernosModulo = useStore((s) => s.setCuadernosModulo)
@@ -179,6 +182,16 @@ export function TabApuntes({
     setEditarAlAbrir(true)
     setApunteLeyendo(nuevo)
   }
+
+  // «Nuevo apunte» pedido desde el Resumen: se crea una sola vez al llegar (la referencia evita el doble efecto de StrictMode)
+  const creadoAlEntrar = useRef(false)
+  useEffect(() => {
+    if (!crearAlEntrar || creadoAlEntrar.current) return
+    creadoAlEntrar.current = true
+    onCreadoAlEntrar?.()
+    iniciarNuevo()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   /** Al cerrar un apunte: si quedó vacío y nunca se tocó, se borra; si tiene texto pero sin título, se le pone uno. */
   const limpiarAlCerrar = (id: string) => {

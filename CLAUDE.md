@@ -22,6 +22,7 @@ App web para estudiantes de Derecho en Chile (React 19 + TS + Vite + Tailwind 4 
 - **Íconos Tabler recortados** (`src/assets/iconos/`, 24 KB en vez de 495). Si usas un `ti-…` nuevo: `npm i --no-save subset-font && node scripts/subset_iconos.mjs`; un test avisa si falta uno.
 - **CSP estricta** en `vercel.json`: si agregas una fuente, API o iframe de otro dominio, hay que permitirlo ahí (connect-src, frame-src, img-src…) o el navegador lo bloquea. Prueba con la app compilada. Nada de Google Fonts: las fuentes van con la app (@fontsource).
 - **Avisos técnicos anónimos** (`services/reporteTecnico.ts` → `api/reportar.ts`): errores y Core Web Vitals, sin datos personales; se leen en los logs de Vercel (`[reporte]`). Si cambia lo que se envía, actualizar la sección 7 de Privacidad.
+- **Ramos**: pueden tener varios profesores (`Ramo.profesores`; `profesor` se mantiene como el primero por compatibilidad con respaldos antiguos: usa siempre `profesoresDe(ramo)`) y un diseño de franja (`Ramo.diseno`, `BandaRamo`). Las fichas de Módulos son `RamoFicha`; el interior del ramo agrupa las 6 pantallas en 4 secciones (`ModuloDetalle`), pero `Tab` sigue teniendo las 6.
 - Zustand: no suscribirse a todo el store en componentes; selectores finos.
 - PowerShell, no Bash, para npm/docker; el puerto 5432 lo ocupa un Postgres nativo.
 

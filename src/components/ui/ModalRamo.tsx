@@ -7,7 +7,9 @@ import { MODULOS } from '../../data/modulos'
 import { ICONO_RAMO_DEFECTO } from '../../services/modulosAcademico'
 import { useDialogo } from '../../hooks/useDialogo'
 import { DIAS_LARGOS, formatearHorario } from '../../services/horario'
-import type { BloqueHorario, Ramo } from '../../types'
+import { DISENOS, disenoDe, profesoresDe } from '../../services/disenoRamo'
+import { BandaRamo } from './BandaRamo'
+import type { BloqueHorario, DisenoRamo, Ramo } from '../../types'
 
 const VERDE = 'var(--accent-base)'
 
@@ -42,7 +44,7 @@ interface Props {
 }
 
 function campoVacio() {
-  return { nombre: '', semestre: '', codigoCurso: '', profesor: '', email: '', horario: '', sala: '', syllabusUrl: '' }
+  return { nombre: '', semestre: '', codigoCurso: '', email: '', horario: '', sala: '', syllabusUrl: '' }
 }
 
 function estadoDesdeRamo(r: Ramo | null): ReturnType<typeof campoVacio> {
@@ -51,7 +53,6 @@ function estadoDesdeRamo(r: Ramo | null): ReturnType<typeof campoVacio> {
     nombre: r.nombre,
     semestre: r.semestre ?? '',
     codigoCurso: r.codigoCurso ?? '',
-    profesor: r.profesor ?? '',
     email: r.email ?? '',
     horario: r.horario ?? '',
     sala: r.sala ?? '',
@@ -74,6 +75,9 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
   const [modulosVinculados, setModulosVinculados] = useState<string[]>(ramoEditando?.modulosVinculados ?? [])
   const [icono, setIcono] = useState<string>(ramoEditando?.icono ?? ICONO_RAMO_DEFECTO)
   const [color, setColor] = useState<string>(ramoEditando?.color ?? VERDE)
+  const [profesores, setProfesores] = useState<string[]>(() => (ramoEditando ? profesoresDe(ramoEditando) : []))
+  const [nuevoProfesor, setNuevoProfesor] = useState('')
+  const [diseno, setDiseno] = useState<DisenoRamo>(() => (ramoEditando ? disenoDe(ramoEditando) : DISENOS[ramosExistentes % DISENOS.length].id))
   const [verDetalles, setVerDetalles] = useState(() => tieneDetalles(ramoEditando))
   const [bloques, setBloques] = useState<BloqueHorario[]>(ramoEditando?.bloques ?? [])
   const [asistenciaMin, setAsistenciaMin] = useState(ramoEditando?.asistenciaMin ? String(ramoEditando.asistenciaMin) : '')
@@ -95,6 +99,9 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
     setIcono(ramoEditando?.icono ?? ICONO_RAMO_DEFECTO)
     // un ramo nuevo parte con un color distinto al del anterior
     setColor(ramoEditando?.color ?? COLORES_RAMO[ramosExistentes % COLORES_RAMO.length])
+    setProfesores(ramoEditando ? profesoresDe(ramoEditando) : [])
+    setNuevoProfesor('')
+    setDiseno(ramoEditando ? disenoDe(ramoEditando) : DISENOS[ramosExistentes % DISENOS.length].id)
     setVerDetalles(tieneDetalles(ramoEditando))
     setBloques(ramoEditando?.bloques ?? [])
     setAsistenciaMin(ramoEditando?.asistenciaMin ? String(ramoEditando.asistenciaMin) : '')
@@ -111,13 +118,25 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
 
   const limpiar = (v: string) => v.trim() || undefined
 
+  const agregarProfesor = () => {
+    const nombre = nuevoProfesor.replace(/\s+/g, ' ').trim()
+    if (!nombre) return
+    setProfesores((prev) => (prev.some((p) => p.toLowerCase() === nombre.toLowerCase()) ? prev : [...prev, nombre]))
+    setNuevoProfesor('')
+  }
+
   const guardar = () => {
     if (!campos.nombre.trim()) return
+    // si quedó un nombre escrito sin presionar «Agregar», cuenta igual
+    const listaProfesores = profesoresDe({ profesores: [...profesores, nuevoProfesor] })
     const datos = {
       nombre: campos.nombre.trim(),
       semestre: limpiar(campos.semestre),
       codigoCurso: limpiar(campos.codigoCurso),
-      profesor: limpiar(campos.profesor),
+      // `profesor` queda como el primero: así las copias y respaldos antiguos lo siguen entendiendo
+      profesor: listaProfesores[0],
+      profesores: listaProfesores.length > 0 ? listaProfesores : undefined,
+      diseno,
       email: limpiar(campos.email),
       bloques: bloques.length > 0 ? bloques : undefined,
       asistenciaMin: Number(asistenciaMin) >= 1 && Number(asistenciaMin) <= 100 ? Math.round(Number(asistenciaMin)) : undefined,
@@ -216,6 +235,49 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
               </label>
             </div>
 
+              <div>
+                <span className={labelClase}>{profesores.length > 1 ? 'Profesores' : 'Profesor o profesores'}</span>
+                {profesores.length > 0 && (
+                  <ul className="flex flex-wrap gap-1.5 mb-2" aria-label="Profesores del ramo">
+                    {profesores.map((nombre) => (
+                      <li
+                        key={nombre}
+                        className={`inline-flex items-center gap-1 pl-2.5 pr-1 py-1 rounded-full text-xs font-medium ${modoOscuro ? 'bg-zinc-800 text-zinc-200' : 'bg-zinc-100 text-zinc-700'}`}
+                      >
+                        {nombre}
+                        <button
+                          type="button"
+                          onClick={() => setProfesores((prev) => prev.filter((p) => p !== nombre))}
+                          aria-label={`Quitar a ${nombre}`}
+                          className="w-5 h-5 rounded-full flex items-center justify-center opacity-70 hover:opacity-100"
+                        >
+                          <i className="ti ti-x text-[11px]" aria-hidden="true" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div className="flex gap-2">
+                  <input
+                    className={inputClase}
+                    value={nuevoProfesor}
+                    onChange={(e) => setNuevoProfesor(e.target.value)}
+                    onKeyDown={(e) => {
+                      // Enter agrega al profesor (no guarda el ramo entero)
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        agregarProfesor()
+                      }
+                    }}
+                    placeholder={profesores.length > 0 ? 'Agregar otro profesor' : 'Nombre del profesor'}
+                    aria-label="Nombre del profesor"
+                  />
+                  <button type="button" onClick={agregarProfesor} disabled={!nuevoProfesor.trim()} className="boton boton-suave flex-shrink-0">
+                    <i className="ti ti-plus" aria-hidden="true" /> Agregar
+                  </button>
+                </div>
+              </div>
             <div>
               <span className={labelClase}>Color</span>
               <div className="flex flex-wrap gap-2" role="group" aria-label="Color del ramo">
@@ -239,6 +301,26 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
               </div>
             </div>
 
+            <div>
+              <span className={labelClase}>Diseño de la ficha</span>
+              <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label="Diseño de la ficha del ramo">
+                {DISENOS.map((d) => (
+                  <button
+                    key={d.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={diseno === d.id}
+                    onClick={() => setDiseno(d.id)}
+                    className="rounded-lg overflow-hidden text-left transition-transform"
+                    style={{ boxShadow: diseno === d.id ? `0 0 0 2px ${modoOscuro ? '#121620' : '#ffffff'}, 0 0 0 4px ${color}` : 'none', transform: diseno === d.id ? 'scale(1.03)' : 'scale(1)' }}
+                  >
+                    <BandaRamo color={color} diseno={d.id} className="h-11" />
+                    <span className={`block text-[11px] font-semibold text-center py-1 ${modoOscuro ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-600'}`}>{d.nombre}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <button
               type="button"
               onClick={() => setVerDetalles((v) => !v)}
@@ -246,7 +328,7 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
               className={`flex items-center gap-1.5 text-xs font-semibold ${modoOscuro ? 'text-zinc-300' : 'text-zinc-600'}`}
             >
               <i className={`ti ti-chevron-right text-sm transition-transform ${verDetalles ? 'rotate-90' : ''}`} aria-hidden="true" />
-              Más detalles (profesor, horario, ícono…)
+              Más detalles (horario, ícono, correo…)
             </button>
 
             {verDetalles && (
@@ -286,16 +368,10 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
                     <input className={inputClase} value={campos.codigoCurso} onChange={(e) => set('codigoCurso')(e.target.value)} placeholder="Ej: DPRI080-23" />
                   </label>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <label className="block">
-                    <span className={labelClase}>Profesor</span>
-                    <input className={inputClase} value={campos.profesor} onChange={(e) => set('profesor')(e.target.value)} />
-                  </label>
-                  <label className="block">
-                    <span className={labelClase}>Email del profesor</span>
-                    <input className={inputClase} type="email" value={campos.email} onChange={(e) => set('email')(e.target.value)} />
-                  </label>
-                </div>
+                <label className="block">
+                  <span className={labelClase}>Email del profesor</span>
+                  <input className={inputClase} type="email" value={campos.email} onChange={(e) => set('email')(e.target.value)} />
+                </label>
                 <div>
                   <span className={labelClase}>Horario de clases</span>
                   {bloques.length === 0 && ramoEditando?.horario && (
@@ -415,7 +491,7 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
 
           <div className={`px-6 py-4 border-t flex items-center justify-between gap-2 ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
             {ramoEditando ? (
-              <button onClick={eliminar} className="text-xs font-medium text-red-600 hover:underline">Eliminar ramo</button>
+              <button onClick={eliminar} className={`text-xs font-medium hover:underline min-h-[36px] ${modoOscuro ? 'text-red-400' : 'text-red-700'}`}>Eliminar ramo</button>
             ) : <span />}
             <div className="flex gap-2">
               <button onClick={onCerrar} className="boton boton-fantasma boton-chico">Cancelar</button>

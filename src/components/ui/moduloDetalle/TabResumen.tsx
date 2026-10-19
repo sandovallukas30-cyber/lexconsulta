@@ -1,14 +1,49 @@
+import { useMemo } from 'react'
 import type { SesionClase, EvaluacionModulo, TextoObligatorio, ApunteModulo, BriefCaso, Coleccion, MapaMental } from '../../../types'
-import { diasHasta, formatearCountdown } from '../../../services/modulosAcademico'
+import { useStore } from '../../../store/useStore'
+import { diasHasta, formatearCountdown, urgenciaDe } from '../../../services/modulosAcademico'
+import { formatoNota, resumenNotas } from '../../../services/notas'
+import { hoyISO } from '../../../services/tareasPlan'
 import { type Tab } from './utilidades'
 
+const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado']
+function fechaCorta(fecha: string): string {
+  const [a, m, d] = fecha.split('-').map(Number)
+  const dias = diasHasta(fecha)
+  if (dias === 0) return 'Hoy'
+  if (dias === 1) return 'Mañana'
+  return `${DIAS[new Date(a, m - 1, d).getDay()]} ${d}`
+}
+
+/** Tarjeta del resumen: título pequeño, contenido y, si hace falta, una acción. */
+function Panel({ titulo, icono, children }: { titulo: string; icono: string; children: React.ReactNode }) {
+  return (
+    <section className="neu-raised p-4 flex flex-col gap-3 min-w-0" aria-label={titulo}>
+      <h2 className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-wide" style={{ color: 'var(--neu-ink3)' }}>
+        <i className={`ti ${icono} text-base`} style={{ color: 'var(--accent-texto)' }} aria-hidden="true" />
+        {titulo}
+      </h2>
+      {children}
+    </section>
+  )
+}
+
+function colorUrgencia(dias: number): string {
+  const u = urgenciaDe(dias)
+  // mezclados con la tinta para que el texto pase el contraste AA sobre el fondo claro u oscuro
+  return u === 'urgente' ? 'color-mix(in srgb, var(--neu-danger) 45%, var(--neu-ink))' : u === 'proximo' ? 'color-mix(in srgb, var(--neu-warn) 38%, var(--neu-ink))' : 'var(--neu-ink2)'
+}
+
 export function TabResumen({
-  datos, modoOscuro, onIrA, colecciones, onAbrirColeccion,
+  moduloId, datos, modoOscuro, onIrA, onNuevoApunte, onAbrirApunte, colecciones, onAbrirColeccion,
   mapas, mapasDisponibles, onAbrirMapa, onVincularMapa,
 }: {
+  moduloId: string
   datos: { clases: SesionClase[]; evaluaciones: EvaluacionModulo[]; textos: TextoObligatorio[]; apuntes: ApunteModulo[]; briefs: BriefCaso[] }
   modoOscuro: boolean
   onIrA: (tab: Tab) => void
+  onNuevoApunte: () => void
+  onAbrirApunte: (id: string) => void
   colecciones: Coleccion[]
   onAbrirColeccion: (id: string) => void
   mapas: MapaMental[]
@@ -16,61 +51,132 @@ export function TabResumen({
   onAbrirMapa: (id: string) => void
   onVincularMapa: (id: string) => void
 }) {
-  const proximaClase = [...datos.clases]
-    .filter((c) => !c.completada)
-    .sort((a, b) => a.fecha.localeCompare(b.fecha))[0]
-  const proximoExamen = [...datos.evaluaciones]
-    .filter((e) => e.nota === null)
-    .sort((a, b) => a.fecha.localeCompare(b.fecha))[0]
-  const textosLeidos = datos.textos.filter((t) => t.leido).length
+  const tareas = useStore((st) => st.tareasPlan)
+  const setVistaActiva = useStore((st) => st.setVistaActiva)
+  const hoy = hoyISO()
 
-  const tarjetas = [
-    {
-      tab: 'clases' as Tab,
-      icono: 'ti-calendar-event',
-      label: 'Clases',
-      valor: `${datos.clases.length}`,
-      detalle: proximaClase
-        ? `Próxima: ${formatearCountdown(diasHasta(proximaClase.fecha)).toLowerCase()}`
-        : datos.clases.length > 0
-        ? 'Todas completadas'
-        : 'Sin sesiones registradas',
-    },
-    {
-      tab: 'examenes' as Tab,
-      icono: 'ti-clipboard-check',
-      label: 'Exámenes',
-      valor: `${datos.evaluaciones.length}`,
-      detalle: proximoExamen
-        ? `${proximoExamen.nombre} · ${formatearCountdown(diasHasta(proximoExamen.fecha)).toLowerCase()}`
-        : datos.evaluaciones.length > 0
-        ? 'Todas calificadas'
-        : 'Sin evaluaciones registradas',
-    },
-    { tab: 'textos' as Tab, icono: 'ti-books', label: 'Textos', valor: `${textosLeidos}/${datos.textos.length}`, detalle: 'leídos' },
-    { tab: 'apuntes' as Tab, icono: 'ti-notes', label: 'Apuntes', valor: `${datos.apuntes.length}`, detalle: datos.apuntes.length === 1 ? 'apunte guardado' : 'apuntes guardados' },
-    { tab: 'casos' as Tab, icono: 'ti-gavel', label: 'Casos', valor: `${datos.briefs.length}`, detalle: datos.briefs.length === 1 ? 'caso analizado' : 'casos analizados' },
-  ]
+  const proximaClase = useMemo(
+    () => [...datos.clases].filter((c) => !c.completada && c.fecha >= hoy).sort((a, b) => (a.fecha + (a.hora ?? '')).localeCompare(b.fecha + (b.hora ?? '')))[0],
+    [datos.clases, hoy]
+  )
+  const proximoExamen = useMemo(
+    () => [...datos.evaluaciones].filter((e) => e.nota === null && e.fecha >= hoy).sort((a, b) => a.fecha.localeCompare(b.fecha))[0],
+    [datos.evaluaciones, hoy]
+  )
+  const pendientes = tareas.filter((t) => t.ramoId === moduloId && !t.hecha)
+  const recientes = useMemo(() => [...datos.apuntes].sort((a, b) => b.fechaModificacion - a.fechaModificacion).slice(0, 3), [datos.apuntes])
+  const notas = useMemo(() => resumenNotas(datos.evaluaciones), [datos.evaluaciones])
+  const textosLeidos = datos.textos.filter((t) => t.leido).length
+  const suave = { color: 'var(--neu-ink2)' }
 
   return (
-    <div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {tarjetas.map((t) => (
-          <button
-            key={t.tab}
-            onClick={() => onIrA(t.tab)}
-            className={`text-left p-4 rounded-tarjeta border transition-colors ${
-              modoOscuro ? 'bg-zinc-800/60 border-zinc-800 hover:bg-zinc-800' : 'bg-white border-zinc-200 hover:bg-zinc-50'
-            }`}
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <i className={`ti ${t.icono} text-base`} style={{ color: 'var(--accent-texto)' }} />
-              <span className={`text-xs font-medium ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>{t.label}</span>
-            </div>
-            <div className={`text-xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{t.valor}</div>
-            <div className={`text-xs mt-0.5 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>{t.detalle}</div>
-          </button>
-        ))}
+    <div className="space-y-5">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Panel titulo="Lo que viene" icono="ti-calendar-event">
+          <div className="space-y-3 text-sm">
+            {proximaClase ? (
+              <button onClick={() => onIrA('clases')} className="sin-neu block w-full text-left">
+                <div className="font-bold" style={{ color: 'var(--neu-ink)' }}>
+                  {fechaCorta(proximaClase.fecha)}{proximaClase.hora ? ` · ${proximaClase.hora}` : ''}
+                </div>
+                <div className="text-xs" style={suave}>
+                  Próxima clase{proximaClase.sala ? ` · ${proximaClase.sala}` : ''}{proximaClase.tema ? ` · ${proximaClase.tema}` : ''}
+                </div>
+              </button>
+            ) : (
+              <p className="text-xs" style={suave}>{datos.clases.length > 0 ? 'No quedan clases por delante.' : 'Aún no hay clases cargadas.'}</p>
+            )}
+            {proximoExamen ? (
+              <button onClick={() => onIrA('examenes')} className="sin-neu block w-full text-left">
+                <div className="font-bold" style={{ color: colorUrgencia(diasHasta(proximoExamen.fecha)) }}>
+                  {proximoExamen.nombre} · {formatearCountdown(diasHasta(proximoExamen.fecha)).toLowerCase()}
+                </div>
+                <div className="text-xs" style={suave}>{proximoExamen.ponderacion}% de la nota final</div>
+              </button>
+            ) : (
+              <button onClick={() => onIrA('examenes')} className="sin-neu block w-full text-left text-xs font-semibold" style={{ color: 'var(--accent-texto)' }}>
+                {datos.evaluaciones.length > 0 ? 'Todas las evaluaciones tienen nota' : 'Agrega tu primera evaluación'}
+              </button>
+            )}
+            <button onClick={() => setVistaActiva('tareas')} className="sin-neu block w-full text-left">
+              <span className="font-bold" style={{ color: 'var(--neu-ink)' }}>{pendientes.length}</span>{' '}
+              <span className="text-xs" style={suave}>{pendientes.length === 1 ? 'tarea pendiente' : 'tareas pendientes'}</span>
+            </button>
+          </div>
+        </Panel>
+
+        <Panel titulo="Tus apuntes" icono="ti-notes">
+          {recientes.length > 0 ? (
+            <ul className="space-y-1.5">
+              {recientes.map((a) => (
+                <li key={a.id}>
+                  <button onClick={() => onAbrirApunte(a.id)} className="sin-neu block w-full text-left min-h-[40px] py-1">
+                    <span className="block text-sm font-bold truncate" style={{ color: 'var(--neu-ink)' }}>{a.titulo || 'Apunte sin título'}</span>
+                    <span className="block text-xs" style={suave}>
+                      {new Date(a.fechaModificacion).toLocaleDateString('es-CL', { day: 'numeric', month: 'short' }).replace('.', '')}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-xs" style={suave}>Todavía no tienes apuntes en este ramo.</p>
+          )}
+          <div className="flex flex-wrap items-center gap-2 mt-auto">
+            <button onClick={onNuevoApunte} className="boton boton-primario boton-chico">
+              <i className="ti ti-plus" aria-hidden="true" /> Nuevo apunte
+            </button>
+            {datos.apuntes.length > 0 && (
+              <button onClick={() => onIrA('apuntes')} className="boton boton-fantasma boton-chico">Ver todos ({datos.apuntes.length})</button>
+            )}
+          </div>
+        </Panel>
+
+        <Panel titulo="Tu nota" icono="ti-chart-line">
+          {notas.estado === 'sin-datos' ? (
+            <>
+              <p className="text-xs" style={suave}>Cuando agregues tus evaluaciones, aquí verás tu promedio y cuánto necesitas para aprobar.</p>
+              <button onClick={() => onIrA('examenes')} className="boton boton-suave boton-chico self-start mt-auto">
+                <i className="ti ti-plus" aria-hidden="true" /> Agregar evaluación
+              </button>
+            </>
+          ) : (
+            <>
+              <div>
+                <div className="text-3xl font-extrabold tabular-nums" style={{ color: 'var(--neu-ink)', fontFamily: 'var(--font-head)' }}>
+                  {notas.promedio !== null ? formatoNota(notas.promedio) : '—'}
+                </div>
+                <div className="text-xs" style={suave}>
+                  {notas.promedio !== null ? 'promedio hasta ahora' : 'sin notas todavía'} · {notas.pesoEvaluado}% evaluado
+                </div>
+              </div>
+              <div className="text-sm font-semibold" style={{ color: 'var(--neu-ink)' }}>
+                {notas.estado === 'posible' && notas.necesaria !== null && <>Necesitas {formatoNota(notas.necesaria)} en lo que falta</>}
+                {notas.estado === 'asegurado' && <>Aprobado asegurado</>}
+                {notas.estado === 'imposible' && <>Ya no alcanza el 4,0</>}
+                {notas.estado === 'completo' && notas.promedio !== null && <>{notas.promedio >= 4 ? 'Ramo aprobado' : 'Ramo reprobado'}</>}
+              </div>
+              <button onClick={() => onIrA('examenes')} className="boton boton-fantasma boton-chico self-start mt-auto">Ver evaluaciones</button>
+            </>
+          )}
+        </Panel>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <button onClick={() => onIrA('textos')} className="neu-raised p-4 text-left flex items-center gap-3">
+          <i className="ti ti-books text-2xl" style={{ color: 'var(--accent-texto)' }} aria-hidden="true" />
+          <span className="min-w-0">
+            <span className="block text-sm font-bold" style={{ color: 'var(--neu-ink)' }}>Textos · {textosLeidos}/{datos.textos.length} leídos</span>
+            <span className="block text-xs" style={suave}>Lecturas del ramo</span>
+          </span>
+        </button>
+        <button onClick={() => onIrA('casos')} className="neu-raised p-4 text-left flex items-center gap-3">
+          <i className="ti ti-gavel text-2xl" style={{ color: 'var(--accent-texto)' }} aria-hidden="true" />
+          <span className="min-w-0">
+            <span className="block text-sm font-bold" style={{ color: 'var(--neu-ink)' }}>Casos · {datos.briefs.length}</span>
+            <span className="block text-xs" style={suave}>{datos.briefs.length === 1 ? 'caso analizado' : 'casos analizados'}</span>
+          </span>
+        </button>
       </div>
 
       {colecciones.length > 0 && (

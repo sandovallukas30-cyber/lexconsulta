@@ -717,6 +717,9 @@ export interface BloqueHorario {
   sala?: string
 }
 
+/** Diseño decorativo de la franja de color de un ramo (sin valor = uno por defecto según el ramo). */
+export type DisenoRamo = 'olas' | 'facetas' | 'arcos' | 'rayas'
+
 export interface Ramo {
   id: string
   nombre: string
@@ -726,11 +729,16 @@ export interface Ramo {
   asistenciaMin?: number
   semestre?: string
   codigoCurso?: string
+  /** Primer profesor (se mantiene por compatibilidad con copias y respaldos antiguos). */
   profesor?: string
+  /** Todos los profesores del ramo: algunos ramos tienen varios. Manda sobre `profesor`. */
+  profesores?: string[]
   email?: string
   horario?: string
   sala?: string
   syllabusUrl?: string
+  /** Diseño de la franja de color de su ficha. */
+  diseno?: DisenoRamo
   modulosVinculados: string[]
   /** Icono propio (clase tabler, ej. "ti-school") -- independiente de los
    *  Módulos vinculados: un Ramo sin ningún Módulo afín (ej. "Principios

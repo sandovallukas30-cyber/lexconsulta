@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { ModalRespaldo } from '../ui/ModalRespaldo'
-import { ResumenSemestre } from '../ui/ResumenSemestre'
 import { useStore } from '../../store/useStore'
 import { MODULOS } from '../../data/modulos'
 import { ModuloCard } from '../ui/ModuloCard'
 import { ModuloDetalle, type Tab } from '../ui/ModuloDetalle'
-import { RamoCard } from '../ui/RamoCard'
+import { RamoFicha } from '../ui/RamoFicha'
+import { formatoNota, resumenNotas } from '../../services/notas'
 import { ModalRamo } from '../ui/ModalRamo'
 import { diasHasta, evaluacionesPendientes, obtenerProximosEventos, formatearCountdown, urgenciaDe, moduloDesdeRamo, type EvaluacionPendiente, type Urgencia } from '../../services/modulosAcademico'
 import { calcularRachaEstudio, contarTarjetasVencidas } from '../../services/actividadEstudio'
@@ -239,18 +239,33 @@ function MisRamos({
   onNuevoRamo: () => void
 }) {
   const ramos = useStore((s) => s.ramos)
+  const academico = useStore((s) => s.academicoModulos)
+
+  // promedio general y ramos en riesgo (antes vivía en una lista aparte, "Mi semestre", que repetía los ramos)
+  const { general, enRiesgo } = useMemo(() => {
+    const filas = ramos.map((r) => resumenNotas(academico[r.id]?.evaluaciones ?? [])).filter((n) => n.estado !== 'sin-datos')
+    const conPromedio = filas.filter((n) => n.promedio !== null)
+    return {
+      general: conPromedio.length > 0 ? conPromedio.reduce((a, n) => a + (n.promedio as number), 0) / conPromedio.length : null,
+      enRiesgo: filas.filter((n) => n.estado === 'imposible' || (n.estado === 'posible' && (n.necesaria ?? 0) >= 6)).length,
+    }
+  }, [ramos, academico])
+  const suave = modoOscuro ? 'text-zinc-400' : 'text-zinc-500'
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-3">
-        <h2 className={`text-sm font-semibold ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>Mis ramos</h2>
-        <button
-          onClick={onNuevoRamo}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-            modoOscuro ? 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700' : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50'
-          }`}
-        >
-          <i className="ti ti-plus text-sm" />
+    <section aria-labelledby="titulo-mis-ramos">
+      <div className="flex flex-wrap justify-between items-center gap-x-4 gap-y-2 mb-3">
+        <div className="flex items-baseline gap-3 flex-wrap">
+          <h2 id="titulo-mis-ramos" className={`text-sm font-semibold ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>Mis ramos</h2>
+          {general !== null && (
+            <span className={`text-xs ${suave}`}>
+              Promedio general <strong className={modoOscuro ? 'text-white' : 'text-zinc-900'}>{formatoNota(general)}</strong>
+              {enRiesgo > 0 && <span className="font-medium" style={{ color: 'var(--neu-danger)' }}> · {enRiesgo} en riesgo</span>}
+            </span>
+          )}
+        </div>
+        <button onClick={onNuevoRamo} className="boton boton-suave boton-chico">
+          <i className="ti ti-plus text-sm" aria-hidden="true" />
           Agregar ramo
         </button>
       </div>
@@ -259,24 +274,23 @@ function MisRamos({
         <div className={`flex flex-col items-center justify-center text-center py-10 rounded-xl border border-dashed ${
           modoOscuro ? 'border-zinc-800 text-zinc-500' : 'border-zinc-300 text-zinc-400'
         }`}>
-          <i className="ti ti-school text-2xl mb-2 opacity-60" />
-          <p className="text-sm">Agrega los ramos que cursas este semestre, con su profesor y horario.</p>
+          <i className="ti ti-school text-2xl mb-2 opacity-60" aria-hidden="true" />
+          <p className="text-sm">Agrega los ramos que cursas este semestre, con sus profesores y horario.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {ramos.map((ramo) => (
-            <RamoCard
+            <RamoFicha
               key={ramo.id}
               ramo={ramo}
               modulos={MODULOS.filter((m) => ramo.modulosVinculados.includes(m.id))}
-              modoOscuro={modoOscuro}
               onClick={() => onAbrirRamo(ramo.id)}
               onEditar={() => onEditarRamo(ramo)}
             />
           ))}
         </div>
       )}
-    </div>
+    </section>
   )
 }
 
@@ -341,6 +355,7 @@ export function ModulosView() {
           evaluacionEnfocada={evaluacionEnfocada}
           onVolver={() => setModuloActivo(null)}
           onEditar={ramoActivo ? () => abrirEdicionRamo(ramoActivo) : undefined}
+          ramo={ramoActivo}
         />
         <ModalRamo abierto={modalAbierto} ramoEditando={ramoEditando} onCerrar={() => setModalAbierto(false)} />
       </>
@@ -383,8 +398,6 @@ export function ModulosView() {
 
         <div className="mt-8 space-y-8">
           <DashboardHoy modoOscuro={modoOscuro} />
-
-          <ResumenSemestre onAbrirRamo={(id) => abrirModulo(id, 'examenes')} />
 
           <MisRamos
             modoOscuro={modoOscuro}
