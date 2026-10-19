@@ -17,7 +17,7 @@ export function PomodoroCompacto({ selectores = true, variante = 'vertical' }: {
   const avance = flow ? (ms % bloque) / bloque : s.totalMs ? 1 - ms / s.totalMs : 0
   const puedeTerminar = s.modo === 'foco' && s.inicioSesion !== null && msEnfocados(s, ahora) >= 60_000
   const etiqueta = s.modo === 'foco' ? (flow ? 'Flowtime' : 'Enfoque') : NOMBRE_MODO[s.modo]
-  const pendientes = tareas.filter((t) => !t.hecha && (!s.ramoId || t.ramoId === s.ramoId))
+  const pendientes = tareas.filter((t) => !t.hecha && (!s.ramoId || !t.ramoId || t.ramoId === s.ramoId))
   const textoJugar = corriendo ? 'Pausar' : s.estado === 'pausado' || (s.inicioSesion !== null && s.modo === 'foco') ? 'Reanudar' : 'Iniciar'
 
   const jugar = (

@@ -303,7 +303,8 @@ export const useEnfoque = create<EstadoEnfoque>()(
           set({ tecnica: t, estado: 'detenido', finAt: null, restanteMs: s.totalMs, inicioRun: null, acumuladoMs: 0, inicioSesion: null })
         },
 
-        setObjetivo: (ramoId, tareaId, apunteId = null) => set({ ramoId, tareaId, apunteId }),
+        setObjetivo: (ramoId, tareaId, apunteId) =>
+          set((g) => ({ ramoId, tareaId, apunteId: apunteId !== undefined ? apunteId : ramoId === g.ramoId ? g.apunteId : null })),
 
         ajustar: (cambios) => {
           const s = get()

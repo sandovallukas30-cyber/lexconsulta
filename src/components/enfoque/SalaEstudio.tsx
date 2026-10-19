@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from '../../store/useStore'
 import { useEnfoque } from '../../store/useEnfoque'
 import { useEnfoqueLocal, type DisposicionSala, type TamanoVideo } from '../../store/useEnfoqueLocal'
@@ -23,8 +23,11 @@ const TAMANOS: [TamanoVideo, string][] = [
 ]
 
 /** Un apunte que se guarda solo, poco después de dejar de escribir. */
+const EditorApunte = lazy(() => import('../ui/editorApunte/EditorApunte'))
+
 function ApunteEditable({ ramoId, apunteId }: { ramoId: string; apunteId: string }) {
   const apunte = useStore((s) => s.academicoModulos[ramoId]?.apuntes.find((a) => a.id === apunteId))
+  const temaLectura = useStore((s) => s.modoLecturaTema)
   const [texto, setTexto] = useState(apunte?.contenido ?? '')
   const pendiente = useRef<number | undefined>(undefined)
   const ultimo = useRef(texto)
@@ -55,13 +58,22 @@ function ApunteEditable({ ramoId, apunteId }: { ramoId: string; apunteId: string
 
   if (!apunte) return <p className="text-sm" style={{ color: 'var(--neu-ink2)' }}>Ese apunte ya no existe.</p>
   return (
-    <textarea
-      value={texto}
-      onChange={(e) => cambiar(e.target.value)}
-      aria-label={`Apunte: ${apunte.titulo}`}
-      spellCheck
-      className="flex-1 min-h-[240px] w-full p-4 text-[15px] leading-relaxed resize-none"
-    />
+    <div className="flex-1 min-h-[320px] flex flex-col overflow-hidden rounded-tarjeta">
+      <Suspense fallback={<p className="p-4 text-sm" style={{ color: 'var(--neu-ink2)' }}>Cargando el apunte…</p>}>
+        <EditorApunte
+          titulo={apunte.titulo}
+          contenido={texto}
+          tema={temaLectura}
+          tamanoPx={16}
+          onTitulo={(t) => {
+            const st = useStore.getState()
+            st.setApuntesModulo(ramoId, (st.academicoModulos[ramoId]?.apuntes ?? []).map((x) => (x.id === apunteId ? { ...x, titulo: t } : x)))
+          }}
+          onContenido={cambiar}
+          onTerminar={() => {}}
+        />
+      </Suspense>
+    </div>
   )
 }
 

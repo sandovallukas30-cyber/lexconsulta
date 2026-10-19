@@ -131,7 +131,7 @@ function Temporizador({ concentracion }: { concentracion: boolean }) {
   const detenido = s.estado === 'detenido'
 
   const pendientes = useMemo(
-    () => tareas.filter((t) => !t.hecha && (!s.ramoId || t.ramoId === s.ramoId)),
+    () => tareas.filter((t) => !t.hecha && (!s.ramoId || !t.ramoId || t.ramoId === s.ramoId)),
     [tareas, s.ramoId]
   )
 
