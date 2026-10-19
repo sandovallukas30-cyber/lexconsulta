@@ -12,6 +12,40 @@ export function useAplicarAjustes() {
 
   useEffect(() => {
     const el = document.documentElement
+    const tactil = window.matchMedia('(pointer: coarse)').matches
+    const meta = document.querySelector<HTMLMetaElement>('meta[name="viewport"]')
+
+    // En iPad y celular el zoom de la app es un zoom REAL de pantalla: se cambia el ancho que el navegador
+    // da a la página (meta viewport). Así, al achicar, la app se cree una pantalla más ancha y reacomoda las
+    // columnas; al agrandar, pasa a la distribución de una pantalla más chica. Con el `zoom` de CSS solo
+    // cambiaba el tamaño de las cosas, no su distribución. En computador se sigue usando el zoom de CSS.
+    let cancelado = false
+    const BASE = 'width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content'
+    const aplicarVista = async () => {
+      if (!meta) return
+      meta.setAttribute('content', BASE)
+      if (zoom === 1) return
+      // se espera a que el navegador acepte el ancho base para medirlo (el de la pantalla en su giro actual)
+      await new Promise<void>((ok) => requestAnimationFrame(() => requestAnimationFrame(() => ok())))
+      if (cancelado) return
+      const base = window.innerWidth
+      if (!(base > 0)) return
+      meta.setAttribute('content', `width=${Math.round(base / zoom)}, initial-scale=${zoom}, minimum-scale=${Math.min(zoom, 1)}, viewport-fit=cover, interactive-widget=resizes-content`)
+    }
+
+    if (tactil && meta) {
+      el.style.zoom = ''
+      el.style.setProperty('--zoom', '1')
+      void aplicarVista()
+      // al girar la pantalla, se vuelve a medir
+      const girar = () => void aplicarVista()
+      window.addEventListener('orientationchange', girar)
+      return () => {
+        cancelado = true
+        window.removeEventListener('orientationchange', girar)
+      }
+    }
+
     el.style.zoom = zoom === 1 ? '' : String(zoom)
     el.style.setProperty('--zoom', String(zoom))
 
