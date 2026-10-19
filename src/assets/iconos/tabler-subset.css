@@ -6,6 +6,7 @@
 .ti-alert-circle:before{content:"\ea05"}
 .ti-alert-octagon:before{content:"\ecc6"}
 .ti-alert-triangle:before{content:"\ea06"}
+.ti-app-window:before{content:"\efe6"}
 .ti-arrow-back-up:before{content:"\eb77"}
 .ti-arrow-big-right:before{content:"\eddc"}
 .ti-arrow-forward-up:before{content:"\eb78"}
@@ -80,6 +81,7 @@
 .ti-folder-plus:before{content:"\eaab"}
 .ti-folder-symlink:before{content:"\f91b"}
 .ti-gavel:before{content:"\ef90"}
+.ti-grip-vertical:before{content:"\ec01"}
 .ti-h-1:before{content:"\ec94"}
 .ti-h-2:before{content:"\ec95"}
 .ti-h-3:before{content:"\ec96"}

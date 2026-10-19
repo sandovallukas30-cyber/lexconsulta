@@ -8,8 +8,12 @@ import { useDialogo } from '../../hooks/useDialogo'
 import { incrustar } from '../../services/video'
 import { nombreRamo } from '../../services/tareasPlan'
 import { PomodoroCompacto } from './PomodoroCompacto'
+import { parsearApunte } from '../../services/apunteFormato'
+import { TEMAS_LECTURA } from '../../services/lecturaTema'
+import { ApunteContenido } from '../ui/ApunteContenido'
 
 const DISPOSICIONES: [DisposicionSala, string, string][] = [
+  ['ventana', 'Ventana pequeña', 'ti-app-window'],
   ['lado', 'Al lado', 'ti-layout-sidebar-right'],
   ['abajo', 'Abajo', 'ti-layout-bottombar'],
   ['arriba', 'Arriba', 'ti-layout-navbar'],
@@ -26,6 +30,7 @@ const TAMANOS: [TamanoVideo, string][] = [
 const EditorApunte = lazy(() => import('../ui/editorApunte/EditorApunte'))
 
 function ApunteEditable({ ramoId, apunteId }: { ramoId: string; apunteId: string }) {
+  const [editando, setEditando] = useState(false)
   const apunte = useStore((s) => s.academicoModulos[ramoId]?.apuntes.find((a) => a.id === apunteId))
   const temaLectura = useStore((s) => s.modoLecturaTema)
   const [texto, setTexto] = useState(apunte?.contenido ?? '')
@@ -56,8 +61,33 @@ function ApunteEditable({ ramoId, apunteId }: { ramoId: string; apunteId: string
     []
   )
 
+  const bloques = useMemo(() => (editando ? [] : parsearApunte(apunte?.contenido ?? '')), [apunte?.contenido, editando])
   if (!apunte) return <p className="text-sm" style={{ color: 'var(--neu-ink2)' }}>Ese apunte ya no existe.</p>
+  const tema = TEMAS_LECTURA[temaLectura]
+  const colorTexto = temaLectura === 'oscuro' ? 'text-zinc-200' : temaLectura === 'papel' ? 'text-[#3a2c1a]' : 'text-zinc-800'
+  const boton = (
+    <button onClick={() => setEditando((v) => !v)} className="boton boton-suave boton-chico self-end" aria-pressed={editando}>
+      <i className={`ti ${editando ? 'ti-check' : 'ti-pencil'}`} aria-hidden="true" /> {editando ? 'Listo' : 'Editar'}
+    </button>
+  )
+  if (!editando) {
+    return (
+      <>
+        {boton}
+        <div className={`flex-1 min-h-[240px] rounded-tarjeta px-5 sm:px-8 py-6 ${tema.bg} ${colorTexto}`} style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontSize: 17 }}>
+          <h3 className={`text-2xl font-serif font-bold mb-4 ${tema.text}`}>{apunte.titulo}</h3>
+          {apunte.contenido.trim() ? (
+            <ApunteContenido bloques={bloques} tema={temaLectura} idBase={`sala-${apunteId}`} />
+          ) : (
+            <p className={`italic ${tema.textSoft}`}>Este apunte todavía no tiene contenido. Toca «Editar» para escribir.</p>
+          )}
+        </div>
+      </>
+    )
+  }
   return (
+    <>
+    {boton}
     <div className="flex-1 min-h-[320px] flex flex-col overflow-hidden rounded-tarjeta">
       <Suspense fallback={<p className="p-4 text-sm" style={{ color: 'var(--neu-ink2)' }}>Cargando el apunte…</p>}>
         <EditorApunte
@@ -73,6 +103,69 @@ function ApunteEditable({ ramoId, apunteId }: { ramoId: string; apunteId: string
           onTerminar={() => {}}
         />
       </Suspense>
+    </div>
+    </>
+  )
+}
+
+/** Ventana del temporizador: píldora que se arrastra y se despliega. */
+function VentanaTemporizador() {
+  const guardada = useEnfoqueLocal((s) => s.sala.ventana)
+  const set = useEnfoqueLocal((s) => s.set)
+  const [abierta, setAbierta] = useState(false)
+  const [pos, setPos] = useState(guardada ?? { r: 16, b: 16 })
+  const caja = useRef<HTMLDivElement>(null)
+  const arrastre = useRef<{ x: number; y: number; r: number; b: number } | null>(null)
+
+  const mover = (e: React.PointerEvent) => {
+    const a = arrastre.current
+    const padre = caja.current?.parentElement
+    if (!a || !padre || !caja.current) return
+    const maxR = Math.max(0, padre.clientWidth - caja.current.offsetWidth)
+    const maxB = Math.max(0, padre.clientHeight - caja.current.offsetHeight)
+    setPos({ r: Math.min(maxR, Math.max(0, a.r - (e.clientX - a.x))), b: Math.min(maxB, Math.max(0, a.b - (e.clientY - a.y))) })
+  }
+  const soltar = () => {
+    if (!arrastre.current) return
+    arrastre.current = null
+    const sala = useEnfoqueLocal.getState().sala
+    set({ sala: { ...sala, ventana: pos } })
+  }
+
+  return (
+    <div ref={caja} className="absolute z-10 neu-raised p-2" style={{ right: pos.r, bottom: pos.b, maxWidth: 'calc(100% - 16px)', width: abierta ? 300 : undefined }}>
+      <div className="flex items-center gap-1">
+        <span
+          onPointerDown={(e) => {
+            arrastre.current = { x: e.clientX, y: e.clientY, r: pos.r, b: pos.b }
+            e.currentTarget.setPointerCapture(e.pointerId)
+          }}
+          onPointerMove={mover}
+          onPointerUp={soltar}
+          onPointerCancel={soltar}
+          title="Arrastra para mover el temporizador"
+          aria-hidden="true"
+          className="w-8 h-9 flex items-center justify-center cursor-grab touch-none select-none"
+          style={{ color: 'var(--neu-ink3)' }}
+        >
+          <i className="ti ti-grip-vertical" />
+        </span>
+        <PomodoroCompacto variante="pildora" selectores={false} />
+        <button
+          onClick={() => setAbierta((v) => !v)}
+          aria-expanded={abierta}
+          aria-label={abierta ? 'Contraer el temporizador' : 'Ver más opciones del temporizador'}
+          title={abierta ? 'Contraer' : 'Ramo, tarea y más'}
+          className="boton boton-fantasma boton-chico boton-icono"
+        >
+          <i className={`ti ${abierta ? 'ti-chevron-down' : 'ti-chevron-up'}`} aria-hidden="true" />
+        </button>
+      </div>
+      {abierta && (
+        <div className="pt-2 max-h-[60vh] overflow-y-auto">
+          <PomodoroCompacto variante="vertical" />
+        </div>
+      )}
     </div>
   )
 }
@@ -148,7 +241,7 @@ export function SalaEstudio() {
     d === 'lado' ? 'lg:grid-cols-[1fr_320px]' : d === 'abajo' || d === 'arriba' ? 'grid-rows-[1fr_auto]' : ''
   const ancho = sala.tamano === 'pequeno' ? '45%' : sala.tamano === 'mediano' ? '70%' : '100%'
 
-  const timer = d !== 'minimo' && (
+  const timer = d === 'ventana' ? <VentanaTemporizador /> : d !== 'minimo' && (
     <aside
       className={`neu-raised p-4 ${d === 'flotante' ? 'absolute right-4 bottom-4 w-[300px] z-10' : ''} ${d === 'arriba' ? 'order-first' : ''}`}
     >
