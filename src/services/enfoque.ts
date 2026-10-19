@@ -17,6 +17,8 @@ export interface SesionFoco {
   minutos: number
   ramoId: string | null
   tareaId: string | null
+  /** Apunte con el que se estudió (si se enfocó desde un apunte). */
+  apunteId?: string
   tipo: Tecnica
   /** YYYY-MM-DD local del inicio */
   fecha: string

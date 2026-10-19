@@ -278,7 +278,10 @@ export function SalaEstudio() {
             </>
           ) : opciones.length > 0 ? (
             <>
-              <select value={apunteSel} onChange={(e) => cambiarSala({ apunte: e.target.value })} aria-label="Apunte a mostrar" className="h-control px-3 text-sm">
+              <select value={apunteSel} onChange={(e) => {
+                cambiarSala({ apunte: e.target.value })
+                useEnfoque.setState({ apunteId: e.target.value.split(':')[1] || null })
+              }} aria-label="Apunte a mostrar" className="h-control px-3 text-sm">
                 {opciones.map((o) => (
                   <option key={o.valor} value={o.valor}>{o.texto}</option>
                 ))}

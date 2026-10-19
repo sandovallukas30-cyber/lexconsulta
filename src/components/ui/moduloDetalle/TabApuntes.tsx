@@ -9,6 +9,9 @@ import { duplicarApunte } from '../../../services/accionesApunte'
 import { ModalMoverApunte } from './AccionesApunte'
 import { ListaApuntes, type AccionesListaApuntes } from './ListaApuntes'
 import { RepasoApunte } from '../RepasoApunte'
+import { useEnfoque } from '../../../store/useEnfoque'
+import { horasMin } from '../../../services/enfoque'
+import { enfocarConApunte } from '../../../services/enfoqueApunte'
 import { tarjetasDe } from '../../../services/tarjetasApunte'
 import { AnimatePresence } from 'framer-motion'
 import { convertirPdfNotion } from '../../../services/notionPdf/importarPdfNotion'
@@ -57,6 +60,12 @@ export function TabApuntes({
   const repasoApuntes = useStore((s) => s.repasoApuntes)
   // Tarjetas por apunte (se recalcula solo cuando cambian los apuntes)
   const tarjetasPorApunte = useMemo(() => new Map(apuntes.map((a) => [a.id, tarjetasDe(a)])), [apuntes])
+  const sesionesFoco = useEnfoque((s) => s.sesiones)
+  const minutosPorApunte = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const x of sesionesFoco) if (x.apunteId) m.set(x.apunteId, (m.get(x.apunteId) ?? 0) + x.minutos)
+    return m
+  }, [sesionesFoco])
   const apuntePendiente = useStore((s) => s.apuntePendiente)
   const limpiarApuntePendiente = useStore((s) => s.limpiarApuntePendiente)
 
@@ -335,6 +344,7 @@ export function TabApuntes({
         setApunteLeyendo(a)
       },
       repasar: (a) => setRepasando(a),
+      enfocar: (a) => enfocarConApunte(moduloId, a.id),
       duplicar: (a) => duplicarApunte(moduloId, a),
       mover: (a) => setMoviendo(a),
       eliminar: (id) => {
@@ -529,6 +539,7 @@ export function TabApuntes({
           tarjetasPorApunte={tarjetasPorApunte}
           repasoApuntes={repasoApuntes}
           acciones={acciones}
+          minutosPorApunte={minutosPorApunte}
         />
       )}
 
@@ -553,6 +564,8 @@ export function TabApuntes({
           if (id) limpiarAlCerrar(id)
         }}
         onEditar={() => apunteLeyendo && iniciarEdicion(apunteLeyendo)}
+        onEnfocar={apunteLeyendo ? () => enfocarConApunte(moduloId, apunteLeyendo.id) : undefined}
+        estudiado={apunteLeyendo && (minutosPorApunte.get(apunteLeyendo.id) ?? 0) > 0 ? horasMin(minutosPorApunte.get(apunteLeyendo.id)!) : undefined}
         onCambiar={(cambios) => apunteLeyendo && actualizarApunte(apunteLeyendo.id, cambios)}
       />
     </div>

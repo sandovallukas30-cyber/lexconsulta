@@ -59,6 +59,10 @@ interface Props {
   editarAlAbrir?: boolean
   /** Texto buscado en el Omnibar: al abrir, saltar a su primera aparición. */
   resaltarAlAbrir?: string
+  /** Enfocar con este apunte (temporizador + Sala de estudio). */
+  onEnfocar?: () => void
+  /** Tiempo ya estudiado con este apunte, ya formateado (p. ej. «3 h 20 min»). */
+  estudiado?: string
 }
 
 /**
@@ -76,11 +80,11 @@ interface Props {
  * Notion): índice de títulos para saltar de sección, barra de progreso, y
  * recuerda por apunte hasta dónde llegaste y qué tamaño de letra usas.
  */
-export function ModoLecturaApunte({ abierto, apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, editarAlAbrir = false, resaltarAlAbrir }: Props) {
+export function ModoLecturaApunte({ abierto, apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, editarAlAbrir = false, resaltarAlAbrir, onEnfocar, estudiado }: Props) {
   return (
     <AnimatePresence>
       {abierto && apunte && (
-        <LectorApunte key={apunte.id} apunte={apunte} clase={clase} cuaderno={cuaderno} onCerrar={onCerrar} onEditar={onEditar} onCambiar={onCambiar} editarAlAbrir={editarAlAbrir} resaltar={resaltarAlAbrir} />
+        <LectorApunte key={apunte.id} apunte={apunte} clase={clase} cuaderno={cuaderno} onCerrar={onCerrar} onEditar={onEditar} onCambiar={onCambiar} editarAlAbrir={editarAlAbrir} resaltar={resaltarAlAbrir} onEnfocar={onEnfocar} estudiado={estudiado} />
       )}
     </AnimatePresence>
   )
@@ -95,12 +99,14 @@ interface PropsLector {
   onCambiar: (cambios: CambiosApunte) => void
   editarAlAbrir: boolean
   resaltar?: string
+  onEnfocar?: () => void
+  estudiado?: string
 }
 
 
 // Se monta al abrir y se desmonta al cerrar: así el índice, el progreso y la
 // voz arrancan limpios en cada apunte sin tener que resetear estado a mano.
-function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, editarAlAbrir, resaltar }: PropsLector) {
+function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, editarAlAbrir, resaltar, onEnfocar, estudiado }: PropsLector) {
   const [indiceTamano, setIndiceTamano] = useState(tamanoInicial)
   const [editando, setEditando] = useState(editarAlAbrir)
   const [columna, setColumna] = useState<HTMLElement | null>(null)
@@ -288,6 +294,21 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
               <i className="ti ti-pencil text-sm" />
               <span className="hidden sm:inline">Editar</span>
             </button>
+
+            {onEnfocar && (
+              <button
+                onClick={() => {
+                  voz.detener()
+                  onCerrar()
+                  onEnfocar()
+                }}
+                title={estudiado ? `Enfocar con este apunte · estudiado ${estudiado}` : 'Enfocar con este apunte: abre la Sala de estudio con él'}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-shrink-0 ${tema.chipBg} ${tema.text} ${tema.chipHover}`}
+              >
+                <i className="ti ti-hourglass-high text-sm" />
+                <span className="hidden sm:inline">Enfocar{estudiado ? ` · ${estudiado}` : ''}</span>
+              </button>
+            )}
 
             {nTarjetas > 0 && (
               <button

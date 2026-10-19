@@ -1,4 +1,5 @@
 import { memo, useMemo } from 'react'
+import { horasMin } from '../../../services/enfoque'
 import { resumenDe } from '../../../services/apunteFormato'
 import { estaPendiente, type TarjetaRepaso } from '../../../services/tarjetasApunte'
 import type { ApunteModulo, CuadernoApuntes, EstadoTarjetaRepaso, SesionClase } from '../../../types'
@@ -9,6 +10,7 @@ import { VERDE } from './utilidades'
 export interface AccionesListaApuntes {
   abrir: (a: ApunteModulo, editar: boolean) => void
   repasar: (a: ApunteModulo) => void
+  enfocar: (a: ApunteModulo) => void
   duplicar: (a: ApunteModulo) => void
   mover: (a: ApunteModulo) => void
   eliminar: (id: string) => void
@@ -23,13 +25,15 @@ interface Props {
   repasoApuntes: Record<string, EstadoTarjetaRepaso>
   /** Debe ser estable (useMemo en quien la pasa): si no, memo no sirve. */
   acciones: AccionesListaApuntes
+  /** Minutos de enfoque por apunte (id → minutos). */
+  minutosPorApunte: Map<string, number>
 }
 
 /** Lista de apuntes (B6). Separada y memoizada porque TabApuntes se
  *  re-renderiza en CADA tecla del formulario de edición: antes eso recalculaba
  *  el resumen (texto plano) de todos los apuntes en cada tecla -- con una
  *  veintena de apuntes largos, ~64 ms por tecla. */
-export const ListaApuntes = memo(function ListaApuntes({ apuntes, cuadernos, clases, modoOscuro, tarjetasPorApunte, repasoApuntes, acciones }: Props) {
+export const ListaApuntes = memo(function ListaApuntes({ apuntes, cuadernos, clases, modoOscuro, tarjetasPorApunte, repasoApuntes, acciones, minutosPorApunte }: Props) {
   return (
     <div className="space-y-2">
       {apuntes.map((a) => {
@@ -44,6 +48,7 @@ export const ListaApuntes = memo(function ListaApuntes({ apuntes, cuadernos, cla
             nTarjetas={ts.length}
             pendientes={ts.filter((t) => estaPendiente(repasoApuntes[t.id])).length}
             acciones={acciones}
+            minutos={minutosPorApunte.get(a.id) ?? 0}
           />
         )
       })}
@@ -52,7 +57,7 @@ export const ListaApuntes = memo(function ListaApuntes({ apuntes, cuadernos, cla
 })
 
 const FilaApunte = memo(function FilaApunte({
-  apunte: a, cuaderno, clase, modoOscuro, nTarjetas, pendientes, acciones,
+  apunte: a, cuaderno, clase, modoOscuro, nTarjetas, pendientes, acciones, minutos,
 }: {
   apunte: ApunteModulo
   cuaderno?: CuadernoApuntes
@@ -61,6 +66,7 @@ const FilaApunte = memo(function FilaApunte({
   nTarjetas: number
   pendientes: number
   acciones: AccionesListaApuntes
+  minutos: number
 }) {
   const resumen = useMemo(() => (a.contenido ? resumenDe(a.contenido) : ''), [a.contenido])
   return (
@@ -81,6 +87,12 @@ const FilaApunte = memo(function FilaApunte({
           )}
           <EtiquetaArticulo articulo={a.articuloRelacionado} modoOscuro={modoOscuro} />
           <EtiquetaClase clase={clase} modoOscuro={modoOscuro} />
+          {minutos > 0 && (
+            <span className={`inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-md ${modoOscuro ? 'bg-zinc-700 text-zinc-300' : 'bg-zinc-100 text-zinc-600'}`} title="Tiempo de enfoque con este apunte">
+              <i className="ti ti-hourglass-high text-xs" />
+              estudiado {horasMin(minutos)}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
           <button
@@ -90,6 +102,14 @@ const FilaApunte = memo(function FilaApunte({
             className="boton boton-fantasma boton-chico boton-icono"
           >
             <i className="ti ti-pencil text-sm" />
+          </button>
+          <button
+            onClick={() => acciones.enfocar(a)}
+            title="Enfocar con este apunte: abre la Sala de estudio"
+            aria-label={`Enfocar con "${a.titulo}"`}
+            className="boton boton-fantasma boton-chico boton-icono"
+          >
+            <i className="ti ti-hourglass-high text-sm" />
           </button>
           {nTarjetas > 0 && (
             <button
