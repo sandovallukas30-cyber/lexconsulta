@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Disclaimer, Privacidad, Terminos } from '../ui/ModalAcercaDe'
 import type { DocumentoLegal } from '../../services/rutasLegales'
 
@@ -12,6 +13,14 @@ const DOCUMENTOS: Record<Documento, { titulo: string; Cuerpo: typeof Privacidad 
 /** Páginas públicas con los textos legales (para enlazar desde Google, Microsoft, etc.). */
 export function PaginaLegal({ documento }: { documento: Documento }) {
   const { titulo, Cuerpo } = DOCUMENTOS[documento]
+  // cada documento con su propio título de pestaña (navegación, favoritos, buscadores)
+  useEffect(() => {
+    const antes = document.title
+    document.title = `${titulo} — Prima Lex`
+    return () => {
+      document.title = antes
+    }
+  }, [titulo])
   return (
     <div className="h-full overflow-y-auto" style={{ background: 'var(--neu-bg)' }}>
       <div className="max-w-2xl mx-auto px-5 py-10">

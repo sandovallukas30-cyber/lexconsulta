@@ -2,3 +2,5 @@ User-agent: *
 Allow: /
 Disallow: /api/
 Disallow: /verify
+
+Sitemap: https://primalex.vercel.app/sitemap.xml

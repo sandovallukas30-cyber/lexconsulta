@@ -27,6 +27,9 @@ App web para estudiantes de Derecho en Chile (React 19 + TS + Vite + Tailwind 4 
 
 ## Verificación
 - Cambios visuales: captura con Playwright + Edge (`playwright-core`) y comparar; para tablet, viewports 744×1133, 820×1180, 1180×820 y 1024×1366 con `hasTouch` e `isMobile`.
+- Accesibilidad: la app pasó axe-core (WCAG 2.1 AA) en las 9 vistas, claro y oscuro. Los colores de texto del sistema tienen un test de contraste (`neumorfismo.contraste.test.ts`): no bajar `--neu-ink2/ink3`. Para volver a auditar: `npm i --no-save axe-core` y correr axe con Playwright sobre cada vista.
+- Hooks del proyecto (`.claude/settings.json`): tras editar `src/` o `api/` se corre eslint sobre ese archivo (solo errores); antes de `git push` se corren tsc, tests y build.
+- Revisores en `.claude/agents/`: `revisor-seguridad` (antes de tocar cuentas, `api/` o datos personales) y `revisor-tablet` (después de cambios de interfaz).
 - No declarar algo listo sin haber visto pasar tests y build.
 
 ## Deploy y datos

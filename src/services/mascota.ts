@@ -147,7 +147,7 @@ function gato(p: Paleta, animo: Animo, acc: AccesorioMascota): string {
 export function mascotaSvg(p: { tipo: TipoMascota; color: ColorMascota; accesorio: AccesorioMascota; animo: Animo }): string {
   const paleta = COLORES_MASCOTA[p.color] ?? COLORES_MASCOTA.indigo
   const cuerpo = p.tipo === 'perro' ? perro(paleta, p.animo, p.accesorio) : p.tipo === 'gato' ? gato(paleta, p.animo, p.accesorio) : lechuza(paleta, p.animo, p.accesorio)
-  const zzz = p.animo === 'dormida' ? `<text x="92" y="26" font-family="Sora, sans-serif" font-weight="800" font-size="16" fill="#8a92b0">z</text><text x="102" y="14" font-family="Sora, sans-serif" font-weight="800" font-size="11" fill="#8a92b0">z</text>` : ''
+  const zzz = p.animo === 'dormida' ? `<path d="M92 16h9l-9 10h9" fill="none" stroke="#8a92b0" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M103 6h6l-6 8h6" fill="none" stroke="#8a92b0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>` : ''
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img">${cuerpo}${zzz}</svg>`
 }
 

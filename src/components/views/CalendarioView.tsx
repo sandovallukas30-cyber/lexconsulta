@@ -97,7 +97,6 @@ function CeldaDia({
   return (
     <button
       onClick={onElegir}
-      aria-label={`${fechaLarga(fecha)}${items.length ? `, ${items.length} ${items.length === 1 ? 'elemento' : 'elementos'}` : ''}`}
       aria-pressed={seleccionada}
       className={`sin-tactil text-left min-h-[58px] sm:min-h-[92px] p-1 sm:p-1.5 rounded-control flex flex-col gap-1 transition-colors border ${
         seleccionada
@@ -105,9 +104,12 @@ function CeldaDia({
           : e.modoOscuro
           ? 'border-transparent hover:bg-zinc-800'
           : 'border-transparent hover:bg-zinc-50'
-      } ${delMes ? '' : 'opacity-40'}`}
+      } ${delMes ? '' : 'opacity-70'}`}
     >
+      {/* el nombre accesible parte del texto visible (WCAG 2.5.3) y suma la fecha completa para el lector de pantalla */}
+      <span className="sr-only">{`${fechaLarga(fecha)}${items.length ? `, ${items.length} ${items.length === 1 ? 'elemento' : 'elementos'}` : ''}. `}</span>
       <span
+        aria-hidden="true"
         className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 ${esHoy ? 'text-white' : e.texto}`}
         style={esHoy ? { background: 'var(--accent-base)' } : undefined}
       >

@@ -19,8 +19,8 @@
   --neu-line: #d7dcee;
   --neu-card: var(--neu-bg);
   --neu-ink: #1f2344;
-  --neu-ink2: #5b6283;
-  --neu-ink3: #8a92b0;
+  --neu-ink2: #4b5373; /* AA: 6:1 sobre --neu-bg */
+  --neu-ink3: #565e7e; /* AA: 4,6:1 incluso sobre el fondo hundido */
   --neu-ok: #1f9d61;
   --neu-ok-soft: #d9f2e4;
   --neu-warn: #d98a1a;
@@ -171,6 +171,13 @@ input[type='checkbox']:not(.sin-neu):checked::after { content: ''; width: 10px; 
 .dark *::-webkit-scrollbar-thumb { background: var(--neu-sl); background-clip: padding-box; }
 
 /* texto de énfasis en tinta del tema (claro) */
+/* Accesibilidad (AA, 4,5:1): en oscuro, los grises más tenues de Tailwind quedaban en 2-3:1. */
+:root[data-tema='oscuro'] :is(.text-zinc-500, .text-zinc-600) { color: var(--neu-ink3); }
+/* Botones primarios que fuerzan el acento base como fondo: texto blanco (5,5:1; el oscuro daba 3,1:1). */
+:root[data-tema='oscuro'] .boton-primario[style*='accent-base'] { color: #fff; }
+/* Etiquetas de color (p. ej. el ramo en una tarea): más mezcla con la tinta en oscuro para que se lean. */
+:root { --chip-mezcla: 82%; }
+:root[data-tema='oscuro'] { --chip-mezcla: 50%; }
 :root[data-tema='claro'] .text-zinc-900 { color: var(--neu-ink); }
 :root[data-tema='claro'] .text-zinc-500, :root[data-tema='claro'] .text-zinc-400 { color: var(--neu-ink2); }
 

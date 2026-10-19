@@ -65,7 +65,7 @@ export function FilaTarea({ tarea, onAbrir, abierta }: Props) {
               className="inline-flex items-center text-[11.5px] font-bold px-2.5 py-0.5 rounded-full"
               style={{
                 background: `color-mix(in srgb, ${colorRamo(tarea.ramoId, ramos)} 15%, transparent)`,
-                color: `color-mix(in srgb, ${colorRamo(tarea.ramoId, ramos)} 82%, var(--neu-ink))`,
+                color: `color-mix(in srgb, ${colorRamo(tarea.ramoId, ramos)} var(--chip-mezcla), var(--neu-ink))`,
               }}
             >
               {ramo}

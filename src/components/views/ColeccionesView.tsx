@@ -281,9 +281,9 @@ function SeccionPlantillas({
                       : 'bg-white border-zinc-200 hover:border-zinc-300'
                   }`}
                 >
-                  <h4 className={`text-sm font-serif font-semibold mb-1 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+                  <h3 className={`text-sm font-serif font-semibold mb-1 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
                     {p.titulo}
-                  </h4>
+                  </h3>
                   <p className={`text-xs mb-2 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>{p.descripcion}</p>
                   <span className={`text-[11px] font-medium ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
                     {p.articulos.length} artículos · usar plantilla

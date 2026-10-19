@@ -2,13 +2,14 @@
 <html lang="es-CL">
   <head>
     <meta charset="UTF-8" />
+    <link rel="canonical" href="https://primalex.vercel.app/" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
     <title>Prima Lex — tu semestre de Derecho, ordenado</title>
     <meta name="description" content="Organiza tu semestre de Derecho: tareas, calendario, enfoque Pomodoro, notas y asistencia por ramo, apuntes, mapas mentales y los códigos chilenos al alcance." />
-    <meta name="theme-color" content="#2563eb" />
+    <meta name="theme-color" content="#5457e0" />
     <meta name="application-name" content="Prima Lex" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Prima Lex" />
@@ -20,10 +21,36 @@
     <meta property="og:description" content="Tareas, calendario, enfoque, notas y asistencia por ramo, apuntes y los códigos chilenos en un solo lugar." />
     <meta property="og:image" content="https://primalex.vercel.app/og.png" />
     <meta property="og:url" content="https://primalex.vercel.app/" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Prima Lex: tareas, calendario, enfoque y apuntes para estudiantes de Derecho" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Prima Lex — tu semestre de Derecho, ordenado" />
+    <meta name="twitter:description" content="Tareas, calendario, enfoque, apuntes y los códigos chilenos en un solo lugar." />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Prima Lex",
+        "url": "https://primalex.vercel.app/",
+        "description": "Herramienta de estudio para estudiantes de Derecho en Chile: tareas, calendario, enfoque Pomodoro, apuntes, mapas mentales y los códigos y leyes chilenas.",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Web, iPadOS, Android, Windows, macOS",
+        "inLanguage": "es-CL",
+        "audience": { "@type": "EducationalAudience", "educationalRole": "student" },
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "CLP" }
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <main style="max-width:40rem;margin:4rem auto;padding:0 1rem;font-family:system-ui,sans-serif;line-height:1.6;color:#1f2344">
+        <h1>Prima Lex</h1>
+        <p>Prima Lex es una herramienta de estudio para estudiantes de Derecho en Chile: organiza tus ramos, tareas y evaluaciones, toma apuntes, repasa y consulta los códigos y leyes chilenas.</p>
+        <p>Necesita JavaScript para funcionar. Actívalo en tu navegador y vuelve a cargar la página.</p>
+      </main>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
