@@ -7,7 +7,11 @@ import { Segmentado } from '../ui/Segmentado'
 import { CalificarSesion } from '../ui/CalificarSesion'
 import { EnfoqueEstadisticas } from '../enfoque/EnfoqueEstadisticas'
 import { EnfoqueHistorial } from '../enfoque/EnfoqueHistorial'
-import { PanelAmbiente } from '../enfoque/PanelAmbiente'
+import { ContenidoAmbiente } from '../enfoque/PanelAmbiente'
+import { FondoEnfoque, useConFondo } from '../enfoque/FondoEnfoque'
+import { useEnfoqueLocal } from '../../store/useEnfoqueLocal'
+import { SONIDOS } from '../../services/ambiente'
+import { esFondo, infoFondo } from '../../services/fondos'
 import { useSala } from '../../store/useSala'
 import { SelectorRamo } from '../ui/SelectorRamo'
 import { colorRamo, hoyISO, nombreRamo } from '../../services/tareasPlan'
@@ -26,7 +30,6 @@ import {
 
 const ModoConcentracion = lazy(() => import('../enfoque/ModoConcentracion').then((m) => ({ default: m.ModoConcentracion })))
 
-const COLOR_MODO: Record<Modo, string> = { foco: 'var(--accent-base)', corto: '#16a34a', largo: '#0d9488' }
 const DIA_INICIAL = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
 
 function useEstilos() {
@@ -82,11 +85,39 @@ function Paso({
   )
 }
 
+/** Botón grande que abre un panel (Ajustes, Fondo y sonido): con ícono, título y un resumen de lo elegido. */
+function BotonPanel({ icono, titulo, resumen, abierto, onClick }: { icono: string; titulo: string; resumen: string; abierto: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-expanded={abierto}
+      className="sin-neu flex items-center gap-3 p-3.5 min-h-[68px] w-full text-left rounded-[18px] transition-shadow"
+      style={{ background: 'var(--neu-card)', boxShadow: abierto ? 'var(--neu-presionada)' : 'var(--neu-elevada)', color: 'var(--neu-ink)' }}
+    >
+      <span className="w-11 h-11 rounded-[14px] flex items-center justify-center flex-shrink-0" style={{ boxShadow: 'var(--neu-chica)', color: 'var(--accent-texto)' }}>
+        <i className={`ti ${icono} text-xl`} aria-hidden="true" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-bold">{titulo}</span>
+        <span className="block text-xs leading-snug" style={{ color: 'var(--neu-ink2)' }}>{resumen}</span>
+      </span>
+      <i className={`ti ti-chevron-right transition-transform flex-shrink-0 ${abierto ? 'rotate-90' : ''}`} style={{ color: 'var(--neu-ink3)' }} aria-hidden="true" />
+    </button>
+  )
+}
+
 function Temporizador() {
   const e = useEstilos()
   const s = useEnfoque()
   const tareas = useStore((st) => st.tareasPlan)
-  const [verAjustes, setVerAjustes] = useState(false)
+  const [panel, setPanel] = useState<'ajustes' | 'ambiente' | null>(null)
+  const alternar = (p: 'ajustes' | 'ambiente') => setPanel((a) => (a === p ? null : p))
+  const conFondo = useConFondo()
+  const fondoId = useEnfoqueLocal((st) => st.fondo)
+  const sonidoId = useEnfoqueLocal((st) => st.sonido)
+  const nombreFondo = infoFondo(esFondo(fondoId) ? fondoId : 'ninguno').nombre
+  const nombreSonido = SONIDOS.find(([id]) => id === sonidoId)?.[1]
   const [concentracion, setConcentracion] = useState(false)
   const corriendo = s.estado === 'corriendo'
   const ahora = useAhora(corriendo)
@@ -97,7 +128,7 @@ function Temporizador() {
   // el anillo: en Pomodoro se vacía; en Flowtime se llena con cada bloque del largo de un Pomodoro
   const bloque = Math.max(60_000, s.ajustes.foco * 60_000)
   const progreso = flow ? (ms % bloque) / bloque || (ms > 0 ? 1 : 0) : s.totalMs ? ms / s.totalMs : 0
-  const color = COLOR_MODO[s.modo]
+  const color = 'var(--accent-base)' // el acento que elige la persona, también en los descansos
   const detenido = s.estado === 'detenido'
 
   const pendientes = useMemo(
@@ -115,7 +146,10 @@ function Temporizador() {
   const puedeTerminar = s.modo === 'foco' && s.estado !== 'detenido' && enfocadoMin >= 1
 
   return (
-    <section className={`${e.tarjeta} flex flex-col items-center`} aria-label="Temporizador">
+    <section className={`${e.tarjeta} enf-tarjeta relative overflow-hidden flex flex-col items-center${conFondo ? ' enf-con-fondo' : ''}`} aria-label="Temporizador">
+      {/* el fondo elegido se ve aquí mismo (no solo en el modo concentración); con ese modo abierto no se dibuja dos veces */}
+      {!concentracion && <FondoEnfoque />}
+      <div className="relative z-10 w-full flex flex-col items-center">
       <Segmentado<Modo>
         id="modo"
         etiqueta="Modo del temporizador"
@@ -235,10 +269,12 @@ function Temporizador() {
         </label>
       </div>
 
-      <div className="mt-5 flex flex-col items-center gap-2 w-full">
+      <div className="mt-6 pt-5 w-full max-w-md flex flex-col items-center gap-3 border-t" style={{ borderColor: 'var(--neu-line)' }}>
+        <p className="text-[11px] font-bold uppercase tracking-wide" style={{ color: 'var(--neu-ink3)' }}>Técnica de estudio</p>
         <Segmentado<Tecnica>
           id="tecnica"
           etiqueta="Técnica"
+          grande
           valor={s.tecnica}
           onChange={s.setTecnica}
           deshabilitado={!detenido}
@@ -252,13 +288,30 @@ function Temporizador() {
             ? 'Flowtime: el reloj sube mientras te concentras y paras cuando quieras; el descanso se sugiere según cuánto enfocaste.'
             : `Pomodoro: ${s.ajustes.foco} min de enfoque y ${s.ajustes.corto} de descanso; cada ${s.ajustes.cada} enfoques, un descanso largo de ${s.ajustes.largo}.`}
         </p>
-        <button onClick={() => setVerAjustes((v) => !v)} aria-expanded={verAjustes} className={`text-xs font-semibold flex items-center gap-1 ${e.suave}`}>
-          <i className={`ti ti-chevron-right transition-transform ${verAjustes ? 'rotate-90' : ''}`} aria-hidden="true" />
-          Ajustes
-        </button>
+
+        <div className="grid grid-cols-2 gap-3 w-full mt-2">
+          <BotonPanel
+            icono="ti-adjustments-horizontal"
+            titulo="Ajustes"
+            resumen={`${s.ajustes.foco} · ${s.ajustes.corto} · ${s.ajustes.largo} min`}
+            abierto={panel === 'ajustes'}
+            onClick={() => alternar('ajustes')}
+          />
+          <BotonPanel
+            icono="ti-photo"
+            titulo="Fondo y sonido"
+            resumen={`${nombreFondo}${sonidoId !== 'apagado' && nombreSonido ? (nombreSonido === nombreFondo ? ' · con sonido' : ` · ${nombreSonido}`) : ''}`}
+            abierto={panel === 'ambiente'}
+            onClick={() => alternar('ambiente')}
+          />
+        </div>
       </div>
 
-      <PanelAmbiente />
+      {panel === 'ambiente' && (
+        <div className="w-full max-w-md mt-4">
+          <ContenidoAmbiente />
+        </div>
+      )}
 
       {concentracion && (
         <Suspense fallback={null}>
@@ -266,8 +319,8 @@ function Temporizador() {
         </Suspense>
       )}
 
-      {verAjustes && (
-        <div className={`w-full max-w-sm mt-2 divide-y ${e.modoOscuro ? 'divide-zinc-800' : 'divide-zinc-100'}`}>
+      {panel === 'ajustes' && (
+        <div className={`w-full max-w-md mt-4 divide-y ${e.modoOscuro ? 'divide-zinc-800' : 'divide-zinc-100'}`}>
           <Paso etiqueta="Enfoque" valor={s.ajustes.foco} min={5} max={120} onChange={(n) => s.ajustar({ foco: n })} deshabilitado={s.estado === 'corriendo'} />
           <Paso etiqueta="Descanso corto" valor={s.ajustes.corto} min={1} max={30} onChange={(n) => s.ajustar({ corto: n })} deshabilitado={s.estado === 'corriendo'} />
           <Paso etiqueta="Descanso largo" valor={s.ajustes.largo} min={5} max={60} onChange={(n) => s.ajustar({ largo: n })} deshabilitado={s.estado === 'corriendo'} />
@@ -283,6 +336,7 @@ function Temporizador() {
           </label>
         </div>
       )}
+      </div>
     </section>
   )
 }

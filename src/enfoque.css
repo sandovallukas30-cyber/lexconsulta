@@ -138,7 +138,7 @@
 /* ───────── Con fondo animado: textos y controles en claro ─────────
    Se reasignan las variables neumórficas dentro de la pantalla; las sombras se
    redefinen aquí porque las variables compuestas se resuelven donde se declaran. */
-.enf-foco.enf-con-fondo {
+.enf-foco.enf-con-fondo, .enf-tarjeta.enf-con-fondo {
   --neu-bg: rgba(8, 12, 28, .42); --neu-bg2: rgba(8, 12, 28, .42); --neu-bg3: rgba(255, 255, 255, .14); --neu-card: rgba(8, 12, 28, .42);
   --neu-sd: rgba(0, 0, 0, .3); --neu-sl: rgba(255, 255, 255, .24); --neu-line: rgba(255, 255, 255, .28);
   --neu-ink: #fff; --neu-ink2: rgba(255, 255, 255, .86); --neu-ink3: rgba(255, 255, 255, .62);
@@ -164,3 +164,15 @@
 .enf-con-fondo select option { color: #10162b; background: #fff; }
 .enf-con-fondo input[type="checkbox"]:checked::after { border-color: #fff; }
 .enf-con-fondo .enf-foco-tarea { background: rgba(8, 12, 28, .42); backdrop-filter: blur(6px); }
+
+/* Con fondo en la tarjeta del temporizador (pantalla normal de Enfoque): los grises de
+   Tailwind que usa la vista pasan a las tintas claras para leerse sobre la escena. */
+.enf-tarjeta.enf-con-fondo { border-color: rgba(255, 255, 255, .2); }
+.enf-tarjeta.enf-con-fondo :is(.text-white, .text-zinc-900, .text-zinc-800, .text-zinc-700, .text-zinc-300) { color: var(--neu-ink); }
+.enf-tarjeta.enf-con-fondo :is(.text-zinc-600, .text-zinc-500, .text-zinc-400) { color: var(--neu-ink2); text-shadow: 0 1px 5px rgba(0, 0, 0, .6); }
+.enf-tarjeta.enf-con-fondo :is(.border-zinc-100, .border-zinc-200, .divide-zinc-100 > *, .divide-zinc-800 > *) { border-color: rgba(255, 255, 255, .22); }
+.enf-tarjeta.enf-con-fondo .enf-fondo-muestra.is-on .enf-fondo-vista { box-shadow: 0 0 0 2px rgba(8, 12, 28, .6), 0 0 0 4px #fff; }
+
+/* Con fondo, el botón principal es blanco con texto oscuro también en el tema oscuro
+   (la regla de contraste de neumorfismo.css para el acento le ganaba y dejaba texto blanco sobre blanco). */
+:root[data-tema] .enf-con-fondo .boton-primario[style*='accent-base'] { background: #fff; color: #10162b; }

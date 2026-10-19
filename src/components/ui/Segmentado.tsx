@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 
 /** Control segmentado con la píldora que se desliza (estilo Orbis). */
 export function Segmentado<T extends string>({
-  id, opciones, valor, onChange, deshabilitado, etiqueta,
+  id, opciones, valor, onChange, deshabilitado, etiqueta, grande,
 }: {
   /** Único por pantalla: la animación comparte la píldora entre opciones del mismo id. */
   id: string
@@ -11,6 +11,8 @@ export function Segmentado<T extends string>({
   onChange: (v: T) => void
   deshabilitado?: boolean
   etiqueta: string
+  /** Versión más alta y legible, para controles importantes (p. ej. la técnica de estudio). */
+  grande?: boolean
 }) {
   return (
     <div role="group" aria-label={etiqueta} className="neu-pressed inline-flex p-1.5 !rounded-full gap-1">
@@ -23,7 +25,7 @@ export function Segmentado<T extends string>({
             aria-pressed={activo}
             disabled={deshabilitado && !activo}
             onClick={() => onChange(o.valor)}
-            className={`sin-tactil relative h-9 px-4 rounded-full text-[13px] font-bold transition-colors disabled:opacity-40 ${
+            className={`sin-tactil relative ${grande ? 'h-11 px-6 text-[15px]' : 'h-9 px-4 text-[13px]'} rounded-full font-bold transition-colors disabled:opacity-40 ${
               activo ? 'text-[var(--accent-texto)]' : 'text-[var(--neu-ink3)] hover:text-[var(--neu-ink2)]'
             }`}
           >

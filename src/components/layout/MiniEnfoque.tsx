@@ -13,7 +13,7 @@ export function MiniEnfoque() {
   const corriendo = estado === 'corriendo'
   const ahora = useAhora(corriendo)
   if (estado === 'detenido' || vistaActiva === 'enfoque') return null
-  const color = s.modo === 'foco' ? 'var(--accent-base)' : '#16a34a'
+  const color = 'var(--accent-base)'
   return (
     <button
       onClick={() => setVistaActiva('enfoque')}
