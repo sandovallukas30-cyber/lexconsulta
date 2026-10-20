@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { fondoModal, panelModal } from '../ui/animacionModal'
 import { useStore } from '../../store/useStore'
 import { useEnfoque } from '../../store/useEnfoque'
 import { useAjustes } from '../../store/useAjustes'
@@ -18,7 +20,7 @@ export function CompartirSemana() {
       <button onClick={() => setAbierto(true)} className="boton boton-suave boton-chico mt-3">
         <i className="ti ti-share-3" aria-hidden="true" /> Compartir mi semana
       </button>
-      {abierto && <VistaPrevia onCerrar={() => setAbierto(false)} />}
+      <AnimatePresence>{abierto && <VistaPrevia onCerrar={() => setAbierto(false)} />}</AnimatePresence>
     </>
   )
 }
@@ -65,14 +67,15 @@ function VistaPrevia({ onCerrar }: { onCerrar: () => void }) {
   }
 
   return (
-    <div className="anim-aparece fixed inset-0 z-[80] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.55)' }} onClick={onCerrar}>
-      <div
+    <motion.div {...fondoModal} className="fixed inset-0 z-[80] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.55)' }} onClick={onCerrar}>
+      <motion.div
+        {...panelModal}
         ref={ref}
         role="dialog"
         aria-modal="true"
         aria-label="Compartir mi semana"
         onClick={(e) => e.stopPropagation()}
-        className="anim-panel max-w-sm w-full max-h-[92vh] overflow-y-auto rounded-2xl shadow-2xl p-5"
+        className="max-w-sm w-full max-h-[92vh] overflow-y-auto rounded-2xl shadow-2xl p-5"
         style={{ background: 'var(--neu-card)' }}
       >
         <div className="flex items-center justify-between mb-3">
@@ -95,7 +98,7 @@ function VistaPrevia({ onCerrar }: { onCerrar: () => void }) {
           </button>
           <button onClick={onCerrar} className="boton boton-suave">Cerrar</button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }

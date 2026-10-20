@@ -1,4 +1,5 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
+import { AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { useEnfoque, esFlow, msEnfocados, msMostrados } from '../../store/useEnfoque'
 import { useAhora } from '../../hooks/useMotorEnfoque'
@@ -525,11 +526,13 @@ export function EnfoqueView() {
         )}
         {pestana === 'estadisticas' && <EnfoqueEstadisticas />}
         {pestana === 'historial' && <EnfoqueHistorial />}
-        {concentracion && (
-          <Suspense fallback={null}>
-            <ModoConcentracion onCerrar={() => setConcentracion(false)} />
-          </Suspense>
-        )}
+        <AnimatePresence>
+          {concentracion && (
+            <Suspense key="concentracion" fallback={null}>
+              <ModoConcentracion onCerrar={() => setConcentracion(false)} />
+            </Suspense>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   )

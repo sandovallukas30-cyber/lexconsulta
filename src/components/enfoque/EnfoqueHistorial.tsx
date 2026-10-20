@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { fondoModal, panelModal } from '../ui/animacionModal'
 import { createPortal } from 'react-dom'
 import { useStore } from '../../store/useStore'
 import { useEnfoque } from '../../store/useEnfoque'
@@ -55,14 +57,15 @@ function SesionForm({ sesion, onClose }: { sesion?: SesionFoco; onClose: () => v
   const etiqueta = 'block text-xs font-semibold mb-1'
   // en un portal: así no hereda los colores del fondo animado de la pestaña y se lee siempre igual
   return createPortal(
-    <div className="anim-aparece fixed inset-0 z-[80] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }} onClick={onClose}>
-      <div
+    <motion.div {...fondoModal} className="fixed inset-0 z-[80] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }} onClick={onClose}>
+      <motion.div
+        {...panelModal}
         ref={ref}
         role="dialog"
         aria-modal="true"
         aria-label={sesion ? 'Editar sesión' : 'Registrar sesión'}
         onClick={(e) => e.stopPropagation()}
-        className="anim-panel max-w-md w-full max-h-[85vh] overflow-y-auto rounded-2xl shadow-2xl p-6"
+        className="max-w-md w-full max-h-[85vh] overflow-y-auto rounded-2xl shadow-2xl p-6"
         style={{ background: 'var(--neu-card)' }}
       >
         <h2 className="text-lg font-bold mb-4" style={{ color: 'var(--neu-ink)' }}>{sesion ? 'Editar sesión' : 'Registrar sesión'}</h2>
@@ -113,8 +116,8 @@ function SesionForm({ sesion, onClose }: { sesion?: SesionFoco; onClose: () => v
             <button type="submit" className="boton boton-primario">Guardar</button>
           </div>
         </form>
-      </div>
-    </div>,
+      </motion.div>
+    </motion.div>,
     document.body,
   )
 }
@@ -185,7 +188,7 @@ export function EnfoqueHistorial() {
           <button className="boton boton-suave w-full mt-2" onClick={() => setDias((n) => n * 2)}>Ver más antiguas</button>
         )}
       </section>
-      {form && <SesionForm sesion={form.sesion} onClose={() => setForm(null)} />}
+      <AnimatePresence>{form && <SesionForm sesion={form.sesion} onClose={() => setForm(null)} />}</AnimatePresence>
     </>
   )
 }

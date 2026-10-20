@@ -7,6 +7,7 @@ import { avisar } from '../../store/useAvisos'
 import { useDialogo } from '../../hooks/useDialogo'
 import { incrustar } from '../../services/video'
 import { nombreRamo } from '../../services/tareasPlan'
+import { motion } from 'framer-motion'
 import { PomodoroCompacto } from './PomodoroCompacto'
 import { FondoEnfoque, useConFondo } from './FondoEnfoque'
 import { parsearApunte } from '../../services/apunteFormato'
@@ -260,12 +261,16 @@ export function SalaEstudio() {
   )
 
   return (
-    <div
+    <motion.div
       ref={ref}
       role="dialog"
       aria-modal="true"
       aria-label="Sala de estudio"
-      className="anim-aparece fixed inset-0 h-[100dvh] z-[85] flex flex-col"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2, ease: [0.2, 0, 0, 1] }}
+      className="fixed inset-0 h-[100dvh] z-[85] flex flex-col"
       style={{ background: 'var(--neu-bg)' }}
     >
       <header className="flex items-center gap-3 flex-wrap px-4 sm:px-6 py-3">
@@ -411,6 +416,6 @@ export function SalaEstudio() {
         </section>
         {timer}
       </div>
-    </div>
+    </motion.div>
   )
 }

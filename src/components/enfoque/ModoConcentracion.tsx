@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../../store/useStore'
 import { useEnfoque, esFlow, msEnfocados, msMostrados } from '../../store/useEnfoque'
@@ -108,7 +109,16 @@ export function ModoConcentracion({ onCerrar }: { onCerrar: () => void }) {
   }
 
   return (
-    <div className={`enf-foco${conFondo ? ' enf-con-fondo' : ''}`} role="dialog" aria-modal="true" aria-label="Modo concentración">
+    <motion.div
+      className={`enf-foco${conFondo ? ' enf-con-fondo' : ''}`}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Modo concentración"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
+    >
       <FondoEnfoque />
       <button type="button" className="boton boton-suave enf-foco-salir" onClick={onCerrar} aria-label="Salir del modo concentración">
         <i className="ti ti-x" aria-hidden="true" />
@@ -264,6 +274,6 @@ export function ModoConcentracion({ onCerrar }: { onCerrar: () => void }) {
           <i className="ti ti-adjustments" aria-hidden="true" /> Fondo, sonido e ideas
         </button>
       </div>
-    </div>
+    </motion.div>
   )
 }

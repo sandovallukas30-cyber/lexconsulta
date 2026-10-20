@@ -75,7 +75,7 @@
 @media (prefers-reduced-motion: reduce) { .enf-fondo *, .enf-fondo { animation: none !important; transition: none !important; } .enf-fx-luciernaga { opacity: .8; } }
 
 /* ───────── Pantalla de concentración ───────── */
-.enf-foco { position: fixed; inset: 0; z-index: 90; background: var(--neu-bg); color: var(--neu-ink); display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 12px; padding: 28px 32px; overflow: hidden; animation: enf-aparece .25s ease-out; }
+.enf-foco { position: fixed; inset: 0; z-index: 90; background: var(--neu-bg); color: var(--neu-ink); display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 12px; padding: 28px 32px; overflow: hidden; }
 @keyframes enf-aparece { from { opacity: 0; } to { opacity: 1; } }
 .enf-foco-salir { position: absolute; top: 20px; right: 24px; z-index: 9; width: 44px; height: 44px; padding: 0; font-size: 20px; }
 .enf-foco-centro { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 0; width: 100%; }

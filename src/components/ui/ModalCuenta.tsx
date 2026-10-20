@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { fondoModal, panelModal } from './animacionModal'
 import { useCuenta, type ProveedorCuenta } from '../../store/useCuenta'
 import { useDialogo } from '../../hooks/useDialogo'
 
@@ -48,10 +50,15 @@ export function BotonCuenta({ compacto = false }: { compacto?: boolean }) {
   )
 }
 
+/** La salida se anima porque el contenido se desmonta dentro de AnimatePresence. */
 export function ModalCuenta() {
   const abierto = useCuenta((s) => s.modalAbierto)
+  return <AnimatePresence>{abierto && <ContenidoModalCuenta key="cuenta" />}</AnimatePresence>
+}
+
+function ContenidoModalCuenta() {
   const cerrar = useCuenta((s) => s.cerrarModal)
-  const ref = useDialogo<HTMLDivElement>(abierto, cerrar)
+  const ref = useDialogo<HTMLDivElement>(true, cerrar)
   const c = useCuenta()
   const [correo, setCorreo] = useState('')
   const [enviado, setEnviado] = useState(false)
@@ -59,7 +66,6 @@ export function ModalCuenta() {
   const [ocupado, setOcupado] = useState(false)
   const [confirmarBorrado, setConfirmarBorrado] = useState(false)
 
-  if (!abierto) return null
 
   const entrar = async (p: ProveedorCuenta) => {
     setError(null)
@@ -92,14 +98,15 @@ export function ModalCuenta() {
   }
 
   return (
-    <div className="anim-aparece fixed inset-0 z-[80] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }} onClick={cerrar}>
-      <div
+    <motion.div {...fondoModal} className="fixed inset-0 z-[80] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }} onClick={cerrar}>
+      <motion.div
+        {...panelModal}
         ref={ref}
         role="dialog"
         aria-modal="true"
         aria-label={c.perfil ? 'Tu cuenta' : 'Entrar a Prima Lex'}
         onClick={(e) => e.stopPropagation()}
-        className="anim-panel max-w-md w-full max-h-[88vh] overflow-y-auto rounded-2xl shadow-2xl p-6"
+        className="max-w-md w-full max-h-[88vh] overflow-y-auto rounded-2xl shadow-2xl p-6"
         style={{ background: 'var(--neu-card)' }}
       >
         <div className="flex items-start justify-between gap-3 mb-4">
@@ -201,7 +208,7 @@ export function ModalCuenta() {
           </div>
         )}
         {error && <p role="alert" className="text-sm mt-3" style={{ color: 'var(--neu-danger)' }}>{error}</p>}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }

@@ -146,11 +146,13 @@ function App() {
           <RightSidebar />
         </div>
       </div>
-      {salaAbierta && (
-        <Suspense fallback={null}>
-          <SalaEstudio />
-        </Suspense>
-      )}
+      <AnimatePresence>
+        {salaAbierta && (
+          <Suspense key="sala" fallback={null}>
+            <SalaEstudio />
+          </Suspense>
+        )}
+      </AnimatePresence>
       <ModalCuenta />
       <Avisos />
       <PanelAtajos />
