@@ -92,14 +92,14 @@ export function ModalCuenta() {
   }
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }} onClick={cerrar}>
+    <div className="anim-aparece fixed inset-0 z-[80] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }} onClick={cerrar}>
       <div
         ref={ref}
         role="dialog"
         aria-modal="true"
         aria-label={c.perfil ? 'Tu cuenta' : 'Entrar a Prima Lex'}
         onClick={(e) => e.stopPropagation()}
-        className="max-w-md w-full max-h-[88vh] overflow-y-auto rounded-2xl shadow-2xl p-6"
+        className="anim-panel max-w-md w-full max-h-[88vh] overflow-y-auto rounded-2xl shadow-2xl p-6"
         style={{ background: 'var(--neu-card)' }}
       >
         <div className="flex items-start justify-between gap-3 mb-4">

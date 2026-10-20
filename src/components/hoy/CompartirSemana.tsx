@@ -65,14 +65,14 @@ function VistaPrevia({ onCerrar }: { onCerrar: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.55)' }} onClick={onCerrar}>
+    <div className="anim-aparece fixed inset-0 z-[80] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.55)' }} onClick={onCerrar}>
       <div
         ref={ref}
         role="dialog"
         aria-modal="true"
         aria-label="Compartir mi semana"
         onClick={(e) => e.stopPropagation()}
-        className="max-w-sm w-full max-h-[92vh] overflow-y-auto rounded-2xl shadow-2xl p-5"
+        className="anim-panel max-w-sm w-full max-h-[92vh] overflow-y-auto rounded-2xl shadow-2xl p-5"
         style={{ background: 'var(--neu-card)' }}
       >
         <div className="flex items-center justify-between mb-3">

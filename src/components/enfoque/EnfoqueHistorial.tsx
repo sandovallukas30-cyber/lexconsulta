@@ -55,14 +55,14 @@ function SesionForm({ sesion, onClose }: { sesion?: SesionFoco; onClose: () => v
   const etiqueta = 'block text-xs font-semibold mb-1'
   // en un portal: así no hereda los colores del fondo animado de la pestaña y se lee siempre igual
   return createPortal(
-    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }} onClick={onClose}>
+    <div className="anim-aparece fixed inset-0 z-[80] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }} onClick={onClose}>
       <div
         ref={ref}
         role="dialog"
         aria-modal="true"
         aria-label={sesion ? 'Editar sesión' : 'Registrar sesión'}
         onClick={(e) => e.stopPropagation()}
-        className="max-w-md w-full max-h-[85vh] overflow-y-auto rounded-2xl shadow-2xl p-6"
+        className="anim-panel max-w-md w-full max-h-[85vh] overflow-y-auto rounded-2xl shadow-2xl p-6"
         style={{ background: 'var(--neu-card)' }}
       >
         <h2 className="text-lg font-bold mb-4" style={{ color: 'var(--neu-ink)' }}>{sesion ? 'Editar sesión' : 'Registrar sesión'}</h2>
