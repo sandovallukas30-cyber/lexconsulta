@@ -5,7 +5,7 @@ import '@fontsource-variable/sora'
 // íconos Tabler recortados a los que usa la app (24 KB en vez de 495): scripts/subset_iconos.mjs
 import './assets/iconos/tabler-subset.css'
 import './index.css'
-import './neumorfismo.css'
+import './base.css'
 import './enfoque.css'
 import { Raiz } from './Raiz.tsx'
 // historial de "Volver" y scroll por vista (se engancha al store)

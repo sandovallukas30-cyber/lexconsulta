@@ -174,5 +174,5 @@
 .enf-tarjeta.enf-con-fondo .enf-fondo-muestra.is-on .enf-fondo-vista { box-shadow: 0 0 0 2px rgba(8, 12, 28, .6), 0 0 0 4px #fff; }
 
 /* Con fondo, el botón principal es blanco con texto oscuro también en el tema oscuro
-   (la regla de contraste de neumorfismo.css para el acento le ganaba y dejaba texto blanco sobre blanco). */
+   (la regla de contraste de base.css para el acento le ganaba y dejaba texto blanco sobre blanco). */
 :root[data-tema] .enf-con-fondo .boton-primario[style*='accent-base'] { background: #fff; color: #10162b; }

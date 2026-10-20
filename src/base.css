@@ -1,23 +1,25 @@
 /* ============================================================================
-   Estilo neumórfico de Prima Lex (diseño de Claude Design: "Prima Lex —
-   Neumorfismo"). Superficies suaves extruidas del MISMO fondo, bordes muy
-   redondeados y sombras duales discretas (una oscura abajo-derecha, una clara
-   arriba-izquierda). Tipografía: Sora (títulos, botones, etiquetas) y Plus
-   Jakarta Sans (texto).
+   Base visual de Prima Lex: superficies planas (tarjetas blancas con borde fino sobre fondo
+   gris claro), tokens `--neu-*` (el prefijo es histórico; se mantuvo para no tocar cientos de
+   componentes), tipografía Sora + Plus Jakarta Sans, accesibilidad (alto contraste, sin
+   animaciones) y compensación del zoom de la interfaz.
 
-   Sin @layer a propósito: gana a las utilidades de Tailwind (bg-white,
-   border-zinc-200…) para que TODA la app tome el estilo sin reescribir cada
-   componente. Para sacar un elemento del estilo: clase `sin-neu`.
+   El estilo neumórfico anterior (sombras duales, relieve y campos hundidos) se retiró: el
+   nuevo diseño se hace aparte. Para volver a él: `git revert` del commit «Quita el neumorfismo».
+
+   Sin @layer a propósito: gana a las utilidades de Tailwind (bg-white, border-zinc-200…) para
+   que TODA la app tome la base sin reescribir cada componente. Para sacar un elemento de ella:
+   clase `sin-neu`.
    ============================================================================ */
 
 :root {
-  --neu-bg: #e9edf6;
-  --neu-bg2: #eef1f9;
-  --neu-bg3: #dde3f1;
-  --neu-sd: #c3cbe0; /* sombra oscura */
-  --neu-sl: rgba(255, 255, 255, 0.55); /* sombra clara (brillo): tenue, para que no se vea como un halo */
-  --neu-line: #d7dcee;
-  --neu-card: var(--neu-bg);
+  --neu-bg: #f4f6fa;
+  --neu-bg2: #f4f6fa;
+  --neu-bg3: #e6eaf3;
+  --neu-sd: rgba(16, 24, 40, 0.1); /* sombra */
+  --neu-sl: rgba(255, 255, 255, 0);
+  --neu-line: #e0e5ed;
+  --neu-card: #ffffff;
   --neu-ink: #1f2344;
   --neu-ink2: #4b5373; /* AA: 6:1 sobre --neu-bg */
   --neu-ink3: #565e7e; /* AA: 4,6:1 incluso sobre el fondo hundido */
@@ -30,11 +32,12 @@
   --font-head: 'Sora Variable', 'Sora', system-ui, sans-serif;
 }
 :root[data-tema='oscuro'] {
-  --neu-bg: #1c2032;
-  --neu-bg2: #212640;
-  --neu-bg3: #171a2a;
-  --neu-sd: #10121f;
-  --neu-sl: #2c3356;
+  --neu-bg: #14172a;
+  --neu-bg2: #1c2032;
+  --neu-bg3: #0f1120;
+  --neu-card: #1c2032;
+  --neu-sd: rgba(0, 0, 0, 0.5);
+  --neu-sl: rgba(0, 0, 0, 0);
   --neu-line: #2d3356;
   --neu-ink: #eef0fb;
   --neu-ink2: #a7afcc;
@@ -47,13 +50,13 @@
   --neu-danger-soft: #44201f;
 }
 
-/* sombras como variables para reutilizarlas */
+/* superficies: borde fino en vez de relieve (se mantienen los nombres para no tocar los componentes) */
 :root {
-  --neu-elevada: 8px 8px 16px var(--neu-sd), -6px -6px 12px var(--neu-sl);
-  --neu-plana: 4px 4px 9px var(--neu-sd), -3px -3px 7px var(--neu-sl);
-  --neu-chica: 3px 3px 6px var(--neu-sd), -2px -2px 5px var(--neu-sl);
-  --neu-presionada: inset 5px 5px 10px var(--neu-sd), inset -5px -5px 10px var(--neu-sl);
-  --neu-presionada-chica: inset 3px 3px 6px var(--neu-sd), inset -3px -3px 6px var(--neu-sl);
+  --neu-elevada: 0 0 0 1px var(--neu-line), 0 1px 2px rgb(16 24 40 / 0.04);
+  --neu-plana: 0 0 0 1px var(--neu-line);
+  --neu-chica: 0 0 0 1px var(--neu-line);
+  --neu-presionada: inset 0 0 0 1px var(--neu-line);
+  --neu-presionada-chica: inset 0 0 0 1px var(--neu-line);
 }
 
 html, body, #root { background: var(--neu-bg); color: var(--neu-ink); }
@@ -69,7 +72,7 @@ main[data-vista='explorador'] .font-serif,
 main[data-vista='colecciones'] .font-serif,
 .zona-juridica .font-serif { font-family: var(--font-serif); letter-spacing: 0; }
 
-/* ---------- utilidades neumórficas ---------- */
+/* ---------- utilidades de superficie ---------- */
 .neu-raised { background: var(--neu-card); border-radius: 22px; box-shadow: var(--neu-elevada); border-color: transparent; }
 .neu-flat { background: var(--neu-bg2); border-radius: 16px; box-shadow: var(--neu-plana); border-color: transparent; }
 .neu-pressed { background: var(--neu-card); border-radius: 16px; box-shadow: var(--neu-presionada); border-color: transparent; }
@@ -94,14 +97,14 @@ main[data-vista='colecciones'] .font-serif,
 
 /* modales y paneles flotantes */
 [role='dialog'] { background-color: var(--neu-card); }
-[role='dialog'] .shadow-2xl, [role='dialog'].shadow-2xl { box-shadow: 14px 14px 30px rgba(10, 14, 40, 0.28), -8px -8px 20px var(--neu-sl); }
+[role='dialog'] .shadow-2xl, [role='dialog'].shadow-2xl { box-shadow: 0 0 0 1px var(--neu-line), 0 20px 50px rgba(10, 14, 40, 0.25); }
 
 /* bordes: más suaves, del tono del fondo */
 .border-zinc-200, .border-zinc-100, .border-zinc-300 { border-color: var(--neu-line); }
 :root[data-tema='oscuro'] :is(.border-zinc-800, .border-zinc-700, .border-zinc-900) { border-color: var(--neu-line); }
 .divide-zinc-200 > :not(:last-child), .divide-zinc-100 > :not(:last-child) { border-color: var(--neu-line); }
 
-/* ---------- campos de texto: hundidos ---------- */
+/* ---------- campos de texto ---------- */
 input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not(.bg-transparent):not(.sin-neu),
 textarea:not(.bg-transparent):not(.sin-neu),
 select:not(.bg-transparent):not(.sin-neu) {
@@ -118,7 +121,7 @@ input:not(.sin-neu):focus-visible, textarea:not(.sin-neu):focus-visible, select:
 }
 :root[data-tema='oscuro'] input:not(.sin-neu), :root[data-tema='oscuro'] select:not(.sin-neu), :root[data-tema='oscuro'] textarea:not(.sin-neu) { color-scheme: dark; }
 
-/* casillas: cuadrito neumórfico */
+/* casillas */
 input[type='checkbox']:not(.sin-neu) {
   appearance: none;
   -webkit-appearance: none;
@@ -138,8 +141,6 @@ input[type='checkbox']:not(.sin-neu):checked::after { content: ''; width: 10px; 
 .sobre-color {
   --neu-sd: rgba(40, 36, 100, .16);
   --neu-sl: rgba(255, 255, 255, .22);
-  --neu-plana: 2px 2px 6px var(--neu-sd), -1px -1px 4px var(--neu-sl);
-  --neu-chica: 2px 2px 5px var(--neu-sd), -1px -1px 3px var(--neu-sl);
 }
 :root[data-tema='oscuro'] .sobre-color {
   --neu-sd: rgba(0, 0, 0, .35);
@@ -158,7 +159,7 @@ input[type='checkbox']:not(.sin-neu):checked::after { content: ''; width: 10px; 
 .boton-primario, .boton[aria-pressed='true'] {
   background: var(--accent-base);
   color: #fff;
-  box-shadow: 5px 5px 11px color-mix(in srgb, var(--neu-sd) 80%, transparent), -4px -4px 10px var(--neu-sl);
+  box-shadow: none;
 }
 :root[data-tema='oscuro'] .boton-primario, :root[data-tema='oscuro'] .boton[aria-pressed='true'] { background: var(--accent-400); color: #171a30; }
 @media (hover: hover) {
@@ -177,9 +178,8 @@ input[type='checkbox']:not(.sin-neu):checked::after { content: ''; width: 10px; 
 /* ---------- chips y etiquetas redondeadas ---------- */
 .rounded-full:is(.bg-zinc-100, .bg-zinc-200, [class*='bg-zinc-200/'], .bg-zinc-800):not(button):not(.sin-neu):not([class*='w-']) { background-color: var(--neu-card); box-shadow: var(--neu-chica); }
 
-/* ---------- barras de progreso: canal hundido ---------- */
+/* ---------- barras de progreso ---------- */
 [role='progressbar'] { background-color: var(--neu-bg3) !important; box-shadow: var(--neu-presionada-chica); }
-[role='progressbar'] > * { box-shadow: 1px 1px 4px color-mix(in srgb, var(--accent-base) 45%, transparent); }
 
 /* ---------- fondo de la app y scroll ---------- */
 .dark, .dark main { background-color: var(--neu-card); }
@@ -199,36 +199,8 @@ input[type='checkbox']:not(.sin-neu):checked::after { content: ''; width: 10px; 
 :root[data-tema='claro'] .text-zinc-500, :root[data-tema='claro'] .text-zinc-400 { color: var(--neu-ink2); }
 
 /* ============================================================================
-   Ajustes de la interfaz (useAjustes): estilo plano, alto contraste y sin
-   animaciones. Se activan con atributos en <html>.
+   Ajustes de la interfaz (useAjustes): alto contraste y sin animaciones. Se activan con atributos en <html>.
    ============================================================================ */
-
-/* Plano: tarjetas blancas sobre fondo gris claro, sombras suaves (el estilo de antes) */
-:root[data-estilo='plano'] {
-  --neu-bg: #f4f6fa;
-  --neu-card: #ffffff;
-  --neu-bg2: #f4f6fa;
-  --neu-bg3: #e6eaf3;
-  --neu-line: #e0e5ed;
-  --neu-sd: rgba(16, 24, 40, 0.1);
-  --neu-sl: rgba(255, 255, 255, 0);
-  --neu-elevada: 0 1px 2px rgb(16 24 40 / 0.04), 0 8px 24px rgb(16 24 40 / 0.07);
-  --neu-plana: 0 1px 2px rgb(16 24 40 / 0.05), 0 3px 10px rgb(16 24 40 / 0.05);
-  --neu-chica: 0 1px 2px rgb(16 24 40 / 0.1);
-  --neu-presionada: inset 0 0 0 1px var(--neu-line);
-  --neu-presionada-chica: inset 0 0 0 1px var(--neu-line);
-}
-:root[data-estilo='plano'][data-tema='oscuro'] {
-  --neu-bg: #14172a;
-  --neu-card: #1c2032;
-  --neu-bg2: #1c2032;
-  --neu-bg3: #0f1120;
-  --neu-line: #2d3356;
-  --neu-sd: rgba(0, 0, 0, 0.5);
-  --neu-elevada: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.35);
-  --neu-plana: 0 1px 2px rgb(0 0 0 / 0.3), 0 3px 10px rgb(0 0 0 / 0.25);
-  --neu-chica: 0 1px 2px rgb(0 0 0 / 0.4);
-}
 
 /* Alto contraste: sin relieve, con bordes y textos más fuertes */
 :root[data-contraste='si'] {

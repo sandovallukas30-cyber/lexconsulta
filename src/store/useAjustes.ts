@@ -14,7 +14,6 @@ export const ZOOMS: [number, string][] = [
   [1.3, 'Muy grande'],
 ]
 
-export type EstiloUI = 'neumo' | 'plano'
 
 /** Tamaños del texto de los códigos: de 14 a 32 px, de 2 en 2 (17 es el de siempre). */
 export const TAMANO_CODIGO_DEFECTO = 17
@@ -26,7 +25,6 @@ export const sumarTamanoCodigo = (actual: number, delta: number): number =>
 export interface AjustesUI {
   /** Escala de toda la interfaz (1 = normal). */
   zoom: number
-  estilo: EstiloUI
   /** Sin relieve, con bordes y textos más fuertes. */
   contraste: boolean
   /** Animaciones suaves al cambiar de sección y abrir ventanas. */
@@ -54,7 +52,6 @@ export const useAjustes = create<AjustesUI>()(
   persist(
     (set) => ({
       zoom: 1,
-      estilo: 'neumo',
       contraste: false,
       animaciones: true,
       celebraciones: true,
@@ -71,7 +68,7 @@ export const useAjustes = create<AjustesUI>()(
     }),
     {
       name: 'prima-lex-ajustes-v1',
-      partialize: (s) => ({ zoom: s.zoom, estilo: s.estilo, contraste: s.contraste, animaciones: s.animaciones, celebraciones: s.celebraciones, recordatorios: s.recordatorios, horaResumen: s.horaResumen, tamanoCodigo: s.tamanoCodigo, catalogoAbierto: s.catalogoAbierto, mascotaActiva: s.mascotaActiva, mascotaTipo: s.mascotaTipo, mascotaNombre: s.mascotaNombre, mascotaColor: s.mascotaColor, mascotaAccesorio: s.mascotaAccesorio }),
+      partialize: (s) => ({ zoom: s.zoom, contraste: s.contraste, animaciones: s.animaciones, celebraciones: s.celebraciones, recordatorios: s.recordatorios, horaResumen: s.horaResumen, tamanoCodigo: s.tamanoCodigo, catalogoAbierto: s.catalogoAbierto, mascotaActiva: s.mascotaActiva, mascotaTipo: s.mascotaTipo, mascotaNombre: s.mascotaNombre, mascotaColor: s.mascotaColor, mascotaAccesorio: s.mascotaAccesorio }),
     }
   )
 )
