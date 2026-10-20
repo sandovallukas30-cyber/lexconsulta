@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { ItemLista } from '../ui/ItemLista'
 import { useStore } from '../../store/useStore'
 import { avisar } from '../../store/useAvisos'
 import { eliminarColeccionConDeshacer } from '../../services/deshacer'
@@ -197,6 +198,7 @@ function ListaColecciones() {
           <EmptyState onCrear={() => setModalNueva(true)} modoOscuro={modoOscuro} />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <AnimatePresence>
             {ordenadas.map((c, i) => (
               <TarjetaColeccion
                 key={c.id}
@@ -207,6 +209,7 @@ function ListaColecciones() {
                 modoOscuro={modoOscuro}
               />
             ))}
+            </AnimatePresence>
           </div>
         )}
 
@@ -348,6 +351,8 @@ function TarjetaColeccion({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.16 } }}
+      layout="position"
       transition={{ duration: 0.25, delay }}
       onClick={onAbrir}
       className={`group relative text-left rounded-xl border-2 p-5 cursor-pointer transition-all hover:shadow-lg hover:-translate-y-0.5 ${
@@ -1112,8 +1117,9 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
               // sin scrollear mucho — esto no lo elimina (no es posible con
               // texto legal completo) pero sí muestra bastantes más de una.
               <div className="columns-1 sm:columns-2 xl:columns-3 2xl:columns-4 gap-3">
+                <AnimatePresence initial={false}>
                 {articulosFiltrados.map(({ ar, indiceOriginal: i }) => (
-                  <div key={`${ar.codigo}::${ar.articulo}`} className="break-inside-avoid mb-3">
+                  <ItemLista as="div" acomodar={false} key={`${ar.codigo}::${ar.articulo}`} className="break-inside-avoid mb-3">
                     <TarjetaArticulo
                       item={ar}
                       posicion={i}
@@ -1127,8 +1133,9 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
                       modoRepaso={modoRepaso}
                       modoOscuro={modoOscuro}
                     />
-                  </div>
+                  </ItemLista>
                 ))}
+                </AnimatePresence>
               </div>
             )}
           </div>

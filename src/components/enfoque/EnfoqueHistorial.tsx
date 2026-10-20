@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { fondoModal, panelModal } from '../ui/animacionModal'
+import { ItemLista } from '../ui/ItemLista'
 import { createPortal } from 'react-dom'
 import { useStore } from '../../store/useStore'
 import { useEnfoque } from '../../store/useEnfoque'
@@ -149,18 +150,21 @@ export function EnfoqueHistorial() {
         {grupos.size === 0 && (
           <p className="text-sm" style={{ color: 'var(--neu-ink2)' }}>No hay sesiones en este período. Si estudiaste sin el temporizador, regístrala a mano.</p>
         )}
+        <AnimatePresence initial={false}>
         {[...grupos.entries()].map(([fecha, lista]) => (
-          <div key={fecha} className="mb-4">
+          <ItemLista as="div" key={fecha}>
+          <div className="mb-4">
             <p className="text-[11px] font-bold uppercase tracking-wide mb-1" style={{ color: 'var(--neu-ink3)' }}>
               {fecha === hoy ? 'Hoy · ' : fecha === sumarDiasISO(hoy, -1) ? 'Ayer · ' : ''}
               {fechaLarga(fecha)} · {horasMin(lista.reduce((a, s) => a + s.minutos, 0))}
             </p>
+            <AnimatePresence initial={false}>
             {lista.map((s) => {
               const nombre = nombreRamo(s.ramoId, ramos)
               const tarea = tareas.find((t) => t.id === s.tareaId)
               return (
+                <ItemLista as="div" key={s.id}>
                 <button
-                  key={s.id}
                   onClick={() => setForm({ sesion: s })}
                   aria-label={`Editar sesión de ${s.minutos} minutos`}
                   className="sin-neu sin-tactil w-full flex items-center gap-3 py-2.5 text-left rounded-xl hover:bg-[var(--neu-bg3)] px-2 -mx-2"
@@ -180,10 +184,14 @@ export function EnfoqueHistorial() {
                   {s.calidad !== undefined && <Estrellas valor={s.calidad} tamano={14} />}
                   <span className="neu-chip px-3 py-1 text-xs font-bold tabular-nums min-w-[76px] text-center" style={{ color: 'var(--accent-texto)' }}>{horasMin(s.minutos)}</span>
                 </button>
+                </ItemLista>
               )
             })}
+            </AnimatePresence>
           </div>
+          </ItemLista>
         ))}
+        </AnimatePresence>
         {hayMas && dias < 365 && (
           <button className="boton boton-suave w-full mt-2" onClick={() => setDias((n) => n * 2)}>Ver más antiguas</button>
         )}
