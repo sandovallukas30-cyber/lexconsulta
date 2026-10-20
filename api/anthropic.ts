@@ -65,15 +65,41 @@ function obtenerIp(req: VercelRequest): string {
   return req.headers['x-real-ip']?.toString() ?? 'desconocida'
 }
 
-function obtenerUsuarioEmail(payload: unknown): string | null {
-  // Intenta extraer usuarioEmail del cuerpo del request
-  if (payload && typeof payload === 'object' && 'usuarioEmail' in payload) {
-    const email = (payload as { usuarioEmail?: unknown }).usuarioEmail
-    if (typeof email === 'string' && email.length > 0) {
-      return email.toLowerCase().trim()
+// Quién es el usuario NO se lee del cuerpo del request (cualquiera puede escribir ahí el correo que quiera
+// y obtener el cupo de «verificado» o un cupo propio por cada correo inventado). Solo cuenta un correo
+// confirmado por Supabase, validando el token de sesión que manda la app en `Authorization: Bearer`.
+const CACHE_TOKEN_MS = 5 * 60 * 1000
+const cacheTokens = new Map<string, { email: string | null; exp: number }>()
+
+async function obtenerEmailVerificado(req: VercelRequest): Promise<string | null> {
+  const cab = req.headers.authorization
+  const token = typeof cab === 'string' && cab.startsWith('Bearer ') ? cab.slice(7).trim() : ''
+  if (token.length < 20 || token.length > 4000) return null
+
+  const ahora = Date.now()
+  const guardado = cacheTokens.get(token)
+  if (guardado && guardado.exp > ahora) return guardado.email
+
+  const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL
+  const anon = process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_ANON_KEY
+  if (!url || !anon) return null
+
+  let email: string | null = null
+  try {
+    const r = await fetch(`${url.replace(/\/$/, '')}/auth/v1/user`, {
+      headers: { apikey: anon, authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(3000),
+    })
+    if (r.ok) {
+      const u = (await r.json()) as { email?: string; email_confirmed_at?: string | null; confirmed_at?: string | null }
+      if (u.email && (u.email_confirmed_at || u.confirmed_at)) email = u.email.toLowerCase().trim()
     }
+  } catch {
+    email = null // sin respuesta de Supabase: se trata como no verificado (cupo menor), nunca como verificado
   }
-  return null
+  if (cacheTokens.size > 500) cacheTokens.clear()
+  cacheTokens.set(token, { email, exp: ahora + CACHE_TOKEN_MS })
+  return email
 }
 
 function obtenerLimite(usuarioEmail: string | null): number {
@@ -119,12 +145,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: 'Falta ANTHROPIC_API_KEY en el servidor' })
   }
 
-  const { model, max_tokens, system, messages, usuarioEmail } = req.body ?? {}
+  const { model, max_tokens, system, messages } = req.body ?? {}
 
   // ----- Rate limit diferenciado por usuario -----
   const ahora = Date.now()
   const ip = obtenerIp(req)
-  const email = obtenerUsuarioEmail({ usuarioEmail })
+  const email = await obtenerEmailVerificado(req)
   const limiteUsuario = obtenerLimite(email)
 
   // Clave para usuario registrado o IP (si no registrado)

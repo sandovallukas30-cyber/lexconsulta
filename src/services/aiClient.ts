@@ -10,6 +10,8 @@
 //
 // Todos los servicios (anthropic.ts, canvas.ts, situacion.ts) llaman a callMessages().
 
+import { supabase } from './supabase'
+
 // El SDK solo se usa en desarrollo: se importa dinámicamente para que no
 // viaje (~144 KB) en el build de producción, que habla con /api/anthropic (C8).
 import type Anthropic from '@anthropic-ai/sdk'
@@ -48,16 +50,24 @@ async function getClienteDev(): Promise<Anthropic> {
 
 export async function callMessages(
   payload: PayloadMessages,
-  usuarioEmail?: string | null,
+  /** Ya no se envía: el servidor identifica al usuario por su sesión, no por un correo declarado. */
+  _usuarioEmail?: string | null,
   onConsultasRestantes?: (n: number) => void,
 ): Promise<RespuestaMessages> {
   if (import.meta.env.PROD) {
     // Producción: proxy seguro
-    const payloadConUsuario = usuarioEmail ? { ...payload, usuarioEmail } : payload
+    // El servidor no confía en un correo declarado: si hay sesión, manda su token y él confirma quién es.
+    const headers: Record<string, string> = { 'content-type': 'application/json' }
+    try {
+      const { data } = (await supabase?.auth.getSession()) ?? { data: null }
+      if (data?.session?.access_token) headers.authorization = `Bearer ${data.session.access_token}`
+    } catch {
+      // sin sesión legible: se consulta como visitante
+    }
     const r = await fetch('/api/anthropic', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(payloadConUsuario),
+      headers,
+      body: JSON.stringify(payload),
     })
 
     // Leer contador de consultas restantes del header
