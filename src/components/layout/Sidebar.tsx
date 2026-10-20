@@ -113,7 +113,7 @@ export function Sidebar() {
       <motion.aside
         initial={false}
         animate={esMovil ? { x: menuMovilAbierto ? 0 : -320, width: 312 } : { x: 0, width: colapsado ? 96 : 296 }}
-        transition={{ duration: 0.22, ease: 'easeOut' }}
+        transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
         aria-label="Menú principal"
         // en móvil se cierra también deslizándolo hacia la izquierda
         drag={esMovil && menuMovilAbierto ? 'x' : false}
@@ -139,10 +139,10 @@ export function Sidebar() {
               onClick={toggleSidebar}
               title="Expandir (Ctrl+B)"
               aria-label="Expandir menú lateral"
-              className="w-11 h-11 rounded-xl flex items-center justify-center"
+              className="anim-aparece w-11 h-11 rounded-xl flex items-center justify-center"
             >
               <span
-                className="w-11 h-11 rounded-[14px] flex items-center justify-center shadow-[4px_4px_9px_var(--neu-sd),-4px_-4px_9px_var(--neu-sl)]"
+                className="w-11 h-11 rounded-[14px] flex items-center justify-center"
                 style={{ background: VERDE }}
               >
                 <i className="ti ti-scale text-lg text-white" />
@@ -150,9 +150,9 @@ export function Sidebar() {
             </button>
           ) : (
             <>
-              <div className="flex-1 min-w-0 flex items-center gap-2.5">
+              <div className="anim-aparece flex-1 min-w-0 flex items-center gap-2.5">
                 <span
-                  className="w-11 h-11 rounded-[14px] flex items-center justify-center flex-shrink-0 shadow-[4px_4px_9px_var(--neu-sd),-4px_-4px_9px_var(--neu-sl)]"
+                  className="w-11 h-11 rounded-[14px] flex items-center justify-center flex-shrink-0"
                   style={{ background: VERDE }}
                   aria-hidden="true"
                 >
@@ -214,7 +214,7 @@ export function Sidebar() {
             onClick={() => setModalCodigos(true)}
             title={`Códigos · ${activos} de ${total} activos (incluye leyes especiales)`}
             className={`w-full min-h-control rounded-control text-sm font-medium transition-colors text-left flex items-center ${
-              colapsado ? 'justify-center px-0 py-1' : 'gap-3 px-3 py-1'
+              colapsado ? 'justify-center px-0 py-1' : 'px-3 py-1'
             } ${
               modoOscuro ? 'text-zinc-300 hover:bg-zinc-800' : 'text-zinc-700 hover:bg-zinc-100'
             }`}
@@ -233,22 +233,12 @@ export function Sidebar() {
                 </span>
               )}
             </span>
-            <AnimatePresence initial={false}>
-              {!colapsado && (
-                <motion.span
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: 'auto' }}
-                  exit={{ opacity: 0, width: 0 }}
-                  transition={{ duration: 0.15 }}
-                  className="flex-1 overflow-hidden whitespace-nowrap"
-                >
-                  <span className="block">Códigos</span>
-                  <span className={`block text-[11px] font-normal truncate ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                    {topeVisible(activos)} activos
-                  </span>
-                </motion.span>
-              )}
-            </AnimatePresence>
+            <Etiqueta visible={!colapsado} className="flex-1">
+              <span className="block">Códigos</span>
+              <span className={`block text-[11px] font-normal truncate ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                {topeVisible(activos)} activos
+              </span>
+            </Etiqueta>
             {!colapsado && (
               <i className={`ti ti-chevron-right text-sm flex-shrink-0 ${modoOscuro ? 'text-zinc-600' : 'text-zinc-400'}`} />
             )}
@@ -258,25 +248,13 @@ export function Sidebar() {
             onClick={() => abrirAcerca('acerca')}
             title={colapsado ? 'Configuración · Apariencia, aviso legal, privacidad' : undefined}
             className={`w-full mt-1 min-h-control rounded-control text-xs transition-colors flex items-center ${
-              colapsado ? 'justify-center px-0' : 'gap-3 px-3'
+              colapsado ? 'justify-center px-0' : 'px-3'
             } ${
               modoOscuro ? 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'
             }`}
           >
             <i className="ti ti-settings text-base flex-shrink-0" />
-            <AnimatePresence initial={false}>
-              {!colapsado && (
-                <motion.span
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: 'auto' }}
-                  exit={{ opacity: 0, width: 0 }}
-                  transition={{ duration: 0.15 }}
-                  className="whitespace-nowrap overflow-hidden"
-                >
-                  Configuración
-                </motion.span>
-              )}
-            </AnimatePresence>
+            <Etiqueta visible={!colapsado}>Configuración</Etiqueta>
           </button>
 
           {/* cuenta y modo oscuro: al pie del menú, fuera de la franja superior */}
@@ -303,6 +281,25 @@ export function Sidebar() {
   )
 }
 
+/** Texto que se pliega con el menú: siempre montado, el ancho y la opacidad pasan por CSS (sin
+ *  desmontar, que era lo que se veía a saltos). Con el menú colapsado queda en 0 y oculto a lectores. */
+function Etiqueta({ visible, children, className = '' }: { visible: boolean; children: React.ReactNode; className?: string }) {
+  return (
+    <span
+      aria-hidden={!visible}
+      className={`grid min-w-0 overflow-hidden ${className}`}
+      style={{
+        gridTemplateColumns: visible ? '1fr' : '0fr',
+        opacity: visible ? 1 : 0,
+        marginLeft: visible ? '0.75rem' : 0,
+        transition: 'grid-template-columns var(--dur-media) var(--ease-estandar), opacity var(--dur-rapida) var(--ease-estandar), margin-left var(--dur-media) var(--ease-estandar)',
+      }}
+    >
+      <span className="min-w-0 overflow-hidden whitespace-nowrap">{children}</span>
+    </span>
+  )
+}
+
 function BotonNav({
   item,
   activo,
@@ -322,28 +319,17 @@ function BotonNav({
       // C8: bajar el código de la vista antes del clic (~100-300 ms antes)
       onPointerEnter={() => precargarVista(item.id)}
       onFocus={() => precargarVista(item.id)}
-      className={`w-full min-h-[46px] rounded-[14px] text-[14.5px] transition-all text-left relative flex items-center ${
-        colapsado ? 'justify-center px-0' : 'gap-3 px-3.5'
+      aria-label={colapsado ? item.label : undefined}
+      className={`w-full min-h-[46px] rounded-[14px] text-[14.5px] text-left relative flex items-center transition-[padding,background-color,color] ${
+        colapsado ? 'justify-center px-0' : 'px-3.5'
       } ${
         activo
-          ? 'font-semibold text-[var(--accent-texto)] shadow-[inset_4px_4px_8px_var(--neu-sd),inset_-4px_-4px_8px_var(--neu-sl)] bg-[var(--neu-bg)]'
-          : 'font-semibold text-[var(--neu-ink2)] hover:text-[var(--neu-ink)] hover:shadow-[3px_3px_6px_var(--neu-sd),-3px_-3px_6px_var(--neu-sl)]'
+          ? 'font-semibold text-[var(--accent-texto)] bg-[color-mix(in_srgb,var(--accent-base)_12%,transparent)]'
+          : 'font-semibold text-[var(--neu-ink2)] hover:text-[var(--neu-ink)] hover:bg-[var(--neu-bg3)]'
       }`}
     >
       <i className={`ti ${item.icono} text-[19px] flex-shrink-0`} />
-      <AnimatePresence initial={false}>
-        {!colapsado && (
-          <motion.span
-            initial={{ opacity: 0, width: 0 }}
-            animate={{ opacity: 1, width: 'auto' }}
-            exit={{ opacity: 0, width: 0 }}
-            transition={{ duration: 0.15 }}
-            className="whitespace-nowrap overflow-hidden"
-          >
-            {item.label}
-          </motion.span>
-        )}
-      </AnimatePresence>
+      <Etiqueta visible={!colapsado}>{item.label}</Etiqueta>
     </button>
   )
 }

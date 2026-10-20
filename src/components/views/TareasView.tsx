@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react'
 import { useStore } from '../../store/useStore'
 import { avisar } from '../../store/useAvisos'
 import { MODULOS } from '../../data/modulos'
+import { AnimatePresence } from 'framer-motion'
 import { FilaTarea } from '../ui/FilaTarea'
+import { ItemLista } from '../ui/ItemLista'
 import { SelectorRamo } from '../ui/SelectorRamo'
 import type { PrioridadTarea, TareaPlan } from '../../types'
 import {
@@ -274,12 +276,14 @@ export function TareasView() {
             </div>
           ) : (
             <ul className={`divide-y ${c.modoOscuro ? 'divide-zinc-800' : 'divide-zinc-100'}`}>
+              <AnimatePresence initial={false}>
               {lista.map((t) => (
-                <li key={t.id}>
+                <ItemLista key={t.id}>
                   <FilaTarea tarea={t} abierta={abiertaId === t.id} onAbrir={() => setAbiertaId((a) => (a === t.id ? null : t.id))} />
                   {abiertaId === t.id && <EditorTarea tarea={t} onCerrar={() => setAbiertaId(null)} />}
-                </li>
+                </ItemLista>
               ))}
+              </AnimatePresence>
             </ul>
           )}
         </section>

@@ -1,4 +1,6 @@
 import { memo, useMemo } from 'react'
+import { AnimatePresence } from 'framer-motion'
+import { ItemLista } from '../ItemLista'
 import { horasMin } from '../../../services/enfoque'
 import { resumenDe } from '../../../services/apunteFormato'
 import { estaPendiente, type TarjetaRepaso } from '../../../services/tarjetasApunte'
@@ -36,11 +38,12 @@ interface Props {
 export const ListaApuntes = memo(function ListaApuntes({ apuntes, cuadernos, clases, modoOscuro, tarjetasPorApunte, repasoApuntes, acciones, minutosPorApunte }: Props) {
   return (
     <div className="space-y-2">
+      <AnimatePresence initial={false}>
       {apuntes.map((a) => {
         const ts = tarjetasPorApunte.get(a.id) ?? []
         return (
+          <ItemLista as="div" key={a.id}>
           <FilaApunte
-            key={a.id}
             apunte={a}
             cuaderno={cuadernos.find((c) => c.id === a.cuadernoId)}
             clase={clases.find((c) => c.id === a.claseId)}
@@ -50,8 +53,10 @@ export const ListaApuntes = memo(function ListaApuntes({ apuntes, cuadernos, cla
             acciones={acciones}
             minutos={minutosPorApunte.get(a.id) ?? 0}
           />
+          </ItemLista>
         )
       })}
+      </AnimatePresence>
     </div>
   )
 })

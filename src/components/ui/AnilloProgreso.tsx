@@ -5,7 +5,6 @@ export function AnilloProgreso({
   tamano = 220,
   grosor = 12,
   color = 'var(--accent-base)',
-  modoOscuro,
   children,
   etiqueta,
 }: {
@@ -13,7 +12,8 @@ export function AnilloProgreso({
   tamano?: number
   grosor?: number
   color?: string
-  modoOscuro: boolean
+  /** Ya no se usa (la pista toma su color del tema); se acepta para no tocar a quienes lo pasan. */
+  modoOscuro?: boolean
   children?: React.ReactNode
   /** Texto para lectores de pantalla (el anillo es decorativo). */
   etiqueta?: string
@@ -29,7 +29,7 @@ export function AnilloProgreso({
       aria-label={etiqueta}
     >
       <svg width={tamano} height={tamano} viewBox={`0 0 ${tamano} ${tamano}`} className="-rotate-90" aria-hidden="true">
-        <circle cx={tamano / 2} cy={tamano / 2} r={r} fill="none" strokeWidth={grosor} stroke={modoOscuro ? 'var(--neu-sl)' : 'var(--neu-line)'} />
+        <circle cx={tamano / 2} cy={tamano / 2} r={r} fill="none" strokeWidth={grosor} stroke={'var(--neu-line)'} />
         <circle
           cx={tamano / 2}
           cy={tamano / 2}
