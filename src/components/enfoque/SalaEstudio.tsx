@@ -8,6 +8,7 @@ import { useDialogo } from '../../hooks/useDialogo'
 import { incrustar } from '../../services/video'
 import { nombreRamo } from '../../services/tareasPlan'
 import { PomodoroCompacto } from './PomodoroCompacto'
+import { FondoEnfoque, useConFondo } from './FondoEnfoque'
 import { parsearApunte } from '../../services/apunteFormato'
 import { TEMAS_LECTURA } from '../../services/lecturaTema'
 import { ApunteContenido } from '../ui/ApunteContenido'
@@ -108,6 +109,17 @@ function ApunteEditable({ ramoId, apunteId }: { ramoId: string; apunteId: string
   )
 }
 
+/** Con un fondo elegido en Enfoque, el temporizador de la sala lo lleva detrás (con los textos en claro). */
+function CajaTemporizador({ className = '', style, children, caja, as: Tag = 'div' }: { className?: string; style?: React.CSSProperties; children: React.ReactNode; caja?: React.Ref<HTMLDivElement>; as?: 'div' | 'aside' }) {
+  const conFondo = useConFondo()
+  return (
+    <Tag ref={caja as never} className={`${conFondo ? `enf-tarjeta enf-con-fondo ${className.includes('absolute') ? '' : 'relative'} overflow-hidden neu-raised` : 'neu-raised'} ${className}`} style={style}>
+      {conFondo && <FondoEnfoque vivo={false} />}
+      <div className="relative z-[1]">{children}</div>
+    </Tag>
+  )
+}
+
 /** Ventana del temporizador: píldora que se arrastra y se despliega. */
 function VentanaTemporizador() {
   const guardada = useEnfoqueLocal((s) => s.sala.ventana)
@@ -133,7 +145,7 @@ function VentanaTemporizador() {
   }
 
   return (
-    <div ref={caja} className="absolute z-10 neu-raised p-2" style={{ right: pos.r, bottom: pos.b, maxWidth: 'calc(100% - 16px)', width: abierta ? 300 : undefined }}>
+    <CajaTemporizador caja={caja} className="absolute z-10 p-2" style={{ right: pos.r, bottom: pos.b, maxWidth: 'calc(100% - 16px)', width: abierta ? 300 : undefined }}>
       <div className="flex items-center gap-1">
         <span
           onPointerDown={(e) => {
@@ -166,7 +178,7 @@ function VentanaTemporizador() {
           <PomodoroCompacto variante="vertical" />
         </div>
       )}
-    </div>
+    </CajaTemporizador>
   )
 }
 
@@ -242,11 +254,9 @@ export function SalaEstudio() {
   const ancho = sala.tamano === 'pequeno' ? '45%' : sala.tamano === 'mediano' ? '70%' : '100%'
 
   const timer = d === 'ventana' ? <VentanaTemporizador /> : d !== 'minimo' && (
-    <aside
-      className={`neu-raised p-4 ${d === 'flotante' ? 'absolute right-4 bottom-4 w-[300px] z-10' : ''} ${d === 'arriba' ? 'order-first' : ''}`}
-    >
+    <CajaTemporizador as="aside" className={`p-4 ${d === 'flotante' ? 'absolute right-4 bottom-4 w-[300px] z-10' : ''} ${d === 'arriba' ? 'order-first' : ''}`}>
       <PomodoroCompacto variante={d === 'lado' || d === 'flotante' ? 'vertical' : 'horizontal'} />
-    </aside>
+    </CajaTemporizador>
   )
 
   return (
