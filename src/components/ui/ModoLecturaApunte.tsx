@@ -7,6 +7,7 @@ import { useProgresoScroll } from '../../hooks/useProgresoScroll'
 import { TAMANOS_FUENTE, TEMAS_LECTURA } from '../../services/lecturaTema'
 import { encabezadosDe, parsearApunte, textoPlanoDe, tieneEstructuraAncha } from '../../services/apunteFormato'
 import { ApunteContenido } from './ApunteContenido'
+import { FondoEnfoque, useConFondo } from '../enfoque/FondoEnfoque'
 import { quitarResaltado, resaltarCoincidencia } from '../../services/resaltado'
 import { descargarApunteMd } from '../../services/apunteArchivo'
 import { imprimir, useImprimirConCtrlP } from '../../services/impresion'
@@ -239,6 +240,9 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
 
   const colorTexto = temaLectura === 'oscuro' ? 'text-zinc-200' : temaLectura === 'papel' ? 'text-[#3a2c1a]' : 'text-zinc-800'
   const hayIndice = encabezados.length >= 3
+  // el fondo elegido en Enfoque también acompaña la lectura (en la edición no: ahí manda el editor)
+  const conFondo = useConFondo() && !editando
+  const velo = conFondo ? <div aria-hidden="true" className={`absolute inset-0 -z-10 ${tema.bg} opacity-90 backdrop-blur-sm`} /> : null
   const nTarjetas = useMemo(() => (editando ? 0 : tarjetasDe(apunte).length), [apunte, editando])
 
   return (
@@ -247,10 +251,12 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.18 }}
-      className={`fixed inset-0 h-[100dvh] z-[80] flex flex-col ${tema.bg}`}
+      className={`fixed inset-0 h-[100dvh] z-[80] flex flex-col ${conFondo ? 'bg-zinc-900' : tema.bg}`}
     >
+      {conFondo && <FondoEnfoque vivo={false} />}
       {!editando && <VistaImprimibleApunte apunte={apunte} bloques={bloques} clase={clase} cuaderno={cuaderno} />}
-      <div className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-3 border-b flex-shrink-0 ${tema.border}`}>
+      <div className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-3 border-b flex-shrink-0 ${tema.border} ${conFondo ? 'relative isolate' : ''}`}>
+        {velo}
         {!editando && (
           <button
             onClick={onCerrar}
@@ -437,7 +443,7 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
       ) : (
         <>
           <div
-            className={`h-[3px] flex-shrink-0 ${tema.chipBg}`}
+            className={`h-[3px] flex-shrink-0 ${tema.chipBg} ${conFondo ? 'relative z-[1]' : ''}`}
             role="progressbar"
             aria-label="Progreso de lectura"
             aria-valuemin={0}
@@ -454,9 +460,10 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
             </p>
           )}
 
-          <div className="relative flex-1 min-h-0">
+          <div className={`relative flex-1 min-h-0 ${conFondo ? 'z-[1]' : ''}`}>
             <div ref={scrollRef} className="h-full overflow-y-auto">
-              <div ref={setColumna} className={`ancho-lectura relative ${ancho ? 'max-w-4xl' : 'max-w-2xl'} mx-auto px-5 sm:px-8 py-10`}>
+              <div ref={setColumna} className={`ancho-lectura relative ${conFondo ? 'isolate my-6 rounded-2xl' : ''} ${ancho ? 'max-w-4xl' : 'max-w-2xl'} mx-auto px-5 sm:px-8 py-10`}>
+                {velo}
                 <h1 className={`text-3xl font-serif font-bold mb-6 ${tema.text}`}>{apunte.titulo}</h1>
                 <div ref={setRaiz} className={colorTexto} style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontSize: TAMANOS_FUENTE[indiceTamano] }}>
                   {contenido.trim() ? (
