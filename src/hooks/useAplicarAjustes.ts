@@ -19,9 +19,12 @@ export function useAplicarAjustes() {
     // columnas; al agrandar, pasa a la distribución de una pantalla más chica. Con el `zoom` de CSS solo
     // cambiaba el tamaño de las cosas, no su distribución. En computador se sigue usando el zoom de CSS.
     let cancelado = false
-    const BASE = 'width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content'
+    // minimum-scale=1: el navegador no puede «achicar para que quepa» (así se descuadraba la página, abarcando mucho más de lo debido)
+    const BASE = 'width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content'
     const aplicarVista = async () => {
       if (!meta) return
+      // si el valor ya era el mismo, Safari no recalcula: se pasa primero por otro para forzarlo
+      meta.setAttribute('content', 'width=device-width, initial-scale=1.0')
       meta.setAttribute('content', BASE)
       if (zoom === 1) return
       // se espera a que el navegador acepte el ancho base para medirlo (el de la pantalla en su giro actual)
@@ -38,10 +41,18 @@ export function useAplicarAjustes() {
       void aplicarVista()
       // al girar la pantalla, se vuelve a medir
       const girar = () => void aplicarVista()
+      // al volver de otra app (iPad), Safari a veces deja la vista con otro ancho: se reaplica
+      const volver = () => {
+        if (document.visibilityState === 'visible') void aplicarVista()
+      }
       window.addEventListener('orientationchange', girar)
+      window.addEventListener('pageshow', girar)
+      document.addEventListener('visibilitychange', volver)
       return () => {
         cancelado = true
         window.removeEventListener('orientationchange', girar)
+        window.removeEventListener('pageshow', girar)
+        document.removeEventListener('visibilitychange', volver)
       }
     }
 
