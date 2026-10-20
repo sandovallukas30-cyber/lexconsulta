@@ -2,11 +2,10 @@ import { useEffect } from 'react'
 import { useAjustes, prefiereMenosMovimiento } from '../store/useAjustes'
 
 /** Pasa los ajustes de interfaz (useAjustes) al documento: atributos en
- *  <html> que lee neumorfismo.css y el zoom de toda la página. Se monta una
+ *  <html> que lee base.css y el zoom de toda la página. Se monta una
  *  vez en App. */
 export function useAplicarAjustes() {
   const zoom = useAjustes((s) => s.zoom)
-  const estilo = useAjustes((s) => s.estilo)
   const contraste = useAjustes((s) => s.contraste)
   const animaciones = useAjustes((s) => s.animaciones)
 
@@ -51,7 +50,7 @@ export function useAplicarAjustes() {
 
     // Cuánto se encogen las unidades vh/vw con el zoom depende del navegador (Safari del iPad y
     // Chrome no coinciden). En vez de suponerlo, se mide: una caja de 100vw se compara con la ventana.
-    // --zoom-vu = 1 si las unidades ya vienen ajustadas, = zoom si no (lo que usa neumorfismo.css).
+    // --zoom-vu = 1 si las unidades ya vienen ajustadas, = zoom si no (lo que usa base.css).
     const medir = () => {
       const sonda = document.createElement('div')
       sonda.style.cssText = 'position:fixed;left:0;top:0;width:100vw;height:0;visibility:hidden;pointer-events:none'
@@ -69,8 +68,7 @@ export function useAplicarAjustes() {
 
   useEffect(() => {
     const el = document.documentElement
-    el.dataset.estilo = estilo
     el.dataset.contraste = contraste ? 'si' : 'no'
     el.dataset.animaciones = animaciones && !prefiereMenosMovimiento() ? 'si' : 'no'
-  }, [estilo, contraste, animaciones])
+  }, [contraste, animaciones])
 }

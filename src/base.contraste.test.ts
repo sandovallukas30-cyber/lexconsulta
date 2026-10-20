@@ -2,10 +2,10 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
-// Los colores de texto del sistema neumórfico deben pasar WCAG AA (4,5:1) sobre
+// Los colores de texto del sistema de superficies deben pasar WCAG AA (4,5:1) sobre
 // sus fondos, en claro y en oscuro. Se leen del propio CSS para que nadie los
 // baje sin que falle este test.
-const css = readFileSync(join(__dirname, 'neumorfismo.css'), 'utf8')
+const css = readFileSync(join(__dirname, 'base.css'), 'utf8')
 
 function bloque(selector: string): string {
   const i = css.indexOf(`${selector} {`)

@@ -1,10 +1,10 @@
 import { sumarTamanoCodigo, TAMANO_CODIGO_DEFECTO, TAMANO_CODIGO_MIN, TAMANO_CODIGO_MAX } from '../../store/useAjustes'
-import { useAjustes, ZOOMS, prefiereMenosMovimiento, type EstiloUI } from '../../store/useAjustes'
+import { useAjustes, ZOOMS, prefiereMenosMovimiento } from '../../store/useAjustes'
 import { Segmentado } from './Segmentado'
 import { DibujoMascota } from '../hoy/Mascota'
 import { ACCESORIOS_MASCOTA, COLORES_MASCOTA, TIPOS_MASCOTA, mascotaSvg, type AccesorioMascota, type ColorMascota, type TipoMascota } from '../../services/mascota'
 
-/** Interruptor neumórfico (checkbox accesible como `switch`). */
+/** Interruptor (checkbox accesible como `switch`). */
 export function Interruptor({
   activo, onChange, etiqueta, descripcion, deshabilitado,
 }: {
@@ -154,22 +154,12 @@ export function AjustesInterfaz() {
       </section>
 
       <section>
-        <h3 className={titulo} style={{ color: 'var(--neu-ink)' }}>Estilo</h3>
-        <Segmentado<EstiloUI>
-          id="estilo"
-          etiqueta="Estilo de la interfaz"
-          valor={a.estilo}
-          onChange={(v) => a.set({ estilo: v })}
-          opciones={[{ valor: 'neumo', texto: 'Neumorfismo' }, { valor: 'plano', texto: 'Plano' }]}
-        />
-        <p className="text-xs mt-2" style={{ color: 'var(--neu-ink2)' }}>
-          «Neumorfismo» levanta y hunde las piezas con sombras suaves. «Plano» usa tarjetas blancas sobre fondo gris, más sobrio.
-        </p>
+        <h3 className={titulo} style={{ color: 'var(--neu-ink)' }}>Visibilidad</h3>
         <Interruptor
           activo={a.contraste}
           onChange={(v) => a.set({ contraste: v })}
           etiqueta="Alto contraste"
-          descripcion="Sin relieve, con bordes y textos más fuertes."
+          descripcion="Bordes y textos más fuertes."
         />
       </section>
 

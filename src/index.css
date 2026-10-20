@@ -333,7 +333,7 @@ html, body, #root { height: 100%; width: 100%; overflow: hidden; }
 
 /* Entradas suaves. El relleno es «backwards»: al terminar no queda ninguna transformación puesta
    (un transform dejaría a los elementos fijos de adentro anclados a la caja y no a la pantalla).
-   Se apagan solas con movimiento reducido y con «animaciones: no» (reglas de más abajo y de neumorfismo.css). */
+   Se apagan solas con movimiento reducido y con «animaciones: no» (reglas de más abajo y de base.css). */
 @keyframes aparece { from { opacity: 0 } }
 @keyframes sube-suave { from { opacity: 0; transform: translateY(10px) scale(.985) } }
 .anim-aparece { animation: aparece var(--dur-media) var(--ease-estandar) backwards; }
