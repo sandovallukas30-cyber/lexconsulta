@@ -90,6 +90,8 @@ export function Sidebar() {
 
   const activos = codigos.filter((c) => c.activo).length
   const total = codigos.length
+  // el número exacto crece con cada ley que se agrega: en pantalla va con tope (el exacto queda en el tooltip)
+  const topeVisible = (n: number) => (n > 9 ? '9+' : String(n))
   const grupoAcademico = esAdmin(usuarioEmail) ? [...itemsAcademicos, itemAdmin] : itemsAcademicos
 
   return (
@@ -210,7 +212,7 @@ export function Sidebar() {
         <div className={`neu-flat mt-auto flex-shrink-0 ${colapsado ? 'p-2' : 'p-2.5'}`}>
           <button
             onClick={() => setModalCodigos(true)}
-            title={colapsado ? `Códigos · ${activos} de ${total} activos (incluye leyes especiales)` : undefined}
+            title={`Códigos · ${activos} de ${total} activos (incluye leyes especiales)`}
             className={`w-full min-h-control rounded-control text-sm font-medium transition-colors text-left flex items-center ${
               colapsado ? 'justify-center px-0 py-1' : 'gap-3 px-3 py-1'
             } ${
@@ -227,7 +229,7 @@ export function Sidebar() {
                   className={`absolute -top-1 -right-1 min-w-[16px] h-4 rounded-full text-[9px] font-bold flex items-center justify-center px-1 text-white`}
                   style={{ background: VERDE }}
                 >
-                  {activos}
+                  {topeVisible(activos)}
                 </span>
               )}
             </span>
@@ -242,7 +244,7 @@ export function Sidebar() {
                 >
                   <span className="block">Códigos</span>
                   <span className={`block text-[11px] font-normal truncate ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                    {activos} de {total} activos
+                    {topeVisible(activos)} activos
                   </span>
                 </motion.span>
               )}
