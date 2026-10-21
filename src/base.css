@@ -67,6 +67,11 @@
   --subtitulo-pagina-tam: 0.875rem; /* 14 px */
 }
 .titulo-pagina { font-family: var(--font-head); font-size: var(--titulo-pagina-tam); font-weight: var(--titulo-pagina-peso); line-height: 1.2; letter-spacing: -0.01em; color: var(--neu-ink); }
+/* Con la barra superior (teléfono y tablet vertical) el título de la sección ya está arriba: el de la página queda
+   solo para lectores de pantalla, para no repetirlo. */
+@media (max-width: 1099px) {
+  .titulo-pagina:not(.titulo-visible) { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+}
 .subtitulo-pagina { font-size: var(--subtitulo-pagina-tam); line-height: 1.45; color: var(--neu-ink2); }
 
 html, body, #root { background: var(--neu-bg); color: var(--neu-ink); }

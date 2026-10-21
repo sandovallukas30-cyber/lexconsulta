@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { useEsMovil } from '../../hooks/useEsMovil'
@@ -15,6 +16,11 @@ export function RightSidebar() {
   const agregarVisitado = useStore((s) => s.agregarVisitado)
 
   const esMovil = useEsMovil()
+
+  // en móvil el panel se superpone al contenido: si quedó abierto desde el computador, arranca cerrado
+  useEffect(() => {
+    if (esMovil && useStore.getState().rightSidebarAbierto) useStore.getState().toggleRightSidebar()
+  }, [esMovil])
 
   const cerrarEnMobile = () => {
     if (esMovil && rightSidebarAbierto) {
