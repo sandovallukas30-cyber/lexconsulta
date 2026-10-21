@@ -43,9 +43,10 @@ export function useMotorEnfoque() {
     s.estado === 'detenido' ? null : `${mmss(msMostrados(s, ahora))} · ${esFlow(s) ? 'Flowtime' : NOMBRE_MODO[s.modo]}`
   )
   useEffect(() => {
-    document.title = titulo ? `${titulo} — Prima Lex` : TITULO_APP
+    const base = () => document.documentElement.dataset.tituloBase ?? TITULO_APP
+    document.title = titulo ? `${titulo} — Prima Lex` : base()
     return () => {
-      document.title = TITULO_APP
+      document.title = base()
     }
   }, [titulo])
 }

@@ -18,6 +18,7 @@ import { Avisos } from './components/ui/Avisos'
 import { RightSidebar } from './components/layout/RightSidebar'
 import { esAdmin } from './config/admin'
 import { useCuenta } from './store/useCuenta'
+import { useRutas } from './hooks/useRutas'
 import { vistas } from './vistas'
 import { useMotorEnfoque } from './hooks/useMotorEnfoque'
 import { LimiteError } from './components/ui/LimiteError'
@@ -52,6 +53,7 @@ const SalaEstudio = lazy(() => import('./components/enfoque/SalaEstudio').then((
 function App() {
   useMotorEnfoque()
   useAplicarAjustes()
+  useRutas()
   useRecordatorios()
   useCuentaInit()
   const vistaActiva = useStore((s) => s.vistaActiva)
