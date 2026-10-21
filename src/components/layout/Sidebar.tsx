@@ -6,6 +6,7 @@ import { ModalCodigos } from '../ui/ModalCodigos'
 import { ModalAcercaDe } from '../ui/ModalAcercaDe'
 import { esAdmin } from '../../config/admin'
 import { useCuenta } from '../../store/useCuenta'
+import { EnfoqueEnMenu } from './EnfoqueEnMenu'
 import { useEsMovil } from '../../hooks/useEsMovil'
 import { BotonCuenta } from '../ui/ModalCuenta'
 import { cuentasDisponibles } from '../../services/supabase'
@@ -331,6 +332,7 @@ function BotonNav({
     >
       <i className={`ti ${item.icono} text-[19px] flex-shrink-0`} />
       <Etiqueta visible={!colapsado}>{item.label}</Etiqueta>
+      {item.id === 'enfoque' && <EnfoqueEnMenu colapsado={colapsado} />}
     </button>
   )
 }

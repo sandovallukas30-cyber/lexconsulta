@@ -288,7 +288,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
           <i className="ti ti-search text-base" />
           <span className="hidden xl:inline flex-1 text-left">Buscar o ir a artículo…</span>
           <kbd
-            className={`hidden xl:inline text-[10px] px-1.5 py-0.5 rounded font-mono ${
+            className={`solo-teclado hidden xl:inline text-[10px] px-1.5 py-0.5 rounded font-mono ${
               modoOscuro ? 'bg-zinc-900 text-zinc-500' : 'bg-white text-zinc-400 border border-zinc-200'
             }`}
           >
@@ -1127,7 +1127,7 @@ function ModalBusqueda({
                   modoOscuro ? 'text-white placeholder:text-zinc-500' : 'text-zinc-900 placeholder:text-zinc-400'
                 }`}
               />
-              <kbd className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${modoOscuro ? 'bg-zinc-800 text-zinc-500' : 'bg-zinc-100 text-zinc-400'}`}>
+              <kbd className={`solo-teclado text-[10px] px-1.5 py-0.5 rounded font-mono ${modoOscuro ? 'bg-zinc-800 text-zinc-500' : 'bg-zinc-100 text-zinc-400'}`}>
                 ESC
               </kbd>
             </div>
@@ -1164,7 +1164,7 @@ function ModalBusqueda({
                           </span>
                         )}
                         {exacto && i === 0 && (
-                          <span className={`ml-auto text-[10px] font-medium ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>↵ Ir al artículo</span>
+                          <span className={`solo-teclado ml-auto text-[10px] font-medium ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>↵ Ir al artículo</span>
                         )}
                       </div>
                       <p className={`text-xs line-clamp-2 ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>
@@ -1189,9 +1189,9 @@ function ModalBusqueda({
                 modoOscuro ? 'border-zinc-800 text-zinc-500' : 'border-zinc-200 text-zinc-400'
               }`}
             >
-              <span><kbd className="font-mono">↑↓</kbd> navegar</span>
-              <span><kbd className="font-mono">↵</kbd> abrir</span>
-              <span><kbd className="font-mono">esc</kbd> cerrar</span>
+              <span className="solo-teclado"><kbd className="font-mono">↑↓</kbd> navegar</span>
+              <span className="solo-teclado"><kbd className="font-mono">↵</kbd> abrir</span>
+              <span className="solo-teclado"><kbd className="font-mono">esc</kbd> cerrar</span>
               <span className="ml-auto">{resultados.length} resultado{resultados.length !== 1 ? 's' : ''}</span>
             </div>
           </motion.div>

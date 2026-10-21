@@ -279,7 +279,7 @@ export function Omnibar({ onClose }: Props) {
 
                   {/* Atajo */}
                   {idx === indiceSeleccionado && (
-                    <div className={`text-xs px-2 py-1 rounded font-mono ${
+                    <div className={`solo-teclado text-xs px-2 py-1 rounded font-mono ${
                       modoOscuro
                         ? 'bg-zinc-600 text-zinc-200'
                         : 'bg-zinc-200 text-zinc-700'

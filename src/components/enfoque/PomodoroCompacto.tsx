@@ -51,6 +51,7 @@ export function PomodoroCompacto({ selectores = true, variante = 'vertical' }: {
   }
 
   const botones = (
+    <>
     <div className="flex items-center justify-center gap-2 flex-wrap">
       <button onClick={s.reiniciar} className="boton boton-suave boton-icono" aria-label="Reiniciar" title="Reiniciar: descarta lo avanzado">
         <i className="ti ti-rotate" aria-hidden="true" />
@@ -66,6 +67,10 @@ export function PomodoroCompacto({ selectores = true, variante = 'vertical' }: {
         </button>
       )}
     </div>
+    {s.modo === 'foco' && s.inicioSesion !== null && !puedeTerminar && (
+      <p className="text-[11px] text-center w-full" style={{ color: 'var(--neu-ink2)' }}>Para guardar hace falta al menos 1 minuto enfocado.</p>
+    )}
+    </>
   )
 
   if (variante === 'horizontal') {

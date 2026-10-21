@@ -164,7 +164,7 @@ export function ModoConcentracion({ onCerrar }: { onCerrar: () => void }) {
         {modo === 'foco' && inicioSesion !== null && (
           <div className="enf-fila">
             <button type="button" className="boton boton-suave" disabled={!puedeTerminar} onClick={terminar} title={puedeTerminar ? undefined : 'Necesitas al menos 1 minuto enfocado'}>
-              <i className="ti ti-flag" aria-hidden="true" /> Terminar y guardar
+              <i className="ti ti-flag" aria-hidden="true" /> {puedeTerminar ? 'Terminar y guardar' : 'Guardar (desde 1 min)'}
             </button>
             <button type="button" className="boton boton-fantasma" onClick={distraje}>
               <i className="ti ti-bolt" aria-hidden="true" /> Me distraje{distracciones > 0 ? ` · ${distracciones}` : ''}

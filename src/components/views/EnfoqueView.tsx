@@ -210,6 +210,11 @@ function Temporizador({ concentracion }: { concentracion: boolean }) {
           </button>
         )}
       </div>
+      {s.modo === 'foco' && s.estado !== 'detenido' && !puedeTerminar && (
+        <p className="text-xs text-center mt-2" style={{ color: 'var(--neu-ink2)' }}>
+          Para guardar esta sesión hace falta al menos 1 minuto enfocado.
+        </p>
+      )}
 
       <div className="flex items-center justify-center gap-2 mt-4 flex-wrap">
         {s.modo === 'foco' && s.inicioSesion !== null && (

@@ -21,11 +21,8 @@ export function Topbar() {
 
   return (
     <>
-    {/* Con el menú fijo (pantallas grandes) no hay franja superior: el contenido empieza arriba del todo y
-        solo flota, si hay un temporizador en marcha, su píldora. La cuenta y el modo oscuro están al pie del menú. */}
-    <div className="hidden escritorio:block absolute top-3 right-6 z-30">
-      <MiniEnfoque />
-    </div>
+    {/* Con el menú fijo (pantallas grandes) no hay franja superior: el contenido empieza arriba del todo. El
+        temporizador en marcha se ve junto a «Enfoque» en el menú (EnfoqueEnMenu), no flotando sobre el contenido. */}
     <header className="escritorio:hidden h-14 sm:h-[72px] px-3 sm:px-8 pt-3 flex items-center justify-between gap-2 flex-shrink-0">
       <div className="flex items-center gap-2 sm:gap-4 min-w-0">
         <button

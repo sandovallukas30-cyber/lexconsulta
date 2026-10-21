@@ -348,6 +348,9 @@ main[data-vista] > *:not(.esqueleto-contenedor) { animation: aparece var(--dur-l
   scroll-behavior: auto !important;
 }
 
+/* Pistas de teclado (Ctrl+K, ↑↓, ↵, Esc): no tienen sentido en pantallas táctiles (iPad, celular) */
+@media (pointer: coarse) { .solo-teclado { display: none !important; } }
+
 /* Rebote corto al marcar una tarea como hecha (se apaga con movimiento reducido) */
 @keyframes pop {
   0% { transform: scale(0.3); opacity: 0; }
