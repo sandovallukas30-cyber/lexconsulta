@@ -50,8 +50,6 @@ async function getClienteDev(): Promise<Anthropic> {
 
 export async function callMessages(
   payload: PayloadMessages,
-  /** Ya no se envía: el servidor identifica al usuario por su sesión, no por un correo declarado. */
-  _usuarioEmail?: string | null,
   onConsultasRestantes?: (n: number) => void,
 ): Promise<RespuestaMessages> {
   if (import.meta.env.PROD) {

@@ -1,10 +1,6 @@
 import { useStore } from '../../store/useStore'
 import { MiniEnfoque } from './MiniEnfoque'
 
-interface TopbarProps {
-  onAbrirRegistro?: () => void
-}
-
 const titulos: Record<string, string> = {
   hoy: 'Hoy',
   tareas: 'Tareas',
@@ -18,29 +14,10 @@ const titulos: Record<string, string> = {
   practica: 'Práctica · Pasapalabra',
 }
 
-// Los límites del servidor (api/anthropic.ts) están temporalmente muy altos
-// mientras solo el dueño del proyecto usa la app: este contador ya no tiene
-// nada útil que mostrar (saldría algo como "997 consultas"), así que se
-// oculta en vez de eso. Volver a `true` junto con revertir los límites del
-// servidor restaura el aviso original.
-const MOSTRAR_CONTADOR_CONSULTAS = false
-
-export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
+export function Topbar() {
   const vistaActiva = useStore((s) => s.vistaActiva)
   const modoOscuro = useStore((s) => s.modoOscuro)
-  const usuarioEmail = useStore((s) => s.usuarioEmail)
-  const usuarioRegistrado = useStore((s) => s.usuarioRegistrado)
-  const consultasRestantesStore = useStore((s) => s.consultasRestantes)
-  const fechaConsultas = useStore((s) => s.fechaConsultas)
   const setMenuMovilAbierto = useStore((s) => s.setMenuMovilAbierto)
-
-  // Resetear contador si es un nuevo día
-  const hoy = new Date().toISOString().slice(0, 10)
-  const consultasRestantes = fechaConsultas === hoy ? consultasRestantesStore : null
-  const limiteMaximo = usuarioRegistrado ? 10 : 3
-  const restantes = consultasRestantes ?? limiteMaximo
-  const sinConsultas = restantes === 0
-  const pocasConsultas = restantes <= 2 && restantes > 0
 
   return (
     <>
@@ -65,47 +42,6 @@ export function Topbar({ onAbrirRegistro }: TopbarProps = {}) {
 
       <div className="flex items-center gap-2">
         <MiniEnfoque />
-        {MOSTRAR_CONTADOR_CONSULTAS && onAbrirRegistro && (
-          <button
-            onClick={onAbrirRegistro}
-            className={`boton gap-2 ${
-              sinConsultas
-                ? modoOscuro
-                  ? 'bg-red-950/40 text-red-400 hover:bg-red-950/60'
-                  : 'bg-red-50 text-red-600 hover:bg-red-100'
-                : pocasConsultas
-                ? modoOscuro
-                  ? 'bg-amber-950/30 text-amber-400 hover:bg-amber-950/50'
-                  : 'bg-amber-50 text-amber-700 hover:bg-amber-100'
-                : usuarioEmail
-                ? modoOscuro
-                  ? 'bg-green-950/30 text-green-400 hover:bg-green-950/50'
-                  : 'bg-green-50 text-green-700 hover:bg-green-100'
-                : modoOscuro
-                ? 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700'
-                : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
-            }`}
-            title={
-              sinConsultas
-                ? 'Límite diario alcanzado'
-                : usuarioEmail
-                ? `Registrado como: ${usuarioEmail}`
-                : 'Registrarse para más consultas'
-            }
-          >
-            <i className={`ti ${
-              sinConsultas ? 'ti-alert-circle' : usuarioEmail ? 'ti-user-check' : 'ti-mail'
-            } text-base`} />
-            <span className="text-xs font-medium">
-              {usuarioEmail
-                ? `${restantes} consultas`
-                : sinConsultas || pocasConsultas
-                ? `${restantes}/3 consultas`
-                : 'Registrarse'}
-            </span>
-          </button>
-        )}
-
       </div>
     </header>
     </>

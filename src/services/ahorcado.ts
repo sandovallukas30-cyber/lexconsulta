@@ -62,7 +62,6 @@ function extraerJSONObjeto(texto: string): unknown {
 export async function generarPalabraAhorcado(
   area: AreaPractica,
   evitar: string[] = [],
-  usuarioEmail?: string | null,
   onConsultasRestantes?: (n: number) => void
 ): Promise<PalabraAhorcado> {
   const res = await callMessages(
@@ -77,7 +76,6 @@ export async function generarPalabraAhorcado(
         },
       ],
     },
-    usuarioEmail,
     onConsultasRestantes
   )
 

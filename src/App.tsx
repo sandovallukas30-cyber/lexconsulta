@@ -1,6 +1,5 @@
 import { Sidebar } from './components/layout/Sidebar'
 import { Topbar } from './components/layout/Topbar'
-import { ModalRegistro } from './components/ui/ModalRegistro'
 import { PARAM_IMPORTAR, decodificarColeccion } from './services/compartirColeccion'
 import type { ColeccionCompartida } from './types'
 import { useState, useEffect, lazy, Suspense } from 'react'
@@ -18,6 +17,7 @@ import { PanelAtajos } from './components/ui/PanelAtajos'
 import { Avisos } from './components/ui/Avisos'
 import { RightSidebar } from './components/layout/RightSidebar'
 import { esAdmin } from './config/admin'
+import { useCuenta } from './store/useCuenta'
 import { vistas } from './vistas'
 import { useMotorEnfoque } from './hooks/useMotorEnfoque'
 import { LimiteError } from './components/ui/LimiteError'
@@ -55,7 +55,8 @@ function App() {
   useRecordatorios()
   useCuentaInit()
   const vistaActiva = useStore((s) => s.vistaActiva)
-  const usuarioEmail = useStore((s) => s.usuarioEmail)
+  // el acceso a Administración va con el correo confirmado de la cuenta (Supabase)
+  const usuarioEmail = useCuenta((s) => s.perfil?.email ?? null)
   const modoOscuro = useStore((s) => s.modoOscuro)
   const temaColor = useStore((s) => s.temaColor)
   const omnibarAbierto = useStore((s) => s.omnibarAbierto)
@@ -64,7 +65,6 @@ function App() {
   const setColeccionActiva = useStore((s) => s.setColeccionActiva)
   const setVistaActiva = useStore((s) => s.setVistaActiva)
   const VistaComponente = vistaActiva === 'admin' && !esAdmin(usuarioEmail) ? vistas.modulos : vistas[vistaActiva]
-  const [modalRegistroAbierto, setModalRegistroAbierto] = useState(false)
   const salaAbierta = useSala((s) => s.abierta)
 
   // enlace compartido de la sala de estudio (?sala=<video>): abre la sala con ese video
@@ -134,7 +134,7 @@ function App() {
     >
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden relative">
-        <Topbar onAbrirRegistro={() => setModalRegistroAbierto(true)} />
+        <Topbar />
         <div className="flex-1 flex overflow-hidden">
           <main data-vista={vistaActiva} className="flex-1 overflow-y-auto">
             <LimiteError key={vistaActiva} modoOscuro={modoOscuro}>
@@ -156,7 +156,6 @@ function App() {
       <ModalCuenta />
       <Avisos />
       <PanelAtajos />
-      <ModalRegistro abierto={modalRegistroAbierto} onCerrar={() => setModalRegistroAbierto(false)} />
       <AnimatePresence>
         {omnibarAbierto && <Omnibar onClose={() => setOmnibarAbierto(false)} />}
       </AnimatePresence>

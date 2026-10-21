@@ -356,7 +356,7 @@ export function Privacidad({ modoOscuro }: { modoOscuro: boolean }) {
 
       <H modoOscuro={modoOscuro}>3. Con cuenta: qué recibimos y para qué</H>
       <P modoOscuro={modoOscuro}>
-        Puedes crear una cuenta con Google o con un enlace enviado a tu correo. Según el método,
+        Puedes crear una cuenta con Google, con Microsoft o con un enlace enviado a tu correo. Según el método,
         recibimos de ese proveedor tu <strong>correo electrónico</strong>, tu <strong>nombre</strong> y tu{' '}
         <strong>foto de perfil</strong> (si la tienes) y un identificador interno. No recibimos tu contraseña ni acceso
         a tu correo, tus archivos o tus contactos: solo pedimos los permisos básicos de identidad (openid, email y
@@ -374,11 +374,11 @@ export function Privacidad({ modoOscuro }: { modoOscuro: boolean }) {
         no la compartimos con terceros con fines comerciales o publicitarios.
       </P>
 
-      <H modoOscuro={modoOscuro}>5. Correo para los juegos de práctica (opcional)</H>
+      <H modoOscuro={modoOscuro}>5. Límite diario de los juegos de práctica</H>
       <P modoOscuro={modoOscuro}>
-        Si verificas tu correo para ampliar el límite diario de los juegos de práctica, enviamos un enlace de
-        verificación a través del proveedor de correo Resend. En ese caso la dirección queda guardada en tu navegador
-        y se envía al servidor solo para verificarla y contar tus usos del día.
+        Los juegos tienen un límite diario de partidas. Si tienes sesión iniciada, la app envía al servidor el
+        token de tu sesión para que Supabase confirme tu correo y se te dé un límite mayor; el servidor no guarda ese
+        correo. Sin sesión, el límite se cuenta por dirección IP.
       </P>
 
       <H modoOscuro={modoOscuro}>6. Inteligencia artificial</H>
@@ -392,8 +392,8 @@ export function Privacidad({ modoOscuro }: { modoOscuro: boolean }) {
       <P modoOscuro={modoOscuro}>
         Para evitar abusos, el servidor mantiene en memoria un contador temporal de usos por dirección IP, que se
         descarta automáticamente. Intervienen como proveedores: Vercel (alojamiento; puede registrar datos técnicos de
-        conexión como la IP), Supabase (cuentas y base de datos), Google (solo si eliges entrar con tu cuenta de Google),
-        Resend (correo) y Anthropic (juegos). Cada uno trata los datos según sus propias políticas. No usamos cookies de
+        conexión como la IP), Supabase (cuentas, base de datos y envío del enlace de ingreso por correo), Google y Microsoft (solo si eliges
+        entrar con tu cuenta de alguno de ellos) y Anthropic (juegos). Cada uno trata los datos según sus propias políticas. No usamos cookies de
         seguimiento ni analítica de terceros, y no vendemos datos. Para detectar fallos, la aplicación envía a nuestro
         propio servidor avisos técnicos <strong>anónimos</strong>: el tipo de error, la sección abierta, la versión de la
         aplicación, el tipo de pantalla y la velocidad de carga. No incluyen tu nombre, tu correo ni tus apuntes, no
@@ -491,8 +491,8 @@ export function Terminos({ modoOscuro }: { modoOscuro: boolean }) {
 
       <H modoOscuro={modoOscuro}>10. Cuentas</H>
       <P modoOscuro={modoOscuro}>
-        Crear una cuenta es opcional. Eres responsable de la seguridad de tu acceso (tu cuenta de Google
-        o tu correo). Podemos suspender cuentas que incumplan estos Términos. Puedes eliminar tu cuenta cuando
+        Crear una cuenta es opcional. Eres responsable de la seguridad de tu acceso (tu cuenta de Google o
+        Microsoft, o tu correo). Podemos suspender cuentas que incumplan estos Términos. Puedes eliminar tu cuenta cuando
         quieras desde tu perfil; el tratamiento de tus datos se describe en la Política de privacidad.
       </P>
     </div>

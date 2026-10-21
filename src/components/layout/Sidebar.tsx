@@ -5,6 +5,7 @@ import { useStore } from '../../store/useStore'
 import { ModalCodigos } from '../ui/ModalCodigos'
 import { ModalAcercaDe } from '../ui/ModalAcercaDe'
 import { esAdmin } from '../../config/admin'
+import { useCuenta } from '../../store/useCuenta'
 import { useEsMovil } from '../../hooks/useEsMovil'
 import { BotonCuenta } from '../ui/ModalCuenta'
 import { cuentasDisponibles } from '../../services/supabase'
@@ -40,7 +41,7 @@ export function Sidebar() {
   const vistaActiva = useStore((s) => s.vistaActiva)
   const setVistaActiva = useStore((s) => s.setVistaActiva)
   const codigos = useStore((s) => s.codigos)
-  const usuarioEmail = useStore((s) => s.usuarioEmail)
+  const usuarioEmail = useCuenta((s) => s.perfil?.email ?? null)
   const modoOscuro = useStore((s) => s.modoOscuro)
   const toggleModoOscuro = useStore((s) => s.toggleModoOscuro)
   const colapsadoEscritorio = useStore((s) => s.sidebarColapsado)

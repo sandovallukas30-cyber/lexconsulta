@@ -218,12 +218,8 @@ interface AppState {
   agregarVisitado: (articulo: string, codigo: CodigoActivo['tipo']) => void
 
   // Autenticación
-  usuarioEmail: string | null
-  usuarioRegistrado: boolean
   consultasRestantes: number | null
   fechaConsultas: string | null // YYYY-MM-DD del día en que se guardó el contador
-  registrarUsuario: (email: string) => void
-  cerrarSesion: () => void
   setConsultasRestantes: (n: number) => void
 
   /** Progreso del usuario en cada Módulo académico (vista "Módulos"),
@@ -400,8 +396,6 @@ export const useStore = create<AppState>()(
       omnibarAbierto: false,
       rightSidebarAbierto: false,
       visitadosRecientes: [],
-      usuarioEmail: null,
-      usuarioRegistrado: false,
       consultasRestantes: null,
       fechaConsultas: null,
       progresoModulos: {},
@@ -1005,20 +999,6 @@ export const useStore = create<AppState>()(
               : [visitado, ...s.visitadosRecientes]
           return { visitadosRecientes: nuevos.slice(0, 10) }
         }),
-      registrarUsuario: (email) =>
-        set({
-          usuarioEmail: email,
-          usuarioRegistrado: true,
-          consultasRestantes: null,
-          fechaConsultas: null,
-        }),
-      cerrarSesion: () =>
-        set({
-          usuarioEmail: null,
-          usuarioRegistrado: false,
-          consultasRestantes: null,
-          fechaConsultas: null,
-        }),
       setConsultasRestantes: (n) =>
         set({
           consultasRestantes: n,
@@ -1172,8 +1152,6 @@ export const useStore = create<AppState>()(
         temaColor: s.temaColor,
         rightSidebarAbierto: s.rightSidebarAbierto,
         visitadosRecientes: s.visitadosRecientes,
-        usuarioEmail: s.usuarioEmail,
-        usuarioRegistrado: s.usuarioRegistrado,
         consultasRestantes: s.consultasRestantes,
         fechaConsultas: s.fechaConsultas,
         progresoModulos: s.progresoModulos,

@@ -102,7 +102,6 @@ interface EntradaCruda {
 
 export async function generarRosco(
   area: AreaPractica,
-  usuarioEmail?: string | null,
   onConsultasRestantes?: (n: number) => void
 ): Promise<EntradaRosco[]> {
   const res = await callMessages(
@@ -117,7 +116,6 @@ export async function generarRosco(
         },
       ],
     },
-    usuarioEmail,
     onConsultasRestantes
   )
 

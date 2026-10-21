@@ -290,7 +290,6 @@ function SeleccionArea({
 }) {
   const iniciar = useStore((s) => s.iniciarPartidaPasapalabra)
   const records = useStore((s) => s.recordsPasapalabra)
-  const usuarioEmail = useStore((s) => s.usuarioEmail)
   const setConsultasRestantes = useStore((s) => s.setConsultasRestantes)
   const [cargando, setCargando] = useState<AreaPractica | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -300,7 +299,7 @@ function SeleccionArea({
     setCargando(area)
     setError(null)
     try {
-      const rosco = await generarRosco(area, usuarioEmail, setConsultasRestantes)
+      const rosco = await generarRosco(area, setConsultasRestantes)
       const partida: PartidaPasapalabra = {
         id: crypto.randomUUID(),
         area,
@@ -1031,7 +1030,6 @@ function SeleccionAreaAhorcado({
 }) {
   const iniciar = useStore((s) => s.iniciarPartidaAhorcado)
   const stats = useStore((s) => s.statsAhorcado)
-  const usuarioEmail = useStore((s) => s.usuarioEmail)
   const setConsultasRestantes = useStore((s) => s.setConsultasRestantes)
   const [cargando, setCargando] = useState<AreaPractica | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -1042,7 +1040,7 @@ function SeleccionAreaAhorcado({
     setCargando(area)
     setError(null)
     try {
-      const p = await generarPalabraAhorcado(area, usadasRef.current, usuarioEmail, setConsultasRestantes)
+      const p = await generarPalabraAhorcado(area, usadasRef.current, setConsultasRestantes)
       usadasRef.current = [...usadasRef.current, p.palabra].slice(-20)
       const partida: PartidaAhorcado = {
         id: crypto.randomUUID(),
