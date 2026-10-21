@@ -3,7 +3,6 @@
 .ti{font-family:"tabler-icons" !important;speak:none;font-style:normal;font-weight:normal;font-variant:normal;text-transform:none;line-height:1;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 .ti-adjustments:before{content:"\ea03"}
 .ti-adjustments-horizontal:before{content:"\ec38"}
-.ti-alert-circle:before{content:"\ea05"}
 .ti-alert-octagon:before{content:"\ecc6"}
 .ti-alert-triangle:before{content:"\ea06"}
 .ti-app-window:before{content:"\efe6"}
@@ -26,6 +25,7 @@
 .ti-books:before{content:"\eff2"}
 .ti-brain:before{content:"\f59f"}
 .ti-brand-google:before{content:"\ec1f"}
+.ti-brand-windows:before{content:"\ecd8"}
 .ti-brand-youtube:before{content:"\ec90"}
 .ti-briefcase:before{content:"\ea46"}
 .ti-building:before{content:"\ea4f"}
@@ -157,12 +157,10 @@
 .ti-search-off:before{content:"\f19c"}
 .ti-separator-horizontal:before{content:"\ec79"}
 .ti-settings:before{content:"\eb20"}
-.ti-settings-2:before{content:"\f5ac"}
 .ti-shape:before{content:"\eb9c"}
 .ti-share-2:before{content:"\f799"}
 .ti-share-3:before{content:"\f7bd"}
 .ti-shield:before{content:"\eb24"}
-.ti-shield-cog:before{content:"\f9c3"}
 .ti-shield-exclamation:before{content:"\f9c6"}
 .ti-sitemap:before{content:"\eb9d"}
 .ti-sparkles:before{content:"\f6d7"}
@@ -184,7 +182,6 @@
 .ti-underline:before{content:"\eba2"}
 .ti-upload:before{content:"\eb47"}
 .ti-user:before{content:"\eb4d"}
-.ti-user-check:before{content:"\eb49"}
 .ti-user-circle:before{content:"\ef68"}
 .ti-user-exclamation:before{content:"\ec12"}
 .ti-users-group:before{content:"\fa21"}

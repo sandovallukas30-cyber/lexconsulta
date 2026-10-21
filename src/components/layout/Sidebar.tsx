@@ -165,7 +165,7 @@ export function Sidebar() {
                   <p className="text-[17px] font-extrabold leading-tight" style={{ color: 'var(--neu-ink)' }}>
                     Prima Lex
                   </p>
-                  <p className="text-[11px]" style={{ color: 'var(--neu-ink3)' }}>Tu cuaderno de Derecho</p>
+                  <p className="sidebar-tagline text-[11px]" style={{ color: 'var(--neu-ink3)' }}>Tu cuaderno de Derecho</p>
                 </div>
               </div>
               <button
