@@ -128,7 +128,7 @@ export function ModalMoverApunte({
   const opciones = useMemo(
     () => [
       ...ramos.map((r) => ({ id: r.id, nombre: r.nombre, grupo: 'Mis ramos' })),
-      ...MODULOS.map((m) => ({ id: m.id, nombre: m.nombre, grupo: 'Módulos' })),
+      ...MODULOS.map((m) => ({ id: m.id, nombre: m.nombre, grupo: 'Áreas del derecho' })),
     ],
     [ramos]
   )
@@ -188,7 +188,7 @@ export function ModalMoverApunte({
           <p className={`text-xs mt-0.5 truncate ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>{apunte.titulo}</p>
         </div>
         <label className="block">
-          <span className={etiqueta}>Ramo o módulo</span>
+          <span className={etiqueta}>Ramo o área del derecho</span>
           <select
             className={campo}
             value={destino}
@@ -197,7 +197,7 @@ export function ModalMoverApunte({
               setCuaderno('')
             }}
           >
-            {['Mis ramos', 'Módulos'].map((g) => {
+            {['Mis ramos', 'Áreas del derecho'].map((g) => {
               const deGrupo = opciones.filter((o) => o.grupo === g)
               if (deGrupo.length === 0) return null
               return (

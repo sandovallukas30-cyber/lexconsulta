@@ -124,7 +124,7 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEdit
         <nav aria-label="Migas" className="flex items-center gap-1 -ml-2.5 mb-4 min-w-0">
           <button onClick={onVolver} className="boton boton-fantasma boton-chico">
             <i className="ti ti-arrow-left text-sm" />
-            Todos los módulos
+            Mis ramos
           </button>
         </nav>
 

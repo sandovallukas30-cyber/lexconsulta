@@ -241,7 +241,7 @@ export function SalaEstudio() {
     const lista: { valor: string; texto: string; primero: boolean }[] = []
     for (const [mid, datos] of Object.entries(academico)) {
       for (const a of datos.apuntes) {
-        lista.push({ valor: `${mid}:${a.id}`, texto: `${nombreRamo(mid, ramos) ?? 'Módulo'} · ${a.titulo || 'Apunte sin título'}`, primero: mid === ramoId })
+        lista.push({ valor: `${mid}:${a.id}`, texto: `${nombreRamo(mid, ramos) ?? 'Ramo'} · ${a.titulo || 'Apunte sin título'}`, primero: mid === ramoId })
       }
     }
     return lista.sort((a, b) => Number(b.primero) - Number(a.primero))

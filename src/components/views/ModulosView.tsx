@@ -377,7 +377,7 @@ export function ModulosView() {
             <i className="ti ti-layout-grid text-xl" style={{ color: 'var(--accent-texto)' }} />
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="titulo-pagina">Módulos</h1>
+            <h1 className="titulo-pagina">Mis ramos</h1>
             <p className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
               Tus ramos del semestre, lo que viene y las áreas del derecho para explorar
             </p>

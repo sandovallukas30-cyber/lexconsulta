@@ -167,7 +167,7 @@ function Acerca({ modoOscuro }: { modoOscuro: boolean }) {
 
       <H modoOscuro={modoOscuro}>Funciones disponibles</H>
       <ul className={`text-sm space-y-2 mb-4 ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>
-        <Feat icono="ti-layout-grid" titulo="Módulos y ramos">
+        <Feat icono="ti-layout-grid" titulo="Mis ramos">
           Organiza tus ramos con clases, evaluaciones y calculadora de notas, textos, apuntes y casos.
         </Feat>
         <Feat icono="ti-book-2" titulo="Explorador">

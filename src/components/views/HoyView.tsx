@@ -278,7 +278,7 @@ export function HoyView() {
             icono="ti-clipboard-check"
             derecha={
               <button onClick={() => setVistaActiva('modulos')} className={`text-xs font-medium ${suave} hover:underline`}>
-                Módulos
+                Mis ramos
               </button>
             }
           >

@@ -522,7 +522,7 @@ export function TabApuntes({
       {filtrados.length === 0 ? (
         <EstadoVacio
           icono="ti-notes"
-          texto={apuntes.length === 0 ? 'Aún no tienes apuntes en este módulo.' : 'No hay apuntes en este cuaderno.'}
+          texto={apuntes.length === 0 ? 'Aún no tienes apuntes en este ramo.' : 'No hay apuntes en este cuaderno.'}
           detalle={apuntes.length === 0 ? 'Escribe uno o importa un .md, .txt o un PDF exportado de Notion.' : undefined}
           acciones={[
             { label: 'Crear apunte', icono: 'ti-plus', onClick: iniciarNuevo },

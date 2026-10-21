@@ -218,7 +218,7 @@ export function TabResumen({
       {colecciones.length > 0 && (
         <div className="mt-6">
           <h2 className={`text-sm font-semibold mb-3 ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>
-            Colecciones de este módulo
+            Colecciones de este ramo
           </h2>
           <div className="space-y-2">
             {colecciones.map((c) => (
@@ -240,7 +240,7 @@ export function TabResumen({
       )}
 
       <VinculoModuloSeccion
-        titulo="Mapas mentales de este módulo"
+        titulo="Mapas mentales de este ramo"
         icono="ti-hierarchy-2"
         vinculados={mapas.map((m) => ({ id: m.id, label: m.titulo }))}
         disponibles={mapasDisponibles.map((m) => ({ id: m.id, label: m.titulo }))}
