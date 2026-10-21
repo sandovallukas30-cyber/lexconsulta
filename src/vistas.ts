@@ -18,7 +18,6 @@ const cargadores: Record<VistaId, Cargador> = {
   explorador: () => import('./components/views/ExploradorView').then((m) => ({ default: m.ExploradorView })),
   colecciones: () => import('./components/views/ColeccionesView').then((m) => ({ default: m.ColeccionesView })),
   mapasmentales: () => import('./components/views/MapasMentalesView').then((m) => ({ default: m.MapasMentalesView })),
-  admin: () => import('./components/views/AdminView').then((m) => ({ default: m.AdminView })),
   practica: () => import('./components/views/PracticaView').then((m) => ({ default: m.PracticaView })),
 }
 

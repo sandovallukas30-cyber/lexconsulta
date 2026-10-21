@@ -5,8 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { ModalCodigos } from '../ui/ModalCodigos'
 import { ModalAcercaDe } from '../ui/ModalAcercaDe'
-import { esAdmin } from '../../config/admin'
-import { useCuenta } from '../../store/useCuenta'
 import { EnfoqueEnMenu } from './EnfoqueEnMenu'
 import { useEsMovil } from '../../hooks/useEsMovil'
 import { BotonCuenta } from '../ui/ModalCuenta'
@@ -35,15 +33,12 @@ const itemsAcademicos: ItemMenu[] = [
   { id: 'practica', icono: 'ti-puzzle', label: 'Práctica' },
 ]
 
-const itemAdmin: ItemMenu = { id: 'admin', icono: 'ti-settings-2', label: 'Admin' }
-
 const VERDE = 'var(--accent-base)'
 
 export function Sidebar() {
   const vistaActiva = useStore((s) => s.vistaActiva)
   const setVistaActiva = useStore((s) => s.setVistaActiva)
   const codigos = useStore((s) => s.codigos)
-  const usuarioEmail = useCuenta((s) => s.perfil?.email ?? null)
   const modoOscuro = useStore((s) => s.modoOscuro)
   const toggleModoOscuro = useStore((s) => s.toggleModoOscuro)
   const colapsadoEscritorio = useStore((s) => s.sidebarColapsado)
@@ -97,7 +92,7 @@ export function Sidebar() {
   const total = codigos.length
   // el número exacto crece con cada ley que se agrega: en pantalla va con tope (el exacto queda en el tooltip)
   const topeVisible = (n: number) => (n > 9 ? '9+' : String(n))
-  const grupoAcademico = esAdmin(usuarioEmail) ? [...itemsAcademicos, itemAdmin] : itemsAcademicos
+  const grupoAcademico = itemsAcademicos
 
   return (
     <>

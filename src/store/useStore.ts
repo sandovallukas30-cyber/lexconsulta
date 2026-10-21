@@ -2,7 +2,6 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { crearAlmacenamiento } from './almacenamiento'
 import type { TemaColorId } from '../theme'
-import { JURISPRUDENCIA_SEED } from '../data/jurisprudenciaSeed'
 
 // Devuelve el índice de la próxima letra "pendiente" del rosco, partiendo desde
 // la posición actual + 1 y volviendo al principio si es necesario (rosco
@@ -19,7 +18,6 @@ import type {
   PerfilUsuario,
   VistaId,
   CodigoActivo,
-  EntradaJurisprudencia,
   ConsultaHistorial,
   Favorito,
   Mensaje,
@@ -61,7 +59,6 @@ interface AppState {
   perfil: PerfilUsuario
   vistaActiva: VistaId
   codigos: CodigoActivo[]
-  jurisprudencia: EntradaJurisprudencia[]
   historial: ConsultaHistorial[]
   favoritos: Favorito[]
   canvases: Canvas[]
@@ -111,9 +108,6 @@ interface AppState {
   setPerfil: (perfil: PerfilUsuario) => void
   setVistaActiva: (vista: VistaId) => void
   toggleCodigo: (tipo: CodigoActivo['tipo']) => void
-  agregarJurisprudencia: (entrada: EntradaJurisprudencia) => void
-  actualizarJurisprudencia: (id: string, cambios: Partial<EntradaJurisprudencia>) => void
-  eliminarJurisprudencia: (id: string) => void
   agregarConsulta: (consulta: ConsultaHistorial) => void
   actualizarConsulta: (id: string, mensajes: Mensaje[]) => void
   eliminarConsulta: (id: string) => void
@@ -365,7 +359,6 @@ export const useStore = create<AppState>()(
       perfil: null,
       vistaActiva: 'hoy',
       codigos: codigosIniciales,
-      jurisprudencia: JURISPRUDENCIA_SEED,
       historial: [],
       favoritos: [],
       canvases: [],
@@ -465,14 +458,6 @@ export const useStore = create<AppState>()(
             c.tipo === tipo && !c.bloqueado ? { ...c, activo: !c.activo } : c
           ),
         })),
-      agregarJurisprudencia: (entrada) =>
-        set((s) => ({ jurisprudencia: [entrada, ...s.jurisprudencia] })),
-      actualizarJurisprudencia: (id, cambios) =>
-        set((s) => ({
-          jurisprudencia: s.jurisprudencia.map((j) => (j.id === id ? { ...j, ...cambios } : j)),
-        })),
-      eliminarJurisprudencia: (id) =>
-        set((s) => ({ jurisprudencia: s.jurisprudencia.filter((j) => j.id !== id) })),
       agregarConsulta: (consulta) =>
         set((s) => ({
           historial: [consulta, ...s.historial].slice(0, 200),
@@ -1130,11 +1115,10 @@ export const useStore = create<AppState>()(
     {
       name: 'prima-lex-storage-v3',
       storage: crearAlmacenamiento(),
-      version: 37,
+      version: 38,
       partialize: (s) => ({
         perfil: s.perfil,
         codigos: s.codigos,
-        jurisprudencia: s.jurisprudencia,
         historial: s.historial,
         favoritos: s.favoritos,
         canvases: s.canvases,
@@ -1203,13 +1187,7 @@ export const useStore = create<AppState>()(
           resincronizarCodigos()
         }
         if (version < 24) {
-          // v24: incorporar el lote inicial de jurisprudencia curada (DT +
-          // Tribunal Ambiental). Se deduplica por id para no reinsertar si el
-          // usuario ya la tenía (p. ej. tras una migración previa).
-          const existentes = Array.isArray(state.jurisprudencia) ? (state.jurisprudencia as EntradaJurisprudencia[]) : []
-          const idsExistentes = new Set(existentes.map((j) => j.id))
-          const nuevas = JURISPRUDENCIA_SEED.filter((j) => !idsExistentes.has(j.id))
-          state = { ...state, jurisprudencia: [...nuevas, ...existentes] }
+          // v24: incorporaba el lote inicial de jurisprudencia (retirado en v38).
         }
         if (version < 26) {
           // v25: DatosAcademicosModulo incorpora `cuadernos`. v26: incorpora
@@ -1306,6 +1284,14 @@ export const useStore = create<AppState>()(
           // v37: estilo neumórfico con el índigo de Prima Lex por defecto. Quien
           // tenía el azul de antes (el valor por defecto) pasa al nuevo.
           if (state.temaColor === 'azul') state = { ...state, temaColor: 'lex' }
+        }
+        if (version < 38) {
+          // v38: se retira el panel de Administración y la jurisprudencia cargada a mano. Quien tenía
+          // Administración como última sección vuelve a Mis ramos; las entradas guardadas se descartan.
+          const { jurisprudencia: _descartada, ...resto } = state as Record<string, unknown>
+          void _descartada
+          state = resto
+          if (state.vistaActiva === 'admin') state = { ...state, vistaActiva: 'modulos' }
         }
         return state as never
       },

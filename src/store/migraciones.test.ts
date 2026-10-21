@@ -6,8 +6,8 @@ type Migrar = (persisted: unknown, version: number) => Record<string, unknown>
 const migrar = useStore.persist.getOptions().migrate as unknown as Migrar
 
 describe('migraciones del store', () => {
-  it('la versión actual es la 37 (si cambia, suma un bloque de migración y actualiza este test)', () => {
-    expect(useStore.persist.getOptions().version).toBe(37)
+  it('la versión actual es la 38 (si cambia, suma un bloque de migración y actualiza este test)', () => {
+    expect(useStore.persist.getOptions().version).toBe(38)
   })
 
   it('un estado vacío no rompe', () => {
@@ -53,6 +53,14 @@ describe('migraciones del store', () => {
 
   it('migrar en la versión actual no cambia nada', () => {
     const s = { vistaActiva: 'hoy', temaColor: 'esmeralda', tareasPlan: [] }
-    expect(migrar(s, 37)).toEqual(s)
+    expect(migrar(s, 38)).toEqual(s)
+  })
+
+  it('v38: se retira Administración y la jurisprudencia cargada', () => {
+    const r = migrar({ vistaActiva: 'admin', jurisprudencia: [{ id: 'x' }], temaColor: 'lex' }, 37)
+    expect(r.vistaActiva).toBe('modulos')
+    expect('jurisprudencia' in r).toBe(false)
+    expect(r.temaColor).toBe('lex')
+    expect(migrar({ vistaActiva: 'tareas' }, 37).vistaActiva).toBe('tareas')
   })
 })

@@ -11,7 +11,6 @@ export const RUTAS: Record<VistaId, string> = {
   colecciones: '/colecciones',
   mapasmentales: '/mapas-mentales',
   practica: '/practica',
-  admin: '/admin',
 }
 
 const TITULOS: Record<VistaId, string> = {
@@ -24,7 +23,6 @@ const TITULOS: Record<VistaId, string> = {
   colecciones: 'Colecciones',
   mapasmentales: 'Mapas mentales',
   practica: 'Práctica',
-  admin: 'Administración',
 }
 
 export const TITULO_APP = 'Prima Lex — tu semestre de Derecho, ordenado'

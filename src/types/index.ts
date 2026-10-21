@@ -74,7 +74,6 @@ export type VistaId =
   | 'explorador'
   | 'colecciones'
   | 'mapasmentales'
-  | 'admin'
   | 'practica'
 
 /** Tema propio del modo lectura del Explorador -- independiente del claro/
@@ -465,37 +464,6 @@ export interface Mensaje {
   comentarioValoracion?: string
   timestamp: Date
 }
-
-export interface EntradaJurisprudencia {
-  id: string
-  organo: string
-  referencia: string
-  fecha: string
-  /** Código indexado en Prima Lex al que se asocia (si corresponde). Fuentes como el
-   * Tribunal Ambiental o Poder Judicial en materias no indexadas quedan sin código. */
-  codigo?: CodigoTipo
-  materia: string
-  resumen: string
-  texto_completo?: string
-  articulosRelacionados?: string[]
-  url?: string
-  fechaCarga?: string
-}
-
-export const ORGANISMOS_CHILE = [
-  'Dirección del Trabajo',
-  'Servicio de Impuestos Internos',
-  'Corte Suprema',
-  'Corte de Apelaciones',
-  'Tribunal del Trabajo',
-  'Tribunal Tributario y Aduanero',
-  'Tribunal Constitucional',
-  'Contraloría General de la República',
-  'Superintendencia de Pensiones',
-  'Superintendencia de Seguridad Social',
-] as const
-
-export type OrganismoChile = (typeof ORGANISMOS_CHILE)[number]
 
 export interface CodigoActivo {
   tipo: CodigoTipo

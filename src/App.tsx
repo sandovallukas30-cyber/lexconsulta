@@ -16,8 +16,6 @@ import { Omnibar } from './components/ui/Omnibar'
 import { PanelAtajos } from './components/ui/PanelAtajos'
 import { Avisos } from './components/ui/Avisos'
 import { RightSidebar } from './components/layout/RightSidebar'
-import { esAdmin } from './config/admin'
-import { useCuenta } from './store/useCuenta'
 import { useRutas } from './hooks/useRutas'
 import { BarraInferior } from './components/layout/BarraInferior'
 import { vistas } from './vistas'
@@ -58,8 +56,6 @@ function App() {
   useRecordatorios()
   useCuentaInit()
   const vistaActiva = useStore((s) => s.vistaActiva)
-  // el acceso a Administración va con el correo confirmado de la cuenta (Supabase)
-  const usuarioEmail = useCuenta((s) => s.perfil?.email ?? null)
   const modoOscuro = useStore((s) => s.modoOscuro)
   const temaColor = useStore((s) => s.temaColor)
   const omnibarAbierto = useStore((s) => s.omnibarAbierto)
@@ -67,7 +63,7 @@ function App() {
   const importarColeccion = useStore((s) => s.importarColeccion)
   const setColeccionActiva = useStore((s) => s.setColeccionActiva)
   const setVistaActiva = useStore((s) => s.setVistaActiva)
-  const VistaComponente = vistaActiva === 'admin' && !esAdmin(usuarioEmail) ? vistas.modulos : vistas[vistaActiva]
+  const VistaComponente = vistas[vistaActiva] ?? vistas.hoy
   const salaAbierta = useSala((s) => s.abierta)
 
   // enlace compartido de la sala de estudio (?sala=<video>): abre la sala con ese video
