@@ -379,7 +379,7 @@ export function ModulosView() {
           <div className="flex-1 min-w-0">
             <h1 className="titulo-pagina">Módulos</h1>
             <p className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
-              Selecciona un área del derecho para explorar sus contenidos y ver tu progreso
+              Tus ramos del semestre, lo que viene y las áreas del derecho para explorar
             </p>
           </div>
           <button
@@ -395,8 +395,7 @@ export function ModulosView() {
         </div>
 
         <div className="mt-8 space-y-8">
-          <DashboardHoy modoOscuro={modoOscuro} />
-
+          {/* orden: primero lo que cursas, luego lo que viene, después tu constancia y por último el catálogo de áreas */}
           <MisRamos
             modoOscuro={modoOscuro}
             onAbrirRamo={(id) => abrirModulo(id)}
@@ -405,6 +404,8 @@ export function ModulosView() {
           />
 
           <ProximasEvaluaciones modoOscuro={modoOscuro} onAbrir={abrirModulo} />
+
+          <DashboardHoy modoOscuro={modoOscuro} />
 
           <section aria-label="Áreas del derecho">
             <button

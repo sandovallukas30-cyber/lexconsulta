@@ -70,6 +70,8 @@
 .subtitulo-pagina { font-size: var(--subtitulo-pagina-tam); line-height: 1.45; color: var(--neu-ink2); }
 
 html, body, #root { background: var(--neu-bg); color: var(--neu-ink); }
+/* Todas las secciones comparten el mismo fondo de página (antes Hoy tenía uno más claro que el resto) */
+main[data-vista] > .h-full { background-color: var(--neu-bg); }
 body { font-family: var(--font-sans); }
 
 /* Sora en títulos, botones, pestañas y todo lo que va en negrita */
