@@ -157,6 +157,7 @@ function Acerca({ modoOscuro }: { modoOscuro: boolean }) {
         <summary className="cursor-pointer select-none">Datos técnicos</summary>
         <p className="mt-1">
           Versión {typeof __VERSION_APP__ === 'string' ? __VERSION_APP__ : 'local'} · pantalla {window.innerWidth}×{window.innerHeight}
+          {window.visualViewport ? ` · visible ${Math.round(window.visualViewport.width)}×${Math.round(window.visualViewport.height)} · escala ${window.visualViewport.scale.toFixed(2)}` : ''}
         </p>
       </details>
       <H modoOscuro={modoOscuro}>Objetivo</H>
