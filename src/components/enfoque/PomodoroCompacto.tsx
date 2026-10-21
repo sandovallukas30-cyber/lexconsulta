@@ -6,7 +6,7 @@ import { CalificarSesion } from '../ui/CalificarSesion'
 import { SelectorRamo } from '../ui/SelectorRamo'
 
 /** Temporizador pequeño: hora, progreso y controles. Lo usa la sala de estudio. */
-export function PomodoroCompacto({ selectores = true, variante = 'vertical' }: { selectores?: boolean; variante?: 'vertical' | 'horizontal' | 'pildora' }) {
+export function PomodoroCompacto({ selectores = true, variante = 'vertical', grande = false }: { selectores?: boolean; variante?: 'vertical' | 'horizontal' | 'pildora'; grande?: boolean }) {
   const s = useEnfoque()
   const tareas = useStore((st) => st.tareasPlan)
   const corriendo = s.estado === 'corriendo'
@@ -40,10 +40,10 @@ export function PomodoroCompacto({ selectores = true, variante = 'vertical' }: {
 
   if (variante === 'pildora') {
     return (
-      <div className="neu-chip inline-flex items-center gap-2 pl-3 pr-1.5 py-1" role="group" aria-label="Temporizador">
+      <div className={`neu-chip inline-flex items-center gap-2 pl-3 pr-1.5 ${grande ? 'py-1.5' : 'py-1'}`} role="group" aria-label="Temporizador">
         <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: 'var(--neu-ink3)' }}>{etiqueta}</span>
-        <span className="text-sm font-extrabold tabular-nums" style={{ color: 'var(--neu-ink)' }}>{mmss(ms)}</span>
-        <button onClick={corriendo ? s.pausar : s.iniciar} className="boton boton-suave boton-chico boton-icono" aria-label={corriendo ? 'Pausar' : 'Iniciar'}>
+        <span className={`${grande ? 'text-3xl' : 'text-sm'} font-extrabold tabular-nums`} style={{ color: 'var(--neu-ink)' }}>{mmss(ms)}</span>
+        <button onClick={corriendo ? s.pausar : s.iniciar} className={`boton ${grande ? 'boton-primario' : 'boton-suave boton-chico'} boton-icono`} aria-label={corriendo ? 'Pausar' : 'Iniciar'}>
           <i className={`ti ${corriendo ? 'ti-player-pause' : 'ti-player-play'}`} aria-hidden="true" />
         </button>
       </div>

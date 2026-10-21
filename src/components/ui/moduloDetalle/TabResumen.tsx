@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import type { SesionClase, EvaluacionModulo, TextoObligatorio, ApunteModulo, BriefCaso, Coleccion, MapaMental } from '../../../types'
 import { useStore } from '../../../store/useStore'
 import { diasHasta, formatearCountdown, urgenciaDe } from '../../../services/modulosAcademico'
@@ -68,6 +68,15 @@ export function TabResumen({
   const notas = useMemo(() => resumenNotas(datos.evaluaciones), [datos.evaluaciones])
   const textosLeidos = datos.textos.filter((t) => t.leido).length
   const suave = { color: 'var(--neu-ink2)' }
+  // tarea rápida desde el ramo: antes había que salir al menú «Tareas» y volver a elegir el ramo
+  const agregarTareaPlan = useStore((st) => st.agregarTareaPlan)
+  const [nuevaTarea, setNuevaTarea] = useState<string | null>(null)
+  const guardarTarea = () => {
+    const titulo = (nuevaTarea ?? '').trim()
+    if (!titulo) return
+    agregarTareaPlan({ titulo, ramoId: moduloId, fecha: null, prioridad: 'media' })
+    setNuevaTarea(null)
+  }
 
   return (
     <div className="space-y-5">
@@ -84,7 +93,16 @@ export function TabResumen({
                 </div>
               </button>
             ) : (
-              <p className="text-xs" style={suave}>{datos.clases.length > 0 ? 'No quedan clases por delante.' : 'Aún no hay clases cargadas.'}</p>
+              datos.clases.length > 0 ? (
+                <p className="text-xs" style={suave}>No quedan clases por delante.</p>
+              ) : (
+                <div>
+                  <p className="text-xs mb-1" style={suave}>Aún no hay clases cargadas.</p>
+                  <button onClick={() => onIrA('clases')} className="sin-neu text-xs font-semibold" style={{ color: 'var(--accent-texto)' }}>
+                    Cargar las clases del semestre
+                  </button>
+                </div>
+              )
             )}
             {proximoExamen ? (
               <button onClick={() => onIrA('examenes')} className="sin-neu block w-full text-left">
@@ -102,6 +120,24 @@ export function TabResumen({
               <span className="font-bold" style={{ color: 'var(--neu-ink)' }}>{pendientes.length}</span>{' '}
               <span className="text-xs" style={suave}>{pendientes.length === 1 ? 'tarea pendiente' : 'tareas pendientes'}</span>
             </button>
+            {nuevaTarea === null ? (
+              <button onClick={() => setNuevaTarea('')} className="boton boton-suave boton-chico">
+                <i className="ti ti-plus" aria-hidden="true" /> Agregar tarea
+              </button>
+            ) : (
+              <form onSubmit={(e) => { e.preventDefault(); guardarTarea() }} className="flex gap-2">
+                <input
+                  autoFocus
+                  value={nuevaTarea}
+                  onChange={(e) => setNuevaTarea(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Escape') setNuevaTarea(null) }}
+                  placeholder="Ej: Leer capítulo 1"
+                  aria-label="Nueva tarea de este ramo"
+                  className="flex-1 min-w-0 h-control-sm px-3 text-sm"
+                />
+                <button type="submit" disabled={!nuevaTarea.trim()} className="boton boton-primario boton-chico">Agregar</button>
+              </form>
+            )}
           </div>
         </Panel>
 

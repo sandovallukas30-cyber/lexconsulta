@@ -64,7 +64,8 @@
   /* Sombras difusas en vez de bordes duros. */
   --shadow-tarjeta: 0 1px 2px rgb(16 24 40 / 0.04), 0 6px 20px rgb(16 24 40 / 0.06);
   --shadow-flotante: 0 12px 40px rgb(16 24 40 / 0.16), 0 2px 8px rgb(16 24 40 / 0.06);
-  --spacing-control: 2.5rem;    /* alto de botones de barra: 40 px */
+  --text-xs: 0.8125rem;         /* el texto de apoyo más chico es de 13 px (antes 12) */
+  --spacing-control: 2.5rem;    /* alto de botones de barra: 40 px (44 en pantallas táctiles, ver más abajo) */
   --spacing-control-sm: 2rem;   /* botones de ícono dentro de filas */
   --spacing-gutter: 1rem;       /* margen lateral en móvil */
   --spacing-gutter-lg: 1.5rem;  /* margen lateral desde sm */
@@ -140,7 +141,7 @@ input[type='checkbox']:focus-visible, input[type='radio']:focus-visible, input[t
   }
   .boton:active:not(:disabled) { transform: scale(0.97); }
   .boton:disabled { opacity: 0.4; cursor: not-allowed; }
-  .boton-chico { --alto-boton: var(--spacing-control-sm); font-size: 0.75rem; padding: 0 0.625rem; }
+  .boton-chico { --alto-boton: var(--spacing-control-sm); font-size: 0.8125rem; padding: 0 0.625rem; }
 
   .boton-suave { background: var(--color-zinc-100); color: var(--color-zinc-700); }
   .boton-fantasma { background: transparent; color: var(--color-zinc-500); }
@@ -185,8 +186,12 @@ input[type='checkbox']:focus-visible, input[type='radio']:focus-visible, input[t
 /* Pantallas táctiles: los botones chicos también a 40 px (ver regla de
    pointer: coarse más abajo para el resto de los botones). */
 @media (pointer: coarse) {
-  .boton-chico { --alto-boton: var(--spacing-control); }
+  :root { --spacing-control: 2.75rem; --spacing-control-sm: 2.75rem; } /* 44 px: tamaño mínimo para el dedo */
+  .boton, .boton-chico { --alto-boton: 2.75rem; }
 }
+
+/* Texto de apoyo: piso de 13 px también para los tamaños escritos a mano (10, 11, 12 px) */
+[class*="text-[10px]"], [class*="text-[11px]"], [class*="text-[11.5px]"], [class*="text-[12px]"], [class*="text-[12.5px]"] { font-size: 0.8125rem; }
 
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; width: 100%; overflow: hidden; }
@@ -276,8 +281,10 @@ html, body, #root { height: 100%; width: 100%; overflow: hidden; }
    punteros "gruesos"; con mouse todo queda igual. Los enlaces en línea no
    cambian (min-height no aplica a elementos inline). */
 @media (pointer: coarse) {
-  main button:not(.sin-tactil), header button, [role='dialog'] button:not(.sin-tactil) { min-height: 40px; }
-  main select, [role='dialog'] select { min-height: 40px; }
+  main button:not(.sin-tactil), header button, aside button:not(.sin-tactil), [role='dialog'] button:not(.sin-tactil) { min-height: 44px; }
+  /* botones de solo ícono escritos con w-8/w-9/w-10: también 44 px de ancho */
+  button[class*="w-8"][class*="h-8"], button[class*="w-9"][class*="h-9"], button[class*="w-10"][class*="h-10"] { min-width: 44px; min-height: 44px; }
+  main select, [role='dialog'] select { min-height: 44px; }
   /* iOS hace zoom al enfocar un campo de menos de 16 px y deja la página desplazada */
   input:not([type='checkbox']):not([type='radio']):not([type='range']), textarea, select { font-size: max(16px, 1em); }
   /* sin el retraso de doble toque y sin rebote que arrastra la página entera */

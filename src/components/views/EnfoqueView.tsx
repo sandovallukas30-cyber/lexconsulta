@@ -433,7 +433,7 @@ function SesionesDeHoy() {
     <section className={e.tarjeta} aria-label="Sesiones de hoy">
       <h2 className={`text-sm font-semibold mb-2 ${e.modoOscuro ? 'text-zinc-200' : 'text-zinc-800'}`}>Sesiones de hoy</h2>
       {delDia.length === 0 ? (
-        <p className={`text-sm py-2 ${e.suave}`}>Aún no hay sesiones hoy. Inicia un enfoque y queda registrado aquí.</p>
+        <p className={`text-sm py-2 ${e.suave}`}>Aún no hay sesiones hoy. Una sesión se guarda al terminar el tiempo o al apretar «Terminar y guardar» (desde 1 minuto), y queda aquí y en la pestaña Historial.</p>
       ) : (
         <ul className={`divide-y ${e.modoOscuro ? 'divide-zinc-800' : 'divide-zinc-100'}`}>
           {delDia.map((x) => {
@@ -476,7 +476,7 @@ function SesionesDeHoy() {
           className={e.campo}
         />
         <button type="submit" disabled={!(Number(manual) >= 1)} className="boton boton-suave">
-          Registrar
+          Registrar a mano
         </button>
       </form>
     </section>

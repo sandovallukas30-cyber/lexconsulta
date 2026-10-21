@@ -277,6 +277,9 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
                     <i className="ti ti-plus" aria-hidden="true" /> Agregar
                   </button>
                 </div>
+                <p className={`text-xs mt-1 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                  Con un solo profesor basta con escribir el nombre. «Agregar» es para sumar más de uno.
+                </p>
               </div>
             <div>
               <span className={labelClase}>Color</span>
@@ -328,7 +331,7 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
               className={`flex items-center gap-1.5 text-xs font-semibold ${modoOscuro ? 'text-zinc-300' : 'text-zinc-600'}`}
             >
               <i className={`ti ti-chevron-right text-sm transition-transform ${verDetalles ? 'rotate-90' : ''}`} aria-hidden="true" />
-              Más detalles (horario, ícono, correo…)
+              Horario de clases y más detalles
             </button>
 
             {verDetalles && (

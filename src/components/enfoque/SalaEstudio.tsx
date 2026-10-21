@@ -163,7 +163,7 @@ function VentanaTemporizador() {
         >
           <i className="ti ti-grip-vertical" />
         </span>
-        <PomodoroCompacto variante="pildora" selectores={false} />
+        <PomodoroCompacto variante="pildora" selectores={false} grande />
         <button
           onClick={() => setAbierta((v) => !v)}
           aria-expanded={abierta}
@@ -292,20 +292,19 @@ export function SalaEstudio() {
           ))}
         </div>
         <span className="flex-1" />
-        <div className="flex items-center gap-1" role="group" aria-label="Dónde va el temporizador">
-          {DISPOSICIONES.map(([id, nombre, icono]) => (
-            <button
-              key={id}
-              aria-pressed={d === id}
-              title={`Temporizador: ${nombre}`}
-              aria-label={`Temporizador: ${nombre}`}
-              onClick={() => cambiarSala({ disposicion: id })}
-              className={`boton boton-chico boton-icono ${d === id ? 'boton-primario' : 'boton-suave'}`}
-            >
-              <i className={`ti ${icono}`} aria-hidden="true" />
-            </button>
-          ))}
-        </div>
+        <label className="flex items-center gap-2 text-xs font-semibold" style={{ color: 'var(--neu-ink2)' }}>
+          Temporizador
+          <select
+            value={d}
+            onChange={(e) => cambiarSala({ disposicion: e.target.value as DisposicionSala })}
+            aria-label="Dónde va el temporizador"
+            className="h-control-sm px-3 text-xs"
+          >
+            {DISPOSICIONES.map(([id, nombre]) => (
+              <option key={id} value={id}>{nombre}</option>
+            ))}
+          </select>
+        </label>
         {sala.material === 'video' && (
           <select value={sala.tamano} onChange={(e) => cambiarSala({ tamano: e.target.value as TamanoVideo })} aria-label="Tamaño del video" className="h-control-sm px-3 text-xs">
             {TAMANOS.map(([t, n]) => (
