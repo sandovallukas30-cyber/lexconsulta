@@ -377,9 +377,7 @@ export function ModulosView() {
             <i className="ti ti-layout-grid text-xl" style={{ color: 'var(--accent-texto)' }} />
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className={`text-2xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
-              Módulos
-            </h1>
+            <h1 className="titulo-pagina">Módulos</h1>
             <p className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
               Selecciona un área del derecho para explorar sus contenidos y ver tu progreso
             </p>

@@ -75,9 +75,7 @@ export function SelectorCodigo({ titulo, descripcion, icono, onElegir }: Props) 
           >
             <i className={`ti ${icono} text-3xl`} style={{ color: 'var(--accent-texto)' }} />
           </div>
-          <h1 className={`text-3xl font-serif font-bold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
-            {titulo}
-          </h1>
+          <h1 className="titulo-pagina mb-2">{titulo}</h1>
           <p className={`text-sm ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
             {descripcion}
           </p>

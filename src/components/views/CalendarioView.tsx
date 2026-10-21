@@ -260,7 +260,7 @@ export function CalendarioView() {
       <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-4">
         <header className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className={`text-2xl font-bold tracking-tight ${e.titulo}`}>Calendario</h1>
+            <h1 className="titulo-pagina">Calendario</h1>
             <p className={`text-sm mt-1 ${e.suave}`}>Tus clases, evaluaciones y tareas en un solo lugar.</p>
           </div>
           <div className="flex items-center gap-2">

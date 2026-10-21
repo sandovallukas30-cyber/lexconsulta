@@ -68,8 +68,12 @@ function claveDe(a: Articulo): string {
 }
 
 export function buscarEnCodigo(arts: Articulo[], consulta: string, limite = 50): ResultadoCodigo[] {
-  const q = consulta.trim()
+  let q = consulta.trim()
   if (!q) return arts.slice(0, limite).map((articulo) => ({ articulo, fragmento: null, exacto: false }))
+
+  // «19 4» o «19 n°4» (artículo y numeral): se busca el artículo; el numeral no es parte del número del artículo
+  const conNumeral = /^(\d+)\s+(?:n[°º.]?\s*)?(\d{1,2})$/i.exec(q)
+  if (conNumeral && !arts.some((a) => claveDe(a) === consultaComoId(q))) q = conNumeral[1]
 
   const qId = consultaComoId(q)
   const palabras = normalizarConsulta(q)

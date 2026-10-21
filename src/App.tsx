@@ -19,6 +19,7 @@ import { RightSidebar } from './components/layout/RightSidebar'
 import { esAdmin } from './config/admin'
 import { useCuenta } from './store/useCuenta'
 import { useRutas } from './hooks/useRutas'
+import { BarraInferior } from './components/layout/BarraInferior'
 import { vistas } from './vistas'
 import { useMotorEnfoque } from './hooks/useMotorEnfoque'
 import { LimiteError } from './components/ui/LimiteError'
@@ -159,6 +160,7 @@ function App() {
           </main>
           <RightSidebar />
         </div>
+        <BarraInferior />
       </div>
       <AnimatePresence>
         {salaAbierta && (

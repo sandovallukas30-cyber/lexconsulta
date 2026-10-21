@@ -1110,6 +1110,9 @@ function ModalBusqueda({
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.96, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Buscar en el código"
             className={`w-full max-w-2xl rounded-panel shadow-flotante overflow-hidden flex flex-col max-h-[70vh] ${
               modoOscuro ? 'bg-zinc-900' : 'bg-white'
             }`}

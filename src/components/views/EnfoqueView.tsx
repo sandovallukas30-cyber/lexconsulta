@@ -493,7 +493,7 @@ export function EnfoqueView() {
     <div className={`h-full overflow-y-auto ${e.modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
       <div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-5">
         <header>
-          <h1 className={`text-2xl font-bold tracking-tight ${e.titulo}`}>Enfoque</h1>
+          <h1 className="titulo-pagina">Enfoque</h1>
           <p className={`text-sm mt-1 ${e.suave}`}>Estudia en bloques con descansos. El reloj sigue corriendo aunque cambies de sección.</p>
         </header>
         <div className="flex flex-wrap items-center justify-between gap-3">

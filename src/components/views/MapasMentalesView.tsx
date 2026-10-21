@@ -233,9 +233,7 @@ function ListaMapas({
           >
             <i className="ti ti-hierarchy-2 text-lg" style={{ color: 'var(--accent-texto)' }} />
           </div>
-          <h1 className={`text-xl font-serif font-semibold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
-            Mapas mentales
-          </h1>
+          <h1 className="titulo-pagina">Mapas mentales</h1>
         </div>
         <p className={`text-sm mb-8 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
           Diagramas libres para estructurar un tema — formas, tamaños de texto y conexiones, sin depender del texto

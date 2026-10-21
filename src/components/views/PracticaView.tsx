@@ -148,9 +148,7 @@ function MenuSeleccionJuegos({
           >
             <i className="ti ti-puzzle text-3xl" style={{ color: 'var(--accent-texto)' }} />
           </div>
-          <h1 className={`text-3xl font-serif font-bold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
-            Área de práctica
-          </h1>
+          <h1 className="titulo-pagina mb-2">Área de práctica</h1>
           <p className={`text-sm max-w-lg mx-auto ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
             Elige un juego para practicar y mejorar tu conocimiento del derecho chileno
           </p>
@@ -336,9 +334,7 @@ function SeleccionArea({
           >
             <i className="ti ti-puzzle text-3xl" style={{ color: 'var(--accent-texto)' }} />
           </div>
-          <h1 className={`text-3xl font-serif font-bold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
-            Pasapalabra jurídico
-          </h1>
+          <h1 className="titulo-pagina mb-2">Pasapalabra jurídico</h1>
           <p className={`text-sm max-w-lg mx-auto ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
             27 letras, 5 minutos, terminología del derecho chileno. Cada palabra se respalda en una norma indexada.
           </p>

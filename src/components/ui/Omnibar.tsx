@@ -178,6 +178,9 @@ export function Omnibar({ onClose }: Props) {
         exit={{ scale: 0.95, opacity: 0 }}
         transition={{ duration: 0.15 }}
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Buscar en tus apuntes y códigos"
         className={`relative w-full max-w-2xl rounded-lg shadow-2xl overflow-hidden ${
           modoOscuro ? 'bg-zinc-900 border border-zinc-800' : 'bg-white border border-zinc-200'
         }`}

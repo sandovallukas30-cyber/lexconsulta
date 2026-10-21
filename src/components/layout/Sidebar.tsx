@@ -167,9 +167,9 @@ export function Sidebar() {
                   <i className="ti ti-scale text-lg text-white" />
                 </span>
                 <div className="min-w-0">
-                  <h1 className="text-[17px] font-extrabold leading-tight" style={{ color: 'var(--neu-ink)' }}>
+                  <p className="text-[17px] font-extrabold leading-tight" style={{ color: 'var(--neu-ink)' }}>
                     Prima Lex
-                  </h1>
+                  </p>
                   <p className="text-[11px]" style={{ color: 'var(--neu-ink3)' }}>Tu cuaderno de Derecho</p>
                 </div>
               </div>

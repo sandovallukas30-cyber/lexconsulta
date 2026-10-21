@@ -112,7 +112,7 @@ export function HoyView() {
         <header className="flex items-end justify-between gap-4 flex-wrap">
           <div className="min-w-0">
           <p className={`text-sm ${suave}`}>{fechaLarga()}</p>
-          <h1 className="text-[32px] font-extrabold leading-tight" style={{ color: 'var(--neu-ink)' }}>{saludo()}</h1>
+          <h1 className="titulo-pagina">{saludo()}</h1>
           <div className="flex flex-wrap gap-2 mt-2.5">
             {resumen.length === 0 && <span className={`text-sm ${suave}`}>Hoy no tienes nada pendiente registrado.</span>}
             {resumen.map((r, i) => (

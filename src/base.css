@@ -59,6 +59,16 @@
   --neu-presionada-chica: inset 0 0 0 1px var(--neu-line);
 }
 
+/* Título de página: un solo estilo para todas las secciones. Para cambiar el aspecto de todos los
+   títulos, basta con cambiar estas variables (o la clase .titulo-pagina). */
+:root {
+  --titulo-pagina-tam: 1.75rem;   /* 28 px */
+  --titulo-pagina-peso: 700;
+  --subtitulo-pagina-tam: 0.875rem; /* 14 px */
+}
+.titulo-pagina { font-family: var(--font-head); font-size: var(--titulo-pagina-tam); font-weight: var(--titulo-pagina-peso); line-height: 1.2; letter-spacing: -0.01em; color: var(--neu-ink); }
+.subtitulo-pagina { font-size: var(--subtitulo-pagina-tam); line-height: 1.45; color: var(--neu-ink2); }
+
 html, body, #root { background: var(--neu-bg); color: var(--neu-ink); }
 body { font-family: var(--font-sans); }
 

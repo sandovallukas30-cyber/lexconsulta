@@ -153,9 +153,7 @@ function ListaColecciones() {
       <div className="max-w-5xl mx-auto px-8 py-10">
         <div className="flex items-start justify-between gap-4 mb-8">
           <div>
-            <h1 className={`text-2xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
-              Colecciones
-            </h1>
+            <h1 className="titulo-pagina">Colecciones</h1>
             <p className={`text-sm mt-1.5 max-w-md ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
               Junta artículos de cualquier código bajo un mismo tema, para estudiarlos
               todos juntos sin ir cambiando de pantalla.
@@ -183,14 +181,17 @@ function ListaColecciones() {
               <i className="ti ti-upload text-base" />
               <span className="hidden sm:inline">Importar</span>
             </button>
-            <button
-              onClick={() => setModalNueva(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-white flex-shrink-0 transition-opacity hover:opacity-90"
-              style={{ background: VERDE }}
-            >
-              <i className="ti ti-plus text-base" />
-              Nueva colección
-            </button>
+            {/* sin colecciones, el llamado único es el del centro de la pantalla (no dos botones iguales) */}
+            {ordenadas.length > 0 && (
+              <button
+                onClick={() => setModalNueva(true)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-white flex-shrink-0 transition-opacity hover:opacity-90"
+                style={{ background: VERDE }}
+              >
+                <i className="ti ti-plus text-base" />
+                Nueva colección
+              </button>
+            )}
           </div>
         </div>
 
