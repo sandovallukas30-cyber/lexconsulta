@@ -152,8 +152,8 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
       actualizarRamo(ramoEditando.id, datos)
       avisar.exito('Ramo actualizado')
     } else {
-      crearRamo(datos)
-      avisar.exito(`Ramo "${datos.nombre}" creado`)
+      const id = crearRamo(datos)
+      avisar.conDeshacer(`Ramo "${datos.nombre}" creado`, () => useStore.getState().eliminarRamo(id))
     }
     onCerrar()
   }
@@ -495,6 +495,9 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
             ) : <span />}
             <div className="flex gap-2">
               <button onClick={onCerrar} className="boton boton-fantasma boton-chico">Cancelar</button>
+              {!campos.nombre.trim() && (
+                <span className={`self-center text-xs ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`} role="status">Escribe el nombre del ramo</span>
+              )}
               <button onClick={guardar} disabled={!campos.nombre.trim()} className="boton boton-primario boton-chico">
                 {ramoEditando ? 'Guardar' : 'Crear ramo'}
               </button>

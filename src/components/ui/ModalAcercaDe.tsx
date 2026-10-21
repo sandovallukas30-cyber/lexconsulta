@@ -152,9 +152,13 @@ function P({ children, modoOscuro }: { children: React.ReactNode; modoOscuro: bo
 function Acerca({ modoOscuro }: { modoOscuro: boolean }) {
   return (
     <div>
-      <p className={`text-xs mb-3 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
-        Versión {typeof __VERSION_APP__ === 'string' ? __VERSION_APP__ : 'local'} · pantalla {window.innerWidth}×{window.innerHeight}
-      </p>
+      {/* los datos técnicos quedan a un clic: sirven para reportar fallos, pero no son para todos */}
+      <details className={`text-xs mb-3 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
+        <summary className="cursor-pointer select-none">Datos técnicos</summary>
+        <p className="mt-1">
+          Versión {typeof __VERSION_APP__ === 'string' ? __VERSION_APP__ : 'local'} · pantalla {window.innerWidth}×{window.innerHeight}
+        </p>
+      </details>
       <H modoOscuro={modoOscuro}>Objetivo</H>
       <P modoOscuro={modoOscuro}>
         Una plataforma de estudio para estudiantes de Derecho en Chile: los textos legales oficiales, tus apuntes
@@ -310,7 +314,7 @@ export function Disclaimer({ modoOscuro }: { modoOscuro: boolean }) {
       <H modoOscuro={modoOscuro}>Vigencia normativa</H>
       <P modoOscuro={modoOscuro}>
         Las normas chilenas se modifican constantemente. Antes de basar una acción en un artículo, verifica que esté
-        vigente consultando
+        vigente consultando{' '}
         <a
           href="https://www.bcn.cl/leychile"
           target="_blank"

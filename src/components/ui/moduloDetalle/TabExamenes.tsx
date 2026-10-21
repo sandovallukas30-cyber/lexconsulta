@@ -75,8 +75,9 @@ export function TabExamenes({
 
   const guardar = () => {
     const pond = Number(ponderacion)
-    if (!nombre.trim() || !fecha || !Number.isFinite(pond) || pond <= 0) {
-      setError('Completa nombre, fecha y una ponderación válida.')
+    const faltan = [!nombre.trim() && 'el nombre', !fecha && 'la fecha', (!Number.isFinite(pond) || pond <= 0) && 'la ponderación (un número mayor que 0, p. ej. 30)'].filter(Boolean)
+    if (faltan.length > 0) {
+      setError(`Falta ${faltan.join(', ')}.`)
       return
     }
     if (ponderacionCargada + pond > 100) {

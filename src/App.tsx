@@ -2,7 +2,7 @@ import { Sidebar } from './components/layout/Sidebar'
 import { Topbar } from './components/layout/Topbar'
 import { PARAM_IMPORTAR, decodificarColeccion } from './services/compartirColeccion'
 import type { ColeccionCompartida } from './types'
-import { useState, useEffect, lazy, Suspense } from 'react'
+import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { useStore } from './store/useStore'
 import { useAplicarAjustes } from './hooks/useAplicarAjustes'
@@ -117,6 +117,17 @@ function App() {
   }, [modoOscuro])
 
   // Atajo global: Cmd/Ctrl+K para abrir Omnibar
+  // Al cambiar de sección el foco pasa al contenido nuevo (antes caía al <body> y había que recorrer todo con Tab otra vez)
+  const refContenido = useRef<HTMLElement>(null)
+  const primeraVista = useRef(true)
+  useEffect(() => {
+    if (primeraVista.current) {
+      primeraVista.current = false
+      return
+    }
+    refContenido.current?.focus({ preventScroll: true })
+  }, [vistaActiva])
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
@@ -132,11 +143,12 @@ function App() {
     <div
       className={`flex h-full w-full overflow-hidden bg-[var(--neu-bg)] ${modoOscuro ? 'dark' : ''}`}
     >
+      <a href="#contenido" className="saltar-contenido">Saltar al contenido</a>
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden relative">
         <Topbar />
         <div className="flex-1 flex overflow-hidden">
-          <main data-vista={vistaActiva} className="flex-1 overflow-y-auto">
+          <main id="contenido" ref={refContenido} tabIndex={-1} data-vista={vistaActiva} className="flex-1 overflow-y-auto outline-none">
             <LimiteError key={vistaActiva} modoOscuro={modoOscuro}>
               <Suspense fallback={<CargandoVista modoOscuro={modoOscuro} />}>
                 <VistaComponente />

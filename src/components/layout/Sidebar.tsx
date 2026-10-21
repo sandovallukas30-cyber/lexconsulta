@@ -1,5 +1,6 @@
 import { precargarVista } from '../../vistas'
 import { useEffect, useState } from 'react'
+import { useDialogo } from '../../hooks/useDialogo'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { ModalCodigos } from '../ui/ModalCodigos'
@@ -55,6 +56,8 @@ export function Sidebar() {
   const esMovil = useEsMovil()
   const colapsado = esMovil ? false : colapsadoEscritorio
   const toggleSidebar = esMovil ? () => setMenuMovilAbierto(false) : toggleSidebarEscritorio
+  // en móvil el menú es un panel: el foco entra, Tab no se escapa a la página de atrás y Esc lo cierra
+  const refMenu = useDialogo<HTMLElement>(esMovil && menuMovilAbierto, () => setMenuMovilAbierto(false))
   const irA = (id: VistaId) => {
     setVistaActiva(id)
     if (esMovil) setMenuMovilAbierto(false)
@@ -113,6 +116,9 @@ export function Sidebar() {
         )}
       </AnimatePresence>
       <motion.aside
+        ref={refMenu}
+        role={esMovil && menuMovilAbierto ? 'dialog' : undefined}
+        aria-modal={esMovil && menuMovilAbierto ? true : undefined}
         initial={false}
         animate={esMovil ? { x: menuMovilAbierto ? 0 : -320, width: 312 } : { x: 0, width: colapsado ? 96 : 296 }}
         transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
@@ -213,7 +219,10 @@ export function Sidebar() {
 
         <div className={`neu-flat mt-auto flex-shrink-0 ${colapsado ? 'p-2' : 'p-2.5'}`}>
           <button
-            onClick={() => setModalCodigos(true)}
+            onClick={() => {
+              if (esMovil) setMenuMovilAbierto(false)
+              setModalCodigos(true)
+            }}
             title={`Códigos · ${activos} de ${total} activos (incluye leyes especiales)`}
             className={`w-full min-h-control rounded-control text-sm font-medium transition-colors text-left flex items-center ${
               colapsado ? 'justify-center px-0 py-1' : 'px-3 py-1'
@@ -247,7 +256,10 @@ export function Sidebar() {
           </button>
 
           <button
-            onClick={() => abrirAcerca('acerca')}
+            onClick={() => {
+              if (esMovil) setMenuMovilAbierto(false)
+              abrirAcerca('acerca')
+            }}
             title={colapsado ? 'Configuración · Apariencia, aviso legal, privacidad' : undefined}
             className={`w-full mt-1 min-h-control rounded-control text-xs transition-colors flex items-center ${
               colapsado ? 'justify-center px-0' : 'px-3'
@@ -258,6 +270,15 @@ export function Sidebar() {
             <i className="ti ti-settings text-base flex-shrink-0" />
             <Etiqueta visible={!colapsado}>Configuración</Etiqueta>
           </button>
+
+          {!colapsado && (
+            <p className={`mt-1 px-3 text-[13px] leading-snug ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
+              Gratis por ahora ·{' '}
+              <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="underline">Privacidad</a>
+              {' · '}
+              <a href="/terminos" target="_blank" rel="noopener noreferrer" className="underline">Términos</a>
+            </p>
+          )}
 
           {/* cuenta y modo oscuro: al pie del menú, fuera de la franja superior */}
           <div

@@ -348,6 +348,10 @@ main[data-vista] > *:not(.esqueleto-contenedor) { animation: aparece var(--dur-l
   scroll-behavior: auto !important;
 }
 
+/* «Saltar al contenido»: invisible hasta que recibe el foco con Tab */
+.saltar-contenido { position: absolute; left: 12px; top: -64px; z-index: 200; padding: 10px 16px; border-radius: 12px; background: var(--accent-base); color: #fff; font-weight: 700; font-size: 14px; text-decoration: none; transition: top var(--dur-rapida) var(--ease-estandar); }
+.saltar-contenido:focus { top: 12px; }
+
 /* Pistas de teclado (Ctrl+K, ↑↓, ↵, Esc): no tienen sentido en pantallas táctiles (iPad, celular) */
 @media (pointer: coarse) { .solo-teclado { display: none !important; } }
 
