@@ -17,6 +17,7 @@ import { PanelAtajos } from './components/ui/PanelAtajos'
 import { Avisos } from './components/ui/Avisos'
 import { RightSidebar } from './components/layout/RightSidebar'
 import { useRutas } from './hooks/useRutas'
+import { useActualizacion } from './hooks/useActualizacion'
 import { BarraInferior } from './components/layout/BarraInferior'
 import { vistas } from './vistas'
 import { useMotorEnfoque } from './hooks/useMotorEnfoque'
@@ -53,6 +54,7 @@ function App() {
   useMotorEnfoque()
   useAplicarAjustes()
   useRutas()
+  useActualizacion()
   useRecordatorios()
   useCuentaInit()
   const vistaActiva = useStore((s) => s.vistaActiva)
