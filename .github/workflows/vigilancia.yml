@@ -1,0 +1,60 @@
+# Vigilancia de Prima Lex sin servicios externos: GitHub revisa el sitio cada 15 minutos y, si algo
+# falla, el workflow queda en rojo y GitHub avisa por correo a quien lo mantiene.
+# (El repositorio es público: los minutos de Actions son gratuitos.)
+#
+# Qué mira:
+#  - cada 15 min: el sitio carga, la API responde, las páginas legales y el sitemap existen;
+#  - cada día: la configuración de cuentas de Supabase (scripts/verificar_supabase.mjs).
+#
+# Aviso: GitHub puede retrasar las ejecuciones programadas varios minutos en horas de mucha carga y
+# apaga las programadas tras 60 días sin actividad en el repositorio. No es un monitor de segundos.
+
+name: Vigilancia
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+    - cron: '17 9 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  SITIO: https://primalex.vercel.app
+
+jobs:
+  sitio:
+    name: El sitio y la API responden
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Página principal
+        run: |
+          curl -fsS --retry 2 --retry-delay 5 -m 20 -o inicio.html "$SITIO/"
+          grep -q "Prima Lex" inicio.html
+      - name: API viva (un GET debe responder 405, no caerse)
+        run: |
+          codigo=$(curl -s -o /dev/null -w '%{http_code}' --retry 2 --retry-delay 5 -m 20 "$SITIO/api/anthropic")
+          echo "api/anthropic -> $codigo"
+          test "$codigo" = "405"
+      - name: Páginas legales y sitemap
+        run: |
+          for ruta in privacidad terminos sitemap.xml; do
+            codigo=$(curl -s -o /dev/null -w '%{http_code}' --retry 2 --retry-delay 5 -m 20 "$SITIO/$ruta")
+            echo "$ruta -> $codigo"
+            test "$codigo" = "200"
+          done
+
+  cuentas:
+    name: Cuentas de Supabase (diario)
+    # solo en la ejecución diaria o cuando se lanza a mano
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '17 9 * * *'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/verificar_supabase.mjs --sitio "$SITIO"
