@@ -1363,9 +1363,15 @@ function FichaFila({
  *  artículo y navegación): así la pantalla no "salta" cuando aparece el
  *  artículo (C4/C8). Un código grande (Civil, 1,5 MB) tarda en bajar. */
 function PantallaCargandoCodigo({ modoOscuro }: { modoOscuro: boolean }) {
+  // con una conexión lenta el código más grande (1,4 MB) puede tardar: después de unos segundos se avisa
+  const [lento, setLento] = useState(false)
+  useEffect(() => {
+    const id = window.setTimeout(() => setLento(true), 4000)
+    return () => window.clearTimeout(id)
+  }, [])
   const bloque = modoOscuro ? 'bg-zinc-800' : 'bg-zinc-200/80'
   return (
-    <div className={`h-full flex flex-col ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`} aria-busy="true" aria-label="Cargando código">
+    <div className={`h-full flex flex-col relative ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`} aria-busy="true" aria-label="Cargando código">
       <div className={`flex items-center gap-3 px-3 sm:px-6 py-3 border-b ${modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
         <div className={`w-7 h-7 rounded-lg animate-pulse ${bloque}`} />
         <div className="space-y-1.5">
@@ -1389,7 +1395,9 @@ function PantallaCargandoCodigo({ modoOscuro }: { modoOscuro: boolean }) {
         </div>
       </div>
       <div className={`border-t px-4 py-3 h-[62px] ${modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`} />
-      <p className="sr-only">Cargando código…</p>
+      <p role="status" className={`absolute left-0 right-0 bottom-[78px] text-center text-sm px-6 ${modoOscuro ? 'text-zinc-300' : 'text-zinc-600'}`}>
+        {lento ? 'Sigue cargando… con una conexión lenta los códigos grandes pueden tardar un poco más. Se guarda en tu dispositivo para la próxima vez.' : 'Cargando el código…'}
+      </p>
     </div>
   )
 }

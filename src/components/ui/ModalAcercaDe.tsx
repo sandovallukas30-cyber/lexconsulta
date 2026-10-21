@@ -343,6 +343,22 @@ export function Privacidad({ modoOscuro }: { modoOscuro: boolean }) {
         <em>Última actualización: 19 de octubre de 2026.</em>
       </P>
 
+      <div
+        className={`rounded-lg p-4 mb-4 text-sm leading-relaxed ${modoOscuro ? 'bg-zinc-800 text-zinc-200' : 'bg-zinc-100 text-zinc-800'}`}
+        role="note"
+        aria-label="Resumen de la política de privacidad"
+      >
+        <p className="font-semibold mb-1">En resumen</p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>Sin cuenta, tus apuntes, tareas y ajustes se guardan solo en tu dispositivo.</li>
+          <li>Con cuenta, se guarda una copia en Supabase para sincronizar tus dispositivos. No está cifrada de extremo a extremo.</li>
+          <li>No hay publicidad ni cookies de seguimiento, y no vendemos datos.</li>
+          <li>Los juegos de práctica usan inteligencia artificial (Anthropic), sin enviar tus apuntes ni datos personales.</li>
+          <li>Puedes eliminar tu cuenta y tu copia en la nube desde tu perfil.</li>
+        </ul>
+        <p className="mt-2 text-xs">El detalle completo está más abajo.</p>
+      </div>
+
       <H modoOscuro={modoOscuro}>1. Quién es responsable</H>
       <P modoOscuro={modoOscuro}>
         Prima Lex es un proyecto independiente creado por un estudiante de Derecho. Esta política se rige por la Ley

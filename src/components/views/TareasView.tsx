@@ -88,10 +88,10 @@ function NuevaTarea({ onCreada }: { onCreada: () => void }) {
           onChange={(e) => setFecha(e.target.value || null)}
           className={c.campo}
         />
-        <button type="button" onClick={() => setFecha(hoyISO())} aria-pressed={fecha === hoyISO()} className="boton boton-chico boton-borde">
+        <button type="button" onClick={() => setFecha(hoyISO())} aria-pressed={fecha === hoyISO()} className="boton boton-borde">
           Hoy
         </button>
-        <button type="button" onClick={() => setFecha(mananaISO())} aria-pressed={fecha === mananaISO()} className="boton boton-chico boton-borde">
+        <button type="button" onClick={() => setFecha(mananaISO())} aria-pressed={fecha === mananaISO()} className="boton boton-borde">
           Mañana
         </button>
         <select

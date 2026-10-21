@@ -156,13 +156,24 @@ export function HoyView() {
         <LoQueSigue />
 
         {sinNada && (
-          <div className={`rounded-tarjeta border border-dashed p-5 text-center ${modoOscuro ? 'border-zinc-700' : 'border-zinc-300'}`}>
-            <p className={`text-sm mb-3 ${suave}`}>Empieza agregando los ramos que cursas este semestre. Con eso, Hoy te muestra clases, evaluaciones y repaso.</p>
-            <button onClick={() => useStore.getState().pedirNuevoRamo()} className="boton boton-primario">
-              <i className="ti ti-plus" aria-hidden="true" />
-              Crear mi primer ramo
-            </button>
-          </div>
+          <section className="neu-raised p-5" aria-label="Primeros pasos">
+            <h2 className="text-base font-bold mb-1" style={{ color: 'var(--neu-ink)' }}>Empieza en tres pasos</h2>
+            <p className={`text-sm mb-4 ${suave}`}>Con esto, Hoy te muestra tus clases, evaluaciones y repaso.</p>
+            <ol className="space-y-2">
+              {[
+                { n: 1, texto: 'Crea tu primer ramo', accion: () => useStore.getState().pedirNuevoRamo(), primario: true },
+                { n: 2, texto: 'Carga una evaluación y su fecha', accion: () => useStore.getState().setVistaActiva('modulos'), primario: false },
+                { n: 3, texto: 'Haz tu primer bloque de enfoque', accion: () => useStore.getState().setVistaActiva('enfoque'), primario: false },
+              ].map((paso) => (
+                <li key={paso.n} className="flex items-center gap-3">
+                  <span className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0" style={{ background: 'var(--neu-bg3)', color: 'var(--neu-ink)' }} aria-hidden="true">{paso.n}</span>
+                  <button onClick={paso.accion} className={`boton ${paso.primario ? 'boton-primario' : 'boton-suave'} flex-1 justify-start`}>
+                    {paso.texto}
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </section>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
