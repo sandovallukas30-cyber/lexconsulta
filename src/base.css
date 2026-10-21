@@ -75,6 +75,17 @@
 .subtitulo-pagina { font-size: var(--subtitulo-pagina-tam); line-height: 1.45; color: var(--neu-ink2); }
 
 html, body, #root { background: var(--neu-bg); color: var(--neu-ink); }
+/* Pantallas bajas (iPad en horizontal, computadores chicos): el menú lateral se compacta para que quepa sin desplazarse.
+   Si aun así no cabe, solo se desplaza la lista de secciones y el pie (Códigos, Configuración, cuenta) queda a la vista. */
+@media (max-height: 880px) {
+  aside[aria-label='Menú principal'] { gap: 0.75rem; }
+  aside[aria-label='Menú principal'] nav button { min-height: 40px; }
+  aside[aria-label='Menú principal'] nav { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+  aside[aria-label='Menú principal'] nav .h-px { margin-top: 0.5rem; margin-bottom: 0.5rem; }
+  aside[aria-label='Menú principal'] .pie-legal { display: none; } /* los enlaces siguen en Configuración */
+  aside[aria-label='Menú principal'] nav .space-y-1 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.125rem; }
+}
+
 /* Todas las secciones comparten el mismo fondo de página (antes Hoy tenía uno más claro que el resto) */
 main[data-vista] > .h-full { background-color: var(--neu-bg); }
 body { font-family: var(--font-sans); }

@@ -180,7 +180,7 @@ export function Sidebar() {
           )}
         </div>
 
-        <nav className={`neu-raised flex-shrink-0 py-3 ${colapsado ? 'px-2' : 'px-3'}`}>
+        <nav className={`neu-raised min-h-0 overflow-y-auto py-3 ${colapsado ? 'px-2' : 'px-3'}`}>
           <div className="space-y-1">
             {itemsSemana.map((item) => (
               <BotonNav
@@ -212,7 +212,7 @@ export function Sidebar() {
           </div>
         </nav>
 
-        <div className={`neu-flat mt-auto flex-shrink-0 ${colapsado ? 'p-2' : 'p-2.5'}`}>
+        <div className={`neu-flat mt-auto flex-shrink-0 ${colapsado ? 'p-2' : 'p-2.5'}`} data-pie-menu>
           <button
             onClick={() => {
               if (esMovil) setMenuMovilAbierto(false)
@@ -267,7 +267,7 @@ export function Sidebar() {
           </button>
 
           {!colapsado && (
-            <p className={`mt-1 px-3 text-[13px] leading-snug ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
+            <p className={`pie-legal mt-1 px-3 text-[13px] leading-snug ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
               Gratis por ahora ·{' '}
               <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="underline">Privacidad</a>
               {' · '}
