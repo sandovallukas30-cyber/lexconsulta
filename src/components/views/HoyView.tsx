@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import { useStore } from '../../store/useStore'
 import { FilaTarea } from '../ui/FilaTarea'
 import { LoQueSigue } from '../hoy/LoQueSigue'
-import { Mascota } from '../hoy/Mascota'
 import { Solemnes } from '../hoy/Solemnes'
 import { CompartirSemana } from '../hoy/CompartirSemana'
 import { AnilloProgreso } from '../ui/AnilloProgreso'
@@ -138,7 +137,6 @@ export function HoyView() {
             )}
           </div>
           </div>
-          <Mascota />
         </header>
 
         {hechasHoy + paraHoy.length > 0 && (

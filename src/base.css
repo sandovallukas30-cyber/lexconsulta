@@ -258,9 +258,3 @@ main :is(.max-w-3xl, .max-w-4xl, .max-w-5xl, .max-w-6xl, .max-w-7xl).mx-auto:not
 main .ancho-lectura.max-w-2xl { max-width: calc(42rem / var(--zoom, 1)); }
 main .ancho-lectura.max-w-4xl { max-width: calc(56rem / var(--zoom, 1)); }
 main :is(.max-w-3xl):is([class*='sm:mx-auto']) { max-width: calc(48rem / var(--zoom, 1)); }
-
-/* Mascota de Hoy */
-@keyframes mascota-flota { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-3px) } }
-.mascota-flota { animation: mascota-flota 3.2s ease-in-out infinite; }
-@keyframes mascota-corazon { 0% { transform: translateY(0) scale(.6); opacity: 0 } 25% { opacity: 1 } 100% { transform: translateY(-34px) scale(1.15); opacity: 0 } }
-.mascota-corazon { animation: mascota-corazon 1.8s ease-out both; }

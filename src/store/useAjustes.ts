@@ -1,6 +1,5 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { AccesorioMascota, ColorMascota, TipoMascota } from '../services/mascota'
 
 /** Preferencias de la interfaz. Propias de cada dispositivo (no van en el
  *  respaldo ni se mezclan con los datos de estudio): el celular y el
@@ -39,12 +38,6 @@ export interface AjustesUI {
   tamanoCodigo: number
   /** Áreas del derecho del catálogo en Módulos: null = automático (abiertas solo si aún no tienes ramos). */
   catalogoAbierto: boolean | null
-  /** Mascota de Hoy (se elige y se viste en Configuración). */
-  mascotaActiva: boolean
-  mascotaTipo: TipoMascota
-  mascotaNombre: string
-  mascotaColor: ColorMascota
-  mascotaAccesorio: AccesorioMascota
   set: (p: Partial<Omit<AjustesUI, 'set'>>) => void
 }
 
@@ -59,16 +52,11 @@ export const useAjustes = create<AjustesUI>()(
       horaResumen: 8,
       tamanoCodigo: TAMANO_CODIGO_DEFECTO,
       catalogoAbierto: null,
-      mascotaActiva: true,
-      mascotaTipo: 'lechuza',
-      mascotaNombre: 'Lex',
-      mascotaColor: 'indigo',
-      mascotaAccesorio: 'birrete',
       set: (p) => set(p),
     }),
     {
       name: 'prima-lex-ajustes-v1',
-      partialize: (s) => ({ zoom: s.zoom, contraste: s.contraste, animaciones: s.animaciones, celebraciones: s.celebraciones, recordatorios: s.recordatorios, horaResumen: s.horaResumen, tamanoCodigo: s.tamanoCodigo, catalogoAbierto: s.catalogoAbierto, mascotaActiva: s.mascotaActiva, mascotaTipo: s.mascotaTipo, mascotaNombre: s.mascotaNombre, mascotaColor: s.mascotaColor, mascotaAccesorio: s.mascotaAccesorio }),
+      partialize: (s) => ({ zoom: s.zoom, contraste: s.contraste, animaciones: s.animaciones, celebraciones: s.celebraciones, recordatorios: s.recordatorios, horaResumen: s.horaResumen, tamanoCodigo: s.tamanoCodigo, catalogoAbierto: s.catalogoAbierto }),
     }
   )
 )

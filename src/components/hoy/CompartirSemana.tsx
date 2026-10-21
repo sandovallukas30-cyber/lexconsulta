@@ -3,7 +3,6 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { fondoModal, panelModal } from '../ui/animacionModal'
 import { useStore } from '../../store/useStore'
 import { useEnfoque } from '../../store/useEnfoque'
-import { useAjustes } from '../../store/useAjustes'
 import { avisar } from '../../store/useAvisos'
 import { useDialogo } from '../../hooks/useDialogo'
 import { calcularRachaEstudio } from '../../services/actividadEstudio'
@@ -30,7 +29,6 @@ function VistaPrevia({ onCerrar }: { onCerrar: () => void }) {
   const tareas = useStore((s) => s.tareasPlan)
   const dias = useStore((s) => s.diasActividadEstudio)
   const ramos = useStore((s) => s.ramos)
-  const a = useAjustes()
   const ref = useDialogo<HTMLDivElement>(true, onCerrar)
   const [conRamo, setConRamo] = useState(true)
   const [blob, setBlob] = useState<Blob | null>(null)
@@ -41,7 +39,7 @@ function VistaPrevia({ onCerrar }: { onCerrar: () => void }) {
     let vivo = true
     const resumen = resumenSemana({ sesiones, tareas, diasActividad: dias, hoy: hoyISO(), racha: calcularRachaEstudio(dias) })
     const ramoTop = conRamo && resumen.ramoTop ? nombreRamo(resumen.ramoTop.ramoId, ramos) : null
-    dibujarSemana(resumen, { ramoTop, mascota: a.mascotaActiva ? { tipo: a.mascotaTipo, color: a.mascotaColor, accesorio: a.mascotaAccesorio, nombre: a.mascotaNombre } : null })
+    dibujarSemana(resumen, { ramoTop })
       .then((b) => {
         if (!vivo) return
         setBlob(b)
@@ -56,7 +54,7 @@ function VistaPrevia({ onCerrar }: { onCerrar: () => void }) {
       vivo = false
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conRamo, a.mascotaActiva, a.mascotaTipo, a.mascotaColor, a.mascotaAccesorio])
+  }, [conRamo])
 
   useEffect(() => () => { if (url) URL.revokeObjectURL(url) }, [url])
 

@@ -1,6 +1,5 @@
 import { horasMin } from './enfoque'
 import { mensajeSemana, rangoSemana, type ResumenSemana } from './resumenSemanal'
-import { mascotaSvg, type AccesorioMascota, type ColorMascota, type Animo, type TipoMascota } from './mascota'
 
 /** Dibuja el resumen de la semana como imagen PNG (1080 × 1350) para compartir.
  *  No lleva datos personales: ni correo ni nombre; solo cifras y, si quieres,
@@ -15,17 +14,7 @@ function rect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h:
   ctx.roundRect(x, y, w, h, r)
 }
 
-function cargarImagen(src: string): Promise<HTMLImageElement> {
-  return new Promise((ok, mal) => {
-    const img = new Image()
-    img.onload = () => ok(img)
-    img.onerror = () => mal(new Error('No se pudo dibujar la mascota'))
-    img.src = src
-  })
-}
-
 export interface OpcionesTarjeta {
-  mascota: { tipo: TipoMascota; color: ColorMascota; accesorio: AccesorioMascota; nombre: string } | null
   /** Nombre del ramo más estudiado (se muestra solo si se pasa). */
   ramoTop: string | null
 }
@@ -140,21 +129,11 @@ export async function dibujarSemana(r: ResumenSemana, o: OpcionesTarjeta): Promi
     ctx.fillText(texto, cx + 56, cy + 785)
   }
 
-  // mascota y frase
+  // frase
   const frase = mensajeSemana(r)
-  if (o.mascota) {
-    const animo: Animo = r.minutos >= 300 ? 'feliz' : 'normal'
-    const svg = mascotaSvg({ tipo: o.mascota.tipo, color: o.mascota.color, accesorio: o.mascota.accesorio, animo })
-    try {
-      const img = await cargarImagen(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`)
-      ctx.drawImage(img, 72, 1055, 220, 220)
-    } catch {
-      /* sin mascota en la imagen */
-    }
-  }
   ctx.fillStyle = '#fff'
   ctx.font = `700 38px ${head}`
-  const xTexto = o.mascota ? 320 : 72
+  const xTexto = 72
   const lineas: string[] = []
   let actual = ''
   for (const palabra of frase.split(' ')) {

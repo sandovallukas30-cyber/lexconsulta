@@ -1,8 +1,6 @@
 import { sumarTamanoCodigo, TAMANO_CODIGO_DEFECTO, TAMANO_CODIGO_MIN, TAMANO_CODIGO_MAX } from '../../store/useAjustes'
 import { useAjustes, ZOOMS, prefiereMenosMovimiento } from '../../store/useAjustes'
 import { Segmentado } from './Segmentado'
-import { DibujoMascota } from '../hoy/Mascota'
-import { ACCESORIOS_MASCOTA, COLORES_MASCOTA, TIPOS_MASCOTA, mascotaSvg, type AccesorioMascota, type ColorMascota, type TipoMascota } from '../../services/mascota'
 
 /** Interruptor (checkbox accesible como `switch`). */
 export function Interruptor({
@@ -84,74 +82,7 @@ export function AjustesInterfaz() {
         </p>
       </section>
 
-      <section>
-        <h3 className={titulo} style={{ color: 'var(--neu-ink)' }}>Tu mascota</h3>
-        <Interruptor activo={a.mascotaActiva} onChange={(v) => a.set({ mascotaActiva: v })} etiqueta="Mostrar mi mascota en Hoy" descripcion="Te acompaña, comenta cómo va tu día y se deja acariciar." />
-        {a.mascotaActiva && (
-          <div className="mt-3 flex flex-col sm:flex-row gap-5">
-            <DibujoMascota
-              svg={mascotaSvg({ tipo: a.mascotaTipo, color: a.mascotaColor, accesorio: a.mascotaAccesorio, animo: 'feliz' })}
-              className="w-28 h-28 rounded-full p-2 flex-shrink-0 mx-auto sm:mx-0"
-              style={{ background: 'var(--neu-card)', boxShadow: 'var(--neu-plana)' }}
-            />
-            <div className="flex-1 space-y-3 min-w-0">
-              <div role="group" aria-label="Tipo de mascota" className="flex gap-2 flex-wrap">
-                {TIPOS_MASCOTA.map((t) => (
-                  <button
-                    key={t.id}
-                    aria-pressed={a.mascotaTipo === t.id}
-                    onClick={() => a.set({ mascotaTipo: t.id as TipoMascota })}
-                    className={`boton boton-chico ${a.mascotaTipo === t.id ? 'boton-primario' : 'boton-suave'}`}
-                  >
-                    {t.nombre}
-                  </button>
-                ))}
-              </div>
-              <label className="block text-xs font-semibold" style={{ color: 'var(--neu-ink2)' }}>
-                Nombre
-                <input
-                  value={a.mascotaNombre}
-                  maxLength={16}
-                  onChange={(e) => a.set({ mascotaNombre: e.target.value })}
-                  onBlur={() => a.mascotaNombre.trim() === '' && a.set({ mascotaNombre: 'Lex' })}
-                  aria-label="Nombre de la mascota"
-                  className="mt-1 w-full h-control px-3 text-sm"
-                />
-              </label>
-              <div role="group" aria-label="Color de la mascota" className="flex gap-2 flex-wrap items-center">
-                <span className="text-xs font-semibold mr-1" style={{ color: 'var(--neu-ink2)' }}>Color</span>
-                {(Object.keys(COLORES_MASCOTA) as ColorMascota[]).map((c) => (
-                  <button
-                    key={c}
-                    aria-label={COLORES_MASCOTA[c].nombre}
-                    aria-pressed={a.mascotaColor === c}
-                    title={COLORES_MASCOTA[c].nombre}
-                    onClick={() => a.set({ mascotaColor: c })}
-                    className="sin-neu sin-tactil w-7 h-7 rounded-full"
-                    style={{
-                      background: COLORES_MASCOTA[c].base,
-                      boxShadow: a.mascotaColor === c ? '0 0 0 3px var(--neu-card), 0 0 0 5px var(--accent-base)' : 'var(--neu-chica)',
-                    }}
-                  />
-                ))}
-              </div>
-              <div role="group" aria-label="Accesorio" className="flex gap-2 flex-wrap items-center">
-                <span className="text-xs font-semibold mr-1" style={{ color: 'var(--neu-ink2)' }}>Accesorio</span>
-                {ACCESORIOS_MASCOTA.map((x) => (
-                  <button
-                    key={x.id}
-                    aria-pressed={a.mascotaAccesorio === x.id}
-                    onClick={() => a.set({ mascotaAccesorio: x.id as AccesorioMascota })}
-                    className={`boton boton-chico ${a.mascotaAccesorio === x.id ? 'boton-primario' : 'boton-suave'}`}
-                  >
-                    {x.nombre}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-      </section>
+      
 
       <section>
         <h3 className={titulo} style={{ color: 'var(--neu-ink)' }}>Visibilidad</h3>
