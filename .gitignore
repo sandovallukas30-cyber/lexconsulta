@@ -26,3 +26,7 @@ dist-ssr
 *.sw?
 
 .vercel
+
+# capturas para Claude Design (se regeneran; pesan mucho)
+docs/diseno/capturas/
+docs/diseno/*.zip
