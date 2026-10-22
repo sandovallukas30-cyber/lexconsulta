@@ -1,6 +1,6 @@
 import { useAjustes, sumarTamanoCodigo, TAMANO_CODIGO_MIN, TAMANO_CODIGO_MAX } from '../../store/useAjustes'
 import { useState, useMemo, useEffect, useRef, useCallback, type ReactNode, type TouchEvent } from 'react'
-import { createPortal } from 'react-dom'
+import { createPortal, flushSync } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { useProgresoScroll } from '../../hooks/useProgresoScroll'
@@ -74,6 +74,22 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
   // coincidencia a marcar en el artículo al abrirlo desde una búsqueda de texto
   const [resaltado, setResaltado] = useState<{ articulo: string; texto: string } | null>(null)
   const refTarjeta = useRef<HTMLElement>(null)
+  // La vista imprimible del código completo tiene miles de nodos (~7.900 en el
+  // Civil): solo se monta al imprimir (botón o Ctrl+P), no mientras se lee.
+  const [imprimiendoCodigo, setImprimiendoCodigo] = useState(false)
+  useEffect(() => {
+    const antes = () => {
+      if (document.body.dataset.imprimir || seleccionadoId) return
+      flushSync(() => setImprimiendoCodigo(true))
+    }
+    const despues = () => setImprimiendoCodigo(false)
+    window.addEventListener('beforeprint', antes)
+    window.addEventListener('afterprint', despues)
+    return () => {
+      window.removeEventListener('beforeprint', antes)
+      window.removeEventListener('afterprint', despues)
+    }
+  }, [seleccionadoId])
 
   // Limpiar la búsqueda cuando cambia el código
   useEffect(() => {
@@ -301,13 +317,18 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
           modernizable={necesitaModernizacion(tipoActivo)}
           modernizado={modernizarLenguaje}
           onModernizar={toggleModernizar}
-          onImprimirCodigo={() => window.print()}
+          onImprimirCodigo={() => {
+            flushSync(() => setImprimiendoCodigo(true))
+            window.print()
+          }}
           tamano={tamanoCodigo}
           onTamano={(d) => ajustarTamano({ tamanoCodigo: sumarTamanoCodigo(tamanoCodigo, d) })}
         />
       </div>
 
-      <VistaImprimibleCodigo codigo={codigo} tipo={tipoActivo} transformarTexto={transformarTexto} />
+      {imprimiendoCodigo && (
+        <VistaImprimibleCodigo codigo={codigo} tipo={tipoActivo} transformarTexto={transformarTexto} />
+      )}
       {seleccionado && (
         <VistaImprimibleArticulo
           tipo={tipoActivo}
