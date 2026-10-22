@@ -1,20 +1,16 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useStore } from '../../store/useStore'
-import { FilaTarea } from '../ui/FilaTarea'
 import { LoQueSigue } from '../hoy/LoQueSigue'
 import { Solemnes } from '../hoy/Solemnes'
 import { CompartirSemana } from '../hoy/CompartirSemana'
 import { AnilloProgreso } from '../ui/AnilloProgreso'
+import { SelectorRamo } from '../ui/SelectorRamo'
 import { useEnfoque, msMostrados } from '../../store/useEnfoque'
 import { useAhora } from '../../hooks/useMotorEnfoque'
-import { horasMin, minutosEnFecha, mmss } from '../../services/enfoque'
-import { calcularRachaEstudio, contarTarjetasVencidas } from '../../services/actividadEstudio'
-import {
-  evaluacionesPendientes,
-} from '../../services/modulosAcademico'
-import { colorRamo, filtrarTareas, hoyISO, nombreRamo } from '../../services/tareasPlan'
-
-const MAX_TAREAS = 6
+import { horasMin, minutosEnFecha, mmss, type Tecnica } from '../../services/enfoque'
+import { calcularRachaEstudio, contarTarjetasVencidas, fechaLocalISO } from '../../services/actividadEstudio'
+import { claseEnCurso } from '../../services/loQueSigue'
+import { filtrarTareas, hoyISO, nombreRamo, ETIQUETA_PRIORIDAD } from '../../services/tareasPlan'
 
 function saludo(): string {
   const h = new Date().getHours()
@@ -28,26 +24,29 @@ function fechaLarga(): string {
 
 function Tarjeta({
   titulo,
-  icono,
   derecha,
   children,
+  className = '',
 }: {
   titulo: string
-  icono: string
   derecha?: React.ReactNode
   children: React.ReactNode
+  className?: string
 }) {
   return (
-    <section className="neu-raised p-5">
-      <div className="flex items-center gap-2.5 mb-3">
-        <i className={`ti ${icono} text-lg`} style={{ color: 'var(--accent-texto)' }} aria-hidden="true" />
-        <h2 className="text-[15px] font-bold flex-1" style={{ color: 'var(--neu-ink)' }}>{titulo}</h2>
+    <section className={`neu-raised p-5 sm:p-6 ${className}`}>
+      <div className="flex items-baseline gap-3 mb-3">
+        <h2 className="text-[18px] font-bold flex-1" style={{ color: 'var(--neu-ink)', fontFamily: 'var(--font-head)' }}>{titulo}</h2>
         {derecha}
       </div>
       {children}
     </section>
   )
 }
+
+type ItemDia =
+  | { tipo: 'clase'; orden: string; moduloId: string; id: string; tema: string; hora?: string; sala?: string; asistio?: boolean }
+  | { tipo: 'tarea'; orden: string; id: string; titulo: string; ramoId: string | null; prioridad: 'alta' | 'media' | 'baja' }
 
 export function HoyView() {
   const modoOscuro = useStore((s) => s.modoOscuro)
@@ -57,33 +56,49 @@ export function HoyView() {
   const colecciones = useStore((s) => s.colecciones)
   const dias = useStore((s) => s.diasActividadEstudio)
   const agregar = useStore((s) => s.agregarTareaPlan)
+  const alternarTarea = useStore((s) => s.alternarTareaPlan)
   const setVistaActiva = useStore((s) => s.setVistaActiva)
+  const setClasesModulo = useStore((s) => s.setClasesModulo)
   const [nueva, setNueva] = useState('')
   const sesionesFoco = useEnfoque((e) => e.sesiones)
   const metaFoco = useEnfoque((e) => e.ajustes.metaDia)
-  const relojEnfoque = useEnfoque()
-  const ahoraEnfoque = useAhora(relojEnfoque.estado === 'corriendo')
+  const estadoEnfoque = useEnfoque((e) => e.estado)
+  const ramoEnfoque = useEnfoque((e) => e.ramoId)
+  const tecnica = useEnfoque((e) => e.tecnica)
+  const ahoraEnfoque = useAhora(estadoEnfoque === 'corriendo')
   const minFoco = minutosEnFecha(sesionesFoco, hoyISO())
 
-  const suave = modoOscuro ? 'text-zinc-400' : 'text-zinc-500'
+  // la hora se pone al día cada 30 s (clase «en curso»)
+  const [ahora, setAhora] = useState(() => new Date())
+  useEffect(() => {
+    const id = window.setInterval(() => setAhora(new Date()), 30_000)
+    return () => window.clearInterval(id)
+  }, [])
+
+  const suave = 'var(--neu-ink2)'
   const hoy = hoyISO()
 
   const paraHoy = useMemo(() => filtrarTareas(tareas, 'hoy'), [tareas])
   const hechasHoy = useMemo(() => tareas.filter((t) => t.hecha && t.hechaEn === hoy).length, [tareas, hoy])
-  const setClasesModulo = useStore((st) => st.setClasesModulo)
-  // todas las clases de hoy, también las ya vistas: así se puede marcar la asistencia
-  const clasesHoy = useMemo(() => {
-    const out: { moduloId: string; id: string; tema: string; hora?: string; sala?: string; asistio?: boolean; completada: boolean }[] = []
+  const enCurso = useMemo(() => claseEnCurso(academico, ramos, hoy, ahora), [academico, ramos, hoy, ahora])
+
+  // clases y tareas de hoy en una sola línea de tiempo (también las clases ya vistas: se marca la asistencia)
+  const lineaDeTiempo = useMemo(() => {
+    const out: ItemDia[] = []
     for (const [moduloId, d] of Object.entries(academico)) {
-      for (const c of d.clases) if (c.fecha === hoy) out.push({ moduloId, id: c.id, tema: c.tema, hora: c.hora, sala: c.sala, asistio: c.asistio, completada: c.completada })
+      for (const c of d.clases) {
+        if (c.fecha === hoy) out.push({ tipo: 'clase', orden: c.hora ?? '99:99', moduloId, id: c.id, tema: c.tema, hora: c.hora, sala: c.sala, asistio: c.asistio })
+      }
     }
-    return out.sort((a, b) => (a.hora ?? '99:99').localeCompare(b.hora ?? '99:99'))
-  }, [academico, hoy])
+    out.sort((a, b) => a.orden.localeCompare(b.orden))
+    for (const t of paraHoy) out.push({ tipo: 'tarea', orden: '99:99', id: t.id, titulo: t.titulo, ramoId: t.ramoId, prioridad: t.prioridad })
+    return out
+  }, [academico, hoy, paraHoy])
+
   const marcarAsistencia = (moduloId: string, claseId: string, valor: boolean) => {
     const lista = useStore.getState().academicoModulos[moduloId]?.clases ?? []
     setClasesModulo(moduloId, lista.map((c) => (c.id === claseId ? { ...c, asistio: c.asistio === valor ? undefined : valor, completada: valor ? true : c.completada } : c)))
   }
-  const evaluaciones = useMemo(() => evaluacionesPendientes(academico).proximas.slice(0, 3), [academico])
   const tarjetas = useMemo(() => contarTarjetasVencidas(colecciones), [colecciones])
   const racha = calcularRachaEstudio(dias)
   const sinNada = ramos.length === 0 && tareas.length === 0
@@ -100,65 +115,54 @@ export function HoyView() {
     setNueva('')
   }
 
-  const resumen = [
-    paraHoy.length > 0 && `${paraHoy.length} ${paraHoy.length === 1 ? 'tarea pendiente' : 'tareas pendientes'}`,
-    clasesHoy.length > 0 && `${clasesHoy.length} ${clasesHoy.length === 1 ? 'clase' : 'clases'}`,
-    evaluaciones[0] && evaluaciones[0].dias <= 7 && `${evaluaciones.filter((x) => x.dias <= 7).length} ${evaluaciones.filter((x) => x.dias <= 7).length === 1 ? 'evaluación' : 'evaluaciones'} esta semana`,
-  ].filter(Boolean)
+  // semana de lunes a domingo: qué hay cada día
+  const semana = useMemo(() => {
+    const base = new Date()
+    base.setHours(12, 0, 0, 0)
+    const lunes = new Date(base)
+    lunes.setDate(base.getDate() - ((base.getDay() + 6) % 7))
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(lunes)
+      d.setDate(lunes.getDate() + i)
+      const iso = fechaLocalISO(d)
+      let clases = 0
+      let evals: string[] = []
+      for (const datos of Object.values(academico)) {
+        clases += datos.clases.filter((c) => c.fecha === iso).length
+        evals = evals.concat(datos.evaluaciones.filter((e) => e.fecha === iso && e.nota === null).map((e) => e.nombre))
+      }
+      const tareasDia = tareas.filter((t) => !t.hecha && t.fecha === iso).length
+      return {
+        iso,
+        dia: d.toLocaleDateString('es-CL', { weekday: 'short' }).replace('.', '').toUpperCase(),
+        numero: d.getDate(),
+        esHoy: iso === hoy,
+        clases,
+        tareas: tareasDia,
+        evals,
+      }
+    })
+  }, [academico, tareas, hoy])
+
+  const iniciarEnfoque = () => {
+    if (estadoEnfoque === 'detenido') useEnfoque.getState().iniciar()
+    setVistaActiva('enfoque')
+  }
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-5">
-        <header className="flex items-end justify-between gap-4 flex-wrap">
-          <div className="min-w-0">
-          <p className={`text-sm ${suave}`}>{fechaLarga()}</p>
+      <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-4">
+        <header className="min-w-0">
+          <p className="text-sm" style={{ color: suave }}>{fechaLarga()}</p>
           <h1 className="titulo-pagina titulo-visible">{saludo()}</h1>
-          <div className="flex flex-wrap gap-2 mt-2.5">
-            {resumen.length === 0 && <span className={`text-sm ${suave}`}>Hoy no tienes nada pendiente registrado.</span>}
-            {resumen.map((r, i) => (
-              <span
-                key={String(r)}
-                className="text-[12.5px] font-bold px-3 py-1 rounded-full"
-                style={
-                  i === 0
-                    ? { background: 'var(--accent-100)', color: 'var(--accent-700)' }
-                    : String(r).includes('evaluaci')
-                    ? { background: 'var(--neu-warn-soft)', color: 'var(--neu-warn)' }
-                    : { background: 'var(--neu-bg)', boxShadow: 'var(--neu-chica)', color: 'var(--neu-ink2)' }
-                }
-              >
-                {r}
-              </span>
-            ))}
-            {hechasHoy > 0 && (
-              <span className="text-[12.5px] font-bold px-3 py-1 rounded-full" style={{ background: 'var(--neu-ok-soft)', color: 'var(--neu-ok)' }}>
-                {hechasHoy} {hechasHoy === 1 ? 'hecha' : 'hechas'} hoy
-              </span>
-            )}
-          </div>
-          </div>
         </header>
-
-        {hechasHoy + paraHoy.length > 0 && (
-            <div className="neu-raised px-6 py-5">
-              <div className="flex justify-between text-[15px] mb-2.5">
-                <span className="font-bold" style={{ color: paraHoy.length === 0 ? 'var(--accent-texto)' : 'var(--neu-ink)' }}>
-                  {paraHoy.length === 0 ? 'Terminaste todo lo de hoy' : `${hechasHoy} de ${hechasHoy + paraHoy.length} tareas hechas`}
-                </span>
-                <span className="font-extrabold" style={{ color: 'var(--accent-texto)' }}>{Math.round((hechasHoy / (hechasHoy + paraHoy.length)) * 100)}%</span>
-              </div>
-              <div className={`h-2 rounded-full overflow-hidden ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-200'}`} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((hechasHoy / (hechasHoy + paraHoy.length)) * 100)} aria-label="Avance de tus tareas de hoy">
-                <div className="h-full rounded-full transition-all duration-500" style={{ width: `${(hechasHoy / (hechasHoy + paraHoy.length)) * 100}%`, background: 'var(--accent-base)' }} />
-              </div>
-            </div>
-          )}
 
         <LoQueSigue />
 
         {sinNada && (
           <section className="neu-raised p-5" aria-label="Primeros pasos">
             <h2 className="text-base font-bold mb-1" style={{ color: 'var(--neu-ink)' }}>Empieza en tres pasos</h2>
-            <p className={`text-sm mb-4 ${suave}`}>Con esto, Hoy te muestra tus clases, evaluaciones y repaso.</p>
+            <p className="text-sm mb-4" style={{ color: suave }}>Con esto, Hoy te muestra tus clases, evaluaciones y repaso.</p>
             <ol className="space-y-2">
               {[
                 { n: 1, texto: 'Crea tu primer ramo', accion: () => useStore.getState().pedirNuevoRamo(), primario: true },
@@ -176,33 +180,98 @@ export function HoyView() {
           </section>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] gap-4 items-start">
           <Tarjeta
-            titulo="Para hoy"
-            icono="ti-checkbox"
+            titulo="Tu día"
             derecha={
-              <button onClick={() => setVistaActiva('tareas')} className={`text-xs font-medium ${suave} hover:underline`}>
-                Ver todas
-              </button>
+              hechasHoy + paraHoy.length > 0 ? (
+                <span className="text-[13px]" style={{ color: suave }}>
+                  {hechasHoy} de {hechasHoy + paraHoy.length} {hechasHoy + paraHoy.length === 1 ? 'tarea hecha' : 'tareas hechas'}
+                </span>
+              ) : undefined
             }
           >
-            {paraHoy.length === 0 ? (
-              <p className={`text-sm py-2 ${suave}`}>Sin tareas para hoy.</p>
+            {lineaDeTiempo.length === 0 ? (
+              <p className="text-sm py-3" style={{ color: suave }}>
+                No hay clases con fecha de hoy ni tareas para hoy. Las clases salen de la pestaña Clases de cada ramo (el horario por sí solo no alcanza).
+              </p>
             ) : (
-              <ul className={`divide-y ${modoOscuro ? 'divide-zinc-800' : 'divide-zinc-100'}`}>
-                {paraHoy.slice(0, MAX_TAREAS).map((t) => (
-                  <li key={t.id}>
-                    <FilaTarea tarea={t} />
-                  </li>
-                ))}
-              </ul>
+              <ol className="relative">
+                {lineaDeTiempo.map((it, i) => {
+                  const esClase = it.tipo === 'clase'
+                  const actual = esClase && enCurso?.claseId === it.id
+                  const ultimo = i === lineaDeTiempo.length - 1
+                  return (
+                    <li key={`${it.tipo}-${it.id}`} className="grid grid-cols-[3.25rem_1.25rem_minmax(0,1fr)_auto] gap-x-3 items-start">
+                      <span
+                        className={`pt-3.5 text-[13px] tabular-nums ${esClase ? 'font-semibold' : 'font-bold uppercase tracking-wide text-[11px]'}`}
+                        style={{ color: actual ? 'var(--accent-texto)' : 'var(--neu-ink3)' }}
+                      >
+                        {esClase ? it.hora ?? '—' : 'Tarea'}
+                      </span>
+                      <span className="relative flex justify-center self-stretch" aria-hidden="true">
+                        {!ultimo && <span className="absolute top-8 bottom-0 w-px" style={{ background: 'var(--neu-line)' }} />}
+                        <span
+                          className="mt-4 w-3.5 h-3.5 rounded-full border-2 bg-[var(--neu-card)]"
+                          style={{ borderColor: actual ? 'var(--accent-base)' : 'var(--neu-ink3)', background: actual ? 'var(--accent-base)' : undefined }}
+                        />
+                      </span>
+                      {esClase ? (
+                        <button onClick={() => abrirModulo(it.moduloId)} className="min-w-0 py-2.5 text-left">
+                          <span className="block text-[15px] font-bold truncate" style={{ color: 'var(--neu-ink)' }}>{it.tema || nombreRamo(it.moduloId, ramos) || 'Clase'}</span>
+                          <span className="block text-[13px] truncate" style={{ color: suave }}>
+                            {nombreRamo(it.moduloId, ramos) ?? 'Ramo'}{it.sala ? ` · ${it.sala}` : ''}
+                          </span>
+                        </button>
+                      ) : (
+                        <div className="min-w-0 py-2.5">
+                          <span className="block text-[15px] font-bold truncate" style={{ color: 'var(--neu-ink)' }}>{it.titulo}</span>
+                          <span className="flex items-center gap-2 flex-wrap text-[13px]" style={{ color: suave }}>
+                            {it.ramoId && (
+                              <span className="px-2 py-0.5 rounded-md text-[12px] font-bold" style={{ background: 'color-mix(in srgb, var(--accent-base) 12%, transparent)', color: 'var(--accent-texto)' }}>
+                                {nombreRamo(it.ramoId, ramos)}
+                              </span>
+                            )}
+                            <span className="inline-flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full" style={{ background: it.prioridad === 'alta' ? 'var(--neu-danger)' : it.prioridad === 'media' ? 'var(--neu-warn)' : 'var(--neu-ink3)' }} aria-hidden="true" />
+                              Prioridad {ETIQUETA_PRIORIDAD[it.prioridad].toLowerCase()}
+                            </span>
+                          </span>
+                        </div>
+                      )}
+                      <span className="py-2 flex gap-1.5 flex-shrink-0 items-center">
+                        {esClase ? (
+                          actual ? (
+                            <span className="text-[13px] font-bold px-3 py-1.5 rounded-full" style={{ background: 'color-mix(in srgb, var(--accent-base) 14%, transparent)', color: 'var(--accent-texto)' }}>
+                              En curso
+                            </span>
+                          ) : (
+                            <span className="flex gap-1.5" role="group" aria-label={`Asistencia a ${it.tema || nombreRamo(it.moduloId, ramos) || 'la clase'}`}>
+                              <button onClick={() => marcarAsistencia(it.moduloId, it.id, true)} aria-pressed={it.asistio === true} className="boton boton-chico boton-suave">
+                                Fui
+                              </button>
+                              <button
+                                onClick={() => marcarAsistencia(it.moduloId, it.id, false)}
+                                aria-pressed={it.asistio === false}
+                                className={`boton boton-chico ${it.asistio === false ? '' : 'boton-suave'}`}
+                                style={it.asistio === false ? { background: '#dc2626', color: '#fff' } : undefined}
+                              >
+                                Falté
+                              </button>
+                            </span>
+                          )
+                        ) : (
+                          <button onClick={() => alternarTarea(it.id)} className="boton boton-chico boton-suave" aria-label={`Marcar como hecha: ${it.titulo}`}>
+                            Marcar hecha
+                          </button>
+                        )}
+                      </span>
+                    </li>
+                  )
+                })}
+              </ol>
             )}
-            {paraHoy.length > MAX_TAREAS && (
-              <button onClick={() => setVistaActiva('tareas')} className={`text-xs mt-1 ${suave} hover:underline`}>
-                y {paraHoy.length - MAX_TAREAS} más…
-              </button>
-            )}
-            <form onSubmit={agregarRapida} className="flex gap-2 mt-3">
+            <form onSubmit={agregarRapida} className="flex gap-2 mt-4">
               <input
                 value={nueva}
                 onChange={(e) => setNueva(e.target.value)}
@@ -212,98 +281,111 @@ export function HoyView() {
                 className={`flex-1 min-w-0 h-control px-3 rounded-control border text-sm outline-none campo-foco ${
                   modoOscuro
                     ? 'bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500'
-                    : 'bg-white border-zinc-300 text-zinc-900 placeholder:text-zinc-400'
+                    : 'bg-[var(--neu-bg)] border-zinc-200 text-zinc-900 placeholder:text-zinc-400'
                 }`}
               />
-              <button type="submit" disabled={!nueva.trim()} className="boton boton-suave">
+              <button type="submit" disabled={!nueva.trim()} className="boton boton-primario">
                 Agregar
               </button>
             </form>
           </Tarjeta>
 
-          <Tarjeta titulo="Enfoque de hoy" icono="ti-hourglass-high">
-            <div className="flex items-center gap-4">
-              <AnilloProgreso progreso={minFoco / Math.max(1, metaFoco)} tamano={84} grosor={8} modoOscuro={modoOscuro} etiqueta={`${minFoco} de ${metaFoco} minutos de enfoque hoy`}>
-                <span className={`text-base font-bold tabular-nums ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{Math.round(Math.min(1, minFoco / Math.max(1, metaFoco)) * 100)}%</span>
-              </AnilloProgreso>
-              <div className="min-w-0">
-                <div className={`text-lg font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{horasMin(minFoco)}</div>
-                <div className={`text-xs ${suave}`}>de {horasMin(metaFoco)} de meta</div>
-              </div>
-            </div>
-            <button onClick={() => setVistaActiva('enfoque')} className="boton boton-primario w-full mt-3">
-              <i className={`ti ${relojEnfoque.estado === 'detenido' ? 'ti-player-play' : 'ti-hourglass-high'}`} aria-hidden="true" />
-              {relojEnfoque.estado === 'detenido' ? 'Iniciar un enfoque' : `Ver temporizador · ${mmss(msMostrados(relojEnfoque, ahoraEnfoque))}`}
-            </button>
-          </Tarjeta>
-
-          {!sinNada && (<>
-          <Tarjeta titulo="Clases de hoy" icono="ti-calendar-event">
-            {clasesHoy.length === 0 ? (
-              <p className={`text-sm py-2 ${suave}`}>
-                No hay clases con fecha de hoy. Aquí salen las clases que cargues en la pestaña Clases de cada ramo (el horario por sí solo no alcanza).
-              </p>
-            ) : (
-              <ul className="space-y-1">
-                {clasesHoy.map((e) => (
-                  <li key={e.id} className={`flex items-center gap-2 rounded-control ${modoOscuro ? 'hover:bg-zinc-800' : 'hover:bg-zinc-50'}`}>
-                    <button onClick={() => abrirModulo(e.moduloId)} className="flex-1 min-w-0 flex items-center gap-3 p-2 text-left">
-                      <span className="w-2 h-8 rounded-full flex-shrink-0" style={{ background: colorRamo(e.moduloId, ramos) }} aria-hidden="true" />
-                      <span className="min-w-0">
-                        <span className={`block text-sm font-medium truncate ${modoOscuro ? 'text-zinc-100' : 'text-zinc-900'}`}>{e.tema || nombreRamo(e.moduloId, ramos) || 'Clase'}</span>
-                        <span className={`block text-xs ${suave}`}>{e.hora ? `${e.hora} · ` : ''}{nombreRamo(e.moduloId, ramos) ?? 'Ramo'}{e.sala ? ` · ${e.sala}` : ''}</span>
-                      </span>
-                    </button>
-                    <span className="flex gap-1 pr-2 flex-shrink-0" role="group" aria-label={`Asistencia a ${e.tema || nombreRamo(e.moduloId, ramos) || 'la clase'}`}>
-                      <button onClick={() => marcarAsistencia(e.moduloId, e.id, true)} aria-pressed={e.asistio === true} className="boton boton-chico boton-suave">
-                        Fui
-                      </button>
-                      <button
-                        onClick={() => marcarAsistencia(e.moduloId, e.id, false)}
-                        aria-pressed={e.asistio === false}
-                        className={`boton boton-chico ${e.asistio === false ? '' : 'boton-suave'}`}
-                        style={e.asistio === false ? { background: '#dc2626', color: '#fff' } : undefined}
-                      >
-                        Falté
-                      </button>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Tarjeta>
-
-          <Tarjeta
-            titulo="Solemnes y evaluaciones"
-            icono="ti-clipboard-check"
-            derecha={
-              <button onClick={() => setVistaActiva('modulos')} className={`text-xs font-medium ${suave} hover:underline`}>
-                Mis ramos
-              </button>
-            }
-          >
-            <Solemnes />
-          </Tarjeta>
-
-          <Tarjeta titulo="Repaso y constancia" icono="ti-flame">
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => setVistaActiva('colecciones')}
-                className={`p-3 rounded-control text-left ${modoOscuro ? 'bg-zinc-800 hover:bg-zinc-700' : 'bg-zinc-50 hover:bg-zinc-100'}`}
+          <div className="space-y-4 min-w-0">
+            {!sinNada && (
+              <Tarjeta
+                titulo="Evaluaciones"
+                derecha={
+                  <button onClick={() => setVistaActiva('modulos')} className="text-[13px] font-semibold hover:underline" style={{ color: 'var(--accent-texto)' }}>
+                    Mis ramos
+                  </button>
+                }
               >
-                <div className={`text-2xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{tarjetas}</div>
-                <div className={`text-xs ${suave}`}>{tarjetas === 1 ? 'tarjeta por repasar' : 'tarjetas por repasar'}</div>
+                <Solemnes />
+              </Tarjeta>
+            )}
+
+            <section className="neu-raised p-5 sm:p-6" aria-label="Enfoque de hoy">
+              <div className="flex items-center gap-4">
+                <AnilloProgreso progreso={minFoco / Math.max(1, metaFoco)} tamano={64} grosor={7} modoOscuro={modoOscuro} etiqueta={`${minFoco} de ${metaFoco} minutos de enfoque hoy`}>
+                  <span className="text-[13px] font-bold tabular-nums" style={{ color: 'var(--neu-ink)' }}>{Math.round(Math.min(1, minFoco / Math.max(1, metaFoco)) * 100)}%</span>
+                </AnilloProgreso>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.08em]" style={{ color: 'var(--neu-ink3)' }}>Enfoque de hoy</p>
+                  <p className="text-[22px] font-extrabold leading-tight" style={{ color: 'var(--neu-ink)' }}>
+                    {horasMin(minFoco)} <span className="text-[13px] font-medium" style={{ color: suave }}>de {horasMin(metaFoco)}</span>
+                  </p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 mt-4">
+                <label className="min-w-0">
+                  <span className="block text-[11px] font-bold uppercase tracking-[0.08em] mb-1" style={{ color: 'var(--neu-ink3)' }}>Ramo</span>
+                  <SelectorRamo
+                    valor={ramoEnfoque}
+                    onChange={(v) => useEnfoque.getState().setObjetivo(v, null)}
+                    textoVacio="Sin ramo"
+                    className="w-full h-control px-3 rounded-control border text-sm bg-[var(--neu-bg)] border-zinc-200 text-[var(--neu-ink)]"
+                  />
+                </label>
+                <label className="min-w-0">
+                  <span className="block text-[11px] font-bold uppercase tracking-[0.08em] mb-1" style={{ color: 'var(--neu-ink3)' }}>Técnica</span>
+                  <select
+                    value={tecnica}
+                    onChange={(e) => useEnfoque.getState().setTecnica(e.target.value as Tecnica)}
+                    disabled={estadoEnfoque !== 'detenido'}
+                    className="w-full h-control px-3 rounded-control border text-sm bg-[var(--neu-bg)] border-zinc-200 text-[var(--neu-ink)]"
+                  >
+                    <option value="pomodoro">Pomodoro</option>
+                    <option value="flowtime">Flowtime</option>
+                  </select>
+                </label>
+              </div>
+              <button onClick={iniciarEnfoque} className="boton boton-primario w-full mt-4">
+                {estadoEnfoque === 'detenido' ? 'Iniciar' : `Ver temporizador · ${mmss(msMostrados(useEnfoque.getState(), ahoraEnfoque))}`}
               </button>
-              <div className={`p-3 rounded-control ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-50'}`}>
-                <div className={`text-2xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{racha}</div>
-                <div className={`text-xs ${suave}`}>{racha === 1 ? 'día seguido' : 'días seguidos'}</div>
+            </section>
+          </div>
+        </div>
+
+        <section className="neu-raised p-2 sm:p-3" aria-label="Esta semana">
+          <ul className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-1">
+            {semana.map((d) => (
+              <li key={d.iso}>
+                <button
+                  onClick={() => setVistaActiva('calendario')}
+                  className="w-full text-left rounded-xl px-3 py-2.5 transition-colors hover:bg-[var(--neu-bg3)]"
+                  style={d.esHoy ? { background: 'color-mix(in srgb, var(--accent-base) 12%, transparent)' } : undefined}
+                  aria-current={d.esHoy ? 'date' : undefined}
+                >
+                  <span className="block text-[13px] font-bold tracking-wide" style={{ color: d.esHoy ? 'var(--accent-texto)' : 'var(--neu-ink3)' }}>
+                    {d.dia} <span className="text-[17px]" style={{ color: d.esHoy ? 'var(--accent-texto)' : 'var(--neu-ink)' }}>{d.numero}</span>
+                  </span>
+                  <span className="block text-[12px] min-h-[1.1rem]" style={{ color: d.evals.length ? 'var(--neu-danger)' : 'var(--neu-ink3)' }}>
+                    {d.evals.length > 0
+                      ? d.evals[0]
+                      : [d.clases > 0 && `${d.clases} ${d.clases === 1 ? 'clase' : 'clases'}`, d.tareas > 0 && `${d.tareas} ${d.tareas === 1 ? 'tarea' : 'tareas'}`].filter(Boolean).join(' · ')}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {!sinNada && (
+          <Tarjeta titulo="Repaso y constancia">
+            <div className="grid grid-cols-2 gap-3 max-w-md">
+              <button onClick={() => setVistaActiva('colecciones')} className="p-3 rounded-control text-left" style={{ background: 'var(--neu-bg)' }}>
+                <div className="text-2xl font-serif font-bold" style={{ color: 'var(--neu-ink)' }}>{tarjetas}</div>
+                <div className="text-xs" style={{ color: suave }}>{tarjetas === 1 ? 'tarjeta por repasar' : 'tarjetas por repasar'}</div>
+              </button>
+              <div className="p-3 rounded-control" style={{ background: 'var(--neu-bg)' }}>
+                <div className="text-2xl font-serif font-bold" style={{ color: 'var(--neu-ink)' }}>{racha}</div>
+                <div className="text-xs" style={{ color: suave }}>{racha === 1 ? 'día seguido' : 'días seguidos'}</div>
               </div>
             </div>
-            <p className={`text-xs mt-3 ${suave}`}>Cuenta estudiar con apuntes, tarjetas o Práctica, o terminar una tarea.</p>
+            <p className="text-xs mt-3" style={{ color: suave }}>Cuenta estudiar con apuntes, tarjetas o Práctica, o terminar una tarea.</p>
             <CompartirSemana />
           </Tarjeta>
-          </>)}
-        </div>
+        )}
       </div>
     </div>
   )
