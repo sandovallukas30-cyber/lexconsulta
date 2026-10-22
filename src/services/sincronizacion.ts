@@ -78,6 +78,27 @@ export function guardarEstado(userId: string, e: EstadoSync) {
   }
 }
 
+const LS_DUENO = 'prima-lex-dueno'
+
+/** Cuenta que sincronizó por última vez en este dispositivo. Si entra otra
+ *  cuenta distinta (un computador compartido), no se unen los datos sin
+ *  preguntar: los apuntes de una persona terminaban en la nube de otra. */
+export function leerDueno(): string | null {
+  try {
+    return localStorage.getItem(LS_DUENO)
+  } catch {
+    return null
+  }
+}
+
+export function guardarDueno(userId: string) {
+  try {
+    localStorage.setItem(LS_DUENO, userId)
+  } catch {
+    /* sin almacenamiento: no se podrá detectar el cambio de cuenta */
+  }
+}
+
 export function olvidarEstado(userId: string) {
   try {
     localStorage.removeItem(`${LS_ESTADO}:${userId}`)
@@ -132,6 +153,7 @@ export async function sincronizar(cliente: SupabaseClient, userId: string): Prom
   }
 
   const fecha = Date.now()
+  guardarDueno(userId)
   guardarEstado(userId, { versionNube, huellaSubida: subio ? huellaDespues : estado.huellaSubida ?? huellaDespues, ultimaSync: fecha })
   return { resultado: subio ? 'subio' : bajo ? 'bajo' : 'igual', fecha }
 }

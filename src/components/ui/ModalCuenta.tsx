@@ -131,6 +131,28 @@ function ContenidoModalCuenta() {
               </span>
             </div>
 
+            {c.conflictoDispositivo && (
+              <div className="neu-flat p-4 space-y-3" role="alert">
+                <p className="text-sm font-bold" style={{ color: 'var(--neu-ink)' }}>
+                  <i className="ti ti-alert-triangle mr-2" style={{ color: 'var(--neu-danger)' }} aria-hidden="true" />
+                  Este dispositivo tiene datos de otra cuenta
+                </p>
+                <p className="text-xs" style={{ color: 'var(--neu-ink2)' }}>
+                  Si es un computador compartido, lo que hay aquí no debería pasar a tu cuenta. Elige qué hacer; no se sincroniza nada hasta que lo hagas.
+                </p>
+                <div className="flex flex-col gap-2">
+                  <button onClick={() => void c.resolverConflicto('empezar')} className="boton boton-primario">
+                    Empezar con lo de mi cuenta
+                  </button>
+                  <p className="text-xs" style={{ color: 'var(--neu-ink3)' }}>Borra los datos de este dispositivo y baja los de tu cuenta.</p>
+                  <button onClick={() => void c.resolverConflicto('unir')} className="boton boton-suave">
+                    Unir con lo que hay aquí
+                  </button>
+                  <p className="text-xs" style={{ color: 'var(--neu-ink3)' }}>Los datos de este dispositivo pasan a tu cuenta. Úsalo solo si son tuyos.</p>
+                </div>
+              </div>
+            )}
+
             <div className="neu-pressed p-4 space-y-2" aria-live="polite">
               <p className="text-sm font-bold" style={{ color: 'var(--neu-ink)' }}>
                 <i className={`ti ${c.sync === 'error' ? 'ti-cloud-off' : c.sync === 'sincronizando' ? 'ti-cloud-upload' : 'ti-cloud-check'} mr-2`} style={{ color: c.sync === 'error' ? 'var(--neu-danger)' : 'var(--accent-texto)' }} aria-hidden="true" />
@@ -145,12 +167,15 @@ function ContenidoModalCuenta() {
             </div>
 
             <p className="text-xs" style={{ color: 'var(--neu-ink2)' }}>
-              Al cerrar sesión, tus datos siguen en este dispositivo; solo se deja de sincronizar. Si borras una tarea o un apunte en un dispositivo y otro todavía lo tiene, puede volver a aparecer.
+              Al cerrar sesión, tus datos siguen en este dispositivo; solo se deja de sincronizar. Si es un equipo compartido, usa «Cerrar sesión y borrar de este equipo». Si borras una tarea o un apunte en un dispositivo y otro todavía lo tiene, puede volver a aparecer.
             </p>
 
             <div className="flex flex-wrap gap-2">
               <button onClick={() => void c.cerrarSesion().then(cerrar)} className="boton boton-suave">
                 <i className="ti ti-logout" aria-hidden="true" /> Cerrar sesión
+              </button>
+              <button onClick={() => void c.cerrarSesion(true).then(cerrar)} className="boton boton-fantasma">
+                Cerrar sesión y borrar de este equipo
               </button>
               {!confirmarBorrado ? (
                 <button onClick={() => setConfirmarBorrado(true)} className="boton boton-fantasma" style={{ color: 'var(--neu-danger)' }}>

@@ -21,7 +21,15 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
   // solo desde la propia app
   const origen = req.headers.origin
   const host = req.headers.host
-  if (origen && host && new URL(origen).host !== host) return res.status(403).end()
+  if (origen && host) {
+    let hostOrigen = ''
+    try {
+      hostOrigen = new URL(origen).host
+    } catch {
+      /* Origin: null o inválido: no es la propia app */
+    }
+    if (hostOrigen !== host) return res.status(403).end()
+  }
 
   // freno básico por IP (en memoria; se reinicia con la instancia)
   const ip = String(req.headers['x-forwarded-for'] ?? '').split(',')[0].trim() || 'desconocida'

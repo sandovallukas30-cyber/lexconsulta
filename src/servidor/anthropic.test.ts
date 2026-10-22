@@ -35,6 +35,32 @@ describe('api/anthropic: identidad del usuario', () => {
     expect(ultimo).toBe(429) // tope de 10 por conexión sin verificar, aunque cada pedido declare otro correo
   })
 
+  it('un visitante tiene 10 partidas al día, no 5 (cada una contaba doble)', async () => {
+    const { default: handler } = await import('../../api/anthropic')
+    const estados: number[] = []
+    for (let i = 0; i < 11; i++) {
+      const { r, res } = respuesta()
+      await handler(pedido('4.4.4.4', cuerpoBase), res)
+      estados.push(r.status)
+    }
+    expect(estados.slice(0, 10).every((s) => s === 200)).toBe(true)
+    expect(estados[10]).toBe(429)
+  })
+
+  it('rechaza bloques que no son texto (imagen/documento) y system en lista', async () => {
+    const { default: handler } = await import('../../api/anthropic')
+    const malos = [
+      { ...cuerpoBase, messages: [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', data: 'A'.repeat(100) } }] }] },
+      { ...cuerpoBase, system: [{ type: 'text', text: 'x'.repeat(50_000) }] },
+      { ...cuerpoBase, messages: [{ role: 'system', content: 'hola' }] },
+    ]
+    for (const cuerpo of malos) {
+      const { r, res } = respuesta()
+      await handler(pedido('6.6.6.6', cuerpo), res)
+      expect(r.status).toBe(400)
+    }
+  })
+
   it('un token que Supabase no confirma sigue siendo visitante', async () => {
     process.env.VITE_SUPABASE_URL = 'https://x.supabase.co'
     process.env.VITE_SUPABASE_ANON_KEY = 'anon'

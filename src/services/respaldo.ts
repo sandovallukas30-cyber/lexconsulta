@@ -95,6 +95,31 @@ export function crearRespaldo(): ArchivoRespaldo {
   }
 }
 
+/** Deja los datos de este dispositivo como los de una instalación nueva. */
+export function vaciarDatosLocales() {
+  const ini = useStore.getInitialState()
+  const base = crearRespaldo()
+  aplicarRespaldo(
+    {
+      ...base,
+      datos: {
+        ramos: ini.ramos,
+        academicoModulos: ini.academicoModulos,
+        progresoModulos: ini.progresoModulos,
+        diasActividadEstudio: ini.diasActividadEstudio,
+        colecciones: ini.colecciones,
+        subrayados: ini.subrayados,
+        mapasMentales: ini.mapasMentales,
+        repasoApuntes: ini.repasoApuntes,
+        posicionLectura: ini.posicionLectura,
+        tareasPlan: ini.tareasPlan,
+        sesionesFoco: useEnfoque.getInitialState().sesiones,
+      },
+    },
+    'reemplazar'
+  )
+}
+
 export function nombreArchivoRespaldo(fecha = new Date()): string {
   const p = (n: number) => String(n).padStart(2, '0')
   return `prima-lex-respaldo-${fecha.getFullYear()}-${p(fecha.getMonth() + 1)}-${p(fecha.getDate())}.json`

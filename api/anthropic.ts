@@ -116,23 +116,28 @@ function calcularRetryAfter(clave: string, ahora: number, limite: number): numbe
   return Math.max(60, Math.ceil(restante / 1000))
 }
 
-function tamanoInput(system: unknown, messages: unknown[]): number {
-  let n = typeof system === 'string' ? system.length : 0
+const MAX_MENSAJES = 20
+
+type MensajeLimpio = { role: 'user' | 'assistant'; content: string }
+
+/** Solo se acepta lo que usa aiClient.ts: `system` de texto y mensajes
+ *  `{role, content: string}`. Cualquier otra forma (bloques de imagen o
+ *  documento, `system` como lista, campos extra) se rechaza: antes esos
+ *  bloques medían 0 para el tope de tamaño y llegaban enteros a Anthropic.
+ *  El cuerpo que se reenvía se reconstruye con estos campos, no se copia. */
+function validarEntrada(system: unknown, messages: unknown[]): { system?: string; messages: MensajeLimpio[]; chars: number } | null {
+  if (system !== undefined && typeof system !== 'string') return null
+  if (messages.length > MAX_MENSAJES) return null
+  let chars = typeof system === 'string' ? system.length : 0
+  const limpios: MensajeLimpio[] = []
   for (const m of messages) {
-    if (m && typeof m === 'object' && 'content' in m) {
-      const c = (m as { content: unknown }).content
-      if (typeof c === 'string') n += c.length
-      else if (Array.isArray(c)) {
-        for (const bloque of c) {
-          if (bloque && typeof bloque === 'object' && 'text' in bloque) {
-            const t = (bloque as { text: unknown }).text
-            if (typeof t === 'string') n += t.length
-          }
-        }
-      }
-    }
+    if (!m || typeof m !== 'object') return null
+    const { role, content } = m as { role?: unknown; content?: unknown }
+    if ((role !== 'user' && role !== 'assistant') || typeof content !== 'string') return null
+    chars += content.length
+    limpios.push({ role, content })
   }
-  return n
+  return { system: system as string | undefined, messages: limpios, chars }
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -142,7 +147,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
-    return res.status(500).json({ error: 'Falta ANTHROPIC_API_KEY en el servidor' })
+    console.error('[anthropic] falta ANTHROPIC_API_KEY en el servidor')
+    return res.status(500).json({ error: 'El servicio de IA no está disponible' })
   }
 
   const { model, max_tokens, system, messages } = req.body ?? {}
@@ -211,18 +217,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'messages requerido' })
   }
 
-  const chars = tamanoInput(system, messages)
-  if (chars > MAX_CHARS_INPUT) {
+  const entrada = validarEntrada(system, messages)
+  if (!entrada) {
+    return res.status(400).json({ error: 'Formato de consulta no permitido' })
+  }
+  if (entrada.chars > MAX_CHARS_INPUT) {
     return res.status(413).json({
       error: 'Consulta demasiado grande',
-      detalle: `El tamaño del prompt (${chars} caracteres) excede el máximo permitido (${MAX_CHARS_INPUT}).`,
+      detalle: `El tamaño del prompt (${entrada.chars} caracteres) excede el máximo permitido (${MAX_CHARS_INPUT}).`,
     })
   }
 
   // ----- Registrar el hit ANTES de llamar al upstream para evitar carrera -----
-  registrarHit(claveUsuario, ahora)
-  registrarHit('global', ahora)
-  registrarHit(`ip:${ip}`, ahora)
+  // Sin sesión, claveUsuario ES `ip:${ip}`: se cuenta una sola vez (antes cada
+  // partida de un visitante contaba doble y tenía 5 al día, no 10).
+  const claves = [...new Set([claveUsuario, 'global', `ip:${ip}`])]
+  for (const c of claves) registrarHit(c, ahora)
 
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
@@ -235,8 +245,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       body: JSON.stringify({
         model,
         max_tokens,
-        system,
-        messages,
+        system: entrada.system,
+        messages: entrada.messages,
       }),
     })
 
@@ -244,13 +254,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (!r.ok) {
       // El fallo es del upstream (Anthropic), no un uso legítimo: no se cobra cuota al usuario.
-      revertirHit(claveUsuario, ahora)
-      revertirHit('global', ahora)
-      revertirHit(`ip:${ip}`, ahora)
+      for (const c of claves) revertirHit(c, ahora)
       res.setHeader('X-RateLimit-Limit', String(limiteUsuario))
       res.setHeader('X-RateLimit-Remaining', String(Math.max(0, limiteUsuario - usoUsuario)))
       res.setHeader('X-RateLimit-Type', email ? 'registered' : 'anonymous')
-      return res.status(r.status).json(data)
+      // El detalle del error de Anthropic (saldo, cuenta, etc.) no se le muestra al usuario.
+      console.error('[anthropic] upstream', r.status, JSON.stringify(data).slice(0, 300))
+      return res.status(r.status >= 500 ? 502 : r.status === 429 ? 429 : 502).json({ error: 'El servicio de IA no pudo responder ahora' })
     }
 
     res.setHeader('X-RateLimit-Limit', String(limiteUsuario))
@@ -259,10 +269,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.setHeader('X-RateLimit-Reset', String(new Date(ahora + VENTANA_MS).toISOString()))
     return res.status(r.status).json(data)
   } catch (e) {
-    revertirHit(claveUsuario, ahora)
-    revertirHit('global', ahora)
-    revertirHit(`ip:${ip}`, ahora)
-    const msg = e instanceof Error ? e.message : 'Error desconocido'
-    return res.status(502).json({ error: 'Upstream error', detalle: msg })
+    for (const c of claves) revertirHit(c, ahora)
+    console.error('[anthropic] fallo de red', e instanceof Error ? e.message : e)
+    return res.status(502).json({ error: 'El servicio de IA no pudo responder ahora' })
   }
 }

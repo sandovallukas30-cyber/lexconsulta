@@ -76,6 +76,13 @@ create policy "borrar mis datos" on public.datos_usuario
 alter table public.datos_usuario drop constraint if exists contenido_tamano;
 alter table public.datos_usuario add constraint contenido_tamano check (pg_column_size(contenido) <= 5000000) not valid;
 
+-- Una sola fila por cuenta: sin esto una cuenta podía crear 'x1', 'x2'… de 5 MB cada una.
+-- `not valid` no revisa filas que ya existan; las nuevas sí se validan.
+alter table public.datos_usuario drop constraint if exists clave_unica_permitida;
+alter table public.datos_usuario add constraint clave_unica_permitida check (clave = 'respaldo') not valid;
+alter table public.datos_usuario drop constraint if exists dispositivo_largo;
+alter table public.datos_usuario add constraint dispositivo_largo check (length(dispositivo) <= 64) not valid;
+
 -- Más adelante, cuando la sincronización sea Pro, se exige el plan en las
 -- políticas de insert/update, por ejemplo:
 --   with check (auth.uid() = user_id and exists (select 1 from public.perfiles p where p.id = auth.uid() and p.plan = 'pro'))

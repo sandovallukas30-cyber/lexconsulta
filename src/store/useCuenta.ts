@@ -1,7 +1,8 @@
 import { create } from 'zustand'
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '../services/supabase'
-import { olvidarEstado, sincronizar, leerEstado } from '../services/sincronizacion'
+import { olvidarEstado, sincronizar, leerEstado, leerDueno, guardarDueno } from '../services/sincronizacion'
+import { vaciarDatosLocales } from '../services/respaldo'
 import { avisar } from './useAvisos'
 
 /** Sesión de la cuenta (Google, Microsoft o enlace por correo) y estado de la
@@ -29,11 +30,14 @@ interface EstadoCuenta {
   ultimaSync: number | null
   errorSync: string | null
   modalAbierto: boolean
+  /** Este dispositivo tiene datos de otra cuenta: no se sincroniza hasta que la persona elija. */
+  conflictoDispositivo: boolean
+  resolverConflicto: (modo: 'empezar' | 'unir') => Promise<void>
   abrirModal: () => void
   cerrarModal: () => void
   iniciarSesion: (p: ProveedorCuenta) => Promise<string | null>
   enlaceCorreo: (email: string) => Promise<string | null>
-  cerrarSesion: () => Promise<void>
+  cerrarSesion: (borrarLocal?: boolean) => Promise<void>
   eliminarCuenta: () => Promise<string | null>
   sincronizarAhora: (silencioso?: boolean) => Promise<void>
   /** Uso interno: la sesión cambió (o se leyó al arrancar). */
@@ -63,6 +67,7 @@ export const useCuenta = create<EstadoCuenta>((set, get) => ({
   ultimaSync: null,
   errorSync: null,
   modalAbierto: false,
+  conflictoDispositivo: false,
   abrirModal: () => set({ modalAbierto: true }),
   cerrarModal: () => set({ modalAbierto: false }),
 
@@ -83,9 +88,40 @@ export const useCuenta = create<EstadoCuenta>((set, get) => ({
     return error ? error.message : null
   },
 
-  cerrarSesion: async () => {
+  cerrarSesion: async (borrarLocal = false) => {
     if (!supabase) return
+    // última copia antes de salir: así borrar lo local o dejarlo para otra cuenta no pierde nada
+    if (get().perfil && !get().conflictoDispositivo) await get().sincronizarAhora(true)
+    if (borrarLocal && get().sync === 'error') {
+      // no se pudo subir la última copia: borrar ahora perdería datos
+      return
+    }
     await supabase.auth.signOut()
+    if (borrarLocal) {
+      try {
+        vaciarDatosLocales()
+        localStorage.removeItem('prima-lex-dueno')
+      } catch {
+        /* almacenamiento lleno: no se borró */
+      }
+    }
+  },
+
+  resolverConflicto: async (modo) => {
+    const p = get().perfil
+    if (!p) return
+    if (modo === 'empezar') {
+      try {
+        vaciarDatosLocales()
+      } catch {
+        set({ sync: 'error', errorSync: 'No se pudo limpiar este dispositivo (almacenamiento lleno).' })
+        return
+      }
+      olvidarEstado(p.id) // sin versión vista: se baja todo lo de la nube
+    }
+    guardarDueno(p.id)
+    set({ conflictoDispositivo: false })
+    void get().sincronizarAhora(true)
   },
 
   eliminarCuenta: async () => {
@@ -100,7 +136,7 @@ export const useCuenta = create<EstadoCuenta>((set, get) => ({
 
   sincronizarAhora: async (silencioso = false) => {
     const p = get().perfil
-    if (!supabase || !p || enCurso) return
+    if (!supabase || !p || enCurso || get().conflictoDispositivo) return
     enCurso = true
     set({ sync: 'sincronizando', errorSync: null })
     try {
@@ -116,16 +152,19 @@ export const useCuenta = create<EstadoCuenta>((set, get) => ({
 
   _aplicarUsuario: async (u) => {
     if (!u) {
-      set({ listo: true, perfil: null, plan: 'gratis', sync: 'inactivo', ultimaSync: null, errorSync: null })
+      set({ listo: true, perfil: null, plan: 'gratis', sync: 'inactivo', ultimaSync: null, errorSync: null, conflictoDispositivo: false })
       return
     }
     const perfil = perfilDe(u)
-    set({ listo: true, perfil, ultimaSync: leerEstado(u.id).ultimaSync })
+    const dueno = leerDueno()
+    const conflicto = dueno !== null && dueno !== u.id
+    set({ listo: true, perfil, ultimaSync: leerEstado(u.id).ultimaSync, conflictoDispositivo: conflicto })
+    if (conflicto) set({ modalAbierto: true })
     // el plan lo escribe el servidor (cobro); aquí solo se lee
     if (supabase) {
       const { data } = await supabase.from('perfiles').select('plan').eq('id', u.id).maybeSingle()
       set({ plan: data?.plan === 'pro' ? 'pro' : 'gratis' })
     }
-    void get().sincronizarAhora(true)
+    if (!conflicto) void get().sincronizarAhora(true)
   },
 }))
