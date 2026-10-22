@@ -15,9 +15,23 @@ interface ItemMenu {
   id: VistaId
   icono: string
   label: string
-  /** número que se muestra a la derecha (tareas pendientes, códigos activos) */
-  insignia?: number
 }
+
+// Menú centrado en estudiantes: herramientas de estudio.
+const itemsSemana: ItemMenu[] = [
+  { id: 'hoy', icono: 'ti-sun', label: 'Hoy' },
+  { id: 'tareas', icono: 'ti-checkbox', label: 'Tareas' },
+  { id: 'calendario', icono: 'ti-calendar', label: 'Calendario' },
+  { id: 'enfoque', icono: 'ti-hourglass-high', label: 'Enfoque' },
+]
+
+const itemsAcademicos: ItemMenu[] = [
+  { id: 'modulos', icono: 'ti-layout-grid', label: 'Mis ramos' },
+  { id: 'explorador', icono: 'ti-book-2', label: 'Explorador' },
+  { id: 'colecciones', icono: 'ti-stack-2', label: 'Colecciones' },
+  { id: 'mapasmentales', icono: 'ti-hierarchy-2', label: 'Mapas mentales' },
+  { id: 'practica', icono: 'ti-puzzle', label: 'Práctica' },
+]
 
 const VERDE = 'var(--accent-base)'
 
@@ -27,26 +41,42 @@ export function Sidebar() {
   const codigos = useStore((s) => s.codigos)
   const modoOscuro = useStore((s) => s.modoOscuro)
   const toggleModoOscuro = useStore((s) => s.toggleModoOscuro)
-  const tareasPendientes = useStore((s) => s.tareasPlan.filter((t) => !t.hecha).length)
-  const setOmnibarAbierto = useStore((s) => s.setOmnibarAbierto)
+  const colapsadoEscritorio = useStore((s) => s.sidebarColapsado)
+  const toggleSidebarEscritorio = useStore((s) => s.toggleSidebar)
   const menuMovilAbierto = useStore((s) => s.menuMovilAbierto)
   const setMenuMovilAbierto = useStore((s) => s.setMenuMovilAbierto)
-  // En móvil el menú es un panel que se superpone al contenido; en escritorio es fijo (sin colapsar)
+  // En móvil el sidebar es un panel que se superpone al contenido (antes
+  // medía siempre 256 px y dejaba 118 px de contenido a 375 px): nunca
+  // colapsado, y "colapsar" = cerrarlo.
   const esMovil = useEsMovil()
+  const colapsado = esMovil ? false : colapsadoEscritorio
+  const toggleSidebar = esMovil ? () => setMenuMovilAbierto(false) : toggleSidebarEscritorio
   // en móvil el menú es un panel: el foco entra, Tab no se escapa a la página de atrás y Esc lo cierra
   const refMenu = useDialogo<HTMLElement>(esMovil && menuMovilAbierto, () => setMenuMovilAbierto(false))
-  const cerrarSiMovil = () => {
-    if (esMovil) setMenuMovilAbierto(false)
-  }
   const irA = (id: VistaId) => {
     setVistaActiva(id)
-    cerrarSiMovil()
+    if (esMovil) setMenuMovilAbierto(false)
   }
   const [modalCodigos, setModalCodigos] = useState(false)
   const acercaAbierto = useStore((s) => s.acercaAbierto)
   const acercaPestana = useStore((s) => s.acercaPestana)
   const abrirAcerca = useStore((s) => s.abrirAcerca)
   const cerrarAcerca = useStore((s) => s.cerrarAcerca)
+
+  // Atajo: Ctrl/Cmd + B para colapsar
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      // defaultPrevented: el campo de un apunte ya usó Ctrl+B para negrita
+      // (antes además colapsaba el menú)
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b' && !e.defaultPrevented) {
+        e.preventDefault()
+        if (esMovil) setMenuMovilAbierto(false)
+        else toggleSidebarEscritorio()
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [esMovil, setMenuMovilAbierto, toggleSidebarEscritorio])
 
   // Esc cierra el panel móvil
   useEffect(() => {
@@ -60,33 +90,9 @@ export function Sidebar() {
 
   const activos = codigos.filter((c) => c.activo).length
   const total = codigos.length
-
-  const grupos: { titulo: string; items: ItemMenu[] }[] = [
-    {
-      titulo: 'Planificar',
-      items: [
-        { id: 'hoy', icono: 'ti-sun', label: 'Hoy' },
-        { id: 'tareas', icono: 'ti-checkbox', label: 'Tareas', insignia: tareasPendientes },
-        { id: 'calendario', icono: 'ti-calendar', label: 'Calendario' },
-        { id: 'enfoque', icono: 'ti-hourglass-high', label: 'Enfoque' },
-      ],
-    },
-    {
-      titulo: 'Estudiar',
-      items: [
-        { id: 'modulos', icono: 'ti-layout-grid', label: 'Mis ramos' },
-        { id: 'practica', icono: 'ti-puzzle', label: 'Práctica' },
-      ],
-    },
-    {
-      titulo: 'Biblioteca jurídica',
-      items: [
-        { id: 'explorador', icono: 'ti-book-2', label: 'Explorador', insignia: activos },
-        { id: 'colecciones', icono: 'ti-stack-2', label: 'Colecciones' },
-        { id: 'mapasmentales', icono: 'ti-hierarchy-2', label: 'Mapas mentales' },
-      ],
-    },
-  ]
+  // el número exacto crece con cada ley que se agrega: en pantalla va con tope (el exacto queda en el tooltip)
+  const topeVisible = (n: number) => (n > 9 ? '9+' : String(n))
+  const grupoAcademico = itemsAcademicos
 
   return (
     <>
@@ -109,7 +115,7 @@ export function Sidebar() {
         role={esMovil && menuMovilAbierto ? 'dialog' : undefined}
         aria-modal={esMovil && menuMovilAbierto ? true : undefined}
         initial={false}
-        animate={esMovil ? { x: menuMovilAbierto ? 0 : -320, width: 312 } : { x: 0, width: 248 }}
+        animate={esMovil ? { x: menuMovilAbierto ? 0 : -320, width: 312 } : { x: 0, width: colapsado ? 96 : 296 }}
         transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
         aria-label="Menú principal"
         // en móvil se cierra también deslizándolo hacia la izquierda
@@ -122,123 +128,168 @@ export function Sidebar() {
         }}
         // en móvil, cerrado = fuera de la pantalla e inerte (no se puede tabular a él)
         inert={esMovil && !menuMovilAbierto ? true : undefined}
-        className={`flex flex-col gap-3 overflow-y-auto overflow-x-hidden px-3 py-4 border-r bg-[var(--neu-card)] ${
-          esMovil ? 'fixed inset-y-0 left-0 z-[70] shadow-2xl' : 'relative flex-shrink-0'
+        className={`flex flex-col gap-5 overflow-y-auto overflow-x-hidden p-4 ${
+          esMovil ? 'fixed inset-y-0 left-0 z-[70] shadow-2xl bg-[var(--neu-bg)]' : 'relative flex-shrink-0 pr-1'
         }`}
-        style={{ borderColor: 'var(--neu-line)' }}
       >
-        <div className="flex-shrink-0 flex items-center justify-between gap-2 px-1">
-          <div className="min-w-0 flex items-center gap-2.5">
-            <span
-              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: VERDE }}
-              aria-hidden="true"
+        <div
+          className={`neu-raised flex-shrink-0 flex items-center ${
+            colapsado ? 'justify-center px-2 py-3' : 'justify-between pl-4 pr-2 py-4'
+          }`}
+        >
+          {colapsado ? (
+            <button
+              onClick={toggleSidebar}
+              title="Expandir (Ctrl+B)"
+              aria-label="Expandir menú lateral"
+              className="anim-aparece w-11 h-11 rounded-xl flex items-center justify-center"
             >
-              <i className="ti ti-scale text-lg text-white" />
-            </span>
-            <p className="text-[18px] font-extrabold leading-tight truncate" style={{ color: 'var(--neu-ink)', fontFamily: 'var(--font-head)' }}>
-              Prima Lex
-            </p>
-          </div>
-          {esMovil && (
-            <button onClick={() => setMenuMovilAbierto(false)} aria-label="Cerrar menú" className="boton boton-fantasma boton-chico boton-icono">
-              <i className="ti ti-x text-lg" />
+              <span
+                className="w-11 h-11 rounded-[14px] flex items-center justify-center"
+                style={{ background: VERDE }}
+              >
+                <i className="ti ti-scale text-lg text-white" />
+              </span>
             </button>
+          ) : (
+            <>
+              <div className="anim-aparece flex-1 min-w-0 flex items-center gap-2.5">
+                <span
+                  className="w-11 h-11 rounded-[14px] flex items-center justify-center flex-shrink-0"
+                  style={{ background: VERDE }}
+                  aria-hidden="true"
+                >
+                  <i className="ti ti-scale text-lg text-white" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[17px] font-extrabold leading-tight" style={{ color: 'var(--neu-ink)' }}>
+                    Prima Lex
+                  </p>
+                  <p className="sidebar-tagline text-[11px]" style={{ color: 'var(--neu-ink3)' }}>Tu cuaderno de Derecho</p>
+                </div>
+              </div>
+              <button
+                onClick={toggleSidebar}
+                title={esMovil ? 'Cerrar menú' : 'Colapsar (Ctrl+B)'}
+                aria-label={esMovil ? 'Cerrar menú' : 'Colapsar menú lateral'}
+                className="boton boton-fantasma boton-chico boton-icono"
+              >
+                <i className={`ti ${esMovil ? 'ti-x' : 'ti-layout-sidebar-left-collapse'} text-lg`} />
+              </button>
+            </>
           )}
         </div>
 
-        <button
-          onClick={() => {
-            cerrarSiMovil()
-            setOmnibarAbierto(true)
-          }}
-          className="flex-shrink-0 w-full min-h-[44px] rounded-xl border px-3 flex items-center gap-2 text-sm text-left transition-colors hover:bg-[var(--neu-bg3)]"
-          style={{ borderColor: 'var(--neu-line)', color: 'var(--neu-ink3)', background: 'var(--neu-bg)' }}
-          aria-label="Buscar artículos, apuntes y secciones"
-        >
-          <i className="ti ti-search text-base flex-shrink-0" aria-hidden="true" />
-          <span className="flex-1 truncate">Buscar…</span>
-          <kbd className="solo-teclado text-[11px] px-1.5 py-0.5 rounded-md border font-sans" style={{ borderColor: 'var(--neu-line)', background: 'var(--neu-card)' }}>
-            Ctrl K
-          </kbd>
-        </button>
+        <nav className={`neu-raised min-h-0 overflow-y-auto py-3 ${colapsado ? 'px-2' : 'px-3'}`}>
+          <div className="space-y-1">
+            {itemsSemana.map((item) => (
+              <BotonNav
+                key={item.id}
+                item={item}
+                activo={vistaActiva === item.id}
+                colapsado={colapsado}
+                onClick={() => irA(item.id)}
+              />
+            ))}
+          </div>
 
-        <nav className="min-h-0 overflow-y-auto" aria-label="Secciones">
-          {grupos.map((g) => (
-            <div key={g.titulo} className="mb-3 last:mb-0">
-              <p className="px-2 pt-2 pb-1 text-[11px] font-bold uppercase tracking-[0.08em]" style={{ color: 'var(--neu-ink3)' }}>
-                {g.titulo}
-              </p>
-              <div className="space-y-0.5">
-                {g.items.map((item) => (
-                  <BotonNav key={item.id} item={item} activo={vistaActiva === item.id} onClick={() => irA(item.id)} />
-                ))}
-              </div>
-            </div>
-          ))}
+          <div
+            aria-hidden="true"
+            className={`h-px my-3 ${colapsado ? 'mx-2' : 'mx-3'}`}
+            style={{ background: 'var(--neu-line)' }}
+          />
+
+          <div className="space-y-1">
+            {grupoAcademico.map((item) => (
+              <BotonNav
+                key={item.id}
+                item={item}
+                activo={vistaActiva === item.id}
+                colapsado={colapsado}
+                onClick={() => irA(item.id)}
+              />
+            ))}
+          </div>
         </nav>
 
-        <div className="mt-auto flex-shrink-0 space-y-1" data-pie-menu>
+        <div className={`neu-flat mt-auto flex-shrink-0 ${colapsado ? 'p-2' : 'p-2.5'}`} data-pie-menu>
           <button
             onClick={() => {
-              cerrarSiMovil()
+              if (esMovil) setMenuMovilAbierto(false)
               setModalCodigos(true)
             }}
             title={`Códigos · ${activos} de ${total} activos (incluye leyes especiales)`}
-            className="w-full min-h-[44px] rounded-[10px] px-2.5 text-sm font-semibold text-left flex items-center gap-3 transition-colors text-[var(--neu-ink2)] hover:text-[var(--neu-ink)] hover:bg-[var(--neu-bg3)]"
+            className={`w-full min-h-control rounded-control text-sm font-medium transition-colors text-left flex items-center ${
+              colapsado ? 'justify-center px-0 py-1' : 'px-3 py-1'
+            } ${
+              modoOscuro ? 'text-zinc-300 hover:bg-zinc-800' : 'text-zinc-700 hover:bg-zinc-100'
+            }`}
           >
-            <i className="ti ti-books text-[18px] flex-shrink-0" aria-hidden="true" />
-            <span className="flex-1 truncate">Códigos activos</span>
+            <span
+              className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 relative"
+              style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
+            >
+              <i className="ti ti-books text-base" style={{ color: 'var(--accent-texto)' }} />
+              {colapsado && (
+                <span
+                  className={`absolute -top-1 -right-1 min-w-[16px] h-4 rounded-full text-[9px] font-bold flex items-center justify-center px-1 text-white`}
+                  style={{ background: VERDE }}
+                >
+                  {topeVisible(activos)}
+                </span>
+              )}
+            </span>
+            <Etiqueta visible={!colapsado} className={colapsado ? '' : 'flex-1'}>
+              <span className="block">Códigos</span>
+              <span className={`block text-[11px] font-normal truncate ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                {activos} activos
+              </span>
+            </Etiqueta>
+            {!colapsado && (
+              <i className={`ti ti-chevron-right text-sm flex-shrink-0 ${modoOscuro ? 'text-zinc-600' : 'text-zinc-400'}`} />
+            )}
           </button>
+
           <button
             onClick={() => {
-              cerrarSiMovil()
+              if (esMovil) setMenuMovilAbierto(false)
               abrirAcerca('acerca')
             }}
-            className="w-full min-h-[44px] rounded-[10px] px-2.5 text-sm font-semibold text-left flex items-center gap-3 transition-colors text-[var(--neu-ink2)] hover:text-[var(--neu-ink)] hover:bg-[var(--neu-bg3)]"
+            title={colapsado ? 'Configuración · Apariencia, aviso legal, privacidad' : undefined}
+            className={`w-full mt-1 min-h-control rounded-control text-xs transition-colors flex items-center ${
+              colapsado ? 'justify-center px-0' : 'px-3'
+            } ${
+              modoOscuro ? 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'
+            }`}
           >
-            <i className="ti ti-adjustments-horizontal text-[18px] flex-shrink-0" aria-hidden="true" />
-            <span className="flex-1 truncate">Configuración</span>
+            <i className="ti ti-settings text-base flex-shrink-0" />
+            <Etiqueta visible={!colapsado}>Configuración</Etiqueta>
           </button>
 
-          {cuentasDisponibles && (
-            <div className="px-0.5">
-              <BotonCuenta compacto={false} />
-            </div>
+          {!colapsado && (
+            <p className={`pie-legal mt-1 px-3 text-[13px] leading-snug ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
+              Gratis por ahora ·{' '}
+              <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="underline">Privacidad</a>
+              {' · '}
+              <a href="/terminos" target="_blank" rel="noopener noreferrer" className="underline">Términos</a>
+            </p>
           )}
 
+          {/* cuenta y modo oscuro: al pie del menú, fuera de la franja superior */}
           <div
-            role="group"
-            aria-label="Tema de la interfaz"
-            className="grid grid-cols-2 gap-1 p-1 rounded-xl"
-            style={{ background: 'var(--neu-bg3)' }}
+            className={`mt-2 pt-2 border-t flex items-center ${colapsado ? 'flex-col gap-2' : 'justify-between gap-2 px-1'}`}
+            style={{ borderColor: 'var(--neu-line)' }}
           >
-            {([false, true] as const).map((oscuro) => {
-              const activo = modoOscuro === oscuro
-              return (
-                <button
-                  key={String(oscuro)}
-                  onClick={() => {
-                    if (!activo) toggleModoOscuro()
-                  }}
-                  aria-pressed={activo}
-                  className={`min-h-[40px] rounded-lg text-sm font-semibold transition-colors ${
-                    activo ? 'shadow-sm' : 'text-[var(--neu-ink3)]'
-                  }`}
-                  style={activo ? { background: 'var(--neu-card)', color: 'var(--neu-ink)' } : undefined}
-                >
-                  {oscuro ? 'Oscuro' : 'Claro'}
-                </button>
-              )
-            })}
+            {cuentasDisponibles && <BotonCuenta compacto={colapsado} />}
+            <button
+              onClick={toggleModoOscuro}
+              className="boton boton-suave boton-icono"
+              title={modoOscuro ? 'Modo claro' : 'Modo oscuro'}
+              aria-label={modoOscuro ? 'Activar modo claro' : 'Activar modo oscuro'}
+            >
+              <i className={`ti ${modoOscuro ? 'ti-sun' : 'ti-moon'} text-lg`} aria-hidden="true" />
+            </button>
           </div>
-
-          <p className="pie-legal px-2 pt-1 text-[13px] leading-snug" style={{ color: 'var(--neu-ink3)' }}>
-            Gratis por ahora ·{' '}
-            <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="underline">Privacidad</a>
-            {' · '}
-            <a href="/terminos" target="_blank" rel="noopener noreferrer" className="underline">Términos</a>
-          </p>
         </div>
       </motion.aside>
 
@@ -248,32 +299,56 @@ export function Sidebar() {
   )
 }
 
-function BotonNav({ item, activo, onClick }: { item: ItemMenu; activo: boolean; onClick: () => void }) {
+/** Texto que se pliega con el menú: siempre montado, el ancho y la opacidad pasan por CSS (sin
+ *  desmontar, que era lo que se veía a saltos). Con el menú colapsado queda en 0 y oculto a lectores. */
+function Etiqueta({ visible, children, className = '' }: { visible: boolean; children: React.ReactNode; className?: string }) {
+  return (
+    <span
+      aria-hidden={!visible}
+      className={`grid min-w-0 overflow-hidden ${className}`}
+      style={{
+        gridTemplateColumns: visible ? '1fr' : '0fr',
+        opacity: visible ? 1 : 0,
+        marginLeft: visible ? '0.75rem' : 0,
+        transition: 'grid-template-columns var(--dur-media) var(--ease-estandar), opacity var(--dur-rapida) var(--ease-estandar), margin-left var(--dur-media) var(--ease-estandar)',
+      }}
+    >
+      <span className="min-w-0 overflow-hidden whitespace-nowrap">{children}</span>
+    </span>
+  )
+}
+
+function BotonNav({
+  item,
+  activo,
+  colapsado,
+  onClick,
+}: {
+  item: ItemMenu
+  activo: boolean
+  colapsado: boolean
+  onClick: () => void
+}) {
   return (
     <button
       onClick={onClick}
+      title={colapsado ? item.label : undefined}
       aria-current={activo ? 'page' : undefined}
       // C8: bajar el código de la vista antes del clic (~100-300 ms antes)
       onPointerEnter={() => precargarVista(item.id)}
       onFocus={() => precargarVista(item.id)}
-      className={`w-full min-h-[44px] rounded-[10px] px-2.5 text-[14.5px] text-left relative flex items-center gap-3 transition-colors ${
+      aria-label={colapsado ? item.label : undefined}
+      className={`w-full min-h-[46px] rounded-[14px] text-[14.5px] text-left relative flex items-center transition-[padding,background-color,color] ${
+        colapsado ? 'justify-center px-0' : 'px-3.5'
+      } ${
         activo
           ? 'font-semibold text-[var(--accent-texto)] bg-[color-mix(in_srgb,var(--accent-base)_12%,transparent)]'
           : 'font-semibold text-[var(--neu-ink2)] hover:text-[var(--neu-ink)] hover:bg-[var(--neu-bg3)]'
       }`}
     >
-      <i className={`ti ${item.icono} text-[18px] flex-shrink-0`} aria-hidden="true" />
-      <span className="flex-1 truncate">{item.label}</span>
-      {item.insignia !== undefined && item.insignia > 0 && (
-        <span
-          className="min-w-[24px] h-[22px] px-1.5 rounded-full text-[12px] font-bold flex items-center justify-center tabular-nums flex-shrink-0"
-          style={{ background: 'var(--neu-bg3)', color: 'var(--neu-ink2)' }}
-        >
-          <span className="sr-only">{item.id === 'tareas' ? 'pendientes: ' : 'activos: '}</span>
-          {item.insignia}
-        </span>
-      )}
-      {item.id === 'enfoque' && <EnfoqueEnMenu colapsado={false} />}
+      <i className={`ti ${item.icono} text-[19px] flex-shrink-0`} />
+      <Etiqueta visible={!colapsado}>{item.label}</Etiqueta>
+      {item.id === 'enfoque' && <EnfoqueEnMenu colapsado={colapsado} />}
     </button>
   )
 }
