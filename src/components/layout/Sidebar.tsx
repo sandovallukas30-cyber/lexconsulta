@@ -242,7 +242,7 @@ export function Sidebar() {
             <Etiqueta visible={!colapsado} className={colapsado ? '' : 'flex-1'}>
               <span className="block">Códigos</span>
               <span className={`block text-[11px] font-normal truncate ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                {topeVisible(activos)} activos
+                {activos} activos
               </span>
             </Etiqueta>
             {!colapsado && (

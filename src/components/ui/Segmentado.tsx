@@ -25,7 +25,7 @@ export function Segmentado<T extends string>({
             aria-pressed={activo}
             disabled={deshabilitado && !activo}
             onClick={() => onChange(o.valor)}
-            className={`sin-tactil relative ${grande ? 'h-11 px-6 text-[15px]' : 'h-9 px-4 text-[13px]'} rounded-full font-bold transition-colors disabled:opacity-40 ${
+            className={`sin-tactil relative ${grande ? 'h-11 px-6 text-[15px]' : 'h-9 pointer-coarse:h-11 px-4 text-[13px]'} rounded-full font-bold transition-colors disabled:opacity-40 ${
               activo ? 'text-[var(--accent-texto)]' : 'text-[var(--neu-ink3)] hover:text-[var(--neu-ink2)]'
             }`}
           >

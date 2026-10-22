@@ -241,7 +241,7 @@ export function HoyView() {
           <Tarjeta titulo="Clases de hoy" icono="ti-calendar-event">
             {clasesHoy.length === 0 ? (
               <p className={`text-sm py-2 ${suave}`}>
-                No hay clases registradas para hoy. Se muestran las que agregues en la pestaña Clases de cada ramo.
+                No hay clases con fecha de hoy. Aquí salen las clases que cargues en la pestaña Clases de cada ramo (el horario por sí solo no alcanza).
               </p>
             ) : (
               <ul className="space-y-1">

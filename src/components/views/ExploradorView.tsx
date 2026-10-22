@@ -77,6 +77,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
   // La vista imprimible del código completo tiene miles de nodos (~7.900 en el
   // Civil): solo se monta al imprimir (botón o Ctrl+P), no mientras se lee.
   const [imprimiendoCodigo, setImprimiendoCodigo] = useState(false)
+  const [reintentando, setReintentando] = useState(false)
   useEffect(() => {
     const antes = () => {
       if (document.body.dataset.imprimir || seleccionadoId) return
@@ -221,8 +222,17 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
           </p>
           <div className="flex justify-center gap-2">
             {errorCodigo && (
-              <button onClick={reintentar} className="boton boton-primario px-4">
-                Reintentar
+              <button
+                onClick={() => {
+                  // con la red caída el intento falla al instante y la pantalla no cambiaba: se ve que lo intentó
+                  setReintentando(true)
+                  window.setTimeout(() => setReintentando(false), 1200)
+                  reintentar()
+                }}
+                disabled={reintentando}
+                className="boton boton-primario px-4"
+              >
+                {reintentando ? 'Reintentando…' : 'Reintentar'}
               </button>
             )}
             <button

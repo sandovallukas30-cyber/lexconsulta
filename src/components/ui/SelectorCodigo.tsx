@@ -85,7 +85,7 @@ export function SelectorCodigo({ titulo, descripcion, icono, onElegir }: Props) 
               type="search"
               value={filtro}
               onChange={(e) => setFiltro(e.target.value)}
-              placeholder="Filtrar por nombre o número (ej. consumidor, 18.290)"
+              placeholder="Nombre o número (ej. 18.290)"
               aria-label="Filtrar códigos y leyes"
               className={`w-full rounded-xl pl-9 pr-3 min-h-[44px] text-sm outline-none border campo-foco transition-colors focus:border-[var(--accent-base)] ${
                 modoOscuro ? 'bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500' : 'bg-white border-zinc-200 text-zinc-900 placeholder:text-zinc-400'
@@ -321,15 +321,15 @@ function CodigoCard({ codigo, onClick, modoOscuro, delay }: CodigoCardProps) {
       </p>
 
       <div
-        className={`flex items-center justify-between text-[11px] pt-3 border-t ${
+        className={`flex items-center justify-between gap-3 text-[11px] pt-3 border-t ${
           modoOscuro ? 'border-zinc-800' : 'border-zinc-100'
         }`}
       >
-        <span className={modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}>
+        <span className={`min-w-0 text-left ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
           {codigo.totalArts > 0 ? `${codigo.totalArts} artículos` : codigo.norma}
         </span>
         <span
-          className="flex items-center gap-1 font-semibold transition-colors"
+          className="flex items-center gap-1 font-semibold transition-colors flex-shrink-0"
           style={{ color: 'var(--accent-texto)' }}
         >
           Abrir

@@ -97,7 +97,7 @@ export function TabResumen({
                 <p className="text-xs" style={suave}>No quedan clases por delante.</p>
               ) : (
                 <div>
-                  <p className="text-xs mb-1" style={suave}>Aún no hay clases cargadas.</p>
+                  <p className="text-xs mb-1" style={suave}>Aún no hay clases con fecha. El horario del ramo no basta: carga las clases para verlas en Hoy y en el Calendario.</p>
                   <button onClick={() => onIrA('clases')} className="sin-neu text-xs font-semibold" style={{ color: 'var(--accent-texto)' }}>
                     Cargar las clases del semestre
                   </button>

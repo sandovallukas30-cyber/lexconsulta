@@ -17,6 +17,7 @@ export function Topbar() {
   const vistaActiva = useStore((s) => s.vistaActiva)
   const modoOscuro = useStore((s) => s.modoOscuro)
   const setMenuMovilAbierto = useStore((s) => s.setMenuMovilAbierto)
+  const menuMovilAbierto = useStore((s) => s.menuMovilAbierto)
 
   return (
     <>
@@ -27,6 +28,7 @@ export function Topbar() {
         <button
           onClick={() => setMenuMovilAbierto(true)}
           aria-label="Abrir menú"
+          aria-expanded={menuMovilAbierto}
           className="boton boton-fantasma boton-icono -ml-1 escritorio:hidden"
         >
           <i className="ti ti-menu-2 text-xl" />

@@ -145,8 +145,13 @@ select:not(.bg-transparent):not(.sin-neu) {
 }
 input::placeholder, textarea::placeholder { color: var(--neu-ink3); }
 input:not(.sin-neu):focus-visible, textarea:not(.sin-neu):focus-visible, select:not(.sin-neu):focus-visible {
-  outline: none;
-  box-shadow: var(--neu-presionada-chica), 0 0 0 2px color-mix(in srgb, var(--accent-base) 55%, transparent);
+  box-shadow: var(--neu-presionada-chica);
+}
+/* Foco de los campos: anillo sólido (antes un halo al 55 % que quedaba bajo 3:1 de contraste, WCAG 1.4.11).
+   Va fuera de las capas de Tailwind, así que gana sobre `outline-none` de las clases de cada campo. */
+input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 1px;
 }
 :root[data-tema='oscuro'] input:not(.sin-neu), :root[data-tema='oscuro'] select:not(.sin-neu), :root[data-tema='oscuro'] textarea:not(.sin-neu) { color-scheme: dark; }
 
