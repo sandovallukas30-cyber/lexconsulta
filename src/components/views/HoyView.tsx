@@ -202,7 +202,7 @@ export function HoyView() {
                   const actual = esClase && enCurso?.claseId === it.id
                   const ultimo = i === lineaDeTiempo.length - 1
                   return (
-                    <li key={`${it.tipo}-${it.id}`} className="grid grid-cols-[3.25rem_1.25rem_minmax(0,1fr)_auto] gap-x-3 items-start">
+                    <li key={`${it.tipo}-${it.id}`} className="grid grid-cols-[3rem_1.25rem_minmax(0,1fr)] sm:grid-cols-[3.25rem_1.25rem_minmax(0,1fr)_auto] gap-x-3 items-start">
                       <span
                         className={`pt-3.5 text-[13px] tabular-nums ${esClase ? 'font-semibold' : 'font-bold uppercase tracking-wide text-[11px]'}`}
                         style={{ color: actual ? 'var(--accent-texto)' : 'var(--neu-ink3)' }}
@@ -218,14 +218,14 @@ export function HoyView() {
                       </span>
                       {esClase ? (
                         <button onClick={() => abrirModulo(it.moduloId)} className="min-w-0 py-2.5 text-left">
-                          <span className="block text-[15px] font-bold truncate" style={{ color: 'var(--neu-ink)' }}>{it.tema || nombreRamo(it.moduloId, ramos) || 'Clase'}</span>
+                          <span className="block text-[15px] font-bold sm:truncate" style={{ color: 'var(--neu-ink)' }}>{it.tema || nombreRamo(it.moduloId, ramos) || 'Clase'}</span>
                           <span className="block text-[13px] truncate" style={{ color: suave }}>
                             {nombreRamo(it.moduloId, ramos) ?? 'Ramo'}{it.sala ? ` · ${it.sala}` : ''}
                           </span>
                         </button>
                       ) : (
                         <div className="min-w-0 py-2.5">
-                          <span className="block text-[15px] font-bold truncate" style={{ color: 'var(--neu-ink)' }}>{it.titulo}</span>
+                          <span className="block text-[15px] font-bold sm:truncate" style={{ color: 'var(--neu-ink)' }}>{it.titulo}</span>
                           <span className="flex items-center gap-2 flex-wrap text-[13px]" style={{ color: suave }}>
                             {it.ramoId && (
                               <span className="px-2 py-0.5 rounded-md text-[12px] font-bold" style={{ background: 'color-mix(in srgb, var(--accent-base) 12%, transparent)', color: 'var(--accent-texto)' }}>
@@ -239,7 +239,7 @@ export function HoyView() {
                           </span>
                         </div>
                       )}
-                      <span className="py-2 flex gap-1.5 flex-shrink-0 items-center">
+                      <span className="col-start-3 sm:col-start-auto pb-2 sm:py-2 flex gap-1.5 flex-shrink-0 items-center">
                         {esClase ? (
                           actual ? (
                             <span className="text-[13px] font-bold px-3 py-1.5 rounded-full" style={{ background: 'color-mix(in srgb, var(--accent-base) 14%, transparent)', color: 'var(--accent-texto)' }}>

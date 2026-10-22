@@ -200,6 +200,59 @@ function PanelDia({ fecha, items }: { fecha: string; items: ItemCalendario[] }) 
   )
 }
 
+/** «Próximos días»: lo que viene después del día elegido (clases, tareas y evaluaciones con su cuenta regresiva). */
+function ProximosDias({ desde }: { desde: string }) {
+  const e = useEstilos()
+  const academico = useStore((s) => s.academicoModulos)
+  const tareas = useStore((s) => s.tareasPlan)
+  const ramos = useStore((s) => s.ramos)
+  const hoy = hoyISO()
+  const lista = useMemo(() => {
+    const ini = sumarDiasISO(desde, 1)
+    const mapa = itemsPorFecha({ academicoModulos: academico, tareasPlan: tareas, ramos }, ini, sumarDiasISO(ini, 20), new Set(TODOS))
+    const out: { fecha: string; it: ItemCalendario }[] = []
+    for (const f of [...mapa.keys()].sort()) for (const it of mapa.get(f) ?? []) if (!it.hecha) out.push({ fecha: f, it })
+    return out.slice(0, 5)
+  }, [desde, academico, tareas, ramos])
+  if (lista.length === 0) return null
+  const dias = (f: string) => Math.round((new Date(f + 'T12:00:00').getTime() - new Date(hoy + 'T12:00:00').getTime()) / 86_400_000)
+  return (
+    <section className={`${e.tarjeta} p-4`} aria-label="Próximos días">
+      <h2 className="text-[18px] font-bold mb-3" style={{ color: 'var(--neu-ink)', fontFamily: 'var(--font-head)' }}>Próximos días</h2>
+      <ul className="space-y-2">
+        {lista.map(({ fecha, it }) => {
+          const ramo = nombreRamo(it.ramoId, ramos)
+          const eval_ = it.tipo === 'evaluacion'
+          const d = dias(fecha)
+          const cuando = new Date(fecha + 'T12:00:00').toLocaleDateString('es-CL', { weekday: 'short', day: 'numeric' }).replace('.', '')
+          return (
+            <li key={`${fecha}-${it.tipo}-${it.titulo}`}>
+              <button
+                onClick={() => abrirRamo(it.ramoId)}
+                className="w-full flex gap-3 rounded-xl p-2.5 text-left transition-colors hover:bg-[var(--neu-bg3)]"
+                style={eval_ ? { background: 'var(--neu-danger-soft)' } : undefined}
+              >
+                <span className="w-1 self-stretch rounded-full flex-shrink-0" style={{ background: eval_ ? 'var(--neu-danger)' : it.tipo === 'clase' ? 'var(--accent-base)' : 'var(--neu-ink3)' }} aria-hidden="true" />
+                <span className="min-w-0 flex-1">
+                  {eval_ && (
+                    <span className="block text-[11px] font-bold uppercase tracking-[0.06em]" style={{ color: 'var(--neu-danger)' }}>
+                      Evaluación · en {d} {d === 1 ? 'día' : 'días'}
+                    </span>
+                  )}
+                  <span className="block text-[15px] font-bold truncate" style={{ color: 'var(--neu-ink)' }}>{it.titulo}</span>
+                  <span className="block text-[13px] truncate" style={{ color: 'var(--neu-ink2)' }}>
+                    {[eval_ ? undefined : it.tipo === 'clase' ? 'Clase' : 'Tarea', cuando, it.hora, ramo].filter(Boolean).join(' · ')}
+                  </span>
+                </span>
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+    </section>
+  )
+}
+
 export function CalendarioView() {
   const e = useEstilos()
   const academico = useStore((s) => s.academicoModulos)
@@ -328,7 +381,10 @@ export function CalendarioView() {
                 ))}
               </div>
             </section>
-            <PanelDia fecha={seleccion} items={items.get(seleccion) ?? []} />
+            <div className="space-y-4 min-w-0">
+              <PanelDia fecha={seleccion} items={items.get(seleccion) ?? []} />
+              <ProximosDias desde={seleccion} />
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-7 gap-3 items-start">
