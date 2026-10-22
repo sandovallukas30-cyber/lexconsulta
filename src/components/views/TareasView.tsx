@@ -11,9 +11,11 @@ import {
   contarPorFiltro,
   ETIQUETA_PRIORIDAD,
   filtrarTareas,
+  etiquetaFecha,
   hoyISO,
   mananaISO,
   proximoDiaISO,
+  sumarDiasISO,
   type FiltroTareas,
 } from '../../services/tareasPlan'
 
@@ -242,6 +244,32 @@ export function TareasView() {
 
   const cuentas = useMemo(() => contarPorFiltro(tareas), [tareas])
   const lista = useMemo(() => filtrarTareas(tareas, filtro, ramoFiltro), [tareas, filtro, ramoFiltro])
+  // la lista se agrupa por cuándo toca (vencidas, hoy, esta semana, más adelante, sin fecha); «Hechas» va sin agrupar
+  const grupos = useMemo(() => {
+    if (filtro === 'hechas') return [{ clave: 'hechas', titulo: '', detalle: '', tareas: lista }]
+    const hoy = hoyISO()
+    const finSemana = sumarDiasISO(hoy, 6)
+    const defs = [
+      { clave: 'vencidas', titulo: 'Vencidas', test: (f: string | null) => !!f && f < hoy },
+      { clave: 'hoy', titulo: 'Hoy', test: (f: string | null) => f === hoy },
+      { clave: 'semana', titulo: 'Esta semana', test: (f: string | null) => !!f && f > hoy && f <= finSemana },
+      { clave: 'despues', titulo: 'Más adelante', test: (f: string | null) => !!f && f > finSemana },
+      { clave: 'sinfecha', titulo: 'Sin fecha', test: (f: string | null) => !f },
+    ]
+    return defs
+      .map((d) => {
+        const ts = lista.filter((t) => d.test(t.fecha))
+        const primera = ts.find((t) => t.fecha)?.fecha
+        const detalle =
+          d.clave === 'hoy'
+            ? new Date().toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'short' })
+            : primera && d.clave !== 'sinfecha'
+            ? etiquetaFecha(primera).texto.toLowerCase()
+            : ''
+        return { clave: d.clave, titulo: d.titulo, detalle, tareas: ts }
+      })
+      .filter((g) => g.tareas.length > 0)
+  }, [lista, filtro])
   const ramosConTareas = useMemo(() => {
     const ids = new Set(tareas.map((t) => t.ramoId).filter((x): x is string => !!x))
     return ids
@@ -249,7 +277,7 @@ export function TareasView() {
 
   return (
     <div className={`h-full overflow-y-auto ${c.modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
-      <div className="max-w-3xl mx-auto p-4 sm:p-6 space-y-5">
+      <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-5">
         <header>
           <h1 className="titulo-pagina">Tareas</h1>
           <p className={`text-sm mt-1 ${c.suave}`}>
@@ -260,13 +288,25 @@ export function TareasView() {
         </header>
         <NuevaTarea onCreada={() => setFiltro((f) => (f === 'hechas' ? 'todas' : f))} />
 
-        <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrar tareas">
-          {FILTROS.map((f) => (
-            <button key={f.id} onClick={() => setFiltro(f.id)} aria-pressed={filtro === f.id} className="boton boton-chico boton-suave">
-              {f.etiqueta}
-              <span className="opacity-70 tabular-nums">{cuentas[f.id]}</span>
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-2 justify-between">
+          <div role="group" aria-label="Filtrar tareas" className="inline-flex gap-1 p-1 rounded-xl" style={{ background: 'var(--neu-bg3)' }}>
+            {FILTROS.map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setFiltro(f.id)}
+                aria-pressed={filtro === f.id}
+                className={`sin-tactil pointer-coarse:min-h-11 min-h-9 px-3.5 rounded-lg text-sm font-semibold inline-flex items-center gap-2 transition-colors ${
+                  filtro === f.id ? 'shadow-sm' : 'text-[var(--neu-ink3)]'
+                }`}
+                style={filtro === f.id ? { background: 'var(--neu-card)', color: 'var(--accent-texto)' } : undefined}
+              >
+                {f.etiqueta}
+                <span className="text-[12px] tabular-nums px-1.5 rounded-full" style={{ background: filtro === f.id ? 'color-mix(in srgb, var(--accent-base) 12%, transparent)' : 'transparent' }}>
+                  {cuentas[f.id]}
+                </span>
+              </button>
+            ))}
+          </div>
           {ramosConTareas.size > 0 && (
             <select
               aria-label="Filtrar por ramo"
@@ -284,25 +324,39 @@ export function TareasView() {
           )}
         </div>
 
-        <section className={`rounded-tarjeta border px-4 shadow-tarjeta ${c.tarjeta}`} aria-live="polite">
+        <div aria-live="polite" className="space-y-4">
           {lista.length === 0 ? (
-            <div className={`py-10 text-center text-sm ${c.suave}`}>
-              <i className="ti ti-checkbox text-2xl block mb-2 opacity-60" aria-hidden="true" />
-              {VACIO[filtro]}
-            </div>
+            <section className={`rounded-tarjeta border px-4 shadow-tarjeta ${c.tarjeta}`}>
+              <div className={`py-10 text-center text-sm ${c.suave}`}>
+                <i className="ti ti-checkbox text-2xl block mb-2 opacity-60" aria-hidden="true" />
+                {VACIO[filtro]}
+              </div>
+            </section>
           ) : (
-            <ul className={`divide-y ${c.modoOscuro ? 'divide-zinc-800' : 'divide-zinc-100'}`}>
-              <AnimatePresence initial={false}>
-              {lista.map((t) => (
-                <ItemLista key={t.id}>
-                  <FilaTarea tarea={t} abierta={abiertaId === t.id} onAbrir={() => setAbiertaId((a) => (a === t.id ? null : t.id))} />
-                  {abiertaId === t.id && <EditorTarea tarea={t} onCerrar={() => setAbiertaId(null)} />}
-                </ItemLista>
-              ))}
-              </AnimatePresence>
-            </ul>
+            grupos.map((g) => (
+              <section key={g.clave} aria-label={g.titulo}>
+                {g.titulo && (
+                  <h2 className="flex items-baseline gap-2 px-1 mb-1.5">
+                    <span className="text-[15px] font-bold" style={{ color: 'var(--neu-ink)' }}>{g.titulo}</span>
+                    {g.detalle && <span className="text-[13px]" style={{ color: 'var(--neu-ink3)' }}>{g.detalle}</span>}
+                  </h2>
+                )}
+                <div className={`rounded-tarjeta border px-4 shadow-tarjeta ${c.tarjeta}`}>
+                  <ul className={`divide-y ${c.modoOscuro ? 'divide-zinc-800' : 'divide-zinc-100'}`}>
+                    <AnimatePresence initial={false}>
+                      {g.tareas.map((t) => (
+                        <ItemLista key={t.id}>
+                          <FilaTarea tarea={t} abierta={abiertaId === t.id} onAbrir={() => setAbiertaId((a) => (a === t.id ? null : t.id))} />
+                          {abiertaId === t.id && <EditorTarea tarea={t} onCerrar={() => setAbiertaId(null)} />}
+                        </ItemLista>
+                      ))}
+                    </AnimatePresence>
+                  </ul>
+                </div>
+              </section>
+            ))
           )}
-        </section>
+        </div>
       </div>
     </div>
   )

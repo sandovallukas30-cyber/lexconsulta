@@ -9,7 +9,6 @@ import { RamoFicha } from '../ui/RamoFicha'
 import { formatoNota, resumenNotas } from '../../services/notas'
 import { ModalRamo } from '../ui/ModalRamo'
 import { diasHasta, evaluacionesPendientes, obtenerProximosEventos, formatearCountdown, urgenciaDe, moduloDesdeRamo, type EvaluacionPendiente, type Urgencia } from '../../services/modulosAcademico'
-import { calcularRachaEstudio, contarTarjetasVencidas } from '../../services/actividadEstudio'
 import type { Ramo } from '../../types'
 import { useAjustes } from '../../store/useAjustes'
 
@@ -79,39 +78,6 @@ const MAX_PROXIMAS = 5
 
 /** Las 3 clases pendientes más cercanas, en una línea compacta (antes se
  *  mezclaban con las evaluaciones en la misma lista). */
-function ProximasClases({ ramos, modoOscuro, onAbrir }: { ramos: Ramo[]; modoOscuro: boolean; onAbrir: (moduloId: string, tab: Tab) => void }) {
-  const academicoModulos = useStore((s) => s.academicoModulos)
-  const clases = useMemo(
-    () =>
-      obtenerProximosEventos(academicoModulos)
-        .filter((e) => e.tipo === 'clase' && diasHasta(e.fecha) >= 0 && resolverModulo(e.moduloId, ramos))
-        .slice(0, 3),
-    [academicoModulos, ramos]
-  )
-  if (clases.length === 0) return null
-  return (
-    <div className="mt-3 flex flex-wrap gap-2" aria-label="Próximas clases">
-      {clases.map((c, i) => {
-        const m = resolverModulo(c.moduloId, ramos)!
-        return (
-          <button
-            key={`${c.moduloId}-${i}`}
-            onClick={() => onAbrir(c.moduloId, 'clases')}
-            title={`${m.nombre}: ${c.titulo}`}
-            className={`inline-flex items-center gap-1.5 px-2.5 min-h-[36px] rounded-lg text-xs border transition-colors ${
-              modoOscuro ? 'border-zinc-800 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-600 hover:bg-white'
-            }`}
-          >
-            <i className="ti ti-calendar-event text-sm" style={{ color: m.color }} />
-            <span className="truncate max-w-[180px]">{c.titulo}</span>
-            <span className={modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}>· {formatearCountdown(diasHasta(c.fecha)).toLowerCase()}</span>
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
 /** B3: evaluaciones sin nota ordenadas por cercanía (todas las de módulos
  *  Y ramos), con cuenta regresiva y color por urgencia; vencidas aparte. */
 function ProximasEvaluaciones({ modoOscuro, onAbrir }: { modoOscuro: boolean; onAbrir: (moduloId: string, tab: Tab, evaluacionId?: string) => void }) {
@@ -132,17 +98,17 @@ function ProximasEvaluaciones({ modoOscuro, onAbrir }: { modoOscuro: boolean; on
   const suave = modoOscuro ? 'text-zinc-400' : 'text-zinc-500'
 
   return (
-    <section aria-labelledby="titulo-proximas-evaluaciones">
+    <section aria-labelledby="titulo-proximas-evaluaciones" className="neu-raised p-5">
       <div className="flex items-baseline justify-between gap-2 mb-3">
-        <h2 id="titulo-proximas-evaluaciones" className={`text-sm font-semibold ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>
-          Próximas evaluaciones
+        <h2 id="titulo-proximas-evaluaciones" className="text-[18px] font-bold" style={{ color: 'var(--neu-ink)', fontFamily: 'var(--font-head)' }}>
+          Evaluaciones
         </h2>
         {proximas.length > 0 && <span className={`text-xs ${suave}`}>{proximas.length} pendiente{proximas.length === 1 ? '' : 's'}</span>}
       </div>
       {proximas.length === 0 ? (
         <p className={`text-sm ${suave}`}>No tienes evaluaciones próximas registradas.</p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 gap-2">
           {visibles.map((x) => (
             <FilaEvaluacion key={`${x.moduloId}-${x.evaluacion.id}`} item={x} ramos={ramos} modoOscuro={modoOscuro} onAbrir={onAbrir} />
           ))}
@@ -153,7 +119,6 @@ function ProximasEvaluaciones({ modoOscuro, onAbrir }: { modoOscuro: boolean; on
           {verTodas ? 'Ver menos' : `Ver todas (${proximas.length})`}
         </button>
       )}
-      <ProximasClases ramos={ramos} modoOscuro={modoOscuro} onAbrir={onAbrir} />
       {vencidas.length > 0 && (
         <div className="mt-3">
           <button
@@ -165,7 +130,7 @@ function ProximasEvaluaciones({ modoOscuro, onAbrir }: { modoOscuro: boolean; on
             Vencidas sin nota ({vencidas.length}) — anota la nota o corrige la fecha
           </button>
           {verVencidas && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+            <div className="grid grid-cols-1 gap-2 mt-1">
               {vencidas.map((x) => (
                 <FilaEvaluacion key={`${x.moduloId}-${x.evaluacion.id}`} item={x} ramos={ramos} modoOscuro={modoOscuro} onAbrir={onAbrir} />
               ))}
@@ -177,66 +142,14 @@ function ProximasEvaluaciones({ modoOscuro, onAbrir }: { modoOscuro: boolean; on
   )
 }
 
-function DashboardHoy({ modoOscuro }: { modoOscuro: boolean }) {
-  const diasActividadEstudio = useStore((s) => s.diasActividadEstudio)
-  const colecciones = useStore((s) => s.colecciones)
-  const setVistaActiva = useStore((s) => s.setVistaActiva)
-
-  const racha = calcularRachaEstudio(diasActividadEstudio)
-  const tarjetasVencidas = contarTarjetasVencidas(colecciones)
-
-  if (racha === 0 && tarjetasVencidas === 0) return null
-
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      {racha > 0 && (
-        <div className={`flex items-center gap-3 p-4 rounded-xl border ${modoOscuro ? 'bg-zinc-800/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
-          <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-orange-500/15">
-            <i className="ti ti-flame text-lg text-orange-500" />
-          </div>
-          <div>
-            <div className={`text-xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{racha}</div>
-            <div className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
-              {racha === 1 ? 'día seguido estudiando' : 'días seguidos estudiando'}
-            </div>
-          </div>
-        </div>
-      )}
-      {tarjetasVencidas > 0 && (
-        <button
-          onClick={() => setVistaActiva('colecciones')}
-          className={`flex items-center gap-3 p-4 rounded-xl border text-left transition-colors ${
-            modoOscuro ? 'bg-zinc-800/60 border-zinc-800 hover:bg-zinc-800' : 'bg-white border-zinc-200 hover:bg-zinc-50'
-          }`}
-        >
-          <div
-            className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{ background: 'color-mix(in srgb, var(--accent-base) 15%, transparent)' }}
-          >
-            <i className="ti ti-cards text-lg" style={{ color: 'var(--accent-texto)' }} />
-          </div>
-          <div>
-            <div className={`text-xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{tarjetasVencidas}</div>
-            <div className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
-              {tarjetasVencidas === 1 ? 'tarjeta para repasar hoy' : 'tarjetas para repasar hoy'}
-            </div>
-          </div>
-        </button>
-      )}
-    </div>
-  )
-}
-
 function MisRamos({
   modoOscuro,
   onAbrirRamo,
   onEditarRamo,
-  onNuevoRamo,
 }: {
   modoOscuro: boolean
   onAbrirRamo: (id: string) => void
   onEditarRamo: (ramo: Ramo) => void
-  onNuevoRamo: () => void
 }) {
   const ramos = useStore((s) => s.ramos)
   const academico = useStore((s) => s.academicoModulos)
@@ -264,10 +177,7 @@ function MisRamos({
             </span>
           )}
         </div>
-        <button onClick={onNuevoRamo} className="boton boton-suave boton-chico">
-          <i className="ti ti-plus text-sm" aria-hidden="true" />
-          Agregar ramo
-        </button>
+
       </div>
 
       {ramos.length === 0 ? (
@@ -278,7 +188,7 @@ function MisRamos({
           <p className="text-sm">Agrega los ramos que cursas este semestre, con sus profesores y horario.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {ramos.map((ramo) => (
             <RamoFicha
               key={ramo.id}
@@ -364,49 +274,35 @@ export function ModulosView() {
 
   return (
     <div className={`h-full overflow-y-auto ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
-      <div className="max-w-5xl mx-auto px-6 py-10">
-        <div className="flex items-center gap-3 mb-2">
-          <div
-            className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{
-              background: modoOscuro
-                ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)'
-                : 'color-mix(in srgb, var(--accent-base) 6%, transparent)',
-            }}
-          >
-            <i className="ti ti-layout-grid text-xl" style={{ color: 'var(--accent-texto)' }} />
-          </div>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+        <div className="flex flex-wrap items-start gap-3">
           <div className="flex-1 min-w-0">
             <h1 className="titulo-pagina">Mis ramos</h1>
-            <p className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
-              Tus ramos del semestre, lo que viene y las áreas del derecho para explorar
-            </p>
+            <p className="text-sm mt-1" style={{ color: 'var(--neu-ink2)' }}>Tus ramos del semestre, lo que viene y las áreas del derecho para explorar</p>
           </div>
           <button
             onClick={() => setRespaldoAbierto(true)}
             title="Exportar o importar un respaldo de tus ramos, apuntes, colecciones y mapas"
-            className={`flex-shrink-0 flex items-center gap-1.5 px-3 min-h-[40px] rounded-lg text-xs font-medium transition-colors ${
-              modoOscuro ? 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700' : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50'
-            }`}
+            className="boton boton-suave flex-shrink-0"
           >
-            <i className="ti ti-database-export text-sm" />
+            <i className="ti ti-database-export text-sm" aria-hidden="true" />
             <span className="hidden sm:inline">Respaldo</span>
+          </button>
+          <button onClick={abrirNuevoRamo} className="boton boton-primario flex-shrink-0">
+            <i className="ti ti-plus text-sm" aria-hidden="true" />
+            Agregar ramo
           </button>
         </div>
 
-        <div className="mt-8 space-y-8">
-          {/* orden: primero lo que cursas, luego lo que viene, después tu constancia y por último el catálogo de áreas */}
-          <MisRamos
-            modoOscuro={modoOscuro}
-            onAbrirRamo={(id) => abrirModulo(id)}
-            onEditarRamo={abrirEdicionRamo}
-            onNuevoRamo={abrirNuevoRamo}
-          />
-
-          <ProximasEvaluaciones modoOscuro={modoOscuro} onAbrir={abrirModulo} />
-
-          <DashboardHoy modoOscuro={modoOscuro} />
-
+        <div className="mt-6 space-y-6">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] items-start">
+            <MisRamos
+              modoOscuro={modoOscuro}
+              onAbrirRamo={(id) => abrirModulo(id)}
+              onEditarRamo={abrirEdicionRamo}
+            />
+            <ProximasEvaluaciones modoOscuro={modoOscuro} onAbrir={abrirModulo} />
+          </div>
           <section aria-label="Áreas del derecho">
             <button
               onClick={() => alternarCatalogo(!catalogoVisible)}

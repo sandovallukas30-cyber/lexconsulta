@@ -133,6 +133,12 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
     p.set('codigo', tipoActivo)
     p.set('art', art)
     window.history.replaceState(window.history.state, '', `${window.location.pathname}?${p}${window.location.hash}`)
+    try {
+      // para «Seguir leyendo» en la pantalla de elegir norma
+      localStorage.setItem('prima-lex-seguir', JSON.stringify({ codigo: tipoActivo, art }))
+    } catch {
+      /* sin almacenamiento */
+    }
   }, [tipoActivo, seleccionado?.a])
   useEffect(
     () => () => {

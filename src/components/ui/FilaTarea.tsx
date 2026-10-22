@@ -1,6 +1,6 @@
 import { useStore } from '../../store/useStore'
 import type { TareaPlan } from '../../types'
-import { colorRamo, etiquetaFecha, nombreRamo, progresoSubtareas } from '../../services/tareasPlan'
+import { colorRamo, ETIQUETA_PRIORIDAD, etiquetaFecha, nombreRamo, progresoSubtareas } from '../../services/tareasPlan'
 import { horasMin } from '../../services/enfoque'
 import { celebrar } from '../../services/celebrar'
 
@@ -96,13 +96,11 @@ export function FilaTarea({ tarea, onAbrir, abierta }: Props) {
         </div>
       </div>
 
-      {tarea.prioridad !== 'baja' && !tarea.hecha && (
-        <span
-          className="mt-2 w-2 h-2 rounded-full flex-shrink-0"
-          style={{ background: COLOR_PRIORIDAD[tarea.prioridad] }}
-          title={`Prioridad ${tarea.prioridad}`}
-        >
-          <span className="sr-only">Prioridad {tarea.prioridad}</span>
+      {!tarea.hecha && (
+        <span className="mt-1 inline-flex items-center gap-1.5 text-[13px] flex-shrink-0" style={{ color: 'var(--neu-ink2)' }}>
+          <span className="w-2 h-2 rounded-full" style={{ background: COLOR_PRIORIDAD[tarea.prioridad] }} aria-hidden="true" />
+          {ETIQUETA_PRIORIDAD[tarea.prioridad]}
+          <span className="sr-only"> (prioridad)</span>
         </span>
       )}
     </div>
