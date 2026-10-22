@@ -285,7 +285,7 @@ export function Sidebar() {
               title={modoOscuro ? 'Modo claro' : 'Modo oscuro'}
               aria-label={modoOscuro ? 'Activar modo claro' : 'Activar modo oscuro'}
             >
-              <span className="text-lg leading-none" aria-hidden="true">{modoOscuro ? '☀️' : '🌙'}</span>
+              <IlustracionTema oscuro={modoOscuro} />
             </button>
           </div>
         </div>
@@ -313,6 +313,36 @@ function Etiqueta({ visible, children, className = '' }: { visible: boolean; chi
     >
       <span className="min-w-0 overflow-hidden whitespace-nowrap">{children}</span>
     </span>
+  )
+}
+
+/** Ilustración simple del cambio de tema: muestra a qué modo se pasa (sol si estás en oscuro, luna si estás en claro). */
+function IlustracionTema({ oscuro }: { oscuro: boolean }) {
+  return oscuro ? (
+    <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+      <circle cx="13" cy="13" r="5.2" fill="#F6B73C" />
+      {Array.from({ length: 8 }, (_, i) => {
+        const a = (i * Math.PI) / 4
+        return (
+          <line
+            key={i}
+            x1={13 + Math.cos(a) * 8.4}
+            y1={13 + Math.sin(a) * 8.4}
+            x2={13 + Math.cos(a) * 11}
+            y2={13 + Math.sin(a) * 11}
+            stroke="#F6B73C"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        )
+      })}
+    </svg>
+  ) : (
+    <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+      <path d="M20.5 15.6A8.6 8.6 0 0 1 10.4 5.5a8.6 8.6 0 1 0 10.1 10.1Z" fill="#6D74D9" />
+      <circle cx="19.6" cy="6.4" r="1.2" fill="#6D74D9" />
+      <circle cx="22.4" cy="10.2" r="0.8" fill="#6D74D9" />
+    </svg>
   )
 }
 
