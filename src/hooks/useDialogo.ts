@@ -53,7 +53,10 @@ export function useDialogo<T extends HTMLElement = HTMLDivElement>(abierto: bool
     return () => {
       window.clearTimeout(t)
       document.removeEventListener('keydown', alTeclear)
-      previo?.focus?.()
+      // si lo que tenía el foco ya no existe (o era la página, p. ej. al abrir con Ctrl+K), el foco va al
+      // contenido: antes caía en <body> y el siguiente Tab volvía al inicio de la página
+      const vuelve = previo && previo !== document.body && previo.isConnected ? previo : document.getElementById('contenido')
+      vuelve?.focus?.()
     }
   }, [abierto])
 

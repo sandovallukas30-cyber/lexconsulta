@@ -55,7 +55,13 @@ export function Omnibar({ onClose }: Props) {
 
   // Autofocus en apertura
   useEffect(() => {
+    const previo = document.activeElement as HTMLElement | null
     inputRef.current?.focus()
+    // al cerrar, el foco vuelve a donde estaba (o al contenido): antes caía en <body>
+    return () => {
+      const vuelve = previo && previo !== document.body && previo.isConnected ? previo : document.getElementById('contenido')
+      vuelve?.focus?.()
+    }
   }, [])
 
   // Lógica de búsqueda (derivada: sin estado propio ni efecto)

@@ -1243,7 +1243,15 @@ function ModalBusqueda({
   }, [busqueda, abierto])
 
   useEffect(() => {
-    if (abierto) setTimeout(() => inputRef.current?.focus(), 50)
+    if (!abierto) return
+    const previo = document.activeElement as HTMLElement | null
+    const t = window.setTimeout(() => inputRef.current?.focus(), 50)
+    // al cerrar, el foco vuelve a donde estaba (o al contenido): antes caía en <body>
+    return () => {
+      window.clearTimeout(t)
+      const vuelve = previo && previo !== document.body && previo.isConnected ? previo : document.getElementById('contenido')
+      vuelve?.focus?.()
+    }
   }, [abierto])
 
   const onKey = (e: React.KeyboardEvent) => {
