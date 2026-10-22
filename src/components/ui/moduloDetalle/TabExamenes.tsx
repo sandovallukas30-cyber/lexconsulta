@@ -224,16 +224,16 @@ export function TabExamenes({
               <p className="text-sm font-medium text-emerald-600">Ya tienes el ramo matemáticamente aprobado.</p>
             ) : notaNecesaria !== null && notaNecesaria > 7 ? (
               <p className="text-sm font-medium text-red-600">
-                No alcanzas un {objetivoNum} aunque saques 7.0 en el {ponderacionPendiente}% restante.
+                No alcanzas un {objetivoNum} aunque saques 7.0 en lo que falta por evaluar ({ponderacionPendiente}% de la nota final).
               </p>
             ) : (
               <p className={`text-sm font-medium ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
-                Necesitas un promedio de <span style={{ color: 'var(--accent-texto)' }}>{notaNecesaria?.toFixed(2)}</span> en el {ponderacionPendiente}% que falta para lograr un {objetivoNum}.
+                Necesitas un promedio de <span style={{ color: 'var(--accent-texto)' }}>{notaNecesaria?.toFixed(2)}</span> en lo que falta por evaluar ({ponderacionPendiente}% de la nota final) para lograr un {objetivoNum}.
               </p>
             )}
             {ponderacionTotalActual < 100 && (
               <p className={`text-xs mt-2 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
-                Ojo: solo tienes {ponderacionTotalActual}% de evaluaciones cargadas — falta agregar el {100 - ponderacionTotalActual}% restante para que el cálculo sea exacto.
+                Ojo: solo cargaste evaluaciones por el {ponderacionTotalActual}% de la nota — agrega el {100 - ponderacionTotalActual}% restante para que el cálculo sea exacto.
               </p>
             )}
           </div>

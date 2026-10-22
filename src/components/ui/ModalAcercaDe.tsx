@@ -398,8 +398,9 @@ export function Privacidad({ modoOscuro }: { modoOscuro: boolean }) {
       <H modoOscuro={modoOscuro}>5. Límite diario de los juegos de práctica</H>
       <P modoOscuro={modoOscuro}>
         Los juegos tienen un límite diario de partidas. Si tienes sesión iniciada, la app envía al servidor el
-        token de tu sesión para que Supabase confirme tu correo y se te dé un límite mayor; el servidor no guarda ese
-        correo. Sin sesión, el límite se cuenta por dirección IP.
+        token de tu sesión para que Supabase confirme tu correo y se te dé un límite mayor; el servidor usa ese correo
+        solo para contar tus partidas del día, en su memoria temporal (hasta 24 horas), y no lo guarda en ninguna
+        base de datos. Sin sesión, el límite se cuenta por dirección IP.
       </P>
 
       <H modoOscuro={modoOscuro}>6. Inteligencia artificial</H>
@@ -414,11 +415,16 @@ export function Privacidad({ modoOscuro }: { modoOscuro: boolean }) {
         Para evitar abusos, el servidor mantiene en memoria un contador temporal de usos por dirección IP, que se
         descarta automáticamente. Intervienen como proveedores: Vercel (alojamiento; puede registrar datos técnicos de
         conexión como la IP), Supabase (cuentas, base de datos y envío del enlace de ingreso por correo), Google y Microsoft (solo si eliges
-        entrar con tu cuenta de alguno de ellos) y Anthropic (juegos). Cada uno trata los datos según sus propias políticas. No usamos cookies de
-        seguimiento ni analítica de terceros, y no vendemos datos. Para detectar fallos, la aplicación envía a nuestro
-        propio servidor avisos técnicos <strong>anónimos</strong>: el tipo de error, la sección abierta, la versión de la
-        aplicación, el tipo de pantalla y la velocidad de carga. No incluyen tu nombre, tu correo ni tus apuntes, no
-        se asocian a tu cuenta y no se usan para identificarte.
+        entrar con tu cuenta de alguno de ellos) y Anthropic (juegos). Algunas funciones usan además servicios que solo
+        intervienen si las usas, y que reciben tu dirección IP al hacerlo: YouTube y Vimeo (al pegar un video en la
+        Sala de estudio) y jsDelivr y PyPI (al importar un PDF de Notion se descarga el programa que lo lee; el PDF no
+        sale de tu dispositivo). Varios de estos proveedores están en otros países. Cada uno trata los datos según sus
+        propias políticas. No usamos cookies de seguimiento ni analítica de terceros, y no vendemos datos. Para detectar
+        fallos, la aplicación envía a nuestro propio servidor avisos técnicos <strong>anónimos</strong>: el tipo de
+        error y un fragmento de su mensaje (sin correos ni enlaces), el archivo y la ruta donde ocurrió, la sección
+        abierta, la versión de la aplicación, si está instalada, el tipo de pantalla y de conexión y la velocidad de
+        carga. No incluyen tu nombre, tu correo ni tus apuntes, no se asocian a tu cuenta y no se usan para
+        identificarte.
       </P>
 
       <H modoOscuro={modoOscuro}>8. Tus derechos y cómo ejercerlos</H>

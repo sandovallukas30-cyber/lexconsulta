@@ -8,6 +8,7 @@ import './index.css'
 import './base.css'
 import './enfoque.css'
 import { Raiz } from './Raiz.tsx'
+import { LimiteError } from './components/ui/LimiteError'
 // historial de "Volver" y scroll por vista (se engancha al store)
 import './services/navegacion'
 import { useStore } from './store/useStore'
@@ -58,6 +59,9 @@ iniciarReporteTecnico(() => useStore.getState().vistaActiva)
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <Raiz />
+    {/* Último recurso: si algo falla fuera de una vista (p. ej. un archivo base que no cargó tras un despliegue), en vez de pantalla en blanco sale «Recargar». */}
+    <LimiteError modoOscuro={window.matchMedia('(prefers-color-scheme: dark)').matches}>
+      <Raiz />
+    </LimiteError>
   </StrictMode>,
 )

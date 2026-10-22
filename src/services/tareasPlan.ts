@@ -15,6 +15,14 @@ export function mananaISO(): string {
   return fechaLocalISO(d)
 }
 
+/** Próxima vez que cae ese día de la semana (0 = domingo … 6 = sábado), sin contar hoy. */
+export function proximoDiaISO(diaSemana: number, desde: Date = new Date()): string {
+  const d = new Date(desde)
+  const falta = ((diaSemana - d.getDay() + 7) % 7) || 7
+  d.setDate(d.getDate() + falta)
+  return fechaLocalISO(d)
+}
+
 const PESO_PRIORIDAD: Record<PrioridadTarea, number> = { alta: 0, media: 1, baja: 2 }
 
 /** Nombre del ramo (propio o del catálogo) o null si no hay / ya no existe. */

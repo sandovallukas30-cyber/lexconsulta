@@ -13,6 +13,7 @@ import {
   filtrarTareas,
   hoyISO,
   mananaISO,
+  proximoDiaISO,
   type FiltroTareas,
 } from '../../services/tareasPlan'
 
@@ -45,11 +46,20 @@ function useClases() {
   }
 }
 
+// El último ramo elegido se recuerda mientras la app está abierta: antes el selector
+// volvía a «Sin ramo» cada vez que se entraba a Tareas y la tarea no aparecía en la ficha.
+let ultimoRamoElegido: string | null = null
+
 function NuevaTarea({ onCreada }: { onCreada: () => void }) {
   const agregar = useStore((s) => s.agregarTareaPlan)
+  const ramoExiste = useStore((s) => (ultimoRamoElegido ? s.ramos.some((r) => r.id === ultimoRamoElegido) || MODULOS.some((m) => m.id === ultimoRamoElegido) : false))
   const c = useClases()
   const [titulo, setTitulo] = useState('')
-  const [ramoId, setRamoId] = useState<string | null>(null)
+  const [ramoId, setRamoIdEstado] = useState<string | null>(ramoExiste ? ultimoRamoElegido : null)
+  const setRamoId = (v: string | null) => {
+    ultimoRamoElegido = v
+    setRamoIdEstado(v)
+  }
   const [fecha, setFecha] = useState<string | null>(null)
   const [prioridad, setPrioridad] = useState<PrioridadTarea>('media')
 
@@ -93,6 +103,12 @@ function NuevaTarea({ onCreada }: { onCreada: () => void }) {
         </button>
         <button type="button" onClick={() => setFecha(mananaISO())} aria-pressed={fecha === mananaISO()} className="boton boton-borde">
           Mañana
+        </button>
+        <button type="button" onClick={() => setFecha(proximoDiaISO(5))} aria-pressed={fecha === proximoDiaISO(5)} className="boton boton-borde">
+          Viernes
+        </button>
+        <button type="button" onClick={() => setFecha(proximoDiaISO(1))} aria-pressed={fecha === proximoDiaISO(1)} className="boton boton-borde">
+          Lunes
         </button>
         <select
           aria-label="Prioridad"

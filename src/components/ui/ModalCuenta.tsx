@@ -231,6 +231,13 @@ function ContenidoModalCuenta() {
                 <p className="text-xs" style={{ color: 'var(--neu-ink3)' }}>Sin contraseña: te mandamos un enlace que sirve una sola vez.</p>
               </form>
             )}
+            <p className="text-xs" style={{ color: 'var(--neu-ink3)' }}>
+              Al entrar aceptas los{' '}
+              <a href="/terminos" target="_blank" rel="noopener noreferrer" className="underline">Términos</a>
+              {' '}y la{' '}
+              <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="underline">Política de privacidad</a>
+              . Prima Lex es gratis por ahora; si algún día cobra, lo avisaremos antes.
+            </p>
           </div>
         )}
         {error && <p role="alert" className="text-sm mt-3" style={{ color: 'var(--neu-danger)' }}>{error}</p>}

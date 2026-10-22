@@ -421,6 +421,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
                     <i className="ti ti-copy text-sm" aria-hidden />
                     <span className="hidden sm:inline">Copiar con cita</span>
                   </button>
+                  <GuardarEnColeccion codigo={tipoActivo} articulo={seleccionado.a} modoOscuro={modoOscuro} />
                 </div>
               </div>
               <ArticuloTexto
@@ -535,6 +536,117 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
         posicionActual={indiceActual + 1}
         totalArticulos={arts.length}
       />
+    </div>
+  )
+}
+
+/** «Guardar» junto al artículo: lo agrega o lo quita de una colección, o crea una nueva.
+ *  Antes el único camino era al revés (Colecciones → Agregar artículo) y no se descubría. */
+function GuardarEnColeccion({ codigo, articulo, modoOscuro }: { codigo: CodigoTipo; articulo: string; modoOscuro: boolean }) {
+  const colecciones = useStore((s) => s.colecciones)
+  const agregar = useStore((s) => s.agregarArticuloAColeccion)
+  const quitar = useStore((s) => s.quitarArticuloDeColeccion)
+  const crear = useStore((s) => s.crearColeccion)
+  const [abierto, setAbierto] = useState(false)
+  const [nueva, setNueva] = useState('')
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!abierto) return
+    const fuera = (e: PointerEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setAbierto(false)
+    }
+    const tecla = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setAbierto(false)
+    }
+    document.addEventListener('pointerdown', fuera)
+    document.addEventListener('keydown', tecla)
+    return () => {
+      document.removeEventListener('pointerdown', fuera)
+      document.removeEventListener('keydown', tecla)
+    }
+  }, [abierto])
+
+  const estaEn = (c: (typeof colecciones)[number]) => c.articulos.some((a) => a.codigo === codigo && a.articulo === articulo)
+  const guardadoEn = colecciones.filter(estaEn).length
+
+  const alternar = (c: (typeof colecciones)[number]) => {
+    if (estaEn(c)) {
+      quitar(c.id, { codigo, articulo })
+      avisar.info(`${articulo} quitado de «${c.titulo}»`)
+    } else {
+      agregar(c.id, { codigo, articulo })
+      avisar.exito(`${articulo} guardado en «${c.titulo}»`)
+    }
+  }
+
+  const crearYGuardar = (e: React.FormEvent) => {
+    e.preventDefault()
+    const titulo = nueva.trim()
+    if (!titulo) return
+    const id = crear(titulo)
+    agregar(id, { codigo, articulo })
+    avisar.exito(`${articulo} guardado en «${titulo}»`)
+    setNueva('')
+    setAbierto(false)
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setAbierto((v) => !v)}
+        aria-expanded={abierto}
+        aria-haspopup="true"
+        title="Guardar este artículo en una colección"
+        aria-label={`Guardar ${articulo} en una colección`}
+        className="boton boton-fantasma boton-chico max-sm:boton-icono"
+      >
+        <i className="ti ti-bookmark text-sm" style={guardadoEn > 0 ? { color: 'var(--accent-texto)' } : undefined} aria-hidden />
+        <span className="hidden sm:inline">{guardadoEn > 0 ? 'Guardado' : 'Guardar'}</span>
+      </button>
+      {abierto && (
+        <div
+          role="group"
+          aria-label="Colecciones"
+          className={`absolute right-0 top-full mt-1 z-30 w-64 rounded-xl border p-2 shadow-xl ${
+            modoOscuro ? 'bg-zinc-900 border-zinc-700' : 'bg-white border-zinc-200'
+          }`}
+        >
+          {colecciones.length > 0 && (
+            <ul className="max-h-48 overflow-y-auto mb-2">
+              {colecciones.map((c) => (
+                <li key={c.id}>
+                  <button
+                    onClick={() => alternar(c)}
+                    aria-pressed={estaEn(c)}
+                    className={`w-full flex items-center gap-2 px-2 min-h-[44px] rounded-lg text-sm text-left ${
+                      modoOscuro ? 'hover:bg-zinc-800 text-zinc-100' : 'hover:bg-zinc-100 text-zinc-900'
+                    }`}
+                  >
+                    <i className={`ti ${estaEn(c) ? 'ti-square-check' : 'ti-square'} text-base`} style={estaEn(c) ? { color: 'var(--accent-texto)' } : undefined} aria-hidden />
+                    <span className="truncate">{c.titulo}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <form onSubmit={crearYGuardar} className="flex gap-1">
+            <input
+              value={nueva}
+              onChange={(e) => setNueva(e.target.value)}
+              aria-label="Nombre de la colección nueva"
+              placeholder="Nueva colección…"
+              maxLength={80}
+              className={`flex-1 min-w-0 h-control px-2 rounded-control border text-sm ${
+                modoOscuro ? 'bg-zinc-800 border-zinc-700 text-zinc-100' : 'bg-white border-zinc-300 text-zinc-900'
+              }`}
+            />
+            <button type="submit" disabled={!nueva.trim()} className="boton boton-primario boton-chico">
+              Crear
+            </button>
+          </form>
+        </div>
+      )}
     </div>
   )
 }

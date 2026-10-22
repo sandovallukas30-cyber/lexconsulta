@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { TareaPlan } from '../types'
-import { contarPorFiltro, etiquetaFecha, filtrarTareas, progresoSubtareas, sumarDiasISO } from './tareasPlan'
+import { contarPorFiltro, etiquetaFecha, filtrarTareas, progresoSubtareas, proximoDiaISO, sumarDiasISO } from './tareasPlan'
 
 const HOY = '2026-10-16'
 
@@ -13,6 +13,14 @@ beforeEach(() => {
   vi.setSystemTime(new Date(2026, 9, 16, 12, 0, 0)) // 16-oct-2026, hora local
 })
 afterEach(() => vi.useRealTimers())
+
+describe('proximoDiaISO', () => {
+  it('el viernes desde un viernes es el de la semana siguiente; desde otro día, el más cercano', () => {
+    expect(proximoDiaISO(5)).toBe('2026-10-23') // hoy es viernes 16-oct-2026
+    expect(proximoDiaISO(1)).toBe('2026-10-19') // lunes
+    expect(proximoDiaISO(5, new Date(2026, 9, 19, 9))).toBe('2026-10-23') // desde el lunes
+  })
+})
 
 describe('sumarDiasISO', () => {
   it('cruza meses y años', () => {
