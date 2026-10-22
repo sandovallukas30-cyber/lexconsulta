@@ -86,7 +86,7 @@ export function HoyView() {
   const lineaDeTiempo = useMemo(() => {
     const out: ItemDia[] = []
     for (const [moduloId, d] of Object.entries(academico)) {
-      for (const c of d.clases) {
+      for (const c of d.clases ?? []) {
         if (c.fecha === hoy) out.push({ tipo: 'clase', orden: c.hora ?? '99:99', moduloId, id: c.id, tema: c.tema, hora: c.hora, sala: c.sala, asistio: c.asistio })
       }
     }
@@ -128,8 +128,8 @@ export function HoyView() {
       let clases = 0
       let evals: string[] = []
       for (const datos of Object.values(academico)) {
-        clases += datos.clases.filter((c) => c.fecha === iso).length
-        evals = evals.concat(datos.evaluaciones.filter((e) => e.fecha === iso && e.nota === null).map((e) => e.nombre))
+        clases += (datos.clases ?? []).filter((c) => c.fecha === iso).length
+        evals = evals.concat((datos.evaluaciones ?? []).filter((e) => e.fecha === iso && e.nota === null).map((e) => e.nombre))
       }
       const tareasDia = tareas.filter((t) => !t.hecha && t.fecha === iso).length
       return {

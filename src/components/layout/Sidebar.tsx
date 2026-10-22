@@ -33,6 +33,13 @@ const itemsAcademicos: ItemMenu[] = [
   { id: 'practica', icono: 'ti-puzzle', label: 'Práctica' },
 ]
 
+// secciones del menú, con su título (se ocultan al retraer el menú)
+const GRUPOS: { titulo: string; items: ItemMenu[] }[] = [
+  { titulo: 'Planificar', items: itemsSemana },
+  { titulo: 'Estudiar', items: itemsAcademicos.filter((i) => i.id === 'modulos' || i.id === 'practica') },
+  { titulo: 'Biblioteca jurídica', items: itemsAcademicos.filter((i) => i.id === 'explorador' || i.id === 'colecciones' || i.id === 'mapasmentales') },
+]
+
 const VERDE = 'var(--accent-base)'
 
 export function Sidebar() {
@@ -92,7 +99,6 @@ export function Sidebar() {
   const total = codigos.length
   // el número exacto crece con cada ley que se agrega: en pantalla va con tope (el exacto queda en el tooltip)
   const topeVisible = (n: number) => (n > 9 ? '9+' : String(n))
-  const grupoAcademico = itemsAcademicos
 
   return (
     <>
@@ -181,36 +187,28 @@ export function Sidebar() {
         </div>
 
         <nav className={`neu-raised min-h-0 overflow-y-auto py-3 ${colapsado ? 'px-2' : 'px-3'}`}>
-          <div className="space-y-1">
-            {itemsSemana.map((item) => (
-              <BotonNav
-                key={item.id}
-                item={item}
-                activo={vistaActiva === item.id}
-                colapsado={colapsado}
-                onClick={() => irA(item.id)}
-              />
-            ))}
-          </div>
-
-          <div
-            aria-hidden="true"
-            className={`h-px my-3 ${colapsado ? 'mx-2' : 'mx-3'}`}
-            style={{ background: 'var(--neu-line)' }}
-          />
-
-          <div className="space-y-1">
-            {grupoAcademico.map((item) => (
-              <BotonNav
-                key={item.id}
-                item={item}
-                activo={vistaActiva === item.id}
-                colapsado={colapsado}
-                onClick={() => irA(item.id)}
-              />
-            ))}
-          </div>
-        </nav>
+          {GRUPOS.map((g, i) => (
+            <div key={g.titulo} className={i > 0 ? 'mt-3' : ''}>
+              {colapsado ? (
+                i > 0 && <div aria-hidden="true" className="h-px mx-2 mb-2" style={{ background: 'var(--neu-line)' }} />
+              ) : (
+                <p className="px-3.5 pt-1 pb-1 text-[11px] font-bold uppercase tracking-[0.08em]" style={{ color: 'var(--neu-ink3)' }}>
+                  {g.titulo}
+                </p>
+              )}
+              <div className="space-y-1">
+                {g.items.map((item) => (
+                  <BotonNav
+                    key={item.id}
+                    item={item}
+                    activo={vistaActiva === item.id}
+                    colapsado={colapsado}
+                    onClick={() => irA(item.id)}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}        </nav>
 
         <div className={`neu-flat mt-auto flex-shrink-0 ${colapsado ? 'p-2' : 'p-2.5'}`} data-pie-menu>
           <button
@@ -287,7 +285,7 @@ export function Sidebar() {
               title={modoOscuro ? 'Modo claro' : 'Modo oscuro'}
               aria-label={modoOscuro ? 'Activar modo claro' : 'Activar modo oscuro'}
             >
-              <i className={`ti ${modoOscuro ? 'ti-sun' : 'ti-moon'} text-lg`} aria-hidden="true" />
+              <span className="text-lg leading-none" aria-hidden="true">{modoOscuro ? '☀️' : '🌙'}</span>
             </button>
           </div>
         </div>
