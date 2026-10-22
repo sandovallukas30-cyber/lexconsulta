@@ -124,6 +124,28 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
     [arts, seleccionado]
   )
 
+  // El artículo abierto queda en la dirección (?codigo=…&art=…): se puede compartir el enlace, y
+  // recargar o volver con «atrás» no pierde el lugar.
+  useEffect(() => {
+    const art = seleccionado?.a
+    if (!art || window.location.pathname !== '/explorador') return
+    const p = new URLSearchParams(window.location.search)
+    p.set('codigo', tipoActivo)
+    p.set('art', art)
+    window.history.replaceState(window.history.state, '', `${window.location.pathname}?${p}${window.location.hash}`)
+  }, [tipoActivo, seleccionado?.a])
+  useEffect(
+    () => () => {
+      if (window.location.pathname !== '/explorador') return
+      const p = new URLSearchParams(window.location.search)
+      p.delete('codigo')
+      p.delete('art')
+      const s = p.toString()
+      window.history.replaceState(window.history.state, '', window.location.pathname + (s ? `?${s}` : '') + window.location.hash)
+    },
+    []
+  )
+
   // Al cambiar de artículo, empezar a leerlo desde arriba (antes quedaba el
   // scroll del artículo anterior y el siguiente se leía desde la mitad)
   useEffect(() => {
