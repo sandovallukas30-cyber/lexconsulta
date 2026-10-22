@@ -180,7 +180,6 @@ export function MapasMentalesView() {
     return (
       <ListaMapas
         mapas={mapas}
-        modoOscuro={modoOscuro}
         onAbrir={setMapaMentalActivo}
         onCrear={() => {
           const id = crearMapaMental('Nuevo mapa mental')
@@ -204,72 +203,120 @@ export function MapasMentalesView() {
 
 // ============= LISTA =============
 
+/** Miniatura de un mapa: sus nodos como cajitas y sus conexiones como líneas, sin texto. */
+function MiniaturaMapa({ mapa }: { mapa: MapaMental }) {
+  const nodos = mapa.nodos
+  if (nodos.length === 0) {
+    return (
+      <div className="h-[130px] flex items-center justify-center text-[13px]" style={{ color: 'var(--neu-ink3)', background: 'var(--neu-bg)' }}>
+        Mapa vacío
+      </div>
+    )
+  }
+  const ancho = (n: (typeof nodos)[number]) => n.ancho ?? 130
+  const alto = (n: (typeof nodos)[number]) => n.alto ?? 44
+  const minX = Math.min(...nodos.map((n) => n.posicion.x))
+  const minY = Math.min(...nodos.map((n) => n.posicion.y))
+  const maxX = Math.max(...nodos.map((n) => n.posicion.x + ancho(n)))
+  const maxY = Math.max(...nodos.map((n) => n.posicion.y + alto(n)))
+  const pad = 30
+  const porId = new Map(nodos.map((n) => [n.id, n]))
+  return (
+    <svg
+      viewBox={`${minX - pad} ${minY - pad} ${maxX - minX + pad * 2} ${maxY - minY + pad * 2}`}
+      preserveAspectRatio="xMidYMid meet"
+      className="w-full h-[130px]"
+      style={{ background: 'var(--neu-bg)' }}
+      role="img"
+      aria-label={`Vista previa del mapa ${mapa.titulo}`}
+    >
+      {mapa.conexiones.map((c) => {
+        const d = porId.get(c.desde)
+        const h = porId.get(c.hasta)
+        if (!d || !h) return null
+        return (
+          <line
+            key={c.id}
+            x1={d.posicion.x + ancho(d) / 2}
+            y1={d.posicion.y + alto(d) / 2}
+            x2={h.posicion.x + ancho(h) / 2}
+            y2={h.posicion.y + alto(h) / 2}
+            stroke="var(--neu-ink3)"
+            strokeOpacity={0.5}
+            strokeWidth={4}
+          />
+        )
+      })}
+      {nodos.map((n) => (
+        <rect
+          key={n.id}
+          x={n.posicion.x}
+          y={n.posicion.y}
+          width={ancho(n)}
+          height={alto(n)}
+          rx={n.forma === 'ovalo' ? alto(n) / 2 : 10}
+          fill={n.forma === 'ninguna' ? 'none' : n.color ?? 'color-mix(in srgb, var(--accent-base) 35%, white)'}
+          stroke={n.forma === 'ninguna' ? 'var(--neu-ink3)' : 'none'}
+          strokeWidth={3}
+        />
+      ))}
+    </svg>
+  )
+}
+
 function ListaMapas({
   mapas,
-  modoOscuro,
   onAbrir,
   onCrear,
   onUsarPlantilla,
   onEliminar,
 }: {
   mapas: MapaMental[]
-  modoOscuro: boolean
   onAbrir: (id: string) => void
   onCrear: () => void
   onUsarPlantilla: (id: string) => void
   onEliminar: (id: string) => void
 }) {
+  const [plantillasAbiertas, setPlantillasAbiertas] = useState(mapas.length === 0)
+  const fecha = (ms: number) => new Date(ms).toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' })
   return (
-    <div className={`fuente-mapa-mental h-full overflow-y-auto ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
-      <div className="max-w-3xl mx-auto px-6 py-10">
-        <div className="flex items-center gap-3 mb-2">
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{
-              background: modoOscuro
-                ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)'
-                : 'color-mix(in srgb, var(--accent-base) 6%, transparent)',
-            }}
-          >
-            <i className="ti ti-hierarchy-2 text-lg" style={{ color: 'var(--accent-texto)' }} />
+    <div className="fuente-mapa-mental h-full overflow-y-auto">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+        <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
+          <div className="min-w-0">
+            <h1 className="titulo-pagina">Mapas mentales</h1>
+            <p className="text-sm mt-1 max-w-xl" style={{ color: 'var(--neu-ink2)' }}>
+              Diagramas libres para estructurar un tema: formas, tamaños de texto y conexiones, sin depender del texto oficial de un artículo.
+            </p>
           </div>
-          <h1 className="titulo-pagina">Mapas mentales</h1>
+          <button onClick={onCrear} className="boton boton-primario flex-shrink-0">
+            <i className="ti ti-plus text-base" aria-hidden="true" />
+            Nuevo mapa mental
+          </button>
         </div>
-        <p className={`text-sm mb-8 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
-          Diagramas libres para estructurar un tema — formas, tamaños de texto y conexiones, sin depender del texto
-          oficial de un artículo.
-        </p>
 
-        <button
-          onClick={onCrear}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed text-sm font-medium mb-6 transition-colors"
-          style={{ borderColor: modoOscuro ? '#3f3f46' : '#d4d4d8', color: 'var(--accent-texto)' }}
-        >
-          <i className="ti ti-plus text-base" />
-          Nuevo mapa mental
-        </button>
-
+        <div className="flex items-baseline gap-2 mb-3">
+          <h2 className="text-[17px] font-bold" style={{ color: 'var(--neu-ink)' }}>Mis mapas</h2>
+          <span className="text-[13px]" style={{ color: 'var(--neu-ink3)' }}>{mapas.length}</span>
+        </div>
         {mapas.length === 0 ? (
-          <p className={`text-center text-sm py-10 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
+          <p className="text-center text-sm py-10" style={{ color: 'var(--neu-ink3)' }}>
             Aún no tienes mapas mentales.
           </p>
         ) : (
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {mapas.map((m) => (
               <div
                 key={m.id}
-                className={`group flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors cursor-pointer ${
-                  modoOscuro ? 'bg-zinc-800/60 border-zinc-800 hover:bg-zinc-800' : 'bg-white border-zinc-200 hover:bg-zinc-50'
-                }`}
+                className="group relative rounded-2xl border overflow-hidden cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5"
+                style={{ background: 'var(--neu-card)', borderColor: 'var(--neu-line)' }}
                 onClick={() => onAbrir(m.id)}
               >
-                <i className={`ti ti-hierarchy-2 text-lg flex-shrink-0 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`} />
-                <div className="flex-1 min-w-0">
-                  <h3 className={`text-sm font-medium truncate ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
-                    {m.titulo}
-                  </h3>
-                  <p className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                    {m.nodos.length} nodo{m.nodos.length === 1 ? '' : 's'}
+                <MiniaturaMapa mapa={m} />
+                <div className="px-4 py-3 border-t" style={{ borderColor: 'var(--neu-line)' }}>
+                  <h3 className="text-[16px] font-bold truncate" style={{ color: 'var(--neu-ink)' }}>{m.titulo}</h3>
+                  <p className="text-[13px]" style={{ color: 'var(--neu-ink2)' }}>
+                    {m.nodos.length} nodo{m.nodos.length === 1 ? '' : 's'} · editado {fecha(m.fechaModificacion)}
                   </p>
                 </div>
                 <button
@@ -279,47 +326,58 @@ function ListaMapas({
                   }}
                   aria-label={`Eliminar el mapa "${m.titulo}"`}
                   title="Eliminar"
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ${
-                    modoOscuro ? 'text-zinc-500 hover:bg-zinc-700 hover:text-red-400' : 'text-zinc-400 hover:bg-zinc-100 hover:text-red-500'
-                  }`}
+                  className="absolute top-2 right-2 w-9 h-9 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100 transition-opacity"
+                  style={{ background: 'var(--neu-card)', color: 'var(--neu-ink3)', border: '1px solid var(--neu-line)' }}
                 >
-                  <i className="ti ti-trash text-sm" />
+                  <i className="ti ti-trash text-sm" aria-hidden="true" />
                 </button>
               </div>
             ))}
+            <button
+              onClick={onCrear}
+              className="min-h-[200px] rounded-2xl border border-dashed flex items-center justify-center text-[15px] font-semibold transition-colors hover:bg-[var(--neu-bg3)]"
+              style={{ borderColor: 'var(--neu-line)', color: 'var(--accent-texto)' }}
+            >
+              + Nuevo mapa mental
+            </button>
           </div>
         )}
 
-        <div className="mt-10">
-          <h2 className={`text-sm font-semibold mb-3 ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>
+        <div className="mt-8">
+          <button
+            onClick={() => setPlantillasAbiertas((v) => !v)}
+            aria-expanded={plantillasAbiertas}
+            className="min-h-11 flex items-center gap-2 text-[17px] font-bold"
+            style={{ color: 'var(--neu-ink)' }}
+          >
             Plantillas para empezar
-          </h2>
-          <div className="space-y-2">
-            {MAPAS_MENTALES_PLANTILLA.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => onUsarPlantilla(p.id)}
-                className={`w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors ${
-                  modoOscuro ? 'bg-zinc-800/40 border-zinc-800 hover:bg-zinc-800' : 'bg-white border-zinc-200 hover:bg-zinc-50'
-                }`}
-              >
-                <i className="ti ti-template text-lg flex-shrink-0" style={{ color: 'var(--accent-texto)' }} />
-                <div className="flex-1 min-w-0">
-                  <h3 className={`text-sm font-medium truncate ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
-                    {p.titulo}
-                  </h3>
-                  <p className={`text-xs truncate ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>{p.descripcion}</p>
-                </div>
-                <i className={`ti ti-chevron-right text-sm flex-shrink-0 ${modoOscuro ? 'text-zinc-600' : 'text-zinc-300'}`} />
-              </button>
-            ))}
-          </div>
+            <span className="text-[13px] font-normal" style={{ color: 'var(--neu-ink3)' }}>{MAPAS_MENTALES_PLANTILLA.length}</span>
+            <i className={`ti ti-chevron-down text-base transition-transform ${plantillasAbiertas ? 'rotate-180' : ''}`} style={{ color: 'var(--accent-texto)' }} aria-hidden="true" />
+          </button>
+          {plantillasAbiertas && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mt-2">
+              {MAPAS_MENTALES_PLANTILLA.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => onUsarPlantilla(p.id)}
+                  className="w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors hover:bg-[var(--neu-bg3)]"
+                  style={{ background: 'var(--neu-card)', borderColor: 'var(--neu-line)' }}
+                >
+                  <i className="ti ti-template text-lg flex-shrink-0" style={{ color: 'var(--accent-texto)' }} aria-hidden="true" />
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-semibold truncate" style={{ color: 'var(--neu-ink)' }}>{p.titulo}</h3>
+                    <p className="text-xs truncate" style={{ color: 'var(--neu-ink2)' }}>{p.descripcion}</p>
+                  </div>
+                  <i className="ti ti-chevron-right text-sm flex-shrink-0" style={{ color: 'var(--neu-ink3)' }} aria-hidden="true" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
   )
 }
-
 // ============= DETALLE =============
 
 const FORMAS: { id: FormaNodoMental; icono: string; label: string }[] = [

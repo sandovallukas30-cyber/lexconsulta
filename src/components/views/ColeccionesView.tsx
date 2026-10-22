@@ -7,6 +7,7 @@ import { avisar } from '../../store/useAvisos'
 import { eliminarColeccionConDeshacer } from '../../services/deshacer'
 import { useCodigo } from '../../hooks/useCodigo'
 import { precargar, obtenerCodigo } from '../../services/codigos'
+import { contarTarjetasVencidas } from '../../services/actividadEstudio'
 import { COLECCIONES_PLANTILLA } from '../../data/coleccionesPlantilla'
 import { obtenerMetadata, nombreCortoMetadata } from '../../data/codigosMetadata'
 import { ContenedorResaltable, ParrafoResaltado } from '../ui/TextoResaltable'
@@ -150,8 +151,8 @@ function ListaColecciones() {
 
   return (
     <div className={`h-full overflow-y-auto ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
-      <div className="max-w-5xl mx-auto px-8 py-10">
-        <div className="flex items-start justify-between gap-4 mb-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+        <div className="flex items-start justify-between gap-4 mb-6">
           <div>
             <h1 className="titulo-pagina">Colecciones</h1>
             <p className={`text-sm mt-1.5 max-w-md ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
@@ -211,6 +212,13 @@ function ListaColecciones() {
               />
             ))}
             </AnimatePresence>
+            <button
+              onClick={() => setModalNueva(true)}
+              className="min-h-[200px] rounded-2xl border border-dashed flex items-center justify-center text-[15px] font-semibold transition-colors hover:bg-[var(--neu-bg3)]"
+              style={{ borderColor: 'var(--neu-line)', color: 'var(--accent-texto)' }}
+            >
+              + Nueva colección
+            </button>
           </div>
         )}
 
@@ -348,6 +356,8 @@ function TarjetaColeccion({
   onEliminar: () => void
   modoOscuro: boolean
 }) {
+  const dominados = coleccion.articulos.filter((a) => a.estado === 'dominado').length
+  const porRepasar = contarTarjetasVencidas([coleccion])
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -356,10 +366,10 @@ function TarjetaColeccion({
       layout="position"
       transition={{ duration: 0.25, delay }}
       onClick={onAbrir}
-      className={`group relative text-left rounded-xl border-2 p-5 cursor-pointer transition-all hover:shadow-lg hover:-translate-y-0.5 ${
+      className={`group relative text-left rounded-2xl border p-5 cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 ${
         modoOscuro
-          ? 'bg-zinc-800/40 border-zinc-800 hover:border-[var(--accent-700)]'
-          : 'bg-white border-zinc-200 hover:border-[var(--accent-500)]'
+          ? 'bg-[var(--neu-card)] border-[var(--neu-line)] hover:border-[var(--accent-700)]'
+          : 'bg-white border-[var(--neu-line)] hover:border-[var(--accent-500)]'
       }`}
     >
       <button
@@ -375,44 +385,67 @@ function TarjetaColeccion({
         <i className="ti ti-trash text-sm" />
       </button>
 
-      <div
-        className="w-10 h-10 rounded-lg flex items-center justify-center mb-3"
-        style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 19%, transparent)' : 'color-mix(in srgb, var(--accent-base) 8%, transparent)' }}
-      >
-        <i className="ti ti-stack-2 text-xl" style={{ color: 'var(--accent-texto)' }} />
-      </div>
-
-      <h3 className={`text-base font-serif font-semibold leading-tight mb-1 pr-6 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+      <h3 className="text-[19px] font-serif font-semibold leading-tight mb-1 pr-6" style={{ color: 'var(--neu-ink)' }}>
         {coleccion.titulo}
       </h3>
-      <p className={`text-xs mb-3 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
+      <p className="text-[13px] mb-3" style={{ color: 'var(--neu-ink2)' }}>
         {coleccion.articulos.length} artículo{coleccion.articulos.length !== 1 ? 's' : ''}
+        {coleccion.articulos.length > 0 && ` · ${dominados}/${coleccion.articulos.length} dominados`}
       </p>
 
-      {coleccion.articulos.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-3">
-          {coleccion.articulos.slice(0, 6).map((a, i) => (
-            <span
-              key={i}
-              className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
-                modoOscuro ? 'bg-zinc-900 text-zinc-400' : 'bg-zinc-100 text-zinc-600'
-              }`}
-            >
-              {a.articulo}
-            </span>
+      {coleccion.articulos.length > 0 ? (
+        <div className="space-y-2 mb-3">
+          {coleccion.articulos.slice(0, 2).map((a) => (
+            <VistaPreviaArticulo key={`${a.codigo}-${a.articulo}`} codigo={a.codigo} articulo={a.articulo} />
           ))}
-          {coleccion.articulos.length > 6 && (
-            <span className={`px-1 py-0.5 text-[10px] ${modoOscuro ? 'text-zinc-600' : 'text-zinc-400'}`}>
-              +{coleccion.articulos.length - 6}
-            </span>
+          {coleccion.articulos.length > 2 && (
+            <p className="text-[13px] font-semibold" style={{ color: 'var(--accent-texto)' }}>
+              + {coleccion.articulos.length - 2} artículo{coleccion.articulos.length - 2 !== 1 ? 's' : ''} más
+            </p>
           )}
         </div>
+      ) : (
+        <p className="text-[13px] mb-3 rounded-xl border border-dashed p-4" style={{ color: 'var(--neu-ink2)', borderColor: 'var(--neu-line)' }}>
+          Aún no tienes artículos adjuntos.
+        </p>
       )}
 
-      <p className={`text-[10px] pt-3 border-t ${modoOscuro ? 'border-zinc-800 text-zinc-600' : 'border-zinc-100 text-zinc-400'}`}>
-        Modificada {formatearFecha(coleccion.fechaModificacion)}
-      </p>
+      <div className="flex items-center justify-between gap-2 pt-3 border-t text-[13px]" style={{ borderColor: 'var(--neu-line)', color: 'var(--neu-ink3)' }}>
+        <span>Modificada {formatearFecha(coleccion.fechaModificacion)}</span>
+        {porRepasar > 0 && (
+          <span className="px-2.5 py-0.5 rounded-full text-[12px] font-bold" style={{ background: 'color-mix(in srgb, var(--accent-base) 12%, transparent)', color: 'var(--accent-texto)' }}>
+            {porRepasar} por repasar
+          </span>
+        )}
+      </div>
     </motion.div>
+  )
+}
+
+/** Dos líneas del artículo, con su código y número, para reconocer la colección de un vistazo. */
+function VistaPreviaArticulo({ codigo, articulo }: { codigo: CodigoTipo; articulo: string }) {
+  const [, forzar] = useState(0)
+  useEffect(() => {
+    let vivo = true
+    if (!obtenerCodigo(codigo)) {
+      void precargar([codigo]).then(() => {
+        if (vivo) forzar((n) => n + 1)
+      })
+    }
+    return () => {
+      vivo = false
+    }
+  }, [codigo])
+  const texto = obtenerCodigo(codigo)?.articulos.find((x) => x.a === articulo)?.t ?? ''
+  return (
+    <div className="rounded-xl px-3 py-2" style={{ background: 'var(--neu-bg)' }}>
+      <p className="text-[11px] font-bold uppercase tracking-[0.06em]" style={{ color: 'var(--neu-danger)' }}>
+        {nombreCortoMetadata(codigo)} · {articulo}
+      </p>
+      <p className="text-[14px] leading-snug line-clamp-2" style={{ color: 'var(--neu-ink)', fontFamily: 'Georgia, serif' }}>
+        {texto || '\u00a0'}
+      </p>
+    </div>
   )
 }
 
