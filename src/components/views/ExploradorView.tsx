@@ -1,7 +1,7 @@
 import { useAjustes, sumarTamanoCodigo, TAMANO_CODIGO_MIN, TAMANO_CODIGO_MAX } from '../../store/useAjustes'
 import { useState, useMemo, useEffect, useRef, useCallback, type ReactNode, type TouchEvent } from 'react'
 import { createPortal, flushSync } from 'react-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, animate, useMotionValue } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { useProgresoScroll } from '../../hooks/useProgresoScroll'
 import { useCodigo } from '../../hooks/useCodigo'
@@ -192,25 +192,47 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
   useEffect(() => {
     indicePrevio.current = indiceActual
   }, [indiceActual])
-  const toqueInicio = useRef<{ x: number; y: number; ignorar: boolean } | null>(null)
-  const alTocarArticulo = (e: TouchEvent) => {
-    const t = e.touches[0]
-    // no robar el gesto a lo que ya se desplaza de lado (tablas, campos de texto) ni a un gesto de varios dedos
-    const ignorar = e.touches.length > 1 || !!(e.target as HTMLElement).closest('table, pre, input, textarea, select, [data-no-swipe]')
-    toqueInicio.current = { x: t.clientX, y: t.clientY, ignorar }
+  // Celular/tableta (puntero táctil): el artículo sigue al dedo y el vecino aparece por el lado, como un
+  // carrusel. En escritorio (mouse) se mantiene el cambio con fundido.
+  const esTactil = useMemo(() => typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches, [])
+  const desplazamientoX = useMotionValue(0)
+  const refPista = useRef<HTMLDivElement>(null)
+  const [arrastrando, setArrastrando] = useState(false)
+  // los vecinos se alinean con lo que se ve (el artículo puede estar leído hasta la mitad)
+  const [topVecinos, setTopVecinos] = useState(0)
+  const cambiandoArticulo = useRef(false)
+  const deslizarA = (dir: 1 | -1) => {
+    const destino = dir === 1 ? siguiente : anterior
+    if (!destino || cambiandoArticulo.current) return
+    cambiandoArticulo.current = true
+    setTopVecinos(refArticulo.current?.scrollTop ?? 0)
+    setArrastrando(true)
+    const ancho = refPista.current?.offsetWidth ?? window.innerWidth
+    // un cuadro para que los vecinos ya estén montados cuando empieza el movimiento
+    requestAnimationFrame(() => {
+      animate(desplazamientoX, -dir * ancho, {
+        duration: 0.22,
+        ease: [0.2, 0, 0, 1],
+        onComplete: () => {
+          // el vecino ya está justo en pantalla: se vuelve «actual» y la pista vuelve a 0 sin salto visible
+          flushSync(() => setSeleccionadoId(destino.a))
+          desplazamientoX.set(0)
+          setArrastrando(false)
+          cambiandoArticulo.current = false
+        },
+      })
+    })
   }
-  const alSoltarArticulo = (e: TouchEvent) => {
-    const inicio = toqueInicio.current
-    toqueInicio.current = null
-    if (!inicio || inicio.ignorar) return
-    const t = e.changedTouches[0]
-    const dx = t.clientX - inicio.x
-    const dy = t.clientY - inicio.y
-    // deslizamiento claramente horizontal; el scroll vertical y la selección de texto quedan intactos
-    if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.5) return
-    if ((window.getSelection()?.toString().length ?? 0) > 0) return
-    if (dx < 0 && siguiente) setSeleccionadoId(siguiente.a)
-    else if (dx > 0 && anterior) setSeleccionadoId(anterior.a)
+  const soltarArrastre = (dx: number, vx: number) => {
+    const ancho = refPista.current?.offsetWidth ?? window.innerWidth
+    const hayTexto = (window.getSelection()?.toString().length ?? 0) > 0
+    const dir: 1 | -1 = dx < 0 ? 1 : -1
+    const destino = dir === 1 ? siguiente : anterior
+    if (!hayTexto && destino && (Math.abs(dx) > ancho * 0.28 || Math.abs(vx) > 500)) {
+      deslizarA(dir)
+    } else {
+      animate(desplazamientoX, 0, { duration: 0.2, ease: [0.2, 0, 0, 1], onComplete: () => setArrastrando(false) })
+    }
   }
 
   // Cercanos: 2 antes y 2 después
@@ -302,6 +324,84 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
       </div>
     )
   }
+
+  const claseTarjeta = `max-w-3xl mx-3 sm:mx-auto my-4 sm:my-8 rounded-panel p-5 sm:p-10 ${
+    modoOscuro ? 'bg-zinc-800/40 border border-zinc-800' : 'bg-white shadow-tarjeta border border-zinc-200/60'
+  }`
+  const tarjetaVecina = (a: Articulo, posicion: number) => (
+    <article className={claseTarjeta}>
+      <div className="flex items-baseline justify-between gap-3 mb-6">
+        <h1
+          className={`font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}
+          style={{ fontSize: Math.round(tamanoCodigo * 1.75) }}
+        >
+          <span style={{ color: 'var(--accent-texto)' }}>{a.a}</span>
+        </h1>
+        <span className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
+          {posicion} de {arts.length}
+        </span>
+      </div>
+      <ArticuloTexto texto={transformarTexto(a.t)} modoOscuro={modoOscuro} codigo={tipoActivo} articulo={a.a} />
+    </article>
+  )
+
+  const tarjetaActual = seleccionado ? (
+        <motion.article
+          key={seleccionado.a}
+          ref={refTarjeta}
+          data-articulo={seleccionado.a}
+          {...(esTactil
+            ? { initial: false as const }
+            : {
+                initial: direccionNav ? { opacity: 0, x: direccionNav * 36 } : { opacity: 0, y: 12 },
+                animate: { opacity: 1, x: 0, y: 0 },
+                exit: { opacity: 0 },
+                transition: { duration: 0.25 },
+              })}
+          className={`max-w-3xl mx-3 sm:mx-auto my-4 sm:my-8 rounded-panel p-5 sm:p-10 ${
+            modoOscuro ? 'bg-zinc-800/40 border border-zinc-800' : 'bg-white shadow-tarjeta border border-zinc-200/60'
+          }`}
+        >
+          <div className="flex items-baseline justify-between gap-3 mb-6">
+            <h1
+              className={`font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}
+              style={{ fontSize: Math.round(tamanoCodigo * 1.75) }}
+            >
+              <span style={{ color: 'var(--accent-texto)' }}>{seleccionado.a}</span>
+            </h1>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                {indiceActual + 1} de {arts.length}
+              </span>
+              <button
+                onClick={() => imprimir('articulo')}
+                title="Imprimir o guardar como PDF solo este artículo"
+                aria-label={`Imprimir ${seleccionado.a}`}
+                className="boton boton-fantasma boton-chico boton-icono max-sm:hidden"
+              >
+                <i className="ti ti-printer text-sm" aria-hidden />
+              </button>
+              <button
+                onClick={copiarConCita}
+                title={`Copiar el texto con la cita "${citaArticulo(tipoActivo, seleccionado.a)}" y la fuente`}
+                aria-label={`Copiar ${seleccionado.a} con cita`}
+                className="boton boton-fantasma boton-chico max-sm:boton-icono"
+              >
+                <i className="ti ti-copy text-sm" aria-hidden />
+                <span className="hidden sm:inline">Copiar con cita</span>
+              </button>
+              <GuardarEnColeccion codigo={tipoActivo} articulo={seleccionado.a} modoOscuro={modoOscuro} />
+            </div>
+          </div>
+          <ArticuloTexto
+            texto={transformarTexto(seleccionado.t)}
+            modoOscuro={modoOscuro}
+            codigo={tipoActivo}
+            articulo={seleccionado.a}
+          />
+          <VinculosArticulo codigo={tipoActivo} articulo={seleccionado.a} modoOscuro={modoOscuro} />
+        </motion.article>
+  ) : null
 
   return (
     <div className={`h-full flex flex-col ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
@@ -444,63 +544,51 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
         </div>
       </div>
 
-      <div ref={refArticulo} className="flex-1 overflow-y-auto" onTouchStart={alTocarArticulo} onTouchEnd={alSoltarArticulo}>
-        {seleccionado && (
-          <AnimatePresence mode="wait">
-            <motion.article
-              key={seleccionado.a}
-              ref={refTarjeta}
-              data-articulo={seleccionado.a}
-              initial={direccionNav ? { opacity: 0, x: direccionNav * 36 } : { opacity: 0, y: 12 }}
-              animate={{ opacity: 1, x: 0, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className={`max-w-3xl mx-3 sm:mx-auto my-4 sm:my-8 rounded-panel p-5 sm:p-10 ${
-                modoOscuro ? 'bg-zinc-800/40 border border-zinc-800' : 'bg-white shadow-tarjeta border border-zinc-200/60'
-              }`}
-            >
-              <div className="flex items-baseline justify-between gap-3 mb-6">
-                <h1
-                  className={`font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}
-                  style={{ fontSize: Math.round(tamanoCodigo * 1.75) }}
-                >
-                  <span style={{ color: 'var(--accent-texto)' }}>{seleccionado.a}</span>
-                </h1>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                    {indiceActual + 1} de {arts.length}
-                  </span>
-                  <button
-                    onClick={() => imprimir('articulo')}
-                    title="Imprimir o guardar como PDF solo este artículo"
-                    aria-label={`Imprimir ${seleccionado.a}`}
-                    className="boton boton-fantasma boton-chico boton-icono max-sm:hidden"
-                  >
-                    <i className="ti ti-printer text-sm" aria-hidden />
-                  </button>
-                  <button
-                    onClick={copiarConCita}
-                    title={`Copiar el texto con la cita "${citaArticulo(tipoActivo, seleccionado.a)}" y la fuente`}
-                    aria-label={`Copiar ${seleccionado.a} con cita`}
-                    className="boton boton-fantasma boton-chico max-sm:boton-icono"
-                  >
-                    <i className="ti ti-copy text-sm" aria-hidden />
-                    <span className="hidden sm:inline">Copiar con cita</span>
-                  </button>
-                  <GuardarEnColeccion codigo={tipoActivo} articulo={seleccionado.a} modoOscuro={modoOscuro} />
-                </div>
+      {esTactil ? (
+        <div ref={refArticulo} className="flex-1 overflow-y-auto overflow-x-hidden">
+          <motion.div
+            ref={refPista}
+            className="relative flow-root min-h-full"
+            style={{ x: desplazamientoX }}
+            drag="x"
+            dragDirectionLock
+            dragMomentum={false}
+            onPointerDown={() => {
+              if (cambiandoArticulo.current) return
+              setTopVecinos(refArticulo.current?.scrollTop ?? 0)
+              setArrastrando(true)
+            }}
+            onPointerUp={() => {
+              if (!cambiandoArticulo.current && Math.abs(desplazamientoX.get()) < 1) setArrastrando(false)
+            }}
+            onPointerCancel={() => {
+              if (!cambiandoArticulo.current && Math.abs(desplazamientoX.get()) < 1) setArrastrando(false)
+            }}
+            onDrag={() => {
+              // sin vecino en ese lado el artículo solo cede un poco
+              const dx = desplazamientoX.get()
+              if ((dx > 0 && !anterior) || (dx < 0 && !siguiente)) desplazamientoX.set(dx * 0.3)
+            }}
+            onDragEnd={(_, info) => soltarArrastre(info.offset.x, info.velocity.x)}
+          >
+            {arrastrando && anterior && (
+              <div aria-hidden="true" inert className="absolute left-0 w-full" style={{ top: topVecinos, transform: 'translateX(-100%)' }}>
+                {tarjetaVecina(anterior, indiceActual)}
               </div>
-              <ArticuloTexto
-                texto={transformarTexto(seleccionado.t)}
-                modoOscuro={modoOscuro}
-                codigo={tipoActivo}
-                articulo={seleccionado.a}
-              />
-              <VinculosArticulo codigo={tipoActivo} articulo={seleccionado.a} modoOscuro={modoOscuro} />
-            </motion.article>
-          </AnimatePresence>
-        )}
-      </div>
+            )}
+            {tarjetaActual}
+            {arrastrando && siguiente && (
+              <div aria-hidden="true" inert className="absolute left-0 w-full" style={{ top: topVecinos, transform: 'translateX(100%)' }}>
+                {tarjetaVecina(siguiente, indiceActual + 2)}
+              </div>
+            )}
+          </motion.div>
+        </div>
+      ) : (
+        <div ref={refArticulo} className="flex-1 overflow-y-auto">
+          {tarjetaActual && <AnimatePresence mode="wait">{tarjetaActual}</AnimatePresence>}
+        </div>
+      )}
 
       <div
         className={`border-t px-2 sm:px-4 py-2 sm:py-3 ${
@@ -512,7 +600,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
             disabled={!anterior}
             label="Anterior"
             sub={anterior?.a}
-            onClick={() => anterior && setSeleccionadoId(anterior.a)}
+            onClick={() => (esTactil ? deslizarA(-1) : anterior && setSeleccionadoId(anterior.a))}
             icono="ti-chevron-left"
             modoOscuro={modoOscuro}
             align="left"
@@ -532,7 +620,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
             disabled={!siguiente}
             label="Siguiente"
             sub={siguiente?.a}
-            onClick={() => siguiente && setSeleccionadoId(siguiente.a)}
+            onClick={() => (esTactil ? deslizarA(1) : siguiente && setSeleccionadoId(siguiente.a))}
             icono="ti-chevron-right"
             modoOscuro={modoOscuro}
             align="right"
