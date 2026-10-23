@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useStore } from '../../store/useStore'
 import { avisar } from '../../store/useAvisos'
 import { FilaTarea } from '../ui/FilaTarea'
@@ -28,13 +28,16 @@ function cuentaRegresiva(fecha: string, hoy: string) {
   return { dias: d, texto, urgente: d >= 0 && d <= 3 }
 }
 
+/** Coral → rosa: más cálido y amable que el rojo plano, y combina con el índigo de la app. */
+const DEGRADE_EVAL = 'linear-gradient(135deg, #ff8a5c 0%, #e4504f 100%)'
+
 /** Bandera roja con la que se marca un día de evaluación (late cuando falta poco). */
 function BanderaEval({ urgente, className = '' }: { urgente: boolean; className?: string }) {
   return (
     <span
       aria-hidden="true"
       className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-white flex-shrink-0 ${urgente ? 'eval-latido' : ''} ${className}`}
-      style={{ background: 'var(--neu-danger)' }}
+      style={{ background: DEGRADE_EVAL, boxShadow: '0 2px 6px color-mix(in srgb, var(--neu-danger) 35%, transparent)' }}
     >
       <i className="ti ti-flag-3 text-[11px]" />
     </span>
@@ -135,14 +138,22 @@ function ContornoOla({ radio, grueso = false }: { radio: number; grueso?: boolea
     return quieto ? undefined : suscribirOla(pintar)
   }, [medida, radio])
 
+  const id = useId()
   return (
     <span ref={caja} aria-hidden="true" className="pointer-events-none absolute inset-0 z-[-1]">
-      <svg width="100%" height="100%" className="overflow-visible">
+      <svg width="100%" height="100%" className="overflow-visible" style={{ filter: 'drop-shadow(0 3px 7px color-mix(in srgb, var(--neu-danger) 22%, transparent))' }}>
+        <defs>
+          <linearGradient id={id} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#ff8a5c" />
+            <stop offset="55%" stopColor="#e4504f" />
+            <stop offset="100%" stopColor="#c45bd6" />
+          </linearGradient>
+        </defs>
         <path
           ref={ruta}
-          fill="var(--neu-danger-soft)"
-          stroke="var(--neu-danger)"
-          strokeWidth={grueso ? 2.1 : 1.5}
+          style={{ fill: 'color-mix(in srgb, var(--neu-danger) 7%, var(--neu-card))' }}
+          stroke={`url(#${id})`}
+          strokeWidth={grueso ? 2 : 1.4}
           strokeLinejoin="round"
           strokeLinecap="round"
         />
@@ -178,15 +189,17 @@ function ItemFila({ it }: { it: ItemCalendario }) {
     return (
       <button
         onClick={() => abrirRamo(it.ramoId)}
-        className={`w-full flex items-center gap-3 p-3 rounded-xl text-left border-2 ${it.hecha ? 'opacity-70' : ''}`}
+        className={`w-full flex items-center gap-3 p-3 rounded-2xl text-left border ${it.hecha ? 'opacity-70' : ''}`}
         style={{
-          background: 'var(--neu-danger-soft)',
-          borderColor: it.hecha ? 'color-mix(in srgb, var(--neu-ok) 50%, transparent)' : 'color-mix(in srgb, var(--neu-danger) 55%, transparent)',
+          background: it.hecha
+            ? 'color-mix(in srgb, var(--neu-ok) 8%, var(--neu-card))'
+            : 'linear-gradient(135deg, color-mix(in srgb, #ff8a5c 12%, var(--neu-card)), color-mix(in srgb, var(--neu-danger) 8%, var(--neu-card)))',
+          borderColor: it.hecha ? 'color-mix(in srgb, var(--neu-ok) 35%, transparent)' : 'color-mix(in srgb, var(--neu-danger) 30%, transparent)',
         }}
       >
         <span
           className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-white ${!it.hecha && cuenta.urgente ? 'eval-latido' : ''}`}
-          style={{ background: it.hecha ? 'var(--neu-ok)' : 'var(--neu-danger)' }}
+          style={{ background: it.hecha ? 'var(--neu-ok)' : DEGRADE_EVAL, boxShadow: it.hecha ? undefined : '0 3px 8px color-mix(in srgb, var(--neu-danger) 35%, transparent)' }}
           aria-hidden="true"
         >
           <i className={`ti ${it.hecha ? 'ti-check' : 'ti-flag-3'} text-lg`} />
@@ -227,8 +240,8 @@ function Etiqueta({ it }: { it: ItemCalendario }) {
   if (it.tipo === 'evaluacion' && !it.hecha) {
     return (
       <span
-        className="flex items-center gap-1 truncate text-[11px] leading-tight px-1.5 py-0.5 rounded-md font-bold text-white"
-        style={{ background: 'var(--neu-danger)' }}
+        className="flex items-center gap-1 truncate text-[11px] leading-tight px-1.5 py-0.5 rounded-md font-bold"
+        style={{ background: 'color-mix(in srgb, var(--neu-danger) 14%, transparent)', color: 'var(--neu-danger)' }}
       >
         <i className="ti ti-flag-3 text-[11px] flex-shrink-0" aria-hidden="true" />
         <span className="truncate">{it.titulo}</span>
@@ -356,8 +369,11 @@ function AvisoEvaluacion({ fecha, items }: { fecha: string; items: ItemCalendari
   return (
     <div
       role="note"
-      className="flex items-center gap-3 rounded-xl px-3 py-2.5 mb-3 border-2"
-      style={{ background: 'var(--neu-danger-soft)', borderColor: 'color-mix(in srgb, var(--neu-danger) 45%, transparent)' }}
+      className="flex items-center gap-3 rounded-2xl px-3 py-2.5 mb-3 border"
+      style={{
+        background: 'linear-gradient(135deg, color-mix(in srgb, #ff8a5c 12%, var(--neu-card)), color-mix(in srgb, var(--neu-danger) 8%, var(--neu-card)))',
+        borderColor: 'color-mix(in srgb, var(--neu-danger) 30%, transparent)',
+      }}
     >
       <BanderaEval urgente={c.urgente} className="!w-8 !h-8" />
       <p className="text-[13px] leading-snug" style={{ color: 'var(--neu-ink)' }}>
@@ -436,7 +452,7 @@ function ProximosDias({ desde }: { desde: string }) {
               <button
                 onClick={() => abrirRamo(it.ramoId)}
                 className="w-full flex gap-3 rounded-xl p-2.5 text-left transition-colors hover:bg-[var(--neu-bg3)]"
-                style={eval_ ? { background: 'var(--neu-danger-soft)' } : undefined}
+                style={eval_ ? { background: 'color-mix(in srgb, var(--neu-danger) 8%, var(--neu-card))' } : undefined}
               >
                 <span className="w-1 self-stretch rounded-full flex-shrink-0" style={{ background: eval_ ? 'var(--neu-danger)' : it.tipo === 'clase' ? 'var(--accent-base)' : 'var(--neu-ink3)' }} aria-hidden="true" />
                 <span className="min-w-0 flex-1">
