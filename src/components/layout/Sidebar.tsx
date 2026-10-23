@@ -137,7 +137,7 @@ export function Sidebar() {
         // en móvil, cerrado = fuera de la pantalla e inerte (no se puede tabular a él)
         inert={esMovil && !menuMovilAbierto ? true : undefined}
         className={`flex flex-col gap-5 overflow-y-auto overflow-x-hidden p-4 ${
-          esMovil ? 'fixed inset-y-0 left-0 z-[70] shadow-2xl bg-[var(--neu-bg)]' : 'relative flex-shrink-0 pr-1'
+          esMovil ? 'fixed inset-y-0 left-0 z-[70] shadow-2xl bg-[var(--neu-bg)] rounded-r-[28px]' : 'relative flex-shrink-0 pr-1'
         }`}
       >
         {/* El botón de colapsar/expandir vive SIEMPRE en el mismo lugar (esquina superior izquierda de
