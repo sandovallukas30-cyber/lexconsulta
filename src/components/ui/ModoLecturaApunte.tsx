@@ -8,9 +8,9 @@ import { TAMANOS_FUENTE, TEMAS_LECTURA } from '../../services/lecturaTema'
 import { encabezadosDe, parsearApunte, textoPlanoDe, tieneEstructuraAncha } from '../../services/apunteFormato'
 import { ApunteContenido } from './ApunteContenido'
 import { quitarResaltado, resaltarCoincidencia } from '../../services/resaltado'
-import { descargarApunteMd } from '../../services/apunteArchivo'
 import { imprimir, useImprimirConCtrlP } from '../../services/impresion'
 import { VistaImprimibleApunte } from './VistasImprimibles'
+import { MenuCompartirApunte } from './MenuCompartirApunte'
 import { tarjetasDe } from '../../services/tarjetasApunte'
 import { RepasoApunte } from './RepasoApunte'
 import { NotasMargen } from './NotasMargen'
@@ -221,7 +221,6 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
     if (window.matchMedia('(max-width: 1023px)').matches) setIndiceAbierto(false)
   }
 
-  const descargar = () => descargarApunteMd(apunte)
   // C9: Ctrl+P imprime el apunte (antes: una hoja en blanco)
   useImprimirConCtrlP('apunte', !editando)
 
@@ -336,24 +335,12 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
         )}
 
         {!editando && (
-          <button
-            onClick={() => imprimir('apunte')}
-            title="Imprimir o guardar como PDF (Ctrl+P)"
-            aria-label="Imprimir el apunte"
-            className={`hidden sm:flex w-9 h-9 rounded-lg items-center justify-center transition-colors flex-shrink-0 ${tema.textSoft} ${tema.hoverSuave}`}
-          >
-            <i className="ti ti-printer text-lg" />
-          </button>
+          <MenuCompartirApunte
+            apunte={apunte}
+            onImprimir={() => imprimir('apunte')}
+            claseBoton={`flex w-9 h-9 rounded-lg items-center justify-center transition-colors ${tema.textSoft} ${tema.hoverSuave}`}
+          />
         )}
-
-        <button
-          onClick={descargar}
-          title="Descargar como archivo .md"
-          aria-label="Descargar como archivo .md"
-          className={`hidden sm:flex w-9 h-9 rounded-lg items-center justify-center transition-colors flex-shrink-0 ${tema.textSoft} ${tema.hoverSuave}`}
-        >
-          <i className="ti ti-download text-lg" />
-        </button>
 
         {/* Tema de lectura */}
         <button

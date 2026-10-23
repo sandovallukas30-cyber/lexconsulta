@@ -4,6 +4,7 @@ import { useStore } from '../../../store/useStore'
 import { avisar } from '../../../store/useAvisos'
 import { MODULOS } from '../../../data/modulos'
 import { descargarApunteMd } from '../../../services/apunteArchivo'
+import { copiarApunteConFormato, descargarApunteHtml, descargarApunteWord } from '../../../services/apunteExportar'
 import { moverApunte } from '../../../services/accionesApunte'
 import type { ApunteModulo, CuadernoApuntes } from '../../../types'
 
@@ -26,7 +27,7 @@ export function MenuAccionesApunte({
   const alternar = () => {
     if (!abierto) {
       const r = ref.current?.getBoundingClientRect()
-      setHaciaArriba(!!r && window.innerHeight - r.bottom < 170)
+      setHaciaArriba(!!r && window.innerHeight - r.bottom < 300)
     }
     setAbierto((v) => !v)
   }
@@ -83,7 +84,7 @@ export function MenuAccionesApunte({
           ref={refMenu}
           role="menu"
           onKeyDown={alTeclear}
-          className={`absolute right-0 ${haciaArriba ? 'bottom-full mb-1' : 'top-full mt-1'} z-20 w-52 py-1 rounded-tarjeta border shadow-lg ${
+          className={`absolute right-0 ${haciaArriba ? 'bottom-full mb-1' : 'top-full mt-1'} z-20 w-60 py-1 rounded-tarjeta border shadow-lg ${
             modoOscuro ? 'bg-zinc-800 border-zinc-700' : 'bg-white border-zinc-200'
           }`}
         >
@@ -96,12 +97,43 @@ export function MenuAccionesApunte({
           <button
             role="menuitem"
             className={item}
+            onClick={elegir(async () => {
+              const ok = await copiarApunteConFormato(apunte)
+              if (ok) avisar.exito('Apunte copiado con formato')
+              else avisar.error('No se pudo copiar')
+            })}
+          >
+            <i className="ti ti-clipboard-text text-base" /> Copiar con formato
+          </button>
+          <button
+            role="menuitem"
+            className={item}
+            onClick={elegir(() => {
+              descargarApunteHtml(apunte)
+              avisar.exito('Apunte descargado como página web')
+            })}
+          >
+            <i className="ti ti-world text-base" /> Descargar página web
+          </button>
+          <button
+            role="menuitem"
+            className={item}
+            onClick={elegir(() => {
+              descargarApunteWord(apunte)
+              avisar.exito('Apunte descargado para Word')
+            })}
+          >
+            <i className="ti ti-file-text text-base" /> Descargar para Word
+          </button>
+          <button
+            role="menuitem"
+            className={item}
             onClick={elegir(() => {
               descargarApunteMd(apunte)
               avisar.exito('Apunte exportado a .md')
             })}
           >
-            <i className="ti ti-file-download text-base" /> Exportar a .md
+            <i className="ti ti-file-download text-base" /> Texto con marcas (.md)
           </button>
         </div>
       )}

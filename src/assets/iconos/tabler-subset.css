@@ -51,6 +51,7 @@
 .ti-circle-x:before{content:"\ea6a"}
 .ti-clear-formatting:before{content:"\ebe5"}
 .ti-clipboard-check:before{content:"\ea6c"}
+.ti-clipboard-text:before{content:"\f089"}
 .ti-clock:before{content:"\ea70"}
 .ti-cloud-check:before{content:"\f84d"}
 .ti-cloud-off:before{content:"\ed3e"}
@@ -160,6 +161,7 @@
 .ti-settings:before{content:"\eb20"}
 .ti-settings-2:before{content:"\f5ac"}
 .ti-shape:before{content:"\eb9c"}
+.ti-share:before{content:"\eb21"}
 .ti-share-2:before{content:"\f799"}
 .ti-share-3:before{content:"\f7bd"}
 .ti-shield:before{content:"\eb24"}
