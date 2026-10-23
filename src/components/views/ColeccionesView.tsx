@@ -864,7 +864,7 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
           <button
             onClick={() => setEditandoTitulo(true)}
             title="Renombrar"
-            className="group/title flex-1 min-w-0 text-left flex items-center gap-2"
+            className="group/title flex-1 min-w-[7rem] text-left flex items-center gap-2"
           >
             <h1 className={`text-lg font-serif font-semibold truncate ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
               {coleccion.titulo}
@@ -876,6 +876,21 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
             />
           </button>
         )}
+
+        <MenuAccionesColeccion
+          acciones={[
+            { icono: 'ti-hierarchy-2', texto: mapaVinculado ? `Mapa vinculado: ${mapaVinculado.titulo}` : 'Vincular con un mapa mental', onClick: () => setModalVincular(true) },
+            ...(coleccion.articulos.length > 0
+              ? [
+                  { icono: 'ti-share-2', texto: 'Compartir esta colección', onClick: () => setModalCompartir(true) },
+                  { icono: 'ti-printer', texto: 'Exportar a PDF', onClick: () => window.print() },
+                ]
+              : []),
+            { icono: 'ti-trash', texto: 'Eliminar colección', peligro: true, onClick: () => eliminarColeccionConDeshacer(coleccion.id) },
+          ]}
+        />
+        {/* en celular el resto de la cabecera baja a una segunda fila */}
+        <div className="basis-full h-0 sm:hidden" aria-hidden="true" />
 
         {coleccion.articulos.length > 0 && (
           <span className={`text-xs flex-shrink-0 hidden sm:inline ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
@@ -958,7 +973,7 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
         <button
           onClick={() => setModalVincular(true)}
           title={mapaVinculado ? `Vinculada con el mapa mental "${mapaVinculado.titulo}"` : 'Vincular con un mapa mental sobre el mismo tema'}
-          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
+          className={`w-8 h-8 rounded-lg hidden sm:flex items-center justify-center transition-colors flex-shrink-0 ${
             mapaVinculado
               ? 'text-white'
               : modoOscuro
@@ -974,7 +989,7 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
           <button
             onClick={() => setModalCompartir(true)}
             title="Compartir esta colección con un link o un archivo"
-            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
+            className={`w-8 h-8 rounded-lg hidden sm:flex items-center justify-center transition-colors flex-shrink-0 ${
               modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'
             }`}
           >
@@ -986,7 +1001,7 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
           <button
             onClick={() => window.print()}
             title="Exportar a PDF: abre el diálogo de impresión, elige 'Guardar como PDF'"
-            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
+            className={`w-8 h-8 rounded-lg hidden sm:flex items-center justify-center transition-colors flex-shrink-0 ${
               modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'
             }`}
           >
@@ -997,7 +1012,7 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
         <button
           onClick={() => eliminarColeccionConDeshacer(coleccion.id)}
           title="Eliminar colección"
-          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
+          className={`w-8 h-8 rounded-lg hidden sm:flex items-center justify-center transition-colors flex-shrink-0 ${
             modoOscuro ? 'text-zinc-500 hover:bg-zinc-800 hover:text-red-400' : 'text-zinc-400 hover:bg-zinc-100 hover:text-red-500'
           }`}
         >
@@ -3400,4 +3415,62 @@ function primerasPalabras(texto: string, n: number): string {
 
 function formatearFecha(ts: number): string {
   return new Date(ts).toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+/** «⋯» de la cabecera de una colección en celular: reúne las acciones menos usadas para que el título tenga lugar. */
+function MenuAccionesColeccion({ acciones }: { acciones: { icono: string; texto: string; onClick: () => void; peligro?: boolean }[] }) {
+  const [abierto, setAbierto] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!abierto) return
+    const fuera = (e: Event) => {
+      if (!ref.current?.contains(e.target as Node)) setAbierto(false)
+    }
+    const esc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setAbierto(false)
+    }
+    document.addEventListener('pointerdown', fuera)
+    window.addEventListener('keydown', esc)
+    return () => {
+      document.removeEventListener('pointerdown', fuera)
+      window.removeEventListener('keydown', esc)
+    }
+  }, [abierto])
+  return (
+    <div ref={ref} className="relative flex-shrink-0 sm:hidden">
+      <button
+        onClick={() => setAbierto((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={abierto}
+        aria-label="Más acciones de la colección"
+        className="w-9 h-9 rounded-lg flex items-center justify-center"
+        style={{ color: 'var(--neu-ink2)' }}
+      >
+        <i className="ti ti-dots text-xl" aria-hidden="true" />
+      </button>
+      {abierto && (
+        <div
+          role="menu"
+          className="absolute right-0 top-full mt-1 z-30 w-64 py-1.5 rounded-2xl border shadow-2xl"
+          style={{ background: 'var(--neu-card)', borderColor: 'var(--neu-line)' }}
+        >
+          {acciones.map((a) => (
+            <button
+              key={a.texto}
+              role="menuitem"
+              onClick={() => {
+                setAbierto(false)
+                a.onClick()
+              }}
+              className="w-full flex items-center gap-3 px-3.5 py-2.5 text-left text-sm font-semibold min-h-[44px] hover:bg-[var(--neu-bg3)]"
+              style={{ color: a.peligro ? 'var(--neu-danger)' : 'var(--neu-ink)' }}
+            >
+              <i className={`ti ${a.icono} text-lg flex-shrink-0`} aria-hidden="true" />
+              <span className="min-w-0 truncate">{a.texto}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
