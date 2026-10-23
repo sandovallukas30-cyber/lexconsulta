@@ -165,7 +165,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
     if (!resaltado) return
     const t = window.setTimeout(() => {
       if (refTarjeta.current && refTarjeta.current.dataset.articulo === resaltado.articulo) {
-        resaltarCoincidencia(refTarjeta.current, resaltado.texto)
+        resaltarCoincidencia(refTarjeta.current, resaltado.texto, { todas: true, duracionMs: 5000 })
       }
     }, 300)
     return () => window.clearTimeout(t)

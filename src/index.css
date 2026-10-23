@@ -295,7 +295,9 @@ html, body, #root { height: 100%; width: 100%; overflow: hidden; }
 }
 
 /* Coincidencia del buscador de apuntes (Omnibar → Modo Lectura) */
-::highlight(prima-busqueda) { background-color: #fde047; color: #1c1917; }
+::highlight(prima-busqueda) { background-color: #fde047; color: #1c1917; text-decoration: underline; text-decoration-color: #f59e0b; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+/* último tramo antes de apagarse: el mismo amarillo, más tenue */
+::highlight(prima-busqueda-suave) { background-color: #fef9c3; color: inherit; }
 
 /* Scrollbar custom — claro */
 *::-webkit-scrollbar { width: 10px; height: 10px; }

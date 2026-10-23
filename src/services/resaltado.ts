@@ -28,24 +28,83 @@ export function rangoDeCoincidencia(raiz: HTMLElement, consulta: string): Range 
 }
 
 type ApiResaltado = { highlights?: Map<string, unknown> }
+type ConstructorResaltado = new (...r: Range[]) => unknown
 
-/** Marca la primera coincidencia y la centra en pantalla. Si el navegador no
- *  tiene la Highlight API, la deja seleccionada. Devuelve si la encontró. */
-export function resaltarCoincidencia(raiz: HTMLElement, consulta: string): boolean {
-  const rango = rangoDeCoincidencia(raiz, consulta)
-  if (!rango) return false
-  ;(rango.startContainer.parentElement ?? raiz).scrollIntoView({ block: 'center' })
+/** Todas las apariciones de la búsqueda dentro de `raiz`: la frase completa si está; si no, cada palabra suelta
+ *  (con un tope, para que un texto enorme no se llene de marcas). */
+export function rangosDeCoincidencias(raiz: HTMLElement, consulta: string, tope = 200): Range[] {
+  const palabras = normalizarConsulta(consulta)
+  if (palabras.length === 0) return []
+  const recorrer = (buscados: string[]) => {
+    const rangos: Range[] = []
+    const walker = document.createTreeWalker(raiz, NodeFilter.SHOW_TEXT)
+    for (let n = walker.nextNode(); n && rangos.length < tope; n = walker.nextNode()) {
+      const texto = n.textContent ?? ''
+      const { norm, mapa } = normalizarConMapa(texto)
+      for (const buscado of buscados) {
+        let desde = 0
+        for (let i = norm.indexOf(buscado, desde); i >= 0 && rangos.length < tope; i = norm.indexOf(buscado, desde)) {
+          const rango = document.createRange()
+          rango.setStart(n, mapa[i])
+          rango.setEnd(n, mapa[i + buscado.length - 1] + 1)
+          rangos.push(rango)
+          desde = i + buscado.length
+        }
+      }
+    }
+    return rangos
+  }
+  const frase = palabras.length > 1 ? recorrer([palabras.join(' ')]) : []
+  return frase.length > 0 ? frase : recorrer([...new Set(palabras)])
+}
+
+let temporizadores: number[] = []
+const limpiarTemporizadores = () => {
+  temporizadores.forEach((id) => window.clearTimeout(id))
+  temporizadores = []
+}
+
+interface OpcionesResaltado {
+  /** Marcar todas las apariciones (por defecto solo la primera). */
+  todas?: boolean
+  /** Si se indica, la marca se desvanece sola pasado ese tiempo (ms): un último tramo más suave y se quita. */
+  duracionMs?: number
+}
+
+/** Marca la coincidencia y la centra en pantalla. Si el navegador no tiene la Highlight API, la deja
+ *  seleccionada. Devuelve si la encontró. */
+export function resaltarCoincidencia(raiz: HTMLElement, consulta: string, opciones: OpcionesResaltado = {}): boolean {
+  limpiarTemporizadores()
+  const rangos = opciones.todas ? rangosDeCoincidencias(raiz, consulta) : [rangoDeCoincidencia(raiz, consulta)].filter((r): r is Range => !!r)
+  if (rangos.length === 0) return false
+  ;(rangos[0].startContainer.parentElement ?? raiz).scrollIntoView({ block: 'center' })
   const api = (globalThis as { CSS?: ApiResaltado }).CSS?.highlights
-  const Resaltado = (globalThis as { Highlight?: new (r: Range) => unknown }).Highlight
-  if (api && Resaltado) api.set('prima-busqueda', new Resaltado(rango))
-  else {
+  const Resaltado = (globalThis as { Highlight?: ConstructorResaltado }).Highlight
+  if (api && Resaltado) {
+    api.set('prima-busqueda', new Resaltado(...rangos))
+    api.delete('prima-busqueda-suave')
+    if (opciones.duracionMs) {
+      const suave = Math.min(1200, opciones.duracionMs / 3)
+      // el color intenso pasa a uno tenue antes de apagarse, para que no desaparezca de golpe
+      temporizadores.push(
+        window.setTimeout(() => {
+          api.delete('prima-busqueda')
+          api.set('prima-busqueda-suave', new Resaltado(...rangos))
+        }, opciones.duracionMs - suave),
+        window.setTimeout(() => api.delete('prima-busqueda-suave'), opciones.duracionMs)
+      )
+    }
+  } else {
     const sel = window.getSelection()
     sel?.removeAllRanges()
-    sel?.addRange(rango)
+    sel?.addRange(rangos[0])
   }
   return true
 }
 
 export function quitarResaltado() {
-  ;(globalThis as { CSS?: ApiResaltado }).CSS?.highlights?.delete('prima-busqueda')
+  limpiarTemporizadores()
+  const api = (globalThis as { CSS?: ApiResaltado }).CSS?.highlights
+  api?.delete('prima-busqueda')
+  api?.delete('prima-busqueda-suave')
 }
