@@ -101,6 +101,16 @@ main[data-vista='explorador'] .font-serif,
 main[data-vista='colecciones'] .font-serif,
 .zona-juridica .font-serif { font-family: var(--font-serif); letter-spacing: 0; }
 
+/* Letra de lectura (Configuración > Pantalla y lectura): la elige cada persona y vale solo para lo que se lee: artículos
+   (Explorador y Colecciones) y apuntes. Cada zona redefine --font-serif, así los títulos con «font-serif» que hay dentro
+   siguen a la elegida y el resto de la interfaz no cambia. La clásica es el valor de siempre. */
+:root { --font-lectura: var(--font-serif); }
+html[data-fuente-lectura='literata'] { --font-lectura: 'Literata Variable', Georgia, serif; }
+html[data-fuente-lectura='moderna'] { --font-lectura: var(--font-sans); }
+html[data-fuente-lectura='legible'] { --font-lectura: 'Atkinson Hyperlegible Next Variable', system-ui, sans-serif; }
+main[data-vista='explorador'], main[data-vista='colecciones'] { --font-serif: var(--font-lectura); }
+.zona-lectura { --font-serif: var(--font-lectura); font-family: var(--font-lectura); }
+
 /* ---------- utilidades de superficie ---------- */
 .neu-raised { background: var(--neu-card); border-radius: 22px; box-shadow: var(--neu-elevada); border-color: transparent; }
 .neu-flat { background: var(--neu-bg2); border-radius: 16px; box-shadow: var(--neu-plana); border-color: transparent; }

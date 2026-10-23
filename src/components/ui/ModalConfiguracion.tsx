@@ -9,6 +9,7 @@ import { fechaUltimoRespaldo } from '../../services/respaldo'
 import { TEMAS, type TemaColorId } from '../../theme'
 import { AVATARES_ANIMALES } from '../../data/avataresAnimales'
 import { BARRA_INFERIOR_DEFECTO, BARRA_INFERIOR_MAX, DESTINOS_NAVEGACION, barraInferiorValida } from '../../data/destinosNavegacion'
+import { cargarFuenteLectura, esFuenteLectura, FUENTES_LECTURA, FUENTE_LECTURA_DEFECTO } from '../../services/fuentesLectura'
 import type { PestanaConfig, VistaId } from '../../types'
 import { AvatarAnimal } from './AvatarAnimal'
 import { AvatarUsuario } from './AvatarUsuario'
@@ -329,6 +330,49 @@ function SeccionApariencia({ modoOscuro }: { modoOscuro: boolean }) {
   )
 }
 
+/** Letra con que se leen los artículos y los apuntes, con una muestra de cada una. */
+function AjusteFuenteLectura() {
+  const actual = useAjustes((s) => (esFuenteLectura(s.fuenteLectura) ? s.fuenteLectura : FUENTE_LECTURA_DEFECTO))
+  const poner = useAjustes((s) => s.set)
+  // las muestras se ven en su propia letra: se descargan al abrir esta sección (pesan poco y quedan en el dispositivo)
+  useEffect(() => {
+    FUENTES_LECTURA.forEach((f) => void cargarFuenteLectura(f.id))
+  }, [])
+  return (
+    <div>
+      <h3 className="text-sm font-bold mb-1" style={{ color: 'var(--neu-ink)' }}>Letra para leer</h3>
+      <p className="text-xs mb-3" style={{ color: 'var(--neu-ink2)' }}>
+        Cambia la letra de los artículos (Explorador y Colecciones) y de tus apuntes. El resto de la app no cambia.
+      </p>
+      <div className="grid gap-2" role="radiogroup" aria-label="Letra para leer">
+        {FUENTES_LECTURA.map((f) => {
+          const activa = f.id === actual
+          return (
+            <button
+              key={f.id}
+              type="button"
+              role="radio"
+              aria-checked={activa}
+              onClick={() => poner({ fuenteLectura: f.id })}
+              className="sin-neu sin-tactil w-full text-left rounded-xl border px-3.5 py-3 min-h-[44px]"
+              style={{ borderColor: activa ? 'var(--accent-base)' : 'var(--neu-line)', background: activa ? 'var(--neu-bg3)' : 'transparent' }}
+            >
+              <span className="flex items-center gap-2 text-sm font-semibold" style={{ color: activa ? 'var(--accent-texto)' : 'var(--neu-ink)' }}>
+                {f.nombre}
+                {activa && <i className="ti ti-check text-base ml-auto" aria-hidden="true" />}
+              </span>
+              <span className="block text-xs mt-0.5" style={{ color: 'var(--neu-ink2)' }}>{f.descripcion}</span>
+              <span className="block mt-2 text-[17px] leading-snug" style={{ color: 'var(--neu-ink)', fontFamily: f.familia }}>
+                Las personas nacen libres e iguales en dignidad y derechos.
+              </span>
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 /** Elegir qué pantallas van en la barra inferior del celular (hasta 4). El orden es el de elección. */
 function AjusteBarraInferior() {
   const elegidos = barraInferiorValida(useAjustes((s) => s.barraInferior))
@@ -399,6 +443,7 @@ function SeccionLectura() {
         <AjusteBarraInferior />
       </Grupo>
       <Grupo titulo="Códigos y leyes" modoOscuro={modoOscuro}>
+        <AjusteFuenteLectura />
         <AjusteTextoCodigos />
         <Interruptor
           activo={numerarIncisos}

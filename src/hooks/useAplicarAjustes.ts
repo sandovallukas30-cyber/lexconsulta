@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useAjustes, prefiereMenosMovimiento } from '../store/useAjustes'
+import { cargarFuenteLectura, esFuenteLectura, FUENTE_LECTURA_DEFECTO } from '../services/fuentesLectura'
 
 /** Pasa los ajustes de interfaz (useAjustes) al documento: atributos en
  *  <html> que lee base.css y el zoom de toda la página. Se monta una
@@ -8,6 +9,7 @@ export function useAplicarAjustes() {
   const zoom = useAjustes((s) => s.zoom)
   const contraste = useAjustes((s) => s.contraste)
   const animaciones = useAjustes((s) => s.animaciones)
+  const fuenteLectura = useAjustes((s) => s.fuenteLectura)
 
   // Salida de emergencia: abrir la web con «?sinzoom» devuelve el tamaño de la interfaz a normal (por si una vista
   // quedó descuadrada y no se alcanzan los ajustes).
@@ -50,4 +52,11 @@ export function useAplicarAjustes() {
     el.dataset.contraste = contraste ? 'si' : 'no'
     el.dataset.animaciones = animaciones && !prefiereMenosMovimiento() ? 'si' : 'no'
   }, [contraste, animaciones])
+
+  // Letra de lectura: un valor guardado que ya no exista vuelve a la clásica
+  useEffect(() => {
+    const id = esFuenteLectura(fuenteLectura) ? fuenteLectura : FUENTE_LECTURA_DEFECTO
+    document.documentElement.dataset.fuenteLectura = id
+    void cargarFuenteLectura(id)
+  }, [fuenteLectura])
 }

@@ -261,7 +261,10 @@ function Bloques({ bloques, modo, depth }: { bloques: Bloque[]; modo: Modo; dept
 export function ApunteContenido({ bloques, tema, idBase = 'ap' }: { bloques: Bloque[]; tema: TemaApunte; idBase?: string }) {
   return (
     <Contexto.Provider value={{ paleta: PALETAS[tema], idBase }}>
-      <Bloques bloques={bloques} modo="normal" depth={0} />
+      {/* `contents`: no cambia el diseño; solo lleva la letra de lectura elegida a los títulos y al texto del apunte */}
+      <div className="zona-lectura contents">
+        <Bloques bloques={bloques} modo="normal" depth={0} />
+      </div>
     </Contexto.Provider>
   )
 }

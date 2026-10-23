@@ -78,7 +78,7 @@ export function AjusteTextoCodigos() {
         </button>
         <button onClick={() => a.set({ tamanoCodigo: TAMANO_CODIGO_DEFECTO })} disabled={a.tamanoCodigo === TAMANO_CODIGO_DEFECTO} className="boton boton-fantasma boton-chico">Restablecer</button>
       </div>
-      <p className="mt-3 rounded-xl p-3" style={{ background: 'var(--neu-bg3)', color: 'var(--neu-ink)', fontFamily: 'var(--font-serif)', fontSize: a.tamanoCodigo, lineHeight: 1.7 }}>
+      <p className="mt-3 rounded-xl p-3" style={{ background: 'var(--neu-bg3)', color: 'var(--neu-ink)', fontFamily: 'var(--font-lectura)', fontSize: a.tamanoCodigo, lineHeight: 1.7 }}>
         Las personas nacen libres e iguales en dignidad y derechos.
       </p>
       <p className="text-xs mt-2" style={{ color: 'var(--neu-ink2)' }}>

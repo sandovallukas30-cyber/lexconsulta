@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { VistaId } from '../types'
 import { BARRA_INFERIOR_DEFECTO } from '../data/destinosNavegacion'
+import { FUENTE_LECTURA_DEFECTO, type FuenteLectura } from '../services/fuentesLectura'
 
 /** Preferencias de la interfaz. Propias de cada dispositivo (no van en el
  *  respaldo ni se mezclan con los datos de estudio): el celular y el
@@ -46,6 +47,8 @@ export interface AjustesUI {
   numerarIncisos: boolean
   /** Destinos de la barra inferior del celular (hasta 4; «Más» siempre va al final). */
   barraInferior: VistaId[]
+  /** Letra de los artículos y los apuntes. */
+  fuenteLectura: FuenteLectura
   set: (p: Partial<Omit<AjustesUI, 'set'>>) => void
 }
 
@@ -63,11 +66,12 @@ export const useAjustes = create<AjustesUI>()(
       avatarAnimal: null,
       numerarIncisos: false,
       barraInferior: BARRA_INFERIOR_DEFECTO,
+      fuenteLectura: FUENTE_LECTURA_DEFECTO,
       set: (p) => set(p),
     }),
     {
       name: 'prima-lex-ajustes-v1',
-      partialize: (s) => ({ zoom: s.zoom, contraste: s.contraste, animaciones: s.animaciones, celebraciones: s.celebraciones, recordatorios: s.recordatorios, horaResumen: s.horaResumen, tamanoCodigo: s.tamanoCodigo, catalogoAbierto: s.catalogoAbierto, avatarAnimal: s.avatarAnimal, numerarIncisos: s.numerarIncisos, barraInferior: s.barraInferior }),
+      partialize: (s) => ({ zoom: s.zoom, contraste: s.contraste, animaciones: s.animaciones, celebraciones: s.celebraciones, recordatorios: s.recordatorios, horaResumen: s.horaResumen, tamanoCodigo: s.tamanoCodigo, catalogoAbierto: s.catalogoAbierto, avatarAnimal: s.avatarAnimal, numerarIncisos: s.numerarIncisos, barraInferior: s.barraInferior, fuenteLectura: s.fuenteLectura }),
     }
   )
 )
