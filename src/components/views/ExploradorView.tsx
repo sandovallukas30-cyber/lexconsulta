@@ -17,6 +17,7 @@ import { construirEsquema, ETIQUETAS_NIVEL, type NodoEsquema } from '../../servi
 import { buscarVinculosArticulo } from '../../services/modulosAcademico'
 import { buscarEnCodigo, consultaComoId } from '../../services/buscarEnCodigo'
 import { quitarResaltado, resaltarCoincidencia } from '../../services/resaltado'
+import { claseInciso, numeralesConIncisos } from '../../services/incisos'
 import { citaArticulo, copiarAlPortapapeles, textoConCita } from '../../services/citas'
 import { avisar } from '../../store/useAvisos'
 import { imprimir, useImprimirConCtrlP } from '../../services/impresion'
@@ -1997,37 +1998,6 @@ function separarNotas(texto: string): { principal: string; notas: { etiqueta: st
   return { principal, notas }
 }
 
-/** Los numerales y las letras de un inciso («1º.», «2.-», «a)», «i)») son parte de ese inciso, no incisos nuevos:
- *  no reciben número propio al margen. */
-const NUMERAL = /^\s*(?:\d{1,2}\s*(?:[º°ª.)]|\.-)|[a-zñ]\)|[ivx]{1,4}\))/i
-const esNumeral = (parrafo: string) => NUMERAL.test(parrafo)
-/** «1º.-», «2º.-»: numeral al estilo de la Constitución (art. 19, 32…). */
-const NUMERAL_CON_GUION = /^\s*\d{1,2}\s*[º°]\s*\.?\s*-/
-/** ¿Los numerales «1º.-» de este artículo traen incisos propios (como en el art. 19 de la Constitución) o son solo
- *  los ítems de una lista (como en el art. 17)? Se sabe porque en el primer caso hay numerales seguidos que llevan
- *  párrafos debajo; en una lista, solo el último ítem puede tener un párrafo de cierre. */
-function numeralesConIncisos(parrafos: string[]): boolean {
-  let anteriorConCuerpo = false
-  for (let i = 0; i < parrafos.length; i++) {
-    if (!NUMERAL_CON_GUION.test(parrafos[i])) continue
-    const siguiente = parrafos[i + 1]
-    const conCuerpo = siguiente !== undefined && !esNumeral(siguiente)
-    if (conCuerpo && anteriorConCuerpo) return true
-    anteriorConCuerpo = conCuerpo
-  }
-  return false
-}
-
-/** Clase del párrafo para la numeración de incisos al margen:
- *  - sin clase: inciso corriente (cuenta y lleva número);
- *  - `es-numeral`: ítem de una enumeración (1º., a), 1)…): parte del inciso, ni cuenta ni lleva número;
- *  - `reinicia-inciso`: numeral con incisos propios (art. 19 de la Constitución): él es el inciso 1.º y la cuenta
- *    empieza de nuevo, que es como se citan («art. 19 N.º 3, inciso 6.º»). */
-function claseInciso(parrafos: string[], i: number, conIncisosPropios: boolean): string {
-  if (!esNumeral(parrafos[i])) return ''
-  return conIncisosPropios && NUMERAL_CON_GUION.test(parrafos[i]) ? ' reinicia-inciso' : ' es-numeral'
-}
-
 function ArticuloTexto({
   texto,
   modoOscuro,
@@ -2074,7 +2044,7 @@ function ArticuloTexto({
               texto={p}
               subrayados={frasesResaltadas}
               onQuitar={(frase) => quitarSubrayado(codigo, articulo, frase)}
-              className={`leading-[1.8] mb-4 last:mb-0${claseInciso(parrafos, i, incisosPropios)}`}
+              className={`leading-[1.8] mb-4 last:mb-0 ${claseInciso(parrafos, i, incisosPropios)}`}
               style={{ fontSize: tamano, ...(i === 0 ? {} : { textIndent: '1.5rem' }) }}
             />
           ))}

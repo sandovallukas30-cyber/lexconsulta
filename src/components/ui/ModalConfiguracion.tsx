@@ -345,7 +345,7 @@ function SeccionLectura() {
           activo={numerarIncisos}
           onChange={(v) => poner({ numerarIncisos: v })}
           etiqueta="Mostrar el número de cada inciso"
-          descripcion="Un número pequeño y tenue al margen de cada inciso (1, 2, 3…) para ubicarte en los artículos largos. No se copia con el texto."
+          descripcion="Un número pequeño y tenue al margen de cada inciso (1, 2, 3…) para ubicarte en los artículos largos. Cuenta los párrafos del texto: los ítems de una lista (1º., a)) no cuentan, y en los artículos con numerales que traen incisos propios (como el 19 de la Constitución) la cuenta se reinicia en cada número. Es una ayuda para ubicarte: para citar, contrasta con el texto vigente en leychile.cl."
         />
         <Interruptor
           activo={modernizar}
