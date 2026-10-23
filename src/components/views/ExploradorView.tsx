@@ -180,7 +180,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
     if (!seleccionado) return
     const ok = await copiarAlPortapapeles(textoConCita(tipoActivo, seleccionado))
     if (ok) avisar.exito(`Copiado: ${citaArticulo(tipoActivo, seleccionado.a)}`)
-    else avisar.error('No se pudo copiar. Selecciona el texto y usa Ctrl+C.')
+    else avisar.error('No se pudo copiar la cita. Inténtalo de nuevo.')
   }
 
   const anterior = indiceActual > 0 ? arts[indiceActual - 1] : null
@@ -2052,7 +2052,7 @@ function ArticuloTexto({
             : `${tramos.map((tr) => `«${tr.texto}»`).join('\n')} (${citaDeVarios(codigo, articulo, ubic)})`
           const cita = tramos.length === 1 ? citaPrecisa(codigo, articulo, ubic[0]) : citaDeVarios(codigo, articulo, ubic)
           if (await copiarAlPortapapeles(texto)) avisar.exito(`Copiado con cita: ${cita}`)
-          else avisar.error('No se pudo copiar. Selecciona el texto y usa Ctrl+C.')
+          else avisar.error('No se pudo copiar la cita. Inténtalo de nuevo.')
         }}
       >
         <div

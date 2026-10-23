@@ -38,11 +38,13 @@ export function ContenedorResaltable({
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const [boton, setBoton] = useState<{ x: number; y: number; tramos: TramoSeleccion[] } | null>(null)
+  const tocandoBarra = useRef(false)
+  const [tactil] = useState(() => typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches)
 
   const revisarSeleccion = useCallback(() => {
     const sel = window.getSelection()
     if (!sel || sel.isCollapsed || !ref.current) {
-      setBoton(null)
+      if (!tocandoBarra.current) setBoton(null)
       return
     }
     const completa = sel.toString().trim()
@@ -100,21 +102,28 @@ export function ContenedorResaltable({
       {children}
       {boton && (
         <div
-          className="absolute z-20 flex items-center gap-1.5"
-          style={{ left: boton.x, top: boton.y, transform: 'translate(-50%, 10px)' }}
+          className={tactil
+            ? 'fixed inset-x-0 bottom-0 z-[60] flex items-center justify-center gap-3 px-4 pt-3 border-t'
+            : 'absolute z-20 flex items-center gap-1.5'}
+          style={tactil
+            ? { paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.75rem)', background: 'var(--neu-card)', borderColor: 'var(--neu-line)' }
+            : { left: boton.x, top: boton.y, transform: 'translate(-50%, 10px)' }}
+          // En celular y tablet la barra va fija abajo, lejos del menú nativo de iOS (Copiar/Consultar/Traducir), que sale
+          // pegado a la selección. Mientras se toca, la selección puede cerrarse antes del «click»: se ignora ese cierre.
+          onPointerDown={() => {
+            tocandoBarra.current = true
+            setTimeout(() => { tocandoBarra.current = false }, 800)
+          }}
         >
-          {/* onPointerDown (no onClick): en iOS, tocar cualquier elemento mientras hay una selección activa primero la
-              CIERRA (el navegador descarta el gesto para ocultar los tiradores) y el click nunca llega a disparar. pointerdown
-              ocurre ANTES de ese cierre; preventDefault evita que el navegador lo dispare, así la selección sigue intacta
-              cuando corremos la acción. */}
+          {/* La acción corre en onClick (no en pointerdown): copiar al portapapeles en iOS exige un gesto del usuario
+              completo, y desde pointerdown el navegador lo rechaza. */}
           <button
-            onPointerDown={(e) => {
-              e.preventDefault()
+            onClick={() => {
               boton.tramos.forEach((tr) => onAgregar(tr.texto))
               window.getSelection()?.removeAllRanges()
               setBoton(null)
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-lg whitespace-nowrap"
+            className={`flex items-center justify-center gap-1.5 rounded-lg text-xs font-semibold shadow-lg whitespace-nowrap ${tactil ? 'flex-1 max-w-40 py-3' : 'px-3 py-1.5'}`}
             style={{ background: COLOR_RESALTADO, color: COLOR_TEXTO_RESALTADO }}
           >
             <i className="ti ti-highlight text-sm" />
@@ -122,13 +131,12 @@ export function ContenedorResaltable({
           </button>
           {onCopiarCita && (
             <button
-              onPointerDown={(e) => {
-                e.preventDefault()
+              onClick={() => {
                 onCopiarCita(boton.tramos)
                 window.getSelection()?.removeAllRanges()
                 setBoton(null)
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-lg whitespace-nowrap"
+              className={`flex items-center justify-center gap-1.5 rounded-lg text-xs font-semibold shadow-lg whitespace-nowrap ${tactil ? 'flex-1 max-w-40 py-3' : 'px-3 py-1.5'}`}
               style={{ background: 'var(--accent-base)', color: '#fff' }}
             >
               <i className="ti ti-quote text-sm" />
