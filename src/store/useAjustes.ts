@@ -40,6 +40,8 @@ export interface AjustesUI {
   catalogoAbierto: boolean | null
   /** Animal elegido como foto de perfil (id de data/avataresAnimales); null = foto de la cuenta o inicial. */
   avatarAnimal: string | null
+  /** Número pequeño y tenue al margen de cada inciso de los artículos. */
+  numerarIncisos: boolean
   set: (p: Partial<Omit<AjustesUI, 'set'>>) => void
 }
 
@@ -55,11 +57,12 @@ export const useAjustes = create<AjustesUI>()(
       tamanoCodigo: TAMANO_CODIGO_DEFECTO,
       catalogoAbierto: null,
       avatarAnimal: null,
+      numerarIncisos: false,
       set: (p) => set(p),
     }),
     {
       name: 'prima-lex-ajustes-v1',
-      partialize: (s) => ({ zoom: s.zoom, contraste: s.contraste, animaciones: s.animaciones, celebraciones: s.celebraciones, recordatorios: s.recordatorios, horaResumen: s.horaResumen, tamanoCodigo: s.tamanoCodigo, catalogoAbierto: s.catalogoAbierto, avatarAnimal: s.avatarAnimal }),
+      partialize: (s) => ({ zoom: s.zoom, contraste: s.contraste, animaciones: s.animaciones, celebraciones: s.celebraciones, recordatorios: s.recordatorios, horaResumen: s.horaResumen, tamanoCodigo: s.tamanoCodigo, catalogoAbierto: s.catalogoAbierto, avatarAnimal: s.avatarAnimal, numerarIncisos: s.numerarIncisos }),
     }
   )
 )

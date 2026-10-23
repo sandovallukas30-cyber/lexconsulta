@@ -332,6 +332,8 @@ function SeccionLectura() {
   const modoOscuro = useStore((s) => s.modoOscuro)
   const modernizar = useStore((s) => s.modernizarLenguaje)
   const toggleModernizar = useStore((s) => s.toggleModernizar)
+  const numerarIncisos = useAjustes((s) => s.numerarIncisos)
+  const poner = useAjustes((s) => s.set)
   return (
     <>
       <Grupo titulo="Interfaz" modoOscuro={modoOscuro}>
@@ -339,6 +341,12 @@ function SeccionLectura() {
       </Grupo>
       <Grupo titulo="Códigos y leyes" modoOscuro={modoOscuro}>
         <AjusteTextoCodigos />
+        <Interruptor
+          activo={numerarIncisos}
+          onChange={(v) => poner({ numerarIncisos: v })}
+          etiqueta="Mostrar el número de cada inciso"
+          descripcion="Un número pequeño y tenue al margen de cada inciso (1, 2, 3…) para ubicarte en los artículos largos. No se copia con el texto."
+        />
         <Interruptor
           activo={modernizar}
           onChange={() => toggleModernizar()}

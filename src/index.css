@@ -296,14 +296,44 @@ html, body, #root { height: 100%; width: 100%; overflow: hidden; }
 
 /* Coincidencia del buscador de apuntes (Omnibar → Modo Lectura) */
 ::highlight(prima-busqueda) { background-color: #fde047; color: #1c1917; text-decoration: underline; text-decoration-color: #f59e0b; text-decoration-thickness: 2px; text-underline-offset: 3px; }
-/* Inciso donde apareció la búsqueda: una barra ámbar a la izquierda y un fondo suave alrededor del párrafo, sin mover el texto */
+/* Inciso donde apareció la búsqueda: un fondo suave alrededor del párrafo y una barra ámbar separada del texto, sin mover nada */
 .inciso-buscado {
+  position: relative;
   border-radius: 6px;
-  box-shadow: -4px 0 0 0 #f59e0b, 0 0 0 6px color-mix(in srgb, #fde047 24%, transparent);
+  box-shadow: 0 0 0 6px color-mix(in srgb, #fde047 24%, transparent);
   background-color: color-mix(in srgb, #fde047 24%, transparent);
   transition: box-shadow 1s ease, background-color 1s ease;
 }
-.inciso-buscado.inciso-buscado-fuera { box-shadow: -4px 0 0 0 transparent, 0 0 0 6px transparent; background-color: transparent; }
+.inciso-buscado::after {
+  content: '';
+  position: absolute;
+  left: -13px;
+  top: -4px;
+  bottom: -4px;
+  width: 3px;
+  border-radius: 2px;
+  background: #f59e0b;
+  transition: opacity 1s ease;
+}
+.inciso-buscado.inciso-buscado-fuera { box-shadow: 0 0 0 6px transparent; background-color: transparent; }
+.inciso-buscado.inciso-buscado-fuera::after { opacity: 0; }
+
+/* Número de cada inciso al margen (ajuste «Mostrar el número de cada inciso»): pequeño, tenue y fuera del texto copiable */
+.incisos-numerados { counter-reset: inciso; padding-left: 28px; }
+.incisos-numerados > p { counter-increment: inciso; position: relative; }
+.incisos-numerados > p::before {
+  content: counter(inciso);
+  position: absolute;
+  right: 100%;
+  margin-right: 17px;
+  font-family: var(--font-sans);
+  font-size: 0.62em;
+  line-height: 2.9; /* 1,8 × el tamaño del párrafo: queda a la altura de su primera línea */
+  font-variant-numeric: tabular-nums;
+  color: var(--neu-ink3);
+  opacity: 0.75;
+  user-select: none;
+}
 /* Marcas de las palabras buscadas (rectángulos detrás del texto, ver services/resaltado.ts) */
 .capa-marcas-busqueda { position: absolute; inset: 0; z-index: -1; pointer-events: none; transition: opacity 1.1s ease; }
 .capa-marcas-busqueda.fuera { opacity: 0; }

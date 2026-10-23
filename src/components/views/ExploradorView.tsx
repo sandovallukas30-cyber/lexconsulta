@@ -2014,6 +2014,7 @@ function ArticuloTexto({
 }) {
   const tamanoPropio = useAjustes((s) => s.tamanoCodigo)
   const tamano = tamanoFuente ?? tamanoPropio
+  const numerarIncisos = useAjustes((s) => s.numerarIncisos)
   const { principal, notas } = useMemo(() => separarNotas(texto), [texto])
   const parrafos = useMemo(
     () => principal.split(/\n{2,}/).map((p) => p.trim()).filter((p) => p.length > 0),
@@ -2030,7 +2031,7 @@ function ArticuloTexto({
     <>
       <ContenedorResaltable onAgregar={(frase) => agregarSubrayado(codigo, articulo, frase)}>
         <div
-          className={modoOscuro ? 'text-zinc-200' : 'text-zinc-800'}
+          className={`${modoOscuro ? 'text-zinc-200' : 'text-zinc-800'}${numerarIncisos ? ' incisos-numerados' : ''}`}
           style={{ fontFamily: 'var(--font-serif)' }}
         >
           {parrafos.map((p, i) => (
