@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 
 /** Control segmentado con la píldora que se desliza (estilo Orbis). */
 export function Segmentado<T extends string>({
-  id, opciones, valor, onChange, deshabilitado, etiqueta, grande,
+  id, opciones, valor, onChange, deshabilitado, etiqueta, grande, llena,
 }: {
   /** Único por pantalla: la animación comparte la píldora entre opciones del mismo id. */
   id: string
@@ -13,9 +13,11 @@ export function Segmentado<T extends string>({
   etiqueta: string
   /** Versión más alta y legible, para controles importantes (p. ej. la técnica de estudio). */
   grande?: boolean
+  /** Ocupa todo el ancho disponible y reparte las opciones por igual (para muchas opciones en pantallas angostas). */
+  llena?: boolean
 }) {
   return (
-    <div role="group" aria-label={etiqueta} className="neu-pressed inline-flex p-1.5 !rounded-full gap-1">
+    <div role="group" aria-label={etiqueta} className={`neu-pressed p-1.5 gap-1 max-w-full ${llena ? 'flex flex-wrap w-full !rounded-2xl' : 'inline-flex !rounded-full'}`}>
       {opciones.map((o) => {
         const activo = o.valor === valor
         return (
@@ -25,7 +27,7 @@ export function Segmentado<T extends string>({
             aria-pressed={activo}
             disabled={deshabilitado && !activo}
             onClick={() => onChange(o.valor)}
-            className={`sin-tactil relative ${grande ? 'h-11 px-6 text-[15px]' : 'h-9 pointer-coarse:h-11 px-4 text-[13px]'} rounded-full font-bold transition-colors disabled:opacity-40 ${
+            className={`sin-tactil relative ${grande ? 'h-11 px-6 text-[15px]' : llena ? 'h-10 pointer-coarse:h-11 flex-auto min-w-[30%] sm:min-w-0 px-3 text-[13px] whitespace-nowrap' : 'h-9 pointer-coarse:h-11 px-4 text-[13px]'} rounded-full font-bold transition-colors disabled:opacity-40 ${
               activo ? 'text-[var(--accent-texto)]' : 'text-[var(--neu-ink3)] hover:text-[var(--neu-ink2)]'
             }`}
           >

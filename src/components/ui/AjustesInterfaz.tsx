@@ -48,6 +48,7 @@ export function AjusteTamanoInterfaz() {
     <div>
       <h3 className={titulo} style={{ color: 'var(--neu-ink)' }}>Tamaño de la interfaz</h3>
       <Segmentado
+        llena
         id="zoom"
         etiqueta="Tamaño de la interfaz"
         valor={String(a.zoom)}

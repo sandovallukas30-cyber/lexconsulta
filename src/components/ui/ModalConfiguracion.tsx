@@ -137,7 +137,7 @@ export function ModalConfiguracion({ abierto, onCerrar, pestanaInicial = 'perfil
                 ))}
               </nav>
 
-              <div className="flex-1 min-w-0 overflow-y-auto p-5 sm:p-6">
+              <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-4 sm:p-6">
                 <h3 className="text-xl font-extrabold" style={{ color: 'var(--neu-ink)' }}>{seccion.titulo}</h3>
                 {seccion.descripcion && <p className="text-sm mt-0.5 mb-5" style={{ color: 'var(--neu-ink2)' }}>{seccion.descripcion}</p>}
                 {!seccion.descripcion && <div className="mb-4" />}
