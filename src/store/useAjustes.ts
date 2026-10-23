@@ -38,6 +38,8 @@ export interface AjustesUI {
   tamanoCodigo: number
   /** Áreas del derecho del catálogo en Módulos: null = automático (abiertas solo si aún no tienes ramos). */
   catalogoAbierto: boolean | null
+  /** Animal elegido como foto de perfil (id de data/avataresAnimales); null = foto de la cuenta o inicial. */
+  avatarAnimal: string | null
   set: (p: Partial<Omit<AjustesUI, 'set'>>) => void
 }
 
@@ -52,11 +54,12 @@ export const useAjustes = create<AjustesUI>()(
       horaResumen: 8,
       tamanoCodigo: TAMANO_CODIGO_DEFECTO,
       catalogoAbierto: null,
+      avatarAnimal: null,
       set: (p) => set(p),
     }),
     {
       name: 'prima-lex-ajustes-v1',
-      partialize: (s) => ({ zoom: s.zoom, contraste: s.contraste, animaciones: s.animaciones, celebraciones: s.celebraciones, recordatorios: s.recordatorios, horaResumen: s.horaResumen, tamanoCodigo: s.tamanoCodigo, catalogoAbierto: s.catalogoAbierto }),
+      partialize: (s) => ({ zoom: s.zoom, contraste: s.contraste, animaciones: s.animaciones, celebraciones: s.celebraciones, recordatorios: s.recordatorios, horaResumen: s.horaResumen, tamanoCodigo: s.tamanoCodigo, catalogoAbierto: s.catalogoAbierto, avatarAnimal: s.avatarAnimal }),
     }
   )
 )

@@ -48,6 +48,7 @@ import type {
   BriefCaso,
   CodigoTipo,
   EstadoTarjetaRepaso,
+  PestanaConfig,
 } from '../types'
 import { siguienteEstado } from '../services/tarjetasApunte'
 import type { NotaRepaso } from '../services/fsrs'
@@ -177,8 +178,8 @@ interface AppState {
   abrirModalPerfil: () => void
   cerrarModalPerfil: () => void
   acercaAbierto: boolean
-  acercaPestana: 'acerca' | 'disclaimer' | 'privacidad' | 'terminos'
-  abrirAcerca: (pestana?: 'acerca' | 'disclaimer' | 'privacidad' | 'terminos') => void
+  acercaPestana: PestanaConfig
+  abrirAcerca: (pestana?: PestanaConfig) => void
   cerrarAcerca: () => void
   partidaPasapalabra: PartidaPasapalabra | null
   iniciarPartidaPasapalabra: (partida: PartidaPasapalabra) => void
@@ -376,7 +377,7 @@ export const useStore = create<AppState>()(
       modernizarLenguaje: false,
       modalPerfilAbierto: false,
       acercaAbierto: false,
-      acercaPestana: 'acerca',
+      acercaPestana: 'perfil',
       partidaPasapalabra: null,
       recordsPasapalabra: {},
       partidaAhorcado: null,
@@ -803,7 +804,7 @@ export const useStore = create<AppState>()(
       setCodigoMapa: (tipo) => set({ codigoMapaActivo: tipo }),
       abrirModalPerfil: () => set({ modalPerfilAbierto: true }),
       cerrarModalPerfil: () => set({ modalPerfilAbierto: false }),
-      abrirAcerca: (pestana = 'acerca') => set({ acercaAbierto: true, acercaPestana: pestana }),
+      abrirAcerca: (pestana = 'perfil') => set({ acercaAbierto: true, acercaPestana: pestana }),
       cerrarAcerca: () => set({ acercaAbierto: false }),
 
       iniciarPartidaPasapalabra: (partida) => set({ partidaPasapalabra: partida }),

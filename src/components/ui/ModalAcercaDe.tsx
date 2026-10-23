@@ -1,142 +1,6 @@
-import { AjustesInterfaz } from './AjustesInterfaz'
-import { useDialogo } from '../../hooks/useDialogo'
-import { useEffect, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
-import { useStore } from '../../store/useStore'
-import { TEMAS, type TemaColorId } from '../../theme'
+/** Contenido de «Acerca de» y de las páginas legales. El marco (ventana y menú de secciones) está en ModalConfiguracion. */
 
-const VERDE = 'var(--accent-base)'
-
-export type PestanaAcerca = 'acerca' | 'apariencia' | 'disclaimer' | 'privacidad' | 'terminos'
-type Pestana = PestanaAcerca
-
-interface Props {
-  abierto: boolean
-  onCerrar: () => void
-  /** Pestaña en la que abrir el modal (por defecto 'acerca'). Se respeta cada vez que se abre. */
-  pestanaInicial?: PestanaAcerca
-}
-
-export function ModalAcercaDe({ abierto, onCerrar, pestanaInicial = 'acerca' }: Props) {
-  const modoOscuro = useStore((s) => s.modoOscuro)
-  const [pestana, setPestana] = useState<Pestana>(pestanaInicial)
-  const dialogoRef = useDialogo<HTMLDivElement>(abierto, onCerrar)
-
-  // Cada vez que el modal se abre, mover a la pestaña solicitada.
-  useEffect(() => {
-    if (abierto) setPestana(pestanaInicial)
-  }, [abierto, pestanaInicial])
-
-  return (
-    <AnimatePresence>
-      {abierto && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: 'rgba(0,0,0,0.55)' }}
-          onClick={onCerrar}
-        >
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            ref={dialogoRef}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Acerca de Prima Lex"
-            onClick={(e) => e.stopPropagation()}
-            className={`max-w-2xl w-full max-h-[85vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col ${
-              modoOscuro ? 'bg-zinc-900' : 'bg-white'
-            }`}
-          >
-            <div
-              className={`px-6 py-4 border-b flex items-center justify-between ${
-                modoOscuro ? 'border-zinc-800' : 'border-zinc-200'
-              }`}
-            >
-              <h2 className={`text-xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
-                Prima<span style={{ color: 'var(--accent-texto)' }}> Lex</span>
-              </h2>
-              <button
-                onClick={onCerrar}
-                aria-label="Cerrar"
-                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
-                  modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'
-                }`}
-              >
-                <i className="ti ti-x text-lg" />
-              </button>
-            </div>
-
-            <div className={`flex items-center gap-1 px-4 border-b overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
-              <Tab id="acerca" actual={pestana} onClick={setPestana} modoOscuro={modoOscuro}>
-                Acerca de
-              </Tab>
-              <Tab id="apariencia" actual={pestana} onClick={setPestana} modoOscuro={modoOscuro}>
-                Apariencia
-              </Tab>
-              <Tab id="disclaimer" actual={pestana} onClick={setPestana} modoOscuro={modoOscuro}>
-                Aviso legal
-              </Tab>
-              <Tab id="privacidad" actual={pestana} onClick={setPestana} modoOscuro={modoOscuro}>
-                Privacidad
-              </Tab>
-              <Tab id="terminos" actual={pestana} onClick={setPestana} modoOscuro={modoOscuro}>
-                Términos
-              </Tab>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-6">
-              {pestana === 'acerca' && <Acerca modoOscuro={modoOscuro} />}
-              {pestana === 'apariencia' && <Apariencia modoOscuro={modoOscuro} />}
-              {pestana === 'disclaimer' && <Disclaimer modoOscuro={modoOscuro} />}
-              {pestana === 'privacidad' && <Privacidad modoOscuro={modoOscuro} />}
-              {pestana === 'terminos' && <Terminos modoOscuro={modoOscuro} />}
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  )
-}
-
-function Tab({
-  id,
-  actual,
-  onClick,
-  children,
-  modoOscuro,
-}: {
-  id: Pestana
-  actual: Pestana
-  onClick: (p: Pestana) => void
-  children: React.ReactNode
-  modoOscuro: boolean
-}) {
-  const activo = id === actual
-  return (
-    <button
-      onClick={() => onClick(id)}
-      aria-pressed={activo}
-      className={`px-4 py-2.5 text-xs font-medium border-b-2 transition-colors -mb-px whitespace-nowrap flex-shrink-0 ${
-        activo
-          ? modoOscuro
-            ? 'text-white'
-            : 'text-zinc-900'
-          : modoOscuro
-          ? 'text-zinc-500 hover:text-zinc-300 border-transparent'
-          : 'text-zinc-500 hover:text-zinc-900 border-transparent'
-      }`}
-      style={activo ? { borderColor: VERDE } : undefined}
-    >
-      {children}
-    </button>
-  )
-}
-
-function H({ children, modoOscuro }: { children: React.ReactNode; modoOscuro: boolean }) {
+export function H({ children, modoOscuro }: { children: React.ReactNode; modoOscuro: boolean }) {
   return (
     <h2 className={`text-base font-semibold mt-5 mb-2 first:mt-0 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
       {children}
@@ -144,13 +8,13 @@ function H({ children, modoOscuro }: { children: React.ReactNode; modoOscuro: bo
   )
 }
 
-function P({ children, modoOscuro }: { children: React.ReactNode; modoOscuro: boolean }) {
+export function P({ children, modoOscuro }: { children: React.ReactNode; modoOscuro: boolean }) {
   return (
     <p className={`text-sm leading-relaxed mb-3 ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>{children}</p>
   )
 }
 
-function Acerca({ modoOscuro }: { modoOscuro: boolean }) {
+export function Acerca({ modoOscuro }: { modoOscuro: boolean }) {
   return (
     <div>
       {/* los datos técnicos quedan a un clic: sirven para reportar fallos, pero no son para todos */}
@@ -208,77 +72,6 @@ function Feat({ icono, titulo, children }: { icono: string; titulo: string; chil
         <strong>{titulo}:</strong> {children}
       </span>
     </li>
-  )
-}
-
-function Apariencia({ modoOscuro }: { modoOscuro: boolean }) {
-  const temaActual = useStore((s) => s.temaColor)
-  const setTema = useStore((s) => s.setTemaColor)
-  return (
-    <div>
-      <AjustesInterfaz />
-      <H modoOscuro={modoOscuro}>Color de acento</H>
-      <P modoOscuro={modoOscuro}>
-        Elige el color que la app usa para los detalles: botones, citas resaltadas, íconos del sidebar y bordes
-        activos. El fondo (blanco o negro según tu modo) se mantiene igual.
-      </P>
-
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mt-3">
-        {TEMAS.map((t) => {
-          const activo = t.id === temaActual
-          return (
-            <button
-              key={t.id}
-              onClick={() => setTema(t.id as TemaColorId)}
-              aria-pressed={activo}
-              className={`group text-left rounded-xl border-2 p-3 transition-all hover:-translate-y-0.5 hover:shadow-md ${
-                activo
-                  ? modoOscuro
-                    ? 'bg-zinc-800 border-zinc-600'
-                    : 'bg-zinc-50 border-zinc-400'
-                  : modoOscuro
-                  ? 'bg-zinc-900 border-zinc-800 hover:border-zinc-700'
-                  : 'bg-white border-zinc-200 hover:border-zinc-300'
-              }`}
-              style={activo ? { borderColor: t.paleta.base } : undefined}
-            >
-              <div className="flex items-center gap-2 mb-1.5">
-                <div className="flex -space-x-1.5">
-                  {[t.paleta[300], t.paleta[500], t.paleta.base].map((c, i) => (
-                    <span
-                      key={i}
-                      className="w-5 h-5 rounded-full border-2"
-                      style={{
-                        background: c,
-                        borderColor: modoOscuro ? '#18181b' : '#ffffff',
-                      }}
-                    />
-                  ))}
-                </div>
-                <span className={`text-sm font-semibold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
-                  {t.nombre}
-                </span>
-                {activo && (
-                  <i
-                    className="ti ti-check text-sm ml-auto"
-                    style={{ color: t.paleta.base }}
-                  />
-                )}
-              </div>
-              <p className={`text-[11px] leading-snug ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                {t.descripcion}
-              </p>
-            </button>
-          )
-        })}
-      </div>
-
-      <P modoOscuro={modoOscuro}>
-        <em className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
-          Tu elección se guarda en este navegador y se aplica cada vez que vuelvas.
-        </em>
-      </P>
-    </div>
   )
 }
 

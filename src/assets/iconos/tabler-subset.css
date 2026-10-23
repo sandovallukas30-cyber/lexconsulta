@@ -16,6 +16,7 @@
 .ti-arrows-horizontal:before{content:"\eb59"}
 .ti-arrows-maximize:before{content:"\ea28"}
 .ti-arrows-shuffle:before{content:"\f000"}
+.ti-bell:before{content:"\ea35"}
 .ti-binary-tree-2:before{content:"\f5d3"}
 .ti-bold:before{content:"\eb7b"}
 .ti-bolt:before{content:"\ea38"}
@@ -63,6 +64,7 @@
 .ti-copy:before{content:"\ea7a"}
 .ti-copy-plus:before{content:"\fdae"}
 .ti-corner-up-left:before{content:"\ea82"}
+.ti-database:before{content:"\ea88"}
 .ti-database-export:before{content:"\ee6e"}
 .ti-dots:before{content:"\ea95"}
 .ti-download:before{content:"\ea96"}
@@ -76,7 +78,6 @@
 .ti-file-upload:before{content:"\ec91"}
 .ti-files:before{content:"\edef"}
 .ti-flag:before{content:"\eaa6"}
-.ti-flag-3:before{content:"\ee8d"}
 .ti-flag-check:before{content:"\fb8c"}
 .ti-folder-plus:before{content:"\eaab"}
 .ti-folder-symlink:before{content:"\f91b"}
@@ -115,6 +116,7 @@
 .ti-list-tree:before{content:"\fafa"}
 .ti-loader-2:before{content:"\f226"}
 .ti-lock:before{content:"\eae2"}
+.ti-login:before{content:"\eba7"}
 .ti-logout:before{content:"\eba8"}
 .ti-mail:before{content:"\eae5"}
 .ti-mail-check:before{content:"\f939"}
@@ -156,6 +158,7 @@
 .ti-search-off:before{content:"\f19c"}
 .ti-separator-horizontal:before{content:"\ec79"}
 .ti-settings:before{content:"\eb20"}
+.ti-settings-2:before{content:"\f5ac"}
 .ti-shape:before{content:"\eb9c"}
 .ti-share-2:before{content:"\f799"}
 .ti-share-3:before{content:"\f7bd"}

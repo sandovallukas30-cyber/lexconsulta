@@ -3,8 +3,9 @@ import { useEffect, useState } from 'react'
 import { useDialogo } from '../../hooks/useDialogo'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
+import { useAjustes } from '../../store/useAjustes'
 import { ModalCodigos } from '../ui/ModalCodigos'
-import { ModalAcercaDe } from '../ui/ModalAcercaDe'
+import { ModalConfiguracion } from '../ui/ModalConfiguracion'
 import { EnfoqueEnMenu } from './EnfoqueEnMenu'
 import { useEsMovil } from '../../hooks/useEsMovil'
 import { BotonCuenta } from '../ui/ModalCuenta'
@@ -48,6 +49,7 @@ export function Sidebar() {
   const codigos = useStore((s) => s.codigos)
   const modoOscuro = useStore((s) => s.modoOscuro)
   const toggleModoOscuro = useStore((s) => s.toggleModoOscuro)
+  const avatarAnimal = useAjustes((s) => s.avatarAnimal)
   const colapsadoEscritorio = useStore((s) => s.sidebarColapsado)
   const toggleSidebarEscritorio = useStore((s) => s.toggleSidebar)
   const menuMovilAbierto = useStore((s) => s.menuMovilAbierto)
@@ -238,9 +240,9 @@ export function Sidebar() {
           <button
             onClick={() => {
               if (esMovil) setMenuMovilAbierto(false)
-              abrirAcerca('acerca')
+              abrirAcerca('perfil')
             }}
-            title={colapsado ? 'Configuración · Apariencia, aviso legal, privacidad' : undefined}
+            title={colapsado ? 'Configuración · Perfil, apariencia, avisos, datos y legal' : undefined}
             className={`w-full mt-1 min-h-control rounded-control text-xs transition-colors flex items-center ${
               colapsado ? 'justify-center px-0' : 'px-3'
             } ${
@@ -265,7 +267,7 @@ export function Sidebar() {
             className={`mt-2 pt-2 border-t flex items-center ${colapsado ? 'flex-col gap-2' : 'justify-between gap-2 px-1'}`}
             style={{ borderColor: 'var(--neu-line)' }}
           >
-            {cuentasDisponibles && <BotonCuenta compacto={colapsado} />}
+            {(cuentasDisponibles || avatarAnimal) && <BotonCuenta compacto={colapsado} />}
             <button
               onClick={toggleModoOscuro}
               className="boton boton-suave boton-icono"
@@ -279,7 +281,7 @@ export function Sidebar() {
       </motion.aside>
 
       <ModalCodigos abierto={modalCodigos} onCerrar={() => setModalCodigos(false)} />
-      <ModalAcercaDe abierto={acercaAbierto} onCerrar={cerrarAcerca} pestanaInicial={acercaPestana} />
+      <ModalConfiguracion abierto={acercaAbierto} onCerrar={cerrarAcerca} pestanaInicial={acercaPestana} />
     </>
   )
 }

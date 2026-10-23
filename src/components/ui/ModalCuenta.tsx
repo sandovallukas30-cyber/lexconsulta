@@ -3,6 +3,10 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { fondoModal, panelModal } from './animacionModal'
 import { useCuenta, type ProveedorCuenta } from '../../store/useCuenta'
 import { useDialogo } from '../../hooks/useDialogo'
+import { AvatarUsuario } from './AvatarUsuario'
+import { AvatarAnimal } from './AvatarAnimal'
+import { useAjustes } from '../../store/useAjustes'
+import { useStore } from '../../store/useStore'
 
 const haceCuanto = (ms: number | null): string => {
   if (!ms) return 'aún no'
@@ -20,28 +24,25 @@ const PROVEEDORES: { id: ProveedorCuenta; nombre: string; icono: string }[] = [
 
 const NOMBRE_PROVEEDOR: Record<string, string> = { google: 'Google', azure: 'Microsoft', email: 'enlace por correo' }
 
-function Avatar({ nombre, url, grande }: { nombre: string; url: string | null; grande?: boolean }) {
-  const [falla, setFalla] = useState(false)
-  const tam = grande ? 'w-14 h-14 text-xl' : 'w-9 h-9 text-sm'
-  if (url && !falla) {
-    return <img src={url} alt="" referrerPolicy="no-referrer" onError={() => setFalla(true)} className={`${tam} rounded-full object-cover`} />
-  }
-  return (
-    <span className={`${tam} rounded-full flex items-center justify-center font-extrabold text-white`} style={{ background: 'var(--accent-base)' }} aria-hidden="true">
-      {nombre.trim().charAt(0).toUpperCase() || '?'}
-    </span>
-  )
-}
-
 /** Botón de la cuenta (al pie del menú lateral): «Entrar» o la foto de la cuenta. `compacto` = solo ícono. */
 export function BotonCuenta({ compacto = false }: { compacto?: boolean }) {
   const perfil = useCuenta((s) => s.perfil)
   const listo = useCuenta((s) => s.listo)
   const abrir = useCuenta((s) => s.abrirModal)
+  const animal = useAjustes((s) => s.avatarAnimal)
+  const abrirConfiguracion = useStore((s) => s.abrirAcerca)
+  // sin cuenta pero con un animal elegido: el animal es tu foto y lleva a tu perfil (ahí también se puede entrar)
+  if (!perfil && animal) {
+    return (
+      <button onClick={() => abrirConfiguracion('perfil')} aria-label="Tu perfil" title="Tu perfil" className="sin-neu sin-tactil rounded-full p-0.5" style={{ boxShadow: 'var(--neu-chica)' }}>
+        <AvatarAnimal id={animal} />
+      </button>
+    )
+  }
   if (!listo) return null
   return perfil ? (
     <button onClick={abrir} aria-label={`Tu cuenta: ${perfil.nombre}`} title={perfil.nombre} className="sin-neu sin-tactil rounded-full p-0.5" style={{ boxShadow: 'var(--neu-chica)' }}>
-      <Avatar nombre={perfil.nombre} url={perfil.avatar} />
+      <AvatarUsuario nombre={perfil.nombre} url={perfil.avatar} />
     </button>
   ) : (
     <button onClick={abrir} aria-label="Entrar a tu cuenta" title="Entrar a tu cuenta" className={`boton boton-suave ${compacto ? 'boton-icono' : 'boton-chico'}`}>
@@ -120,7 +121,7 @@ function ContenidoModalCuenta() {
         {c.perfil ? (
           <div className="space-y-5">
             <div className="flex items-center gap-3">
-              <Avatar nombre={c.perfil.nombre} url={c.perfil.avatar} grande />
+              <AvatarUsuario nombre={c.perfil.nombre} url={c.perfil.avatar} grande />
               <div className="min-w-0">
                 <p className="font-bold truncate" style={{ color: 'var(--neu-ink)' }}>{c.perfil.nombre}</p>
                 <p className="text-sm truncate" style={{ color: 'var(--neu-ink2)' }}>{c.perfil.email}</p>
