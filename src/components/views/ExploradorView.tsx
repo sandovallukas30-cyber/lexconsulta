@@ -199,6 +199,15 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
   const desplazamientoX = useMotionValue(0)
   const refPista = useRef<HTMLDivElement>(null)
   const [arrastrando, setArrastrando] = useState(false)
+  // Mientras hay texto seleccionado (para resaltar o citar) el artículo no se desliza: framer-motion apaga la selección de
+  // texto (`user-select: none`) en lo que se arrastra, y un gesto de selección no debe cambiar de artículo.
+  const [haySeleccion, setHaySeleccion] = useState(false)
+  useEffect(() => {
+    if (!esTactil) return
+    const alCambiar = () => setHaySeleccion(!(window.getSelection()?.isCollapsed ?? true))
+    document.addEventListener('selectionchange', alCambiar)
+    return () => document.removeEventListener('selectionchange', alCambiar)
+  }, [esTactil])
   // los vecinos se alinean con lo que se ve (el artículo puede estar leído hasta la mitad)
   const [topVecinos, setTopVecinos] = useState(0)
   const cambiandoArticulo = useRef(false)
@@ -359,7 +368,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
                 exit: { opacity: 0 },
                 transition: { duration: 0.25 },
               })}
-          className={`max-w-3xl mx-3 sm:mx-auto my-4 sm:my-8 rounded-panel p-5 sm:p-10 ${
+          className={`max-w-3xl mx-3 sm:mx-auto my-4 sm:my-8 rounded-panel p-5 sm:p-10 select-text ${
             modoOscuro ? 'bg-zinc-800/40 border border-zinc-800' : 'bg-white shadow-tarjeta border border-zinc-200/60'
           }`}
         >
@@ -551,11 +560,11 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
             ref={refPista}
             className="relative flow-root min-h-full"
             style={{ x: desplazamientoX }}
-            drag="x"
+            drag={haySeleccion ? false : 'x'}
             dragDirectionLock
             dragMomentum={false}
             onPointerDown={() => {
-              if (cambiandoArticulo.current) return
+              if (cambiandoArticulo.current || haySeleccion) return
               setTopVecinos(refArticulo.current?.scrollTop ?? 0)
               setArrastrando(true)
             }}
