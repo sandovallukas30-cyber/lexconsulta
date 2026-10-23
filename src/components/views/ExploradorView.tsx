@@ -185,6 +185,34 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
   const anterior = indiceActual > 0 ? arts[indiceActual - 1] : null
   const siguiente = indiceActual >= 0 && indiceActual < arts.length - 1 ? arts[indiceActual + 1] : null
 
+  // Dirección del último cambio de artículo (1 = siguiente, -1 = anterior, 0 = salto): el artículo nuevo
+  // entra deslizándose desde ese lado, y en el celular se cambia deslizando el dedo.
+  const indicePrevio = useRef(indiceActual)
+  const direccionNav = Math.abs(indiceActual - indicePrevio.current) === 1 ? Math.sign(indiceActual - indicePrevio.current) : 0
+  useEffect(() => {
+    indicePrevio.current = indiceActual
+  }, [indiceActual])
+  const toqueInicio = useRef<{ x: number; y: number; ignorar: boolean } | null>(null)
+  const alTocarArticulo = (e: TouchEvent) => {
+    const t = e.touches[0]
+    // no robar el gesto a lo que ya se desplaza de lado (tablas, campos de texto) ni a un gesto de varios dedos
+    const ignorar = e.touches.length > 1 || !!(e.target as HTMLElement).closest('table, pre, input, textarea, select, [data-no-swipe]')
+    toqueInicio.current = { x: t.clientX, y: t.clientY, ignorar }
+  }
+  const alSoltarArticulo = (e: TouchEvent) => {
+    const inicio = toqueInicio.current
+    toqueInicio.current = null
+    if (!inicio || inicio.ignorar) return
+    const t = e.changedTouches[0]
+    const dx = t.clientX - inicio.x
+    const dy = t.clientY - inicio.y
+    // deslizamiento claramente horizontal; el scroll vertical y la selección de texto quedan intactos
+    if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.5) return
+    if ((window.getSelection()?.toString().length ?? 0) > 0) return
+    if (dx < 0 && siguiente) setSeleccionadoId(siguiente.a)
+    else if (dx > 0 && anterior) setSeleccionadoId(anterior.a)
+  }
+
   // Cercanos: 2 antes y 2 después
   const cercanos = useMemo(() => {
     if (indiceActual < 0) return []
@@ -416,15 +444,15 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
         </div>
       </div>
 
-      <div ref={refArticulo} className="flex-1 overflow-y-auto">
+      <div ref={refArticulo} className="flex-1 overflow-y-auto" onTouchStart={alTocarArticulo} onTouchEnd={alSoltarArticulo}>
         {seleccionado && (
           <AnimatePresence mode="wait">
             <motion.article
               key={seleccionado.a}
               ref={refTarjeta}
               data-articulo={seleccionado.a}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={direccionNav ? { opacity: 0, x: direccionNav * 36 } : { opacity: 0, y: 12 }}
+              animate={{ opacity: 1, x: 0, y: 0 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.25 }}
               className={`max-w-3xl mx-3 sm:mx-auto my-4 sm:my-8 rounded-panel p-5 sm:p-10 ${
@@ -553,10 +581,16 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
         setBusqueda={setBusqueda}
         onSelect={(a) => {
           // buscó texto (no un número): marcar dónde aparece
-          setResaltado(busqueda.trim() && !consultaComoId(busqueda) ? { articulo: a, texto: busqueda } : null)
-          setSeleccionadoId(a)
+          const textoBuscado = busqueda
+          // La ventana se cierra en el acto; el cambio de artículo (que re-renderiza una
+          // tarjeta pesada) espera a que termine de salir, para que no se vea colgada.
           setBusquedaAbierta(false)
-          setBusqueda('')
+          window.setTimeout(() => {
+            setResaltado(textoBuscado.trim() && !consultaComoId(textoBuscado) ? { articulo: a, texto: textoBuscado } : null)
+            setSeleccionadoId(a)
+          }, 80)
+          // se limpia después de la salida: si no, durante el fundido se veía "Sin resultados"
+          window.setTimeout(() => setBusqueda(''), 300)
         }}
         modoOscuro={modoOscuro}
       />
@@ -886,7 +920,7 @@ function NavBtn({
         <p className={`text-[10px] uppercase tracking-wider font-semibold ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
           {label}
         </p>
-        <p className="font-mono text-xs font-semibold">{sub ?? '—'}</p>
+        <p className="tabular-nums text-xs font-semibold">{sub ?? '—'}</p>
       </div>
       {align === 'right' && <i className={`ti ${icono} text-lg`} />}
     </button>
@@ -912,7 +946,7 @@ function Carrusel({
             onClick={() => onSelect(a.a)}
             // en móvil solo el artículo actual: los vecinos ya están en Anterior/Siguiente
             aria-current={activo ? 'true' : undefined}
-            className={`boton boton-chico font-mono ${activo ? 'boton-primario font-semibold' : 'boton-fantasma max-sm:hidden'}`}
+            className={`boton boton-chico tabular-nums ${activo ? 'boton-primario font-semibold' : 'boton-fantasma max-sm:hidden'}`}
             title={primerasPalabras(a.t, 10)}
           >
             {a.a}
@@ -1202,7 +1236,7 @@ function NodoCapitulo({
               <button
                 key={a.a}
                 onClick={() => onSelect(a.a)}
-                className={`w-full text-left px-2 py-1 rounded text-[11px] font-mono transition-colors truncate ${
+                className={`w-full text-left px-2 py-1 rounded text-[11px] tabular-nums transition-colors truncate ${
                   activo
                     ? 'font-semibold text-white'
                     : modoOscuro
@@ -1279,7 +1313,7 @@ function ModalBusqueda({
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          exit={{ opacity: 0, transition: { duration: 0.07 } }}
           className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-[15vh]"
           style={{ background: 'rgba(0,0,0,0.5)' }}
           onClick={onCerrar}
@@ -1287,7 +1321,7 @@ function ModalBusqueda({
           <motion.div
             initial={{ scale: 0.96, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.96, opacity: 0 }}
+            exit={{ scale: 0.98, opacity: 0, transition: { duration: 0.07 } }}
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
@@ -1337,7 +1371,7 @@ function ModalBusqueda({
                       }`}
                     >
                       <div className="flex items-baseline gap-2 mb-0.5">
-                        <span className="font-mono text-xs font-semibold" style={{ color: 'var(--accent-texto)' }}>
+                        <span className="tabular-nums text-xs font-semibold" style={{ color: 'var(--accent-texto)' }}>
                           {a.a}
                         </span>
                         {a.libro && (
@@ -1909,7 +1943,7 @@ function ArticuloTexto({
       <ContenedorResaltable onAgregar={(frase) => agregarSubrayado(codigo, articulo, frase)}>
         <div
           className={modoOscuro ? 'text-zinc-200' : 'text-zinc-800'}
-          style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
+          style={{ fontFamily: 'var(--font-serif)' }}
         >
           {parrafos.map((p, i) => (
             <ParrafoResaltado

@@ -135,7 +135,7 @@ export function SelectorCodigo({ titulo, descripcion, onElegir }: Props) {
           >
             <div className="min-w-0 flex-1">
               <p className="text-[11px] font-bold uppercase tracking-[0.08em]" style={{ color: 'var(--accent-texto)' }}>Seguir leyendo</p>
-              <p className="text-[20px] font-bold truncate" style={{ color: 'var(--neu-ink)', fontFamily: 'Georgia, serif' }}>
+              <p className="text-[20px] font-bold truncate" style={{ color: 'var(--neu-ink)', fontFamily: 'var(--font-serif)' }}>
                 {nombreSeguir} · {seguir.art}
               </p>
             </div>

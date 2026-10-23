@@ -395,12 +395,12 @@ function TarjetaColeccion({
 
       {coleccion.articulos.length > 0 ? (
         <div className="space-y-2 mb-3">
-          {coleccion.articulos.slice(0, 2).map((a) => (
+          {coleccion.articulos.slice(0, 1).map((a) => (
             <VistaPreviaArticulo key={`${a.codigo}-${a.articulo}`} codigo={a.codigo} articulo={a.articulo} />
           ))}
-          {coleccion.articulos.length > 2 && (
+          {coleccion.articulos.length > 1 && (
             <p className="text-[13px] font-semibold" style={{ color: 'var(--accent-texto)' }}>
-              + {coleccion.articulos.length - 2} artículo{coleccion.articulos.length - 2 !== 1 ? 's' : ''} más
+              +{coleccion.articulos.length - 1} artículo{coleccion.articulos.length - 1 !== 1 ? 's' : ''}
             </p>
           )}
         </div>
@@ -422,7 +422,7 @@ function TarjetaColeccion({
   )
 }
 
-/** Dos líneas del artículo, con su código y número, para reconocer la colección de un vistazo. */
+/** Dos líneas de un artículo, con su código y número, para reconocer la colección de un vistazo. */
 function VistaPreviaArticulo({ codigo, articulo }: { codigo: CodigoTipo; articulo: string }) {
   const [, forzar] = useState(0)
   useEffect(() => {
@@ -442,7 +442,7 @@ function VistaPreviaArticulo({ codigo, articulo }: { codigo: CodigoTipo; articul
       <p className="text-[11px] font-bold uppercase tracking-[0.06em]" style={{ color: 'var(--neu-danger)' }}>
         {nombreCortoMetadata(codigo)} · {articulo}
       </p>
-      <p className="text-[14px] leading-snug line-clamp-2" style={{ color: 'var(--neu-ink)', fontFamily: 'Georgia, serif' }}>
+      <p className="text-[14px] leading-snug line-clamp-2" style={{ color: 'var(--neu-ink)', fontFamily: 'var(--font-serif)' }}>
         {texto || '\u00a0'}
       </p>
     </div>
@@ -1698,7 +1698,7 @@ function TarjetaArticulo({
             >
               <div
                 className={`px-3.5 py-2.5 text-[13px] leading-relaxed ${modoOscuro ? 'text-zinc-300 bg-zinc-900/50' : 'text-zinc-700 bg-zinc-50/50'}`}
-                style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
+                style={{ fontFamily: 'var(--font-serif)' }}
               >
                 {item.cargando ? (
                   <p className={`text-xs italic ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>Cargando…</p>
@@ -3345,7 +3345,7 @@ function ModalAgregarArticulo({
                                 : 'hover:bg-zinc-50'
                           }`}
                         >
-                          <span className="font-mono text-xs font-semibold flex-shrink-0" style={{ color: 'var(--accent-texto)' }}>
+                          <span className="tabular-nums text-xs font-semibold flex-shrink-0" style={{ color: 'var(--accent-texto)' }}>
                             {a.a}
                           </span>
                           <span className={`text-xs line-clamp-1 flex-1 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>

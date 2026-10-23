@@ -478,7 +478,7 @@ export default function EditorApunte({ titulo, contenido, tema: temaLectura, tam
             />
             <div
               className={`ap-tema-${temaLectura} ${temaLectura === 'oscuro' ? 'text-zinc-200' : temaLectura === 'papel' ? 'text-[#3a2c1a]' : 'text-zinc-800'}`}
-              style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontSize: tamanoPx }}
+              style={{ fontFamily: 'var(--font-serif)', fontSize: tamanoPx }}
             >
               <EditorContent editor={editor} />
             <MenuComandos editor={editor} teclas={teclasMenu} />

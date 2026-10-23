@@ -30,7 +30,7 @@ export function CitaBlock({ cita }: Props) {
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-2">
-            <span className="font-mono text-sm font-semibold" style={{ color }}>
+            <span className="tabular-nums text-sm font-semibold" style={{ color }}>
               {cita.articulo.startsWith('Art.') ? cita.articulo : `Art. ${cita.articulo}`}
             </span>
             <span className={`text-sm truncate ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>
@@ -61,7 +61,7 @@ export function CitaBlock({ cita }: Props) {
               className={`px-4 py-3 border-t text-sm leading-relaxed ${
                 modoOscuro ? 'border-zinc-800 text-zinc-300 bg-zinc-900/50' : 'border-zinc-100 text-zinc-700 bg-zinc-50/50'
               }`}
-              style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
+              style={{ fontFamily: 'var(--font-serif)' }}
             >
               {dividirIncisos(cita.texto_original).map((parrafo, i) => (
                 <p

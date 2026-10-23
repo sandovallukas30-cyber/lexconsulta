@@ -1,7 +1,7 @@
 /* ============================================================================
    Base visual de Prima Lex: superficies planas (tarjetas blancas con borde fino sobre fondo
    gris claro), tokens `--neu-*` (el prefijo es histórico; se mantuvo para no tocar cientos de
-   componentes), tipografía Sora + Plus Jakarta Sans, accesibilidad (alto contraste, sin
+   componentes), tipografía Plus Jakarta Sans (+ serifa para textos jurídicos), accesibilidad (alto contraste, sin
    animaciones) y compensación del zoom de la interfaz.
 
    El estilo neumórfico anterior (sombras duales, relieve y campos hundidos) se retiró: el
@@ -29,7 +29,7 @@
   --neu-warn-soft: #faeace;
   --neu-danger: #e4504f;
   --neu-danger-soft: #fbdede;
-  --font-head: 'Sora Variable', 'Sora', system-ui, sans-serif;
+  --font-head: var(--font-sans);
 }
 :root[data-tema='oscuro'] {
   --neu-bg: #14172a;
@@ -91,7 +91,7 @@ html, body, #root { background: var(--neu-bg); color: var(--neu-ink); }
 main[data-vista] > .h-full { background-color: var(--neu-bg); }
 body { font-family: var(--font-sans); }
 
-/* Sora en títulos, botones, pestañas y todo lo que va en negrita */
+/* Títulos, botones, pestañas y negritas usan la misma sans de la interfaz (antes Sora: sumaba una 3.ª familia a cada pantalla) */
 h1, h2, h3, h4, button, .boton, [role='tab'], [class*='font-bold'], [class*='font-semibold'], [class*='font-extrabold'] {
   font-family: var(--font-head);
 }

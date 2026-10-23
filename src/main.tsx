@@ -1,7 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import '@fontsource-variable/plus-jakarta-sans'
-import '@fontsource-variable/sora'
 // íconos Tabler recortados a los que usa la app (24 KB en vez de 495): scripts/subset_iconos.mjs
 import './assets/iconos/tabler-subset.css'
 import './index.css'

@@ -147,29 +147,34 @@ export function Omnibar({ onClose }: Props) {
   }
 
   const seleccionarResultado = (resultado: ResultadoBusqueda) => {
-    switch (resultado.tipo) {
-      case 'articulo':
-        if (resultado.codigo) {
-          // abre el artículo elegido, no solo el código
-          abrirArticuloEnExplorador(resultado.codigo, resultado.articulo ?? '')
-          agregarVisitado(resultado.articulo || '', resultado.codigo)
-        }
-        break
-      case 'apunte':
-        if (resultado.moduloId && resultado.articulo) abrirApunte(resultado.moduloId, resultado.articulo, busqueda)
-        break
-      case 'favorito':
-        setVistaActiva('explorador')
-        break
-    }
+    // Se cierra en el acto; la navegación (que monta una vista pesada) espera a que la
+    // ventana termine de salir, para que no parezca que queda colgada.
+    const textoBuscado = busqueda
     setOmnibarAbierto(false)
+    window.setTimeout(() => {
+      switch (resultado.tipo) {
+        case 'articulo':
+          if (resultado.codigo) {
+            // abre el artículo elegido, no solo el código
+            abrirArticuloEnExplorador(resultado.codigo, resultado.articulo ?? '')
+            agregarVisitado(resultado.articulo || '', resultado.codigo)
+          }
+          break
+        case 'apunte':
+          if (resultado.moduloId && resultado.articulo) abrirApunte(resultado.moduloId, resultado.articulo, textoBuscado)
+          break
+        case 'favorito':
+          setVistaActiva('explorador')
+          break
+      }
+    }, 80)
   }
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+      exit={{ opacity: 0, transition: { duration: 0.07 } }}
       transition={{ duration: 0.2 }}
       className="fixed inset-0 z-50 flex items-start justify-center pt-[12vh] sm:pt-[20vh] px-4"
       onClick={() => onClose()}
@@ -181,7 +186,7 @@ export function Omnibar({ onClose }: Props) {
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
+        exit={{ scale: 0.98, opacity: 0, transition: { duration: 0.07 } }}
         transition={{ duration: 0.15 }}
         onClick={(e) => e.stopPropagation()}
         role="dialog"

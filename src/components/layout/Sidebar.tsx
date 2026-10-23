@@ -138,51 +138,38 @@ export function Sidebar() {
           esMovil ? 'fixed inset-y-0 left-0 z-[70] shadow-2xl bg-[var(--neu-bg)]' : 'relative flex-shrink-0 pr-1'
         }`}
       >
-        <div
-          className={`neu-raised flex-shrink-0 flex items-center ${
-            colapsado ? 'justify-center px-2 py-3' : 'justify-between pl-4 pr-2 py-4'
-          }`}
-        >
-          {colapsado ? (
-            <button
-              onClick={toggleSidebar}
-              title="Expandir (Ctrl+B)"
-              aria-label="Expandir menú lateral"
-              className="anim-aparece w-11 h-11 rounded-xl flex items-center justify-center"
-            >
+        {/* El botón de colapsar/expandir vive SIEMPRE en el mismo lugar (esquina superior izquierda de
+            la tarjeta): se abre y se cierra tocando el mismo punto, sin mover el cursor ni el dedo. */}
+        <div className="neu-raised flex-shrink-0 flex items-center gap-2.5 py-3 pl-[10px] pr-2">
+          <button
+            onClick={toggleSidebar}
+            title={esMovil ? 'Cerrar menú' : colapsado ? 'Expandir (Ctrl+B)' : 'Colapsar (Ctrl+B)'}
+            aria-label={esMovil ? 'Cerrar menú' : colapsado ? 'Expandir menú lateral' : 'Colapsar menú lateral'}
+            aria-expanded={esMovil ? undefined : !colapsado}
+            className="boton boton-fantasma w-11 h-11 flex-shrink-0 flex items-center justify-center rounded-[14px]"
+          >
+            {/* el set de íconos es recortado: «expandir» es el de «colapsar» espejado */}
+            <i
+              className={`ti ${esMovil ? 'ti-x' : 'ti-layout-sidebar-left-collapse'} text-xl`}
+              style={!esMovil && colapsado ? { transform: 'scaleX(-1)' } : undefined}
+            />
+          </button>
+          {!colapsado && (
+            <div className="anim-aparece flex-1 min-w-0 flex items-center gap-2.5">
               <span
-                className="w-11 h-11 rounded-[14px] flex items-center justify-center"
+                className="w-11 h-11 rounded-[14px] flex items-center justify-center flex-shrink-0"
                 style={{ background: VERDE }}
+                aria-hidden="true"
               >
                 <i className="ti ti-scale text-lg text-white" />
               </span>
-            </button>
-          ) : (
-            <>
-              <div className="anim-aparece flex-1 min-w-0 flex items-center gap-2.5">
-                <span
-                  className="w-11 h-11 rounded-[14px] flex items-center justify-center flex-shrink-0"
-                  style={{ background: VERDE }}
-                  aria-hidden="true"
-                >
-                  <i className="ti ti-scale text-lg text-white" />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-[17px] font-extrabold leading-tight" style={{ color: 'var(--neu-ink)' }}>
-                    Prima Lex
-                  </p>
-                  <p className="sidebar-tagline text-[11px]" style={{ color: 'var(--neu-ink3)' }}>Tu cuaderno de Derecho</p>
-                </div>
+              <div className="min-w-0">
+                <p className="text-[17px] font-extrabold leading-tight" style={{ color: 'var(--neu-ink)' }}>
+                  Prima Lex
+                </p>
+                <p className="sidebar-tagline text-[11px]" style={{ color: 'var(--neu-ink3)' }}>Tu cuaderno de Derecho</p>
               </div>
-              <button
-                onClick={toggleSidebar}
-                title={esMovil ? 'Cerrar menú' : 'Colapsar (Ctrl+B)'}
-                aria-label={esMovil ? 'Cerrar menú' : 'Colapsar menú lateral'}
-                className="boton boton-fantasma boton-chico boton-icono"
-              >
-                <i className={`ti ${esMovil ? 'ti-x' : 'ti-layout-sidebar-left-collapse'} text-lg`} />
-              </button>
-            </>
+            </div>
           )}
         </div>
 

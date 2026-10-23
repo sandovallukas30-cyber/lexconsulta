@@ -22,7 +22,7 @@ export interface OpcionesTarjeta {
 export async function dibujarSemana(r: ResumenSemana, o: OpcionesTarjeta): Promise<Blob> {
   // las fuentes de la app tienen que estar cargadas antes de dibujar
   try {
-    await Promise.all([document.fonts.load('800 80px Sora'), document.fonts.load('600 32px "Plus Jakarta Sans"')])
+    await Promise.all([document.fonts.load('800 80px "Plus Jakarta Sans"'), document.fonts.load('600 32px "Plus Jakarta Sans"')])
   } catch {
     /* si no cargan, se usa la fuente del sistema */
   }
@@ -38,7 +38,7 @@ export async function dibujarSemana(r: ResumenSemana, o: OpcionesTarjeta): Promi
   ctx.fillStyle = grad
   ctx.fillRect(0, 0, W, H)
 
-  const head = '"Sora", "Segoe UI", sans-serif'
+  const head = '"Plus Jakarta Sans", "Segoe UI", sans-serif'
   const body = '"Plus Jakarta Sans", "Segoe UI", sans-serif'
 
   // marca
