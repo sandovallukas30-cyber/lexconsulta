@@ -307,11 +307,11 @@ html, body, #root { height: 100%; width: 100%; overflow: hidden; }
 .inciso-buscado::after {
   content: '';
   position: absolute;
-  left: -13px;
-  top: -4px;
-  bottom: -4px;
+  left: -9px; /* pegada al borde del fondo suave (que sobresale 6 px): sin hueco entre la barra y el color */
+  top: -6px;
+  bottom: -6px;
   width: 3px;
-  border-radius: 2px;
+  border-radius: 3px 0 0 3px;
   background: #f59e0b;
   transition: opacity 1s ease;
 }
