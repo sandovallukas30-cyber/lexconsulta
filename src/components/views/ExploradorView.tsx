@@ -203,6 +203,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
   // Mientras hay texto seleccionado (para resaltar o citar) el artículo no se desliza: framer-motion apaga la selección de
   // texto (`user-select: none`) en lo que se arrastra, y un gesto de selección no debe cambiar de artículo.
   const [haySeleccion, setHaySeleccion] = useState(false)
+  const haySeleccionRef = useRef(false)
   // Un dedo que se queda quieto más de ~0,25 s es el inicio de una selección (pulsación larga): desde ahí, y hasta soltar, el
   // artículo no se desliza aunque el dedo se mueva para extender la selección.
   const [pulsacionLarga, setPulsacionLarga] = useState(false)
@@ -230,7 +231,11 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
   }
   useEffect(() => {
     if (!esTactil) return
-    const alCambiar = () => setHaySeleccion(!(window.getSelection()?.isCollapsed ?? true))
+    const alCambiar = () => {
+      const hay = !(window.getSelection()?.isCollapsed ?? true)
+      haySeleccionRef.current = hay
+      setHaySeleccion(hay)
+    }
     document.addEventListener('selectionchange', alCambiar)
     return () => document.removeEventListener('selectionchange', alCambiar)
   }, [esTactil])
@@ -581,7 +586,12 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
       </div>
 
       {esTactil ? (
-        <div ref={refArticulo} className="flex-1 overflow-y-auto overflow-x-hidden">
+        <div
+          ref={refArticulo}
+          className="flex-1 overflow-y-auto overflow-x-hidden"
+          // al llevar el tirador de la selección hasta el borde, el navegador desplaza el contenido hacia el costado
+          onScroll={(e) => { if (e.currentTarget.scrollLeft !== 0) e.currentTarget.scrollLeft = 0 }}
+        >
           <motion.div
             ref={refPista}
             className="relative flow-root min-h-full"
@@ -606,13 +616,13 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
             }}
             onDrag={() => {
               // el arrastre ya había empezado cuando se detectó la pulsación larga: el artículo no se mueve
-              if (pulsandoLargo.current) return desplazamientoX.set(0)
+              if (pulsandoLargo.current || haySeleccionRef.current) return desplazamientoX.set(0)
               // sin vecino en ese lado el artículo solo cede un poco
               const dx = desplazamientoX.get()
               if ((dx > 0 && !anterior) || (dx < 0 && !siguiente)) desplazamientoX.set(dx * 0.3)
             }}
             onDragEnd={(_, info) => {
-              if (pulsandoLargo.current || Math.abs(desplazamientoX.get()) < 1) {
+              if (pulsandoLargo.current || haySeleccionRef.current || Math.abs(desplazamientoX.get()) < 1) {
                 desplazamientoX.set(0)
                 setArrastrando(false)
                 return
