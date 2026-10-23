@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from '../../store/useStore'
 import { avisar } from '../../store/useAvisos'
 import { FilaTarea } from '../ui/FilaTarea'
@@ -37,6 +37,116 @@ function BanderaEval({ urgente, className = '' }: { urgente: boolean; className?
       style={{ background: 'var(--neu-danger)' }}
     >
       <i className="ti ti-flag-3 text-[11px]" />
+    </span>
+  )
+}
+
+/* ---------- contorno en ola de los días con evaluación ----------
+   La línea que rodea la ficha ondula suave y la onda recorre todo el borde. Todas las olas son iguales (siempre sutiles). Un solo bucle de animación para todas las fichas. */
+const suscriptores = new Set<(seg: number) => void>()
+let cuadro = 0
+function suscribirOla(fn: (seg: number) => void) {
+  suscriptores.add(fn)
+  if (!cuadro) {
+    const bucle = (ms: number) => {
+      if (!document.hidden) suscriptores.forEach((f) => f(ms / 1000))
+      cuadro = requestAnimationFrame(bucle)
+    }
+    cuadro = requestAnimationFrame(bucle)
+  }
+  return () => {
+    suscriptores.delete(fn)
+    if (suscriptores.size === 0) {
+      cancelAnimationFrame(cuadro)
+      cuadro = 0
+    }
+  }
+}
+
+interface PuntoBorde { x: number; y: number; nx: number; ny: number; lado: number; u: number }
+
+/** Perímetro de un rectángulo redondeado muestreado cada ~3 px, con la normal hacia afuera. Cada punto sabe en
+ *  qué lado está (0 arriba, 1 derecha, 2 abajo, 3 izquierda) y en qué fracción de él (`u`), así las ondas se
+ *  reparten igual en los cuatro lados. Las esquinas son un punto de empalme (u = 0 del lado que sigue). */
+function perimetroRedondeado(w: number, h: number, r: number) {
+  const pts: PuntoBorde[] = []
+  const rr = Math.max(2, Math.min(r, w / 2 - 1, h / 2 - 1))
+  const esquina = (cx: number, cy: number, a0: number, lado: number) => {
+    for (let a = 0; a <= 90; a += 10) {
+      const rad = ((a0 + a) * Math.PI) / 180
+      pts.push({ x: cx + rr * Math.cos(rad), y: cy + rr * Math.sin(rad), nx: Math.cos(rad), ny: Math.sin(rad), lado, u: 0 })
+    }
+  }
+  const largos = [w - 2 * rr, h - 2 * rr, w - 2 * rr, h - 2 * rr]
+  const recta = (x0: number, y0: number, x1: number, y1: number, nx: number, ny: number, lado: number) => {
+    const n = Math.max(1, Math.round(largos[lado] / 3))
+    for (let i = 1; i < n; i++) pts.push({ x: x0 + ((x1 - x0) * i) / n, y: y0 + ((y1 - y0) * i) / n, nx, ny, lado, u: i / n })
+  }
+  esquina(w - rr, rr, -90, 1); recta(w, rr, w, h - rr, 1, 0, 1)
+  esquina(w - rr, h - rr, 0, 2); recta(w - rr, h, rr, h, 0, 1, 2)
+  esquina(rr, h - rr, 90, 3); recta(0, h - rr, 0, rr, -1, 0, 3)
+  esquina(rr, rr, 180, 0); recta(rr, 0, w - rr, 0, 0, -1, 0)
+  return { pts, largos }
+}
+
+/** Contorno ondulado que reemplaza al borde recto de una ficha. Va dentro de un elemento `relative isolate`
+ *  y se dibuja por detrás del contenido. */
+function ContornoOla({ radio, grueso = false }: { radio: number; grueso?: boolean }) {
+  const caja = useRef<HTMLSpanElement>(null)
+  const ruta = useRef<SVGPathElement>(null)
+  const [medida, setMedida] = useState<{ w: number; h: number } | null>(null)
+
+  useEffect(() => {
+    const el = caja.current
+    if (!el) return
+    const medir = () => setMedida({ w: el.clientWidth, h: el.clientHeight })
+    medir()
+    const ro = new ResizeObserver(medir)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  // todas las olas iguales: misma altura, mismo largo y misma velocidad en cada ficha
+  const AMP = 1.0
+  const VEL = 0.6
+
+  useEffect(() => {
+    if (!medida || medida.w < 20 || medida.h < 20 || !ruta.current) return
+    const nodo = ruta.current
+    const amp = AMP
+    // la línea se dibuja un poco hacia adentro para que la onda nunca se salga de la ficha
+    const margen = amp + 1
+    const { pts, largos } = perimetroRedondeado(medida.w - margen * 2, medida.h - margen * 2, radio - margen)
+    // las mismas ondas en los cuatro lados: cada uno lleva un número entero de ondas (una cada ~44 px)
+    const ondas = largos.map((l) => Math.max(1, Math.round(l / 44)))
+    const quieto =
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.dataset.animaciones === 'no'
+    const pintar = (seg: number) => {
+      const fase = quieto ? 0 : seg * VEL * 1.6
+      let d = ''
+      for (let i = 0; i < pts.length; i++) {
+        const p = pts[i]
+        const o = amp * Math.sin(2 * Math.PI * ondas[p.lado] * p.u - fase)
+        d += `${i ? 'L' : 'M'}${(margen + p.x + p.nx * o).toFixed(1)} ${(margen + p.y + p.ny * o).toFixed(1)}`
+      }
+      nodo.setAttribute('d', d + 'Z')
+    }
+    pintar(0)
+    return quieto ? undefined : suscribirOla(pintar)
+  }, [medida, radio])
+
+  return (
+    <span ref={caja} aria-hidden="true" className="pointer-events-none absolute inset-0 z-[-1]">
+      <svg width="100%" height="100%" className="overflow-visible">
+        <path
+          ref={ruta}
+          fill="var(--neu-danger-soft)"
+          stroke="var(--neu-danger)"
+          strokeWidth={grueso ? 2.1 : 1.5}
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+      </svg>
     </span>
   )
 }
@@ -153,24 +263,25 @@ function CeldaDia({
   const e = useEstilos()
   const dia = Number(fecha.slice(8))
   const hayEval = items.some((x) => x.tipo === 'evaluacion' && !x.hecha)
-  const urgente = hayEval && cuentaRegresiva(fecha, hoyISO()).urgente
   return (
     <button
       onClick={onElegir}
       aria-pressed={seleccionada}
-      className={`sin-tactil relative text-left min-h-[58px] sm:min-h-[76px] xl:min-h-[92px] p-1 sm:p-1.5 rounded-control flex flex-col gap-1 transition-colors border ${
-        seleccionada
+      className={`sin-tactil relative isolate text-left min-h-[58px] sm:min-h-[76px] xl:min-h-[92px] p-1 sm:p-1.5 rounded-control flex flex-col gap-1 transition-colors border ${
+        hayEval
+          ? 'border-transparent'
+          : seleccionada
           ? 'border-[var(--accent-base)] bg-[color-mix(in_srgb,var(--accent-base)_8%,transparent)]'
-          : hayEval
-          ? 'border-[color-mix(in_srgb,var(--neu-danger)_55%,transparent)] bg-[var(--neu-danger-soft)]'
           : e.modoOscuro
           ? 'border-transparent hover:bg-zinc-800'
           : 'border-transparent hover:bg-zinc-50'
       } ${delMes ? '' : 'opacity-70'}`}
     >
+      {/* contorno en ola: reemplaza al borde recto (al elegir el día, la línea se hace más gruesa) */}
+      {hayEval && <ContornoOla radio={14} grueso={seleccionada} />}
       {/* chincheta de evaluación: en la esquina de la celda, para que se vea de lejos */}
       {hayEval && (
-        <BanderaEval urgente={urgente} className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 !w-4 !h-4 sm:!w-5 sm:!h-5 [&>i]:!text-[9px] sm:[&>i]:!text-[11px]" />
+        <BanderaEval urgente={false} className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 !w-4 !h-4 sm:!w-5 sm:!h-5 [&>i]:!text-[9px] sm:[&>i]:!text-[11px]" />
       )}
       {/* el nombre accesible parte del texto visible (WCAG 2.5.3) y suma la fecha completa para el lector de pantalla */}
       <span className="sr-only">{`${fechaLarga(fecha)}${items.length ? `, ${items.length} ${items.length === 1 ? 'elemento' : 'elementos'}` : ''}. `}</span>
@@ -490,16 +601,16 @@ export function CalendarioView() {
               return (
                 <section
                   key={f}
-                  className={`${e.tarjeta} p-3 ${esHoy ? 'ring-2 ring-[var(--accent-base)]' : ''} ${hayEval ? '!border-2 !border-[var(--neu-danger)]' : ''}`}
-                  style={hayEval ? { background: 'var(--neu-danger-soft)' } : undefined}
+                  className={`${e.tarjeta} relative isolate p-3 ${esHoy ? 'ring-2 ring-[var(--accent-base)]' : ''} ${hayEval ? '!border-transparent !bg-transparent !shadow-none' : ''}`}
                   aria-label={fechaLarga(f)}
                 >
+                  {hayEval && <ContornoOla radio={18} />}
                   <div className="flex items-baseline gap-2 mb-1">
                     <span className={`text-xs font-semibold uppercase tracking-wide ${esHoy ? '' : e.suave}`} style={esHoy ? { color: 'var(--accent-texto)' } : undefined}>
                       {DIAS[i]}
                     </span>
                     <span className={`text-lg font-bold ${e.titulo}`}>{Number(f.slice(8))}</span>
-                    {hayEval && <BanderaEval urgente={cuentaRegresiva(f, hoy).urgente} className="ml-auto self-center" />}
+                    {hayEval && <BanderaEval urgente={false} className="ml-auto self-center" />}
                   </div>
                   <ListaDelDia fecha={f} items={delDia} />
                 </section>
