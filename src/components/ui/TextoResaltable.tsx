@@ -22,12 +22,15 @@ const COLOR_TEXTO_RESALTADO = '#1c1917'
 export function ContenedorResaltable({
   children,
   onAgregar,
+  onCopiarCita,
 }: {
   children: ReactNode
   onAgregar: (frase: string) => void
+  /** Si se pasa, junto a «Resaltar» aparece «Citar» (copia la frase con su cita): recibe la frase y en qué párrafo (0, 1, 2…) del artículo está. */
+  onCopiarCita?: (frase: string, indiceParrafo: number) => void
 }) {
   const ref = useRef<HTMLDivElement>(null)
-  const [boton, setBoton] = useState<{ x: number; y: number; frase: string } | null>(null)
+  const [boton, setBoton] = useState<{ x: number; y: number; frase: string; indice: number } | null>(null)
 
   const revisarSeleccion = useCallback(() => {
     const sel = window.getSelection()
@@ -62,7 +65,8 @@ export function ContenedorResaltable({
     // Debajo de la selección, no arriba: el menú nativo de iOS/Safari
     // (Copiar/Consultar/Traducir...) se posiciona arriba de la selección, así
     // que si el botón propio también va arriba, quedan uno encima del otro.
-    setBoton({ x: rect.left + rect.width / 2 - rectContenedor.left, y: rect.bottom - rectContenedor.top, frase })
+    const indice = Array.from(ref.current.querySelectorAll('p')).indexOf(parrafoComun as HTMLParagraphElement)
+    setBoton({ x: rect.left + rect.width / 2 - rectContenedor.left, y: rect.bottom - rectContenedor.top, frase, indice })
   }, [])
 
   // onMouseUp no dispara con selección táctil (iPad/celular): seleccionar
@@ -88,32 +92,43 @@ export function ContenedorResaltable({
     <div ref={ref} className="relative" onMouseUp={revisarSeleccion}>
       {children}
       {boton && (
-        <button
-          // onPointerDown (no onClick): en iOS, tocar cualquier elemento
-          // mientras hay una selección activa primero la CIERRA (el navegador
-          // descarta el gesto para ocultar los tiradores de selección) y el
-          // click nunca llega a disparar -- por eso se veía el botón pero no
-          // hacía nada. pointerdown ocurre ANTES de ese cierre; preventDefault
-          // evita que el navegador lo dispare, así la selección sigue intacta
-          // cuando corremos onAgregar.
-          onPointerDown={(e) => {
-            e.preventDefault()
-            onAgregar(boton.frase)
-            window.getSelection()?.removeAllRanges()
-            setBoton(null)
-          }}
-          className="absolute z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-lg whitespace-nowrap"
-          style={{
-            left: boton.x,
-            top: boton.y,
-            transform: 'translate(-50%, 10px)',
-            background: COLOR_RESALTADO,
-            color: COLOR_TEXTO_RESALTADO,
-          }}
+        <div
+          className="absolute z-20 flex items-center gap-1.5"
+          style={{ left: boton.x, top: boton.y, transform: 'translate(-50%, 10px)' }}
         >
-          <i className="ti ti-highlight text-sm" />
-          Resaltar
-        </button>
+          {/* onPointerDown (no onClick): en iOS, tocar cualquier elemento mientras hay una selección activa primero la
+              CIERRA (el navegador descarta el gesto para ocultar los tiradores) y el click nunca llega a disparar. pointerdown
+              ocurre ANTES de ese cierre; preventDefault evita que el navegador lo dispare, así la selección sigue intacta
+              cuando corremos la acción. */}
+          <button
+            onPointerDown={(e) => {
+              e.preventDefault()
+              onAgregar(boton.frase)
+              window.getSelection()?.removeAllRanges()
+              setBoton(null)
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-lg whitespace-nowrap"
+            style={{ background: COLOR_RESALTADO, color: COLOR_TEXTO_RESALTADO }}
+          >
+            <i className="ti ti-highlight text-sm" />
+            Resaltar
+          </button>
+          {onCopiarCita && (
+            <button
+              onPointerDown={(e) => {
+                e.preventDefault()
+                onCopiarCita(boton.frase, boton.indice)
+                window.getSelection()?.removeAllRanges()
+                setBoton(null)
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-lg whitespace-nowrap"
+              style={{ background: 'var(--accent-base)', color: '#fff' }}
+            >
+              <i className="ti ti-quote text-sm" />
+              Citar
+            </button>
+          )}
+        </div>
       )}
     </div>
   )

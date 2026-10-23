@@ -59,3 +59,49 @@ export function numerosDeIncisos(parrafos: string[]): (number | null)[] {
     return n
   })
 }
+
+/** Dónde está un párrafo dentro del artículo, para citarlo: inciso, número (numeral) y letra. */
+export interface UbicacionCita {
+  inciso: number | null
+  numero: string | null
+  letra: string | null
+  /** El número trae incisos propios (art. 19): el inciso se cuenta dentro del número y se cita después de él. */
+  propio: boolean
+}
+
+/** «3º.- La igual…» → «3»; «1) Las que…» → «1». */
+function numeroDeItem(parrafo: string): string | null {
+  return /^\s*(\d{1,2})\s*(?:[º°ª.)]|\.-)/.exec(parrafo)?.[1] ?? null
+}
+/** «a) …» → «a»; «ii) …» → «ii». */
+function letraDeItem(parrafo: string): string | null {
+  return /^\s*([a-zñ]|[ivx]{2,4})\)/i.exec(parrafo)?.[1].toLowerCase() ?? null
+}
+
+/** Ubicación citable del párrafo `i` (o null si es un encabezado). El inciso se omite cuando es el único del artículo, o
+ *  el 1.º de una lista de ítems o de un número («art. 17 N.º 2», «art. 19 N.º 3»). */
+export function ubicacionDeParrafo(parrafos: string[], i: number): UbicacionCita | null {
+  if (!parrafos[i] || esEncabezado(parrafos[i])) return null
+  const propios = numeralesConIncisos(parrafos)
+  const incisosTotales = parrafos.filter((_, k) => claseInciso(parrafos, k, propios) !== 'es-numeral').length
+  let n = 0
+  let numeroPropio: string | null = null
+  for (let k = 0; k < i; k++) {
+    const c = claseInciso(parrafos, k, propios)
+    if (c === 'es-numeral') continue
+    if (c === 'reinicia-inciso') {
+      n = 1
+      numeroPropio = numeroDeItem(parrafos[k])
+    } else n += 1
+  }
+  const c = claseInciso(parrafos, i, propios)
+  if (c === 'reinicia-inciso') return { inciso: null, numero: numeroDeItem(parrafos[i]), letra: null, propio: true }
+  if (c === 'es-numeral') {
+    const letra = letraDeItem(parrafos[i])
+    const numero = letra ? numeroPropio : numeroDeItem(parrafos[i])
+    return { inciso: n > 1 ? n : null, numero, letra, propio: !!numeroPropio && !!letra }
+  }
+  n += 1
+  if (numeroPropio) return { inciso: n > 1 ? n : null, numero: numeroPropio, letra: null, propio: true }
+  return { inciso: incisosTotales > 1 ? n : null, numero: null, letra: null, propio: false }
+}

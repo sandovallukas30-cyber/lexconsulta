@@ -1,10 +1,32 @@
 import { abreviaturaCita, obtenerMetadata } from '../data/codigosMetadata'
 import type { Articulo, CodigoTipo } from '../types'
+import type { UbicacionCita } from './incisos'
 
 /** "Art. 1545 CC", "Art. 3 transitorio Ley 19.496" (C7). El id del JSON ya
  *  trae "Art."; los numerales del auto acordado ("N° 3") se dejan tal cual. */
 export function citaArticulo(tipo: CodigoTipo, idArticulo: string): string {
   return `${idArticulo.trim()} ${abreviaturaCita(tipo)}`
+}
+
+/** Cita corta como se escribe en un trabajo chileno: «art. 1445 inc. 2° CC», «art. 19 N° 3 inc. 6° CPR»,
+ *  «art. 65 inc. 4° N° 6 CPR», «art. 23 Ley 19.620». Minúscula (va entre paréntesis en el texto corrido), con las
+ *  abreviaturas de códigos de uso frecuente (CC, CCom, CPR…). Orden: artículo → inciso → número → letra; cuando el número
+ *  trae incisos propios (art. 19) el número va primero y el inciso se cuenta dentro de él. */
+export function citaPrecisa(tipo: CodigoTipo, idArticulo: string, u?: UbicacionCita | null): string {
+  const art = idArticulo.trim().replace(/^Art(?:[íi]culo)?\.?\s*/i, '')
+  const partes = [`art. ${art}`]
+  const inc = u?.inciso ? `inc. ${u.inciso}°` : null
+  const num = u?.numero ? `N° ${u.numero}` : null
+  if (u?.propio) partes.push(...[num, inc].filter((x): x is string => !!x))
+  else partes.push(...[inc, num].filter((x): x is string => !!x))
+  if (u?.letra) partes.push(`letra ${u.letra})`)
+  partes.push(abreviaturaCita(tipo))
+  return partes.join(' ')
+}
+
+/** Lo que queda en el portapapeles al copiar una frase seleccionada: «frase» (art. 1445 inc. 2° CC). */
+export function frasesConCita(tipo: CodigoTipo, idArticulo: string, frase: string, u?: UbicacionCita | null): string {
+  return `«${frase.trim().replace(/\s+/g, ' ')}» (${citaPrecisa(tipo, idArticulo, u)})`
 }
 
 /** Texto que queda en el portapapeles con "Copiar con cita": la cita, el

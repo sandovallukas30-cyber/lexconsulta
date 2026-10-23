@@ -17,8 +17,8 @@ import { construirEsquema, ETIQUETAS_NIVEL, type NodoEsquema } from '../../servi
 import { buscarVinculosArticulo } from '../../services/modulosAcademico'
 import { buscarEnCodigo, consultaComoId } from '../../services/buscarEnCodigo'
 import { quitarResaltado, resaltarCoincidencia } from '../../services/resaltado'
-import { claseInciso, numeralesConIncisos } from '../../services/incisos'
-import { citaArticulo, copiarAlPortapapeles, textoConCita } from '../../services/citas'
+import { claseInciso, numeralesConIncisos, ubicacionDeParrafo } from '../../services/incisos'
+import { citaArticulo, citaPrecisa, copiarAlPortapapeles, frasesConCita, textoConCita } from '../../services/citas'
 import { avisar } from '../../store/useAvisos'
 import { imprimir, useImprimirConCtrlP } from '../../services/impresion'
 import { VistaImprimibleArticulo } from '../ui/VistasImprimibles'
@@ -2031,7 +2031,14 @@ function ArticuloTexto({
   const incisosPropios = useMemo(() => numeralesConIncisos(parrafos), [parrafos])
   return (
     <>
-      <ContenedorResaltable onAgregar={(frase) => agregarSubrayado(codigo, articulo, frase)}>
+      <ContenedorResaltable
+        onAgregar={(frase) => agregarSubrayado(codigo, articulo, frase)}
+        onCopiarCita={async (frase, indice) => {
+          const texto = frasesConCita(codigo, articulo, frase, ubicacionDeParrafo(parrafos, indice))
+          if (await copiarAlPortapapeles(texto)) avisar.exito(`Copiado con cita: ${citaPrecisa(codigo, articulo, ubicacionDeParrafo(parrafos, indice))}`)
+          else avisar.error('No se pudo copiar. Selecciona el texto y usa Ctrl+C.')
+        }}
+      >
         <div
           className={`${modoOscuro ? 'text-zinc-200' : 'text-zinc-800'}${numerarIncisos ? ' incisos-numerados' : ''}`}
           style={{ fontFamily: 'var(--font-serif)' }}
