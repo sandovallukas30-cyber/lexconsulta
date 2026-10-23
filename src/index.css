@@ -296,6 +296,14 @@ html, body, #root { height: 100%; width: 100%; overflow: hidden; }
 
 /* Coincidencia del buscador de apuntes (Omnibar → Modo Lectura) */
 ::highlight(prima-busqueda) { background-color: #fde047; color: #1c1917; text-decoration: underline; text-decoration-color: #f59e0b; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+/* Inciso donde apareció la búsqueda: una barra ámbar a la izquierda y un fondo suave alrededor del párrafo, sin mover el texto */
+.inciso-buscado {
+  border-radius: 6px;
+  box-shadow: -4px 0 0 0 #f59e0b, 0 0 0 6px color-mix(in srgb, #fde047 24%, transparent);
+  background-color: color-mix(in srgb, #fde047 24%, transparent);
+  transition: box-shadow 1s ease, background-color 1s ease;
+}
+.inciso-buscado.inciso-buscado-fuera { box-shadow: -4px 0 0 0 transparent, 0 0 0 6px transparent; background-color: transparent; }
 /* último tramo antes de apagarse: el mismo amarillo, más tenue */
 ::highlight(prima-busqueda-suave) { background-color: #fef9c3; color: inherit; }
 

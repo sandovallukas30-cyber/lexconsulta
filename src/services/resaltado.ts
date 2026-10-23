@@ -64,6 +64,28 @@ const limpiarTemporizadores = () => {
   temporizadores = []
 }
 
+/** Incisos (párrafos) que hoy llevan la marca de bloque, para poder quitársela. */
+let incisosMarcados: HTMLElement[] = []
+const quitarMarcaIncisos = () => {
+  incisosMarcados.forEach((el) => el.classList.remove('inciso-buscado', 'inciso-buscado-fuera'))
+  incisosMarcados = []
+}
+
+/** Marca el inciso completo donde aparece la búsqueda (barra y fondo suaves): en un artículo largo, la palabra
+ *  suelta se pierde, pero el bloque se ve de lejos y dice en qué inciso estás. */
+function marcarIncisos(rangos: Range[]): HTMLElement[] {
+  quitarMarcaIncisos()
+  for (const r of rangos) {
+    const nodo = r.startContainer
+    const el = (nodo instanceof Element ? nodo : nodo.parentElement)?.closest('p')
+    if (el instanceof HTMLElement && !incisosMarcados.includes(el)) {
+      el.classList.add('inciso-buscado')
+      incisosMarcados.push(el)
+    }
+  }
+  return incisosMarcados
+}
+
 interface OpcionesResaltado {
   /** Marcar todas las apariciones (por defecto solo la primera). */
   todas?: boolean
@@ -75,35 +97,47 @@ interface OpcionesResaltado {
  *  seleccionada. Devuelve si la encontró. */
 export function resaltarCoincidencia(raiz: HTMLElement, consulta: string, opciones: OpcionesResaltado = {}): boolean {
   limpiarTemporizadores()
+  quitarMarcaIncisos()
   const rangos = opciones.todas ? rangosDeCoincidencias(raiz, consulta) : [rangoDeCoincidencia(raiz, consulta)].filter((r): r is Range => !!r)
   if (rangos.length === 0) return false
-  ;(rangos[0].startContainer.parentElement ?? raiz).scrollIntoView({ block: 'center' })
+  // la marca de inciso va solo cuando la marca es pasajera (Explorador); en los apuntes no se toca el bloque
+  const incisos = opciones.duracionMs ? marcarIncisos(rangos) : []
+  ;(incisos[0] ?? rangos[0].startContainer.parentElement ?? raiz).scrollIntoView({ block: 'center' })
   const api = (globalThis as { CSS?: ApiResaltado }).CSS?.highlights
   const Resaltado = (globalThis as { Highlight?: ConstructorResaltado }).Highlight
+  const conApi = !!(api && Resaltado)
   if (api && Resaltado) {
     api.set('prima-busqueda', new Resaltado(...rangos))
     api.delete('prima-busqueda-suave')
-    if (opciones.duracionMs) {
-      const suave = Math.min(1200, opciones.duracionMs / 3)
-      // el color intenso pasa a uno tenue antes de apagarse, para que no desaparezca de golpe
-      temporizadores.push(
-        window.setTimeout(() => {
-          api.delete('prima-busqueda')
-          api.set('prima-busqueda-suave', new Resaltado(...rangos))
-        }, opciones.duracionMs - suave),
-        window.setTimeout(() => api.delete('prima-busqueda-suave'), opciones.duracionMs)
-      )
-    }
   } else {
     const sel = window.getSelection()
     sel?.removeAllRanges()
     sel?.addRange(rangos[0])
+  }
+  if (opciones.duracionMs) {
+    const total = opciones.duracionMs
+    const suave = Math.min(1200, total / 3)
+    // primero el bloque del inciso empieza a apagarse; luego el amarillo intenso pasa a uno tenue; al final todo se quita
+    temporizadores.push(
+      window.setTimeout(() => incisos.forEach((el) => el.classList.add('inciso-buscado-fuera')), total - suave - 400),
+      window.setTimeout(() => {
+        if (conApi) {
+          api!.delete('prima-busqueda')
+          api!.set('prima-busqueda-suave', new Resaltado!(...rangos))
+        }
+      }, total - suave),
+      window.setTimeout(() => {
+        if (conApi) api!.delete('prima-busqueda-suave')
+        quitarMarcaIncisos()
+      }, total)
+    )
   }
   return true
 }
 
 export function quitarResaltado() {
   limpiarTemporizadores()
+  quitarMarcaIncisos()
   const api = (globalThis as { CSS?: ApiResaltado }).CSS?.highlights
   api?.delete('prima-busqueda')
   api?.delete('prima-busqueda-suave')
