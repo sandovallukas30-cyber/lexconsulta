@@ -304,6 +304,11 @@ html, body, #root { height: 100%; width: 100%; overflow: hidden; }
   transition: box-shadow 1s ease, background-color 1s ease;
 }
 .inciso-buscado.inciso-buscado-fuera { box-shadow: -4px 0 0 0 transparent, 0 0 0 6px transparent; background-color: transparent; }
+/* Marcas de las palabras buscadas (rectángulos detrás del texto, ver services/resaltado.ts) */
+.capa-marcas-busqueda { position: absolute; inset: 0; z-index: -1; pointer-events: none; transition: opacity 1.1s ease; }
+.capa-marcas-busqueda.fuera { opacity: 0; }
+.marca-busqueda { position: absolute; border-radius: 3px; background-color: rgba(253, 224, 71, 0.8); box-shadow: inset 0 -2px 0 #f59e0b; }
+:root[data-tema='oscuro'] .marca-busqueda { background-color: rgba(253, 224, 71, 0.38); }
 /* último tramo antes de apagarse: el mismo amarillo, más tenue */
 ::highlight(prima-busqueda-suave) { background-color: #fef9c3; color: inherit; }
 
