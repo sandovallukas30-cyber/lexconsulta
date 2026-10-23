@@ -333,6 +333,7 @@ function SeccionLectura() {
   const modernizar = useStore((s) => s.modernizarLenguaje)
   const toggleModernizar = useStore((s) => s.toggleModernizar)
   const numerarIncisos = useAjustes((s) => s.numerarIncisos)
+  const deslizarArticulos = useAjustes((s) => s.deslizarArticulos)
   const poner = useAjustes((s) => s.set)
   return (
     <>
@@ -341,6 +342,12 @@ function SeccionLectura() {
       </Grupo>
       <Grupo titulo="Códigos y leyes" modoOscuro={modoOscuro}>
         <AjusteTextoCodigos />
+        <Interruptor
+          activo={deslizarArticulos}
+          onChange={(v) => poner({ deslizarArticulos: v })}
+          etiqueta="Deslizar para cambiar de artículo"
+          descripcion="En celular y tablet, arrastrar el dedo hacia los lados pasa al artículo anterior o siguiente. Viene apagado para que no se mueva el artículo al seleccionar texto; los botones Anterior y Siguiente funcionan siempre."
+        />
         <Interruptor
           activo={numerarIncisos}
           onChange={(v) => poner({ numerarIncisos: v })}

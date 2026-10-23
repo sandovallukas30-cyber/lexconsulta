@@ -195,7 +195,10 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
   }, [indiceActual])
   // Celular/tableta (puntero táctil): el artículo sigue al dedo y el vecino aparece por el lado, como un
   // carrusel. En escritorio (mouse) se mantiene el cambio con fundido.
-  const esTactil = useMemo(() => typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches, [])
+  const tactil = useMemo(() => typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches, [])
+  // El carrusel (deslizar para cambiar de artículo) es opcional y viene apagado: al seleccionar texto con el dedo se movía solo.
+  const deslizarArticulos = useAjustes((s) => s.deslizarArticulos)
+  const esTactil = tactil && deslizarArticulos
   const desplazamientoX = useMotionValue(0)
   const refPista = useRef<HTMLDivElement>(null)
   const [arrastrando, setArrastrando] = useState(false)
