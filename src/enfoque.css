@@ -176,3 +176,13 @@
 /* Con fondo, el botón principal es blanco con texto oscuro también en el tema oscuro
    (la regla de contraste de base.css para el acento le ganaba y dejaba texto blanco sobre blanco). */
 :root[data-tema] .enf-con-fondo .boton-primario[style*='accent-base'] { background: #fff; color: #10162b; }
+
+/* Modo concentración minimalista: con el reloj corriendo, solo queda el tiempo; un toque trae los controles de vuelta */
+.enf-ocultable { transition: opacity .7s ease; }
+.enf-quieto .enf-ocultable { opacity: 0; pointer-events: none; }
+.enf-quieto { cursor: none; }
+.enf-foco-tarea { border: 0; font-family: inherit; font-size: 14px; cursor: pointer; }
+.enf-foco .enf-mas { margin: 0 0 6px; width: auto; z-index: 1; }
+.enf-seccion { display: flex; flex-direction: column; gap: 12px; padding-top: 14px; border-top: 1px solid var(--neu-line); }
+.enf-seccion-titulo { margin: 0; font-family: var(--font-head); font-size: 13px; font-weight: 700; color: var(--neu-ink); }
+@media (prefers-reduced-motion: reduce) { .enf-ocultable { transition: none; } }

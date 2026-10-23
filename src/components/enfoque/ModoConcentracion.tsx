@@ -52,6 +52,21 @@ export function ModoConcentracion({ onCerrar }: { onCerrar: () => void }) {
   const [tamanoAnillo, setTamanoAnillo] = useState(anillo)
   const [opciones, setOpciones] = useState(false)
   const [idea, setIdea] = useState('')
+  // Mientras el reloj corre, todo lo que no sea el tiempo se desvanece tras unos segundos sin tocar la pantalla; un toque
+  // o un movimiento del mouse lo trae de vuelta. Con el panel abierto o en pausa siempre se ve.
+  const [calma, setCalma] = useState(false)
+  const temporizadorCalma = useRef<number | undefined>(undefined)
+  const despertar = () => {
+    setCalma(false)
+    window.clearTimeout(temporizadorCalma.current)
+    if (corriendo && !opciones) temporizadorCalma.current = window.setTimeout(() => setCalma(true), 5000)
+  }
+  useEffect(() => {
+    window.clearTimeout(temporizadorCalma.current)
+    if (corriendo && !opciones) temporizadorCalma.current = window.setTimeout(() => setCalma(true), 5000)
+    else setCalma(false)
+    return () => window.clearTimeout(temporizadorCalma.current)
+  }, [corriendo, opciones])
 
   // El cierre se guarda en una ref para no volver a armar los listeners en cada render.
   const cerrarRef = useRef(onCerrar)
@@ -108,9 +123,10 @@ export function ModoConcentracion({ onCerrar }: { onCerrar: () => void }) {
     avisar.exito('Idea guardada en tus tareas')
   }
 
+  const chip = tarea ? tarea.titulo : nombre
   return (
     <motion.div
-      className={`enf-foco${conFondo ? ' enf-con-fondo' : ''}`}
+      className={`enf-foco${conFondo ? ' enf-con-fondo' : ''}${calma ? ' enf-quieto' : ''}`}
       role="dialog"
       aria-modal="true"
       aria-label="Modo concentración"
@@ -118,14 +134,16 @@ export function ModoConcentracion({ onCerrar }: { onCerrar: () => void }) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
+      onPointerMove={calma ? despertar : undefined}
+      onPointerDown={despertar}
     >
       <FondoEnfoque />
-      <button type="button" className="boton boton-suave enf-foco-salir" onClick={onCerrar} aria-label="Salir del modo concentración">
+      <button type="button" className="boton boton-suave enf-foco-salir enf-ocultable" onClick={onCerrar} aria-label="Salir del modo concentración">
         <i className="ti ti-x" aria-hidden="true" />
       </button>
 
       <div className="enf-foco-centro">
-        <div className="enf-sobretitulo">{flow ? 'Flowtime' : NOMBRE_MODO[modo]}</div>
+        <div className="enf-sobretitulo enf-ocultable">{flow ? 'Flowtime' : NOMBRE_MODO[modo]}</div>
         <AnilloProgreso
           progreso={progreso}
           tamano={tamanoAnillo}
@@ -138,18 +156,24 @@ export function ModoConcentracion({ onCerrar }: { onCerrar: () => void }) {
           </div>
         </AnilloProgreso>
 
-        {tarea && <div className="enf-foco-tarea">{tarea.titulo}</div>}
-        {!tarea && nombre && (
-          <div className="enf-foco-tarea" style={{ borderLeft: `4px solid ${colorRamo(ramoId, ramos)}` }}>
-            {nombre}
-          </div>
-        )}
+        {/* una sola línea de contexto; al tocarla se abren los ajustes (ahí se elige el ramo y la tarea) */}
+        <button
+          type="button"
+          className="enf-foco-tarea enf-ocultable"
+          style={!tarea && nombre ? { borderLeft: `4px solid ${colorRamo(ramoId, ramos)}` } : undefined}
+          onClick={() => setOpciones(true)}
+          aria-label={chip ? `En foco: ${chip}. Abrir los ajustes` : 'Elegir ramo o tarea'}
+        >
+          {chip || 'Elegir ramo o tarea'}
+        </button>
         {modo !== 'foco' && tecnica === 'pomodoro' && <Respiracion compacta />}
 
-        <div className="enf-controles">
-          <button type="button" className="boton boton-suave enf-redondo" onClick={reiniciar} aria-label="Reiniciar (descarta lo avanzado)" title="Reiniciar">
-            <i className="ti ti-rotate-clockwise-2" aria-hidden="true" />
-          </button>
+        <div className="enf-controles enf-ocultable">
+          {!corriendo && (
+            <button type="button" className="boton boton-suave enf-redondo" onClick={reiniciar} aria-label="Reiniciar (descarta lo avanzado)" title="Reiniciar">
+              <i className="ti ti-rotate-clockwise-2" aria-hidden="true" />
+            </button>
+          )}
           <button type="button" className="boton boton-primario enf-principal" onClick={corriendo ? pausar : iniciar}>
             <i className={`ti ${corriendo ? 'ti-player-pause' : 'ti-player-play'}`} aria-hidden="true" />
             {corriendo ? 'Pausar' : 'Iniciar'}
@@ -160,120 +184,134 @@ export function ModoConcentracion({ onCerrar }: { onCerrar: () => void }) {
             </button>
           )}
         </div>
-
-        {modo === 'foco' && inicioSesion !== null && (
-          <div className="enf-fila">
-            <button type="button" className="boton boton-suave" disabled={!puedeTerminar} onClick={terminar} title={puedeTerminar ? undefined : 'Necesitas al menos 1 minuto enfocado'}>
-              <i className="ti ti-flag" aria-hidden="true" /> {puedeTerminar ? 'Terminar y guardar' : 'Guardar (desde 1 min)'}
-            </button>
-            <button type="button" className="boton boton-fantasma" onClick={distraje}>
-              <i className="ti ti-bolt" aria-hidden="true" /> Me distraje{distracciones > 0 ? ` · ${distracciones}` : ''}
-            </button>
-          </div>
-        )}
-        <div className="enf-calificar">
-          <CalificarSesion />
-        </div>
       </div>
 
       {opciones && (
-        <div className="enf-panel neu-raised" role="region" aria-label="Opciones del enfoque">
+        <div className="enf-panel neu-raised" role="region" aria-label="Ajustes del enfoque">
           <div className="enf-panel-cab">
-            <b>Fondo, sonido e ideas</b>
-            <button type="button" className="boton boton-fantasma boton-chico" aria-label="Cerrar las opciones" onClick={() => setOpciones(false)}>
+            <b>Ajustes del enfoque</b>
+            <button type="button" className="boton boton-fantasma boton-chico" aria-label="Cerrar los ajustes" onClick={() => setOpciones(false)}>
               <i className="ti ti-x" aria-hidden="true" />
             </button>
           </div>
-          <form className="enf-campo" onSubmit={anotarIdea}>
-            <label className="enf-etiqueta" htmlFor="enf-idea">
-              Se me ocurrió…
-            </label>
-            <div className="enf-fila-idea">
-              <input
-                id="enf-idea"
-                value={idea}
-                maxLength={140}
-                onChange={(e) => setIdea(e.target.value)}
-                placeholder="Anótalo y sigue concentrado; lo ves después en Tareas"
-                className="enf-input"
-              />
-              <button type="submit" className="boton boton-suave" disabled={!idea.trim()}>
-                Guardar
+
+          <section className="enf-seccion" aria-label="Qué estás estudiando">
+            <h3 className="enf-seccion-titulo">Qué estás estudiando</h3>
+            <div className="enf-campo">
+              <span className="enf-etiqueta">Ramo</span>
+              <SelectorRamo valor={ramoId} onChange={(v) => setObjetivo(v, tareaId)} etiqueta="Ramo en foco" className="enf-input" />
+            </div>
+            <div className="enf-campo">
+              <label className="enf-etiqueta" htmlFor="enf-tarea">
+                Tarea en foco
+              </label>
+              <select id="enf-tarea" className="enf-input" value={tareaId ?? ''} onChange={(e) => setObjetivo(ramoId, e.target.value || null)}>
+                <option value="">Ninguna</option>
+                {pendientes.map((tp) => (
+                  <option key={tp.id} value={tp.id}>
+                    {tp.titulo}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {tarea && (
+              <button
+                type="button"
+                className="boton boton-suave"
+                onClick={() => {
+                  alternarTareaPlan(tarea.id)
+                  setObjetivo(ramoId, null)
+                  avisar.exito(`Tarea completada: ${tarea.titulo}`)
+                }}
+              >
+                <i className="ti ti-check" aria-hidden="true" /> Completar la tarea
               </button>
-            </div>
-          </form>
-          <div className="enf-campo">
-            <span className="enf-etiqueta">Fondo</span>
-            <SelectorFondo />
-          </div>
-          <div className="enf-campo">
-            <span className="enf-etiqueta">Sonido ambiente</span>
-            <div className="enf-sonidos" role="radiogroup" aria-label="Sonido ambiente">
-              {SONIDOS.map(([id, nombreSonido]) => (
-                <button
-                  key={id}
-                  type="button"
-                  role="radio"
-                  aria-checked={sonido === id}
-                  className={`boton boton-chico ${sonido === id ? 'boton-primario' : 'boton-suave'}`}
-                  onClick={() => ajustarLocal({ sonido: id })}
-                >
-                  {nombreSonido}
+            )}
+          </section>
+
+          {modo === 'foco' && inicioSesion !== null && (
+            <section className="enf-seccion" aria-label="Esta sesión">
+              <h3 className="enf-seccion-titulo">Esta sesión</h3>
+              <div className="enf-fila">
+                <button type="button" className="boton boton-suave" disabled={!puedeTerminar} onClick={terminar} title={puedeTerminar ? undefined : 'Necesitas al menos 1 minuto enfocado'}>
+                  <i className="ti ti-flag" aria-hidden="true" /> {puedeTerminar ? 'Terminar y guardar' : 'Guardar (desde 1 min)'}
                 </button>
-              ))}
+                <button type="button" className="boton boton-fantasma" onClick={distraje}>
+                  <i className="ti ti-bolt" aria-hidden="true" /> Me distraje{distracciones > 0 ? ` · ${distracciones}` : ''}
+                </button>
+              </div>
+              <div className="enf-calificar">
+                <CalificarSesion />
+              </div>
+            </section>
+          )}
+
+          <section className="enf-seccion" aria-label="Ambiente">
+            <h3 className="enf-seccion-titulo">Ambiente</h3>
+            <div className="enf-campo">
+              <span className="enf-etiqueta">Fondo</span>
+              <SelectorFondo />
             </div>
-            <div className="enf-volumen">
-              <i className="ti ti-volume" aria-hidden="true" />
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.05"
-                value={volumen}
-                onChange={(e) => ajustarLocal({ volumen: Number(e.target.value) })}
-                aria-label="Volumen"
-                disabled={sonido === 'apagado'}
-              />
+            <div className="enf-campo">
+              <span className="enf-etiqueta">Sonido ambiente</span>
+              <div className="enf-sonidos" role="radiogroup" aria-label="Sonido ambiente">
+                {SONIDOS.map(([id, nombreSonido]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    role="radio"
+                    aria-checked={sonido === id}
+                    className={`boton boton-chico ${sonido === id ? 'boton-primario' : 'boton-suave'}`}
+                    onClick={() => ajustarLocal({ sonido: id })}
+                  >
+                    {nombreSonido}
+                  </button>
+                ))}
+              </div>
+              <div className="enf-volumen">
+                <i className="ti ti-volume" aria-hidden="true" />
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={volumen}
+                  onChange={(e) => ajustarLocal({ volumen: Number(e.target.value) })}
+                  aria-label="Volumen"
+                  disabled={sonido === 'apagado'}
+                />
+              </div>
             </div>
-          </div>
+          </section>
+
+          <section className="enf-seccion" aria-label="Ideas">
+            <h3 className="enf-seccion-titulo">Se me ocurrió…</h3>
+            <form className="enf-campo" onSubmit={anotarIdea}>
+              <div className="enf-fila-idea">
+                <input
+                  id="enf-idea"
+                  value={idea}
+                  maxLength={140}
+                  onChange={(e) => setIdea(e.target.value)}
+                  aria-label="Anotar una idea"
+                  placeholder="Anótalo y sigue concentrado; lo ves después en Tareas"
+                  className="enf-input"
+                />
+                <button type="submit" className="boton boton-suave" disabled={!idea.trim()}>
+                  Guardar
+                </button>
+              </div>
+            </form>
+          </section>
         </div>
       )}
 
-      <div className="enf-pie neu-raised">
-        <div className="enf-campo">
-          <span className="enf-etiqueta">Ramo</span>
-          <SelectorRamo valor={ramoId} onChange={(v) => setObjetivo(v, tareaId)} etiqueta="Ramo en foco" className="enf-input" />
-        </div>
-        <div className="enf-campo">
-          <label className="enf-etiqueta" htmlFor="enf-tarea">
-            Tarea en foco
-          </label>
-          <select id="enf-tarea" className="enf-input" value={tareaId ?? ''} onChange={(e) => setObjetivo(ramoId, e.target.value || null)}>
-            <option value="">Ninguna</option>
-            {pendientes.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.titulo}
-              </option>
-            ))}
-          </select>
-        </div>
-        {tarea && (
-          <button
-            type="button"
-            className="boton boton-suave"
-            onClick={() => {
-              alternarTareaPlan(tarea.id)
-              setObjetivo(ramoId, null)
-              avisar.exito(`Tarea completada: ${tarea.titulo}`)
-            }}
-          >
-            <i className="ti ti-check" aria-hidden="true" /> Completar
-          </button>
-        )}
-        <button type="button" className={`boton boton-suave enf-mas${opciones ? ' is-on' : ''}`} aria-expanded={opciones} onClick={() => setOpciones((o) => !o)}>
-          <i className="ti ti-adjustments" aria-hidden="true" /> Fondo, sonido e ideas
+      {/* único control extra en pantalla: discreto, abajo, y también se desvanece */}
+      {!opciones && (
+        <button type="button" className="boton boton-fantasma enf-mas enf-ocultable" aria-expanded={false} onClick={() => setOpciones(true)}>
+          <i className="ti ti-adjustments" aria-hidden="true" /> Ajustes
         </button>
-      </div>
+      )}
     </motion.div>
   )
 }
