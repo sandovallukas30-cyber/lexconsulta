@@ -8,7 +8,8 @@ import { cuentasDisponibles } from '../../services/supabase'
 import { fechaUltimoRespaldo } from '../../services/respaldo'
 import { TEMAS, type TemaColorId } from '../../theme'
 import { AVATARES_ANIMALES } from '../../data/avataresAnimales'
-import type { PestanaConfig } from '../../types'
+import { BARRA_INFERIOR_DEFECTO, BARRA_INFERIOR_MAX, DESTINOS_NAVEGACION, barraInferiorValida } from '../../data/destinosNavegacion'
+import type { PestanaConfig, VistaId } from '../../types'
 import { AvatarAnimal } from './AvatarAnimal'
 import { AvatarUsuario } from './AvatarUsuario'
 import { Segmentado } from './Segmentado'
@@ -328,6 +329,61 @@ function SeccionApariencia({ modoOscuro }: { modoOscuro: boolean }) {
   )
 }
 
+/** Elegir qué pantallas van en la barra inferior del celular (hasta 4). El orden es el de elección. */
+function AjusteBarraInferior() {
+  const elegidos = barraInferiorValida(useAjustes((s) => s.barraInferior))
+  const poner = useAjustes((s) => s.set)
+  const alternar = (id: VistaId) => {
+    if (elegidos.includes(id)) {
+      if (elegidos.length > 1) poner({ barraInferior: elegidos.filter((e) => e !== id) })
+    } else if (elegidos.length < BARRA_INFERIOR_MAX) poner({ barraInferior: [...elegidos, id] })
+  }
+  const llena = elegidos.length >= BARRA_INFERIOR_MAX
+  return (
+    <div>
+      <h3 className="text-sm font-bold mb-1" style={{ color: 'var(--neu-ink)' }}>Barra inferior del celular</h3>
+      <p className="text-xs mb-3" style={{ color: 'var(--neu-ink2)' }}>
+        Elige hasta {BARRA_INFERIOR_MAX} pantallas para tenerlas siempre a un toque. Las demás siguen en «Más». Aparecen en el orden en que las eliges.
+      </p>
+      <div className="grid grid-cols-2 gap-2" role="group" aria-label="Pantallas de la barra inferior">
+        {DESTINOS_NAVEGACION.map((d) => {
+          const activo = elegidos.includes(d.id)
+          const bloqueado = !activo && llena
+          return (
+            <button
+              key={d.id}
+              type="button"
+              aria-pressed={activo}
+              disabled={bloqueado}
+              onClick={() => alternar(d.id)}
+              className="sin-neu sin-tactil flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm font-semibold min-h-[44px] disabled:opacity-40"
+              style={{
+                borderColor: activo ? 'var(--accent-base)' : 'var(--neu-line)',
+                background: activo ? 'var(--accent-suave, var(--neu-bg3))' : 'transparent',
+                color: activo ? 'var(--accent-texto)' : 'var(--neu-ink)',
+              }}
+            >
+              <i className={`ti ${d.icono} text-lg flex-shrink-0`} aria-hidden="true" />
+              <span className="min-w-0 truncate">{d.largo}</span>
+              {activo && <span className="ml-auto text-xs tabular-nums" aria-label={`posición ${elegidos.indexOf(d.id) + 1}`}>{elegidos.indexOf(d.id) + 1}</span>}
+            </button>
+          )
+        })}
+      </div>
+      <p className="text-xs mt-2" style={{ color: 'var(--neu-ink2)' }}>
+        {llena ? 'Ya tienes 4: quita una para elegir otra.' : `Te quedan ${BARRA_INFERIOR_MAX - elegidos.length} por elegir.`}
+      </p>
+      <button
+        onClick={() => poner({ barraInferior: BARRA_INFERIOR_DEFECTO })}
+        disabled={elegidos.join() === BARRA_INFERIOR_DEFECTO.join()}
+        className="boton boton-fantasma boton-chico mt-2"
+      >
+        Restablecer
+      </button>
+    </div>
+  )
+}
+
 function SeccionLectura() {
   const modoOscuro = useStore((s) => s.modoOscuro)
   const modernizar = useStore((s) => s.modernizarLenguaje)
@@ -338,6 +394,9 @@ function SeccionLectura() {
     <>
       <Grupo titulo="Interfaz" modoOscuro={modoOscuro}>
         <AjusteTamanoInterfaz />
+      </Grupo>
+      <Grupo titulo="Navegación" modoOscuro={modoOscuro}>
+        <AjusteBarraInferior />
       </Grupo>
       <Grupo titulo="Códigos y leyes" modoOscuro={modoOscuro}>
         <AjusteTextoCodigos />

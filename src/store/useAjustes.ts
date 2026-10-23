@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import type { VistaId } from '../types'
+import { BARRA_INFERIOR_DEFECTO } from '../data/destinosNavegacion'
 
 /** Preferencias de la interfaz. Propias de cada dispositivo (no van en el
  *  respaldo ni se mezclan con los datos de estudio): el celular y el
@@ -42,6 +44,8 @@ export interface AjustesUI {
   avatarAnimal: string | null
   /** Número pequeño y tenue al margen de cada inciso de los artículos. */
   numerarIncisos: boolean
+  /** Destinos de la barra inferior del celular (hasta 4; «Más» siempre va al final). */
+  barraInferior: VistaId[]
   set: (p: Partial<Omit<AjustesUI, 'set'>>) => void
 }
 
@@ -58,11 +62,12 @@ export const useAjustes = create<AjustesUI>()(
       catalogoAbierto: null,
       avatarAnimal: null,
       numerarIncisos: false,
+      barraInferior: BARRA_INFERIOR_DEFECTO,
       set: (p) => set(p),
     }),
     {
       name: 'prima-lex-ajustes-v1',
-      partialize: (s) => ({ zoom: s.zoom, contraste: s.contraste, animaciones: s.animaciones, celebraciones: s.celebraciones, recordatorios: s.recordatorios, horaResumen: s.horaResumen, tamanoCodigo: s.tamanoCodigo, catalogoAbierto: s.catalogoAbierto, avatarAnimal: s.avatarAnimal, numerarIncisos: s.numerarIncisos }),
+      partialize: (s) => ({ zoom: s.zoom, contraste: s.contraste, animaciones: s.animaciones, celebraciones: s.celebraciones, recordatorios: s.recordatorios, horaResumen: s.horaResumen, tamanoCodigo: s.tamanoCodigo, catalogoAbierto: s.catalogoAbierto, avatarAnimal: s.avatarAnimal, numerarIncisos: s.numerarIncisos, barraInferior: s.barraInferior }),
     }
   )
 )
