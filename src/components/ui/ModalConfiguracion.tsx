@@ -66,6 +66,7 @@ const GRUPOS: { nombre: string; secciones: Seccion[] }[] = [
   {
     nombre: 'Información',
     secciones: [
+      { id: 'guia', etiqueta: 'Guía rápida', icono: 'ti-help', titulo: 'Guía rápida', descripcion: 'Gestos y atajos que no se ven a simple vista.' },
       { id: 'acerca', etiqueta: 'Acerca de', icono: 'ti-info-circle', titulo: 'Acerca de Prima Lex' },
       { id: 'disclaimer', etiqueta: 'Aviso legal', icono: 'ti-alert-triangle', titulo: 'Aviso legal' },
       { id: 'privacidad', etiqueta: 'Privacidad', icono: 'ti-lock', titulo: 'Política de privacidad' },
@@ -148,6 +149,7 @@ export function ModalConfiguracion({ abierto, onCerrar, pestanaInicial = 'perfil
                 {pestana === 'lectura' && <SeccionLectura />}
                 {pestana === 'avisos' && <Grupo modoOscuro={modoOscuro}><AjusteAvisos /></Grupo>}
                 {pestana === 'datos' && <SeccionDatos modoOscuro={modoOscuro} />}
+                {pestana === 'guia' && <SeccionGuia />}
                 {pestana === 'acerca' && <Acerca modoOscuro={modoOscuro} />}
                 {pestana === 'disclaimer' && <Disclaimer modoOscuro={modoOscuro} />}
                 {pestana === 'privacidad' && <Privacidad modoOscuro={modoOscuro} />}
@@ -326,6 +328,68 @@ function SeccionApariencia({ modoOscuro }: { modoOscuro: boolean }) {
         <AjusteAnimaciones />
         <AjusteContraste />
       </Grupo>
+    </>
+  )
+}
+
+const GUIA: { titulo: string; icono: string; items: { que: string; como: string }[] }[] = [
+  {
+    titulo: 'Moverte por la app',
+    icono: 'ti-menu-2',
+    items: [
+      { que: 'Menú completo', como: 'En celular y tablet vertical, toca «Más» en la barra de abajo. En computador, el menú está a la izquierda y se pliega con Ctrl+B.' },
+      { que: 'Tu barra de abajo', como: 'Elige qué 4 pantallas van en la barra en Pantalla y lectura → Navegación.' },
+      { que: 'Buscar cualquier cosa', como: 'Ctrl+K (⌘K en Mac) abre el buscador de funciones y artículos.' },
+    ],
+  },
+  {
+    titulo: 'Leer códigos y leyes',
+    icono: 'ti-book-2',
+    items: [
+      { que: 'Pasar de artículo', como: 'Botones Anterior y Siguiente, o desliza el artículo hacia los lados en celular y tablet.' },
+      { que: 'Resaltar o citar una frase', como: 'Selecciona el texto y usa los botones Resaltar o Citar. En celular van en una barra fija abajo. Citar copia la frase con su cita, por ejemplo (art. 1445 inc. 2° CC).' },
+      { que: 'Seleccionar sin que se mueva', como: 'Mantén el dedo quieto un instante antes de arrastrar: el artículo no se desliza mientras seleccionas.' },
+      { que: 'Cambiar la letra', como: 'Pantalla y lectura → Letra para leer. También puedes mostrar el número de cada inciso.' },
+    ],
+  },
+  {
+    titulo: 'Tareas y repaso',
+    icono: 'ti-checkbox',
+    items: [
+      { que: 'Completar o posponer una tarea', como: 'En celular, desliza la fila a la derecha para completarla o a la izquierda para pasarla a mañana.' },
+      { que: 'Repasar tarjetas', como: 'Toca la tarjeta para voltearla y luego desliza: izquierda «Otra vez», derecha «Bien», arriba «Fácil».' },
+    ],
+  },
+  {
+    titulo: 'Apuntes',
+    icono: 'ti-file-text',
+    items: [
+      { que: 'Dar formato rápido', como: 'Escribe «/» al comienzo de una línea y elige: título, lista, recuadro, tabla…' },
+      { que: 'Pasarlos a otra persona con su formato', como: 'Botón de compartir del apunte: PDF, copiar con formato, página web o Word.' },
+    ],
+  },
+]
+
+/** Los gestos y atajos que no se ven a simple vista, juntos en un solo lugar. */
+function SeccionGuia() {
+  const modoOscuro = useStore((s) => s.modoOscuro)
+  return (
+    <>
+      {GUIA.map((g) => (
+        <Grupo key={g.titulo} titulo={g.titulo} modoOscuro={modoOscuro}>
+          <dl className="grid gap-3">
+            {g.items.map((i) => (
+              <div key={i.que} className="flex gap-3">
+                <i className={`ti ${g.icono} text-lg mt-0.5 flex-shrink-0`} style={{ color: 'var(--accent-texto)' }} aria-hidden="true" />
+                <div className="min-w-0">
+                  <dt className="text-sm font-semibold" style={{ color: 'var(--neu-ink)' }}>{i.que}</dt>
+                  <dd className="text-xs mt-0.5" style={{ color: 'var(--neu-ink2)' }}>{i.como}</dd>
+                </div>
+              </div>
+            ))}
+          </dl>
+        </Grupo>
+      ))}
     </>
   )
 }

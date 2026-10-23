@@ -378,8 +378,18 @@ export function HoyView() {
                 <div className="text-xs" style={{ color: suave }}>{tarjetas === 1 ? 'tarjeta por repasar' : 'tarjetas por repasar'}</div>
               </button>
               <div className="p-3 rounded-control" style={{ background: 'var(--neu-bg)' }}>
-                <div className="text-2xl font-serif font-bold" style={{ color: 'var(--neu-ink)' }}>{racha}</div>
-                <div className="text-xs" style={{ color: suave }}>{racha === 1 ? 'día seguido' : 'días seguidos'}</div>
+                {/* Sin racha no se muestra un «0» que se lea como fracaso: se invita a empezar, sin culpa */}
+                {racha > 0 ? (
+                  <>
+                    <div className="text-2xl font-serif font-bold" style={{ color: 'var(--neu-ink)' }}>{racha}</div>
+                    <div className="text-xs" style={{ color: suave }}>{racha === 1 ? 'día seguido' : 'días seguidos'}</div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-base font-serif font-bold" style={{ color: 'var(--neu-ink)' }}>Tu racha empieza hoy</div>
+                    <div className="text-xs" style={{ color: suave }}>Cualquier estudio cuenta</div>
+                  </>
+                )}
               </div>
             </div>
             <p className="text-xs mt-3" style={{ color: suave }}>Cuenta estudiar con apuntes, tarjetas o Práctica, o terminar una tarea.</p>

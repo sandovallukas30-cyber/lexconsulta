@@ -11,6 +11,7 @@ import {
   REINSERTAR_FALLADA_EN,
   type TarjetaRepaso,
 } from '../../services/tarjetasApunte'
+import { PistaGesto, esPantallaTactil } from './PistaGesto'
 import type { ApunteModulo } from '../../types'
 
 const VERDE = 'var(--accent-base)'
@@ -195,6 +196,7 @@ export function RepasoApunte({ apunte, onCerrar }: Props) {
           </div>
         ) : (
           <div className="w-full max-w-xl">
+            <PistaGesto id="deslizar-tarjeta" activa={esPantallaTactil() && volteada} texto="Desliza la tarjeta: izquierda «Otra vez», derecha «Bien», arriba «Fácil»" />
             <TarjetaDeslizable
               key={`${actual.id}-${indice}`}
               habilitada={volteada}

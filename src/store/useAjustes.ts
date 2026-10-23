@@ -49,6 +49,8 @@ export interface AjustesUI {
   barraInferior: VistaId[]
   /** Letra de los artículos y los apuntes. */
   fuenteLectura: FuenteLectura
+  /** Pistas de gestos que ya se mostraron (cada una aparece una sola vez por dispositivo). */
+  pistasVistas: string[]
   set: (p: Partial<Omit<AjustesUI, 'set'>>) => void
 }
 
@@ -67,11 +69,12 @@ export const useAjustes = create<AjustesUI>()(
       numerarIncisos: false,
       barraInferior: BARRA_INFERIOR_DEFECTO,
       fuenteLectura: FUENTE_LECTURA_DEFECTO,
+      pistasVistas: [],
       set: (p) => set(p),
     }),
     {
       name: 'prima-lex-ajustes-v1',
-      partialize: (s) => ({ zoom: s.zoom, contraste: s.contraste, animaciones: s.animaciones, celebraciones: s.celebraciones, recordatorios: s.recordatorios, horaResumen: s.horaResumen, tamanoCodigo: s.tamanoCodigo, catalogoAbierto: s.catalogoAbierto, avatarAnimal: s.avatarAnimal, numerarIncisos: s.numerarIncisos, barraInferior: s.barraInferior, fuenteLectura: s.fuenteLectura }),
+      partialize: (s) => ({ zoom: s.zoom, contraste: s.contraste, animaciones: s.animaciones, celebraciones: s.celebraciones, recordatorios: s.recordatorios, horaResumen: s.horaResumen, tamanoCodigo: s.tamanoCodigo, catalogoAbierto: s.catalogoAbierto, avatarAnimal: s.avatarAnimal, numerarIncisos: s.numerarIncisos, barraInferior: s.barraInferior, fuenteLectura: s.fuenteLectura, pistasVistas: s.pistasVistas }),
     }
   )
 )

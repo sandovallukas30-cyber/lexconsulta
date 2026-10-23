@@ -1,7 +1,7 @@
 export type PerfilUsuario = 'ciudadano' | 'profesional' | null
 
 /** Secciones de la ventana de Configuración. */
-export type PestanaConfig = 'perfil' | 'apariencia' | 'lectura' | 'avisos' | 'datos' | 'acerca' | 'disclaimer' | 'privacidad' | 'terminos'
+export type PestanaConfig = 'perfil' | 'apariencia' | 'lectura' | 'avisos' | 'datos' | 'guia' | 'acerca' | 'disclaimer' | 'privacidad' | 'terminos'
 
 export type CodigoTipo =
   | 'con'

@@ -23,6 +23,7 @@ import { avisar } from '../../store/useAvisos'
 import { imprimir, useImprimirConCtrlP } from '../../services/impresion'
 import { VistaImprimibleArticulo } from '../ui/VistasImprimibles'
 import { TAMANOS_FUENTE, TEMAS_LECTURA } from '../../services/lecturaTema'
+import { PistaGesto } from '../ui/PistaGesto'
 import type { Articulo, CodigoData, CodigoTipo } from '../../types'
 
 const VERDE = 'var(--accent-base)'
@@ -585,6 +586,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
         </div>
       </div>
 
+      <PistaGesto id="deslizar-articulo" activa={esTactil} texto="Desliza el artículo hacia los lados para pasar al anterior o al siguiente" />
       {esTactil ? (
         <div
           ref={refArticulo}

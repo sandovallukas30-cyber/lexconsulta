@@ -6,6 +6,7 @@ import { AnimatePresence } from 'framer-motion'
 import { FilaTarea } from '../ui/FilaTarea'
 import { ItemLista } from '../ui/ItemLista'
 import { SelectorRamo } from '../ui/SelectorRamo'
+import { PistaGesto, esPantallaTactil } from '../ui/PistaGesto'
 import type { PrioridadTarea, TareaPlan } from '../../types'
 import {
   contarPorFiltro,
@@ -277,6 +278,7 @@ export function TareasView() {
 
   return (
     <div className={`h-full overflow-y-auto ${c.modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
+      <PistaGesto id="deslizar-tarea" activa={esPantallaTactil() && cuentas.todas > 0} texto="Desliza una tarea a la derecha para completarla, o a la izquierda para pasarla a mañana" />
       <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-5">
         <header>
           <h1 className="titulo-pagina">Tareas</h1>
