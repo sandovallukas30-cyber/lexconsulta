@@ -42,8 +42,6 @@ export interface AjustesUI {
   avatarAnimal: string | null
   /** Número pequeño y tenue al margen de cada inciso de los artículos. */
   numerarIncisos: boolean
-  /** Deslizar el dedo para pasar al artículo anterior o siguiente (celular y tablet). Apagado por defecto. */
-  deslizarArticulos: boolean
   set: (p: Partial<Omit<AjustesUI, 'set'>>) => void
 }
 
@@ -60,12 +58,11 @@ export const useAjustes = create<AjustesUI>()(
       catalogoAbierto: null,
       avatarAnimal: null,
       numerarIncisos: false,
-      deslizarArticulos: false,
       set: (p) => set(p),
     }),
     {
       name: 'prima-lex-ajustes-v1',
-      partialize: (s) => ({ zoom: s.zoom, contraste: s.contraste, animaciones: s.animaciones, celebraciones: s.celebraciones, recordatorios: s.recordatorios, horaResumen: s.horaResumen, tamanoCodigo: s.tamanoCodigo, catalogoAbierto: s.catalogoAbierto, avatarAnimal: s.avatarAnimal, numerarIncisos: s.numerarIncisos, deslizarArticulos: s.deslizarArticulos }),
+      partialize: (s) => ({ zoom: s.zoom, contraste: s.contraste, animaciones: s.animaciones, celebraciones: s.celebraciones, recordatorios: s.recordatorios, horaResumen: s.horaResumen, tamanoCodigo: s.tamanoCodigo, catalogoAbierto: s.catalogoAbierto, avatarAnimal: s.avatarAnimal, numerarIncisos: s.numerarIncisos }),
     }
   )
 )

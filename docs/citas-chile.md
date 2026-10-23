@@ -1,7 +1,7 @@
 # Cómo se cita un artículo en Chile (botón «Citar» del Explorador)
 
 Implementación: `src/services/citas.ts` (`citaPrecisa`, `frasesConCita`) y `src/services/incisos.ts` (`ubicacionDeParrafo`).
-Al seleccionar texto de un artículo aparece **Citar**: copia `«frase» (art. 1445 inc. 2° CC)`.
+Al seleccionar texto de un artículo aparece **Citar**: copia `"frase" (art. 1445 inc. 2° CC)`.
 
 ## Formato que usa la app
 

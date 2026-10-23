@@ -196,15 +196,38 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
   // Celular/tableta (puntero táctil): el artículo sigue al dedo y el vecino aparece por el lado, como un
   // carrusel. En escritorio (mouse) se mantiene el cambio con fundido.
   const tactil = useMemo(() => typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches, [])
-  // El carrusel (deslizar para cambiar de artículo) es opcional y viene apagado: al seleccionar texto con el dedo se movía solo.
-  const deslizarArticulos = useAjustes((s) => s.deslizarArticulos)
-  const esTactil = tactil && deslizarArticulos
+  const esTactil = tactil
   const desplazamientoX = useMotionValue(0)
   const refPista = useRef<HTMLDivElement>(null)
   const [arrastrando, setArrastrando] = useState(false)
   // Mientras hay texto seleccionado (para resaltar o citar) el artículo no se desliza: framer-motion apaga la selección de
   // texto (`user-select: none`) en lo que se arrastra, y un gesto de selección no debe cambiar de artículo.
   const [haySeleccion, setHaySeleccion] = useState(false)
+  // Un dedo que se queda quieto más de ~0,25 s es el inicio de una selección (pulsación larga): desde ahí, y hasta soltar, el
+  // artículo no se desliza aunque el dedo se mueva para extender la selección.
+  const [pulsacionLarga, setPulsacionLarga] = useState(false)
+  const temporizadorPulsacion = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const pulsandoLargo = useRef(false)
+  const origenPulsacion = useRef({ x: 0, y: 0 })
+  const iniciarPulsacion = (e: React.PointerEvent) => {
+    origenPulsacion.current = { x: e.clientX, y: e.clientY }
+    clearTimeout(temporizadorPulsacion.current)
+    temporizadorPulsacion.current = setTimeout(() => {
+      pulsandoLargo.current = true
+      setPulsacionLarga(true)
+    }, 250)
+  }
+  // si el dedo se mueve antes de 0,25 s es un deslizamiento, no el comienzo de una selección
+  const moverPulsacion = (e: React.PointerEvent) => {
+    if (pulsandoLargo.current) return
+    if (Math.hypot(e.clientX - origenPulsacion.current.x, e.clientY - origenPulsacion.current.y) > 10) clearTimeout(temporizadorPulsacion.current)
+  }
+  const terminarPulsacion = () => {
+    clearTimeout(temporizadorPulsacion.current)
+    // el fin del arrastre de framer llega justo después de soltar: la marca se apaga un instante más tarde
+    setTimeout(() => { pulsandoLargo.current = false }, 80)
+    setPulsacionLarga(false)
+  }
   useEffect(() => {
     if (!esTactil) return
     const alCambiar = () => setHaySeleccion(!(window.getSelection()?.isCollapsed ?? true))
@@ -563,26 +586,39 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
             ref={refPista}
             className="relative flow-root min-h-full"
             style={{ x: desplazamientoX }}
-            drag={haySeleccion ? false : 'x'}
+            drag={haySeleccion || pulsacionLarga ? false : 'x'}
             dragDirectionLock
             dragMomentum={false}
-            onPointerDown={() => {
+            onPointerMove={moverPulsacion}
+            onPointerDown={(e) => {
+              iniciarPulsacion(e)
               if (cambiandoArticulo.current || haySeleccion) return
               setTopVecinos(refArticulo.current?.scrollTop ?? 0)
               setArrastrando(true)
             }}
             onPointerUp={() => {
+              terminarPulsacion()
               if (!cambiandoArticulo.current && Math.abs(desplazamientoX.get()) < 1) setArrastrando(false)
             }}
             onPointerCancel={() => {
+              terminarPulsacion()
               if (!cambiandoArticulo.current && Math.abs(desplazamientoX.get()) < 1) setArrastrando(false)
             }}
             onDrag={() => {
+              // el arrastre ya había empezado cuando se detectó la pulsación larga: el artículo no se mueve
+              if (pulsandoLargo.current) return desplazamientoX.set(0)
               // sin vecino en ese lado el artículo solo cede un poco
               const dx = desplazamientoX.get()
               if ((dx > 0 && !anterior) || (dx < 0 && !siguiente)) desplazamientoX.set(dx * 0.3)
             }}
-            onDragEnd={(_, info) => soltarArrastre(info.offset.x, info.velocity.x)}
+            onDragEnd={(_, info) => {
+              if (pulsandoLargo.current || Math.abs(desplazamientoX.get()) < 1) {
+                desplazamientoX.set(0)
+                setArrastrando(false)
+                return
+              }
+              soltarArrastre(info.offset.x, info.velocity.x)
+            }}
           >
             {arrastrando && anterior && (
               <div aria-hidden="true" inert className="absolute left-0 w-full" style={{ top: topVecinos, transform: 'translateX(-100%)' }}>
@@ -2049,7 +2085,7 @@ function ArticuloTexto({
           const ubic = tramos.map((tr) => ubicacionDeParrafo(parrafos, tr.indice))
           const texto = tramos.length === 1
             ? frasesConCita(codigo, articulo, tramos[0].texto, ubic[0])
-            : `${tramos.map((tr) => `«${tr.texto}»`).join('\n')} (${citaDeVarios(codigo, articulo, ubic)})`
+            : `${tramos.map((tr) => `"${tr.texto}"`).join('\n')} (${citaDeVarios(codigo, articulo, ubic)})`
           const cita = tramos.length === 1 ? citaPrecisa(codigo, articulo, ubic[0]) : citaDeVarios(codigo, articulo, ubic)
           if (await copiarAlPortapapeles(texto)) avisar.exito(`Copiado con cita: ${cita}`)
           else avisar.error('No se pudo copiar la cita. Inténtalo de nuevo.')

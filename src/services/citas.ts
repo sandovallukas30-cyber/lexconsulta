@@ -47,9 +47,9 @@ export function citaDeVarios(tipo: CodigoTipo, idArticulo: string, ubicaciones: 
   return a === b ? a : `${a} a ${b.replace(/^art\. \S+ /, '')}`
 }
 
-/** Lo que queda en el portapapeles al copiar una frase seleccionada: «frase» (art. 1445 inc. 2° CC). */
+/** Lo que queda en el portapapeles al copiar una frase seleccionada: "frase" (art. 1445 inc. 2° CC). */
 export function frasesConCita(tipo: CodigoTipo, idArticulo: string, frase: string, u?: UbicacionCita | null): string {
-  return `«${frase.trim().replace(/\s+/g, ' ')}» (${citaPrecisa(tipo, idArticulo, u)})`
+  return `"${frase.trim().replace(/\s+/g, ' ')}" (${citaPrecisa(tipo, idArticulo, u)})`
 }
 
 /** Texto que queda en el portapapeles con "Copiar con cita": la cita, el

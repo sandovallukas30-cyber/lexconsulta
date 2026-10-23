@@ -24,7 +24,7 @@ describe('citaPrecisa', () => {
 
 describe('frasesConCita', () => {
   it('la frase va entre comillas angulares y la cita entre paréntesis', () => {
-    expect(frasesConCita('civ', 'Art. 1545', 'Todo contrato  legalmente celebrado', null)).toBe('«Todo contrato legalmente celebrado» (art. 1545 CC)')
+    expect(frasesConCita('civ', 'Art. 1545', 'Todo contrato  legalmente celebrado', null)).toBe('"Todo contrato legalmente celebrado" (art. 1545 CC)')
   })
 })
 
