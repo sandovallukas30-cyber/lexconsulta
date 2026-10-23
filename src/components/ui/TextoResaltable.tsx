@@ -19,18 +19,25 @@ const COLOR_TEXTO_RESALTADO = '#1c1917'
  * `codigo::articulo`), así que un resaltado hecho en una vista aparece en
  * la otra.
  */
+/** Un tramo de la selección dentro de UN párrafo (inciso): `indice` es la posición del párrafo en el artículo. */
+export interface TramoSeleccion {
+  indice: number
+  texto: string
+}
+
 export function ContenedorResaltable({
   children,
   onAgregar,
   onCopiarCita,
 }: {
   children: ReactNode
+  /** Se llama una vez por cada tramo de la selección (si abarca varios incisos, uno por inciso). */
   onAgregar: (frase: string) => void
-  /** Si se pasa, junto a «Resaltar» aparece «Citar» (copia la frase con su cita): recibe la frase y en qué párrafo (0, 1, 2…) del artículo está. */
-  onCopiarCita?: (frase: string, indiceParrafo: number) => void
+  /** Si se pasa, junto a «Resaltar» aparece «Citar»: recibe los tramos de la selección con el párrafo de cada uno. */
+  onCopiarCita?: (tramos: TramoSeleccion[]) => void
 }) {
   const ref = useRef<HTMLDivElement>(null)
-  const [boton, setBoton] = useState<{ x: number; y: number; frase: string; indice: number } | null>(null)
+  const [boton, setBoton] = useState<{ x: number; y: number; tramos: TramoSeleccion[] } | null>(null)
 
   const revisarSeleccion = useCallback(() => {
     const sel = window.getSelection()
@@ -38,35 +45,35 @@ export function ContenedorResaltable({
       setBoton(null)
       return
     }
-    const frase = sel.toString().trim().replace(/\s+/g, ' ')
-    // Selecciones vacías, gigantes (arrastró toda la página sin querer) o de
-    // otra parte del documento (otro artículo, el sidebar) se ignoran.
-    if (!frase || frase.length > 600 || !sel.anchorNode || !ref.current.contains(sel.anchorNode)) {
+    const completa = sel.toString().trim()
+    // Selecciones vacías, gigantes (arrastró toda la página sin querer) o de otra parte del documento (otro artículo, el
+    // sidebar) se ignoran.
+    if (!completa || completa.length > 1500 || !sel.anchorNode || !ref.current.contains(sel.anchorNode)) {
       setBoton(null)
       return
     }
     const range = sel.getRangeAt(0)
-    // Cada <p> se resalta buscando la frase como substring de SU PROPIO
-    // texto (ver ParrafoResaltado): si la selección cruza de un párrafo a
-    // otro (fácil de hacer sin querer arrastrando el mouse, con el
-    // interlineado amplio del modo lectura en particular), la frase
-    // completa no existe entera en ninguno de los dos párrafos por
-    // separado y el resaltado se guardaría sin llegar a verse nunca. Se
-    // descarta aquí, antes de ofrecer el botón, para no prometer algo que
-    // fallaría en silencio.
-    const nodoComun = range.commonAncestorContainer
-    const parrafoComun = (nodoComun instanceof Element ? nodoComun : nodoComun.parentElement)?.closest('p')
-    if (!parrafoComun) {
+    // Cada <p> se resalta buscando la frase como substring de SU PROPIO texto (ver ParrafoResaltado). Una selección que cruza
+    // de un inciso a otro (lo normal al seleccionar un inciso entero: el triple clic o «seleccionar párrafo» del iPad
+    // terminan al principio del siguiente) se parte en un tramo por inciso, y cada tramo se resalta o se cita por separado.
+    const tramos: TramoSeleccion[] = []
+    Array.from(ref.current.querySelectorAll('p')).forEach((parrafo, indice) => {
+      if (!range.intersectsNode(parrafo)) return
+      const r = range.cloneRange()
+      if (!parrafo.contains(range.startContainer)) r.setStart(parrafo, 0)
+      if (!parrafo.contains(range.endContainer)) r.setEnd(parrafo, parrafo.childNodes.length)
+      const texto = r.toString().trim().replace(/\s+/g, ' ')
+      if (texto) tramos.push({ indice, texto })
+    })
+    if (tramos.length === 0) {
       setBoton(null)
       return
     }
     const rect = range.getBoundingClientRect()
     const rectContenedor = ref.current.getBoundingClientRect()
-    // Debajo de la selección, no arriba: el menú nativo de iOS/Safari
-    // (Copiar/Consultar/Traducir...) se posiciona arriba de la selección, así
-    // que si el botón propio también va arriba, quedan uno encima del otro.
-    const indice = Array.from(ref.current.querySelectorAll('p')).indexOf(parrafoComun as HTMLParagraphElement)
-    setBoton({ x: rect.left + rect.width / 2 - rectContenedor.left, y: rect.bottom - rectContenedor.top, frase, indice })
+    // Debajo de la selección, no arriba: el menú nativo de iOS/Safari (Copiar/Consultar/Traducir...) se posiciona arriba de
+    // la selección, así que si el botón propio también va arriba, quedan uno encima del otro.
+    setBoton({ x: rect.left + rect.width / 2 - rectContenedor.left, y: rect.bottom - rectContenedor.top, tramos })
   }, [])
 
   // onMouseUp no dispara con selección táctil (iPad/celular): seleccionar
@@ -103,7 +110,7 @@ export function ContenedorResaltable({
           <button
             onPointerDown={(e) => {
               e.preventDefault()
-              onAgregar(boton.frase)
+              boton.tramos.forEach((tr) => onAgregar(tr.texto))
               window.getSelection()?.removeAllRanges()
               setBoton(null)
             }}
@@ -117,7 +124,7 @@ export function ContenedorResaltable({
             <button
               onPointerDown={(e) => {
                 e.preventDefault()
-                onCopiarCita(boton.frase, boton.indice)
+                onCopiarCita(boton.tramos)
                 window.getSelection()?.removeAllRanges()
                 setBoton(null)
               }}

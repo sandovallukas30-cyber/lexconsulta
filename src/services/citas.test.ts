@@ -27,3 +27,19 @@ describe('frasesConCita', () => {
     expect(frasesConCita('civ', 'Art. 1545', 'Todo contrato  legalmente celebrado', null)).toBe('«Todo contrato legalmente celebrado» (art. 1545 CC)')
   })
 })
+
+import { citaDeVarios } from './citas'
+
+describe('citaDeVarios', () => {
+  const inc = (n: number) => ({ inciso: n, numero: null, letra: null, propio: false })
+  it('incisos seguidos: «incs. 2° a 4°»', () => {
+    expect(citaDeVarios('civ', 'Art. 1445', [inc(2), inc(3), inc(4)])).toBe('art. 1445 incs. 2° a 4° CC')
+  })
+  it('dentro de un mismo número con incisos propios', () => {
+    const n = (i: number | null) => ({ inciso: i, numero: '3', letra: null, propio: true })
+    expect(citaDeVarios('con', 'Art. 19', [n(null), n(2), n(3)])).toBe('art. 19 N° 3 incs. 1° a 3° CPR')
+  })
+  it('un solo inciso repetido da la cita simple', () => {
+    expect(citaDeVarios('civ', 'Art. 1445', [inc(2), inc(2)])).toBe('art. 1445 inc. 2° CC')
+  })
+})

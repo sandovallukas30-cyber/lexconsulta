@@ -24,6 +24,29 @@ export function citaPrecisa(tipo: CodigoTipo, idArticulo: string, u?: UbicacionC
   return partes.join(' ')
 }
 
+/** Cita de una selección que abarca varios párrafos: si son incisos seguidos del mismo nivel, «art. 1445 incs. 2° a 4° CC»;
+ *  si no, se cita desde el primero hasta el último («art. 19 N° 3 incs. 1° a 3° CPR» o, en otros casos, el primero y el último). */
+export function citaDeVarios(tipo: CodigoTipo, idArticulo: string, ubicaciones: (UbicacionCita | null)[]): string {
+  const u = ubicaciones.filter((x): x is UbicacionCita => !!x)
+  if (u.length === 0) return citaPrecisa(tipo, idArticulo)
+  const primero = u[0]
+  const ultimo = u[u.length - 1]
+  const mismaBase = u.every((x) => x.numero === primero.numero && x.letra === null && x.propio === primero.propio)
+  if (mismaBase && primero.letra === null) {
+    const art = idArticulo.trim().replace(/^Art(?:[íi]culo)?\.?\s*/i, '')
+    // el primer párrafo de un número va sin inciso («N° 3»): equivale al inciso 1.°
+    const desde = primero.inciso ?? (primero.numero ? 1 : null)
+    const hasta = ultimo.inciso ?? (ultimo.numero ? 1 : null)
+    if (desde !== null && hasta !== null && hasta > desde) {
+      const num = primero.numero ? `N° ${primero.numero} ` : ''
+      return `art. ${art} ${num}incs. ${desde}° a ${hasta}° ${abreviaturaCita(tipo)}`
+    }
+  }
+  const a = citaPrecisa(tipo, idArticulo, primero)
+  const b = citaPrecisa(tipo, idArticulo, ultimo)
+  return a === b ? a : `${a} a ${b.replace(/^art\. \S+ /, '')}`
+}
+
 /** Lo que queda en el portapapeles al copiar una frase seleccionada: «frase» (art. 1445 inc. 2° CC). */
 export function frasesConCita(tipo: CodigoTipo, idArticulo: string, frase: string, u?: UbicacionCita | null): string {
   return `«${frase.trim().replace(/\s+/g, ' ')}» (${citaPrecisa(tipo, idArticulo, u)})`

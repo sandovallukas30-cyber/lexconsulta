@@ -18,7 +18,7 @@ import { buscarVinculosArticulo } from '../../services/modulosAcademico'
 import { buscarEnCodigo, consultaComoId } from '../../services/buscarEnCodigo'
 import { quitarResaltado, resaltarCoincidencia } from '../../services/resaltado'
 import { claseInciso, numeralesConIncisos, ubicacionDeParrafo } from '../../services/incisos'
-import { citaArticulo, citaPrecisa, copiarAlPortapapeles, frasesConCita, textoConCita } from '../../services/citas'
+import { citaArticulo, citaDeVarios, citaPrecisa, copiarAlPortapapeles, frasesConCita, textoConCita } from '../../services/citas'
 import { avisar } from '../../store/useAvisos'
 import { imprimir, useImprimirConCtrlP } from '../../services/impresion'
 import { VistaImprimibleArticulo } from '../ui/VistasImprimibles'
@@ -2033,9 +2033,13 @@ function ArticuloTexto({
     <>
       <ContenedorResaltable
         onAgregar={(frase) => agregarSubrayado(codigo, articulo, frase)}
-        onCopiarCita={async (frase, indice) => {
-          const texto = frasesConCita(codigo, articulo, frase, ubicacionDeParrafo(parrafos, indice))
-          if (await copiarAlPortapapeles(texto)) avisar.exito(`Copiado con cita: ${citaPrecisa(codigo, articulo, ubicacionDeParrafo(parrafos, indice))}`)
+        onCopiarCita={async (tramos) => {
+          const ubic = tramos.map((tr) => ubicacionDeParrafo(parrafos, tr.indice))
+          const texto = tramos.length === 1
+            ? frasesConCita(codigo, articulo, tramos[0].texto, ubic[0])
+            : `${tramos.map((tr) => `«${tr.texto}»`).join('\n')} (${citaDeVarios(codigo, articulo, ubic)})`
+          const cita = tramos.length === 1 ? citaPrecisa(codigo, articulo, ubic[0]) : citaDeVarios(codigo, articulo, ubic)
+          if (await copiarAlPortapapeles(texto)) avisar.exito(`Copiado con cita: ${cita}`)
           else avisar.error('No se pudo copiar. Selecciona el texto y usa Ctrl+C.')
         }}
       >
