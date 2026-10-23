@@ -369,14 +369,6 @@ main[data-vista] > *:not(.esqueleto-contenedor) { animation: aparece var(--dur-l
   100% { transform: scale(1); }
 }
 
-/* Calendario: la bandera de una evaluación próxima late suave para que no pase desapercibida
-   (con movimiento reducido o «animaciones: no» las reglas globales de arriba la dejan quieta) */
-@keyframes latido-eval {
-  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 color-mix(in srgb, var(--neu-danger) 45%, transparent); }
-  50% { transform: scale(1.12); box-shadow: 0 0 0 5px color-mix(in srgb, var(--neu-danger) 0%, transparent); }
-}
-.eval-latido { animation: latido-eval 1.8s ease-in-out infinite; }
-
 /* Esqueleto de carga: aparece solo si la vista tarda más de ~150 ms (así no
    parpadea cuando carga al tiro) y late suave mientras espera. */
 @keyframes esqueleto-aparece { from { opacity: 0 } to { opacity: 1 } }

@@ -28,22 +28,6 @@ function cuentaRegresiva(fecha: string, hoy: string) {
   return { dias: d, texto, urgente: d >= 0 && d <= 3 }
 }
 
-/** Coral → rosa: más cálido y amable que el rojo plano, y combina con el índigo de la app. */
-const DEGRADE_EVAL = 'linear-gradient(135deg, #ff8a5c 0%, #e4504f 100%)'
-
-/** Bandera roja con la que se marca un día de evaluación (late cuando falta poco). */
-function BanderaEval({ urgente, className = '' }: { urgente: boolean; className?: string }) {
-  return (
-    <span
-      aria-hidden="true"
-      className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-white flex-shrink-0 ${urgente ? 'eval-latido' : ''} ${className}`}
-      style={{ background: DEGRADE_EVAL, boxShadow: '0 2px 6px color-mix(in srgb, var(--neu-danger) 35%, transparent)' }}
-    >
-      <i className="ti ti-flag-3 text-[11px]" />
-    </span>
-  )
-}
-
 /* ---------- contorno en ola de los días con evaluación ----------
    La línea que rodea la ficha ondula suave y la onda recorre todo el borde. Todas las olas son iguales (siempre sutiles). Un solo bucle de animación para todas las fichas. */
 const suscriptores = new Set<(seg: number) => void>()
@@ -197,13 +181,11 @@ function ItemFila({ it }: { it: ItemCalendario }) {
           borderColor: it.hecha ? 'color-mix(in srgb, var(--neu-ok) 35%, transparent)' : 'color-mix(in srgb, var(--neu-danger) 30%, transparent)',
         }}
       >
-        <span
-          className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-white ${!it.hecha && cuenta.urgente ? 'eval-latido' : ''}`}
-          style={{ background: it.hecha ? 'var(--neu-ok)' : DEGRADE_EVAL, boxShadow: it.hecha ? undefined : '0 3px 8px color-mix(in srgb, var(--neu-danger) 35%, transparent)' }}
-          aria-hidden="true"
-        >
-          <i className={`ti ${it.hecha ? 'ti-check' : 'ti-flag-3'} text-lg`} />
-        </span>
+        {it.hecha && (
+          <span className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-white" style={{ background: 'var(--neu-ok)' }} aria-hidden="true">
+            <i className="ti ti-check text-base" />
+          </span>
+        )}
         <span className="min-w-0 flex-1">
           <span className="block text-[11px] font-extrabold uppercase tracking-[0.08em]" style={{ color: it.hecha ? 'var(--neu-ok)' : 'var(--neu-danger)' }}>
             {it.hecha ? 'Evaluación rendida' : `Evaluación · ${cuenta.texto}`}
@@ -243,7 +225,6 @@ function Etiqueta({ it }: { it: ItemCalendario }) {
         className="flex items-center gap-1 truncate text-[11px] leading-tight px-1.5 py-0.5 rounded-md font-bold"
         style={{ background: 'color-mix(in srgb, var(--neu-danger) 14%, transparent)', color: 'var(--neu-danger)' }}
       >
-        <i className="ti ti-flag-3 text-[11px] flex-shrink-0" aria-hidden="true" />
         <span className="truncate">{it.titulo}</span>
       </span>
     )
@@ -292,10 +273,6 @@ function CeldaDia({
     >
       {/* contorno en ola: reemplaza al borde recto (al elegir el día, la línea se hace más gruesa) */}
       {hayEval && <ContornoOla radio={14} grueso={seleccionada} />}
-      {/* chincheta de evaluación: en la esquina de la celda, para que se vea de lejos */}
-      {hayEval && (
-        <BanderaEval urgente={false} className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 !w-4 !h-4 sm:!w-5 sm:!h-5 [&>i]:!text-[9px] sm:[&>i]:!text-[11px]" />
-      )}
       {/* el nombre accesible parte del texto visible (WCAG 2.5.3) y suma la fecha completa para el lector de pantalla */}
       <span className="sr-only">{`${fechaLarga(fecha)}${items.length ? `, ${items.length} ${items.length === 1 ? 'elemento' : 'elementos'}` : ''}. `}</span>
       <span
@@ -375,7 +352,6 @@ function AvisoEvaluacion({ fecha, items }: { fecha: string; items: ItemCalendari
         borderColor: 'color-mix(in srgb, var(--neu-danger) 30%, transparent)',
       }}
     >
-      <BanderaEval urgente={c.urgente} className="!w-8 !h-8" />
       <p className="text-[13px] leading-snug" style={{ color: 'var(--neu-ink)' }}>
         <span className="font-extrabold" style={{ color: 'var(--neu-danger)' }}>
           {pendientes.length === 1 ? 'Evaluación' : `${pendientes.length} evaluaciones`} · {c.texto}
@@ -626,7 +602,6 @@ export function CalendarioView() {
                       {DIAS[i]}
                     </span>
                     <span className={`text-lg font-bold ${e.titulo}`}>{Number(f.slice(8))}</span>
-                    {hayEval && <BanderaEval urgente={false} className="ml-auto self-center" />}
                   </div>
                   <ListaDelDia fecha={f} items={delDia} />
                 </section>
