@@ -2003,16 +2003,29 @@ const NUMERAL = /^\s*(?:\d{1,2}\s*(?:[º°ª.)]|\.-)|[a-zñ]\)|[ivx]{1,4}\))/i
 const esNumeral = (parrafo: string) => NUMERAL.test(parrafo)
 /** «1º.-», «2º.-»: numeral al estilo de la Constitución (art. 19, 32…). */
 const NUMERAL_CON_GUION = /^\s*\d{1,2}\s*[º°]\s*\.?\s*-/
+/** ¿Los numerales «1º.-» de este artículo traen incisos propios (como en el art. 19 de la Constitución) o son solo
+ *  los ítems de una lista (como en el art. 17)? Se sabe porque en el primer caso hay numerales seguidos que llevan
+ *  párrafos debajo; en una lista, solo el último ítem puede tener un párrafo de cierre. */
+function numeralesConIncisos(parrafos: string[]): boolean {
+  let anteriorConCuerpo = false
+  for (let i = 0; i < parrafos.length; i++) {
+    if (!NUMERAL_CON_GUION.test(parrafos[i])) continue
+    const siguiente = parrafos[i + 1]
+    const conCuerpo = siguiente !== undefined && !esNumeral(siguiente)
+    if (conCuerpo && anteriorConCuerpo) return true
+    anteriorConCuerpo = conCuerpo
+  }
+  return false
+}
+
 /** Clase del párrafo para la numeración de incisos al margen:
  *  - sin clase: inciso corriente (cuenta y lleva número);
  *  - `es-numeral`: ítem de una enumeración (1º., a), 1)…): parte del inciso, ni cuenta ni lleva número;
- *  - `reinicia-inciso`: numeral que trae incisos propios debajo (como los del art. 19 de la Constitución): él es el
- *    inciso 1.º y la cuenta empieza de nuevo, que es como se citan («art. 19 N.º 3, inciso 6.º»). */
-function claseInciso(parrafos: string[], i: number): string {
+ *  - `reinicia-inciso`: numeral con incisos propios (art. 19 de la Constitución): él es el inciso 1.º y la cuenta
+ *    empieza de nuevo, que es como se citan («art. 19 N.º 3, inciso 6.º»). */
+function claseInciso(parrafos: string[], i: number, conIncisosPropios: boolean): string {
   if (!esNumeral(parrafos[i])) return ''
-  const siguiente = parrafos[i + 1]
-  if (NUMERAL_CON_GUION.test(parrafos[i]) && siguiente !== undefined && !esNumeral(siguiente)) return ' reinicia-inciso'
-  return ' es-numeral'
+  return conIncisosPropios && NUMERAL_CON_GUION.test(parrafos[i]) ? ' reinicia-inciso' : ' es-numeral'
 }
 
 function ArticuloTexto({
@@ -2045,6 +2058,7 @@ function ArticuloTexto({
   const claveSubrayado = `${codigo}::${articulo}`
   const frasesResaltadas = subrayadosStore[claveSubrayado] ?? []
   const referenciasPorParrafo = useReferenciasFiltradas(parrafos, codigo, articulo)
+  const incisosPropios = useMemo(() => numeralesConIncisos(parrafos), [parrafos])
   return (
     <>
       <ContenedorResaltable onAgregar={(frase) => agregarSubrayado(codigo, articulo, frase)}>
@@ -2060,7 +2074,7 @@ function ArticuloTexto({
               texto={p}
               subrayados={frasesResaltadas}
               onQuitar={(frase) => quitarSubrayado(codigo, articulo, frase)}
-              className={`leading-[1.8] mb-4 last:mb-0${claseInciso(parrafos, i)}`}
+              className={`leading-[1.8] mb-4 last:mb-0${claseInciso(parrafos, i, incisosPropios)}`}
               style={{ fontSize: tamano, ...(i === 0 ? {} : { textIndent: '1.5rem' }) }}
             />
           ))}
