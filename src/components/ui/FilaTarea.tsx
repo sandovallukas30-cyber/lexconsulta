@@ -1,6 +1,9 @@
+import { useMemo, useRef, useState } from 'react'
+import { animate, motion, useMotionValue, useTransform } from 'framer-motion'
 import { useStore } from '../../store/useStore'
+import { avisar } from '../../store/useAvisos'
 import type { TareaPlan } from '../../types'
-import { colorRamo, ETIQUETA_PRIORIDAD, etiquetaFecha, nombreRamo, progresoSubtareas } from '../../services/tareasPlan'
+import { colorRamo, ETIQUETA_PRIORIDAD, etiquetaFecha, mananaISO, nombreRamo, progresoSubtareas } from '../../services/tareasPlan'
 import { horasMin } from '../../services/enfoque'
 import { celebrar } from '../../services/celebrar'
 
@@ -19,6 +22,33 @@ export function FilaTarea({ tarea, onAbrir, abierta }: Props) {
   const modoOscuro = useStore((s) => s.modoOscuro)
   const ramos = useStore((s) => s.ramos)
   const alternar = useStore((s) => s.alternarTareaPlan)
+  const actualizar = useStore((s) => s.actualizarTareaPlan)
+  const refCasilla = useRef<HTMLButtonElement>(null)
+
+  // En el celular la fila se desliza: a la derecha la completa (o la reabre), a la izquierda la pasa a mañana.
+  // Con mouse no hay gesto: ahí están la casilla y el editor de siempre.
+  const tactil = useMemo(() => typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches, [])
+  const x = useMotionValue(0)
+  const [moviendo, setMoviendo] = useState(false)
+  const opHecha = useTransform(x, [0, 40, 90], [0, 0.5, 1])
+  const opManana = useTransform(x, [0, -40, -90], [0, 0.5, 1])
+  const UMBRAL = 90
+  const vibrar = () => {
+    try {
+      navigator.vibrate?.(12)
+    } catch {
+      /* sin vibración */
+    }
+  }
+  const alternarConFiesta = () => {
+    if (!tarea.hecha) celebrar(refCasilla.current)
+    alternar(tarea.id)
+  }
+  const pasarAManana = () => {
+    const antes = tarea.fecha
+    actualizar(tarea.id, { fecha: mananaISO() })
+    avisar.conDeshacer('Tarea pasada a mañana', () => actualizar(tarea.id, { fecha: antes }))
+  }
 
   const ramo = nombreRamo(tarea.ramoId, ramos)
   const fecha = tarea.fecha ? etiquetaFecha(tarea.fecha, tarea.hecha) : null
@@ -35,9 +65,10 @@ export function FilaTarea({ tarea, onAbrir, abierta }: Props) {
     </span>
   )
 
-  return (
+  const fila = (
     <div className="flex items-start gap-3 py-2.5">
       <button
+        ref={refCasilla}
         role="checkbox"
         aria-checked={tarea.hecha}
         aria-label={`${tarea.hecha ? 'Marcar como pendiente' : 'Marcar como hecha'}: ${tarea.titulo}`}
@@ -103,6 +134,57 @@ export function FilaTarea({ tarea, onAbrir, abierta }: Props) {
           <span className="sr-only"> (prioridad)</span>
         </span>
       )}
+    </div>
+  )
+
+  if (!tactil) return fila
+
+  return (
+    <div className="relative overflow-hidden">
+      <motion.div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-0 left-0 right-0 flex items-center justify-start gap-2 pl-4 text-sm font-bold text-white"
+        style={{ opacity: opHecha, background: 'var(--neu-ok)' }}
+      >
+        <i className={`ti ${tarea.hecha ? 'ti-arrow-back-up' : 'ti-check'} text-lg`} />
+        {tarea.hecha ? 'Reabrir' : 'Hecha'}
+      </motion.div>
+      {!tarea.hecha && (
+        <motion.div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 left-0 right-0 flex items-center justify-end gap-2 pr-4 text-sm font-bold text-white"
+          style={{ opacity: opManana, background: 'var(--neu-warn)' }}
+        >
+          Mañana
+          <i className="ti ti-calendar-event text-lg" />
+        </motion.div>
+      )}
+      <motion.div
+        drag="x"
+        className="relative"
+        dragDirectionLock
+        dragMomentum={false}
+        style={{ x, background: moviendo ? 'var(--neu-card)' : 'transparent' }}
+        onDragStart={() => setMoviendo(true)}
+        onDrag={() => {
+          // la fila va con el dedo, con un poco de resistencia; una tarea hecha solo se puede reabrir (derecha)
+          const dx = x.get()
+          if (dx < 0 && tarea.hecha) x.set(dx * 0.1)
+        }}
+        onDragEnd={(_, info) => {
+          setMoviendo(false)
+          animate(x, 0, { type: 'spring', stiffness: 500, damping: 40 })
+          if (info.offset.x > UMBRAL || info.velocity.x > 700) {
+            vibrar()
+            alternarConFiesta()
+          } else if (!tarea.hecha && (info.offset.x < -UMBRAL || info.velocity.x < -700)) {
+            vibrar()
+            pasarAManana()
+          }
+        }}
+      >
+        {fila}
+      </motion.div>
     </div>
   )
 }

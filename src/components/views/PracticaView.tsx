@@ -4,6 +4,8 @@ import { useStore } from '../../store/useStore'
 import { generarRosco, esRespuestaCorrecta } from '../../services/pasapalabra'
 import { generarPalabraAhorcado, ERRORES_MAXIMOS } from '../../services/ahorcado'
 import { useDestello } from '../../hooks/useDestello'
+import { RepasoColecciones } from '../ui/RepasoColecciones'
+import { contarTarjetasVencidas } from '../../services/actividadEstudio'
 import { obtenerCodigosConPreguntas } from '../../data/destelloPreguntas'
 import type { AreaPractica, EntradaRosco, PartidaPasapalabra, PartidaAhorcado, CodigoActivo, CodigoTipo } from '../../types'
 
@@ -34,7 +36,7 @@ const AREAS: { id: AreaPractica; nombre: string; icono: string; descripcion: str
   { id: 'recursos_naturales', nombre: 'Minería y Aguas', icono: 'ti-mountain', descripcion: 'Código de Minería y Código de Aguas' },
 ]
 
-type JuegoSeleccionado = 'none' | 'pasapalabra' | 'quiz' | 'ahorcado'
+type JuegoSeleccionado = 'none' | 'pasapalabra' | 'quiz' | 'ahorcado' | 'repaso'
 
 export function PracticaView() {
   const partida = useStore((s) => s.partidaPasapalabra)
@@ -116,6 +118,10 @@ export function PracticaView() {
     return <SeleccionAreaAhorcado modoOscuro={modoOscuro} onVolverAlMenu={() => setJuegoSeleccionado('none')} />
   }
 
+  if (juegoSeleccionado === 'repaso') {
+    return <RepasoColecciones onVolver={() => setJuegoSeleccionado('none')} />
+  }
+
   // Menú de selección inicial
   return <MenuSeleccionJuegos modoOscuro={modoOscuro} onSeleccionar={setJuegoSeleccionado} />
 }
@@ -129,6 +135,8 @@ function MenuSeleccionJuegos({
   modoOscuro: boolean
   onSeleccionar: (juego: JuegoSeleccionado) => void
 }) {
+  const colecciones = useStore((s) => s.colecciones)
+  const paraRepasar = contarTarjetasVencidas(colecciones)
   return (
     <div className={`h-full overflow-y-auto ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
       <div className="max-w-4xl mx-auto px-8 py-10">
@@ -155,6 +163,35 @@ function MenuSeleccionJuegos({
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
+          {/* Repaso de colecciones */}
+          {paraRepasar > 0 && (
+            <motion.button
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => onSeleccionar('repaso')}
+              className={`group text-left rounded-2xl border-2 p-6 transition-all hover:shadow-lg hover:-translate-y-1 md:col-span-2 lg:col-span-3 ${
+                modoOscuro ? 'bg-zinc-800/40 border-[var(--accent-700)]' : 'bg-white border-[var(--accent-500)]'
+              }`}
+            >
+              <div className="flex items-center gap-4">
+                <span
+                  className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ background: 'color-mix(in srgb, var(--accent-base) 14%, transparent)' }}
+                >
+                  <i className="ti ti-cards text-2xl" style={{ color: 'var(--accent-texto)' }} />
+                </span>
+                <div className="flex-1 min-w-0">
+                  <h2 className={`text-xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>Repaso de colecciones</h2>
+                  <p className={`text-sm leading-relaxed ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                    {paraRepasar} artículo{paraRepasar === 1 ? '' : 's'} te toca{paraRepasar === 1 ? '' : 'n'} hoy. Desliza la tarjeta: a la derecha si lo sabías, a la izquierda si no.
+                  </p>
+                </div>
+                <i className="ti ti-arrow-right text-lg transition-transform group-hover:translate-x-1" style={{ color: 'var(--accent-texto)' }} />
+              </div>
+            </motion.button>
+          )}
+
           {/* Pasapalabra */}
           <motion.button
             initial={{ opacity: 0, y: 10 }}

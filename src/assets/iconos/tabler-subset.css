@@ -76,8 +76,8 @@
 .ti-file-upload:before{content:"\ec91"}
 .ti-files:before{content:"\edef"}
 .ti-flag:before{content:"\eaa6"}
+.ti-flag-3:before{content:"\ee8d"}
 .ti-flag-check:before{content:"\fb8c"}
-.ti-flame:before{content:"\ec2c"}
 .ti-folder-plus:before{content:"\eaab"}
 .ti-folder-symlink:before{content:"\f91b"}
 .ti-gavel:before{content:"\ef90"}
@@ -148,7 +148,6 @@
 .ti-reload:before{content:"\f3ae"}
 .ti-rotate:before{content:"\eb16"}
 .ti-rotate-clockwise-2:before{content:"\ebb5"}
-.ti-route:before{content:"\eb17"}
 .ti-row-insert-bottom:before{content:"\eed0"}
 .ti-row-remove:before{content:"\fafe"}
 .ti-scale:before{content:"\ebc2"}

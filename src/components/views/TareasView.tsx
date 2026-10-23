@@ -289,13 +289,13 @@ export function TareasView() {
         <NuevaTarea onCreada={() => setFiltro((f) => (f === 'hechas' ? 'todas' : f))} />
 
         <div className="flex flex-wrap items-center gap-2 justify-between">
-          <div role="group" aria-label="Filtrar tareas" className="inline-flex gap-1 p-1 rounded-xl" style={{ background: 'var(--neu-bg3)' }}>
+          <div role="group" aria-label="Filtrar tareas" className="flex w-full sm:w-auto sm:inline-flex gap-1 p-1 rounded-xl" style={{ background: 'var(--neu-bg3)' }}>
             {FILTROS.map((f) => (
               <button
                 key={f.id}
                 onClick={() => setFiltro(f.id)}
                 aria-pressed={filtro === f.id}
-                className={`sin-tactil pointer-coarse:min-h-11 min-h-9 px-3.5 rounded-lg text-sm font-semibold inline-flex items-center gap-2 transition-colors ${
+                className={`sin-tactil pointer-coarse:min-h-11 min-h-9 flex-1 sm:flex-none justify-center px-1.5 sm:px-3.5 rounded-lg text-[13px] sm:text-sm font-semibold inline-flex items-center gap-1 sm:gap-2 transition-colors ${
                   filtro === f.id ? 'shadow-sm' : 'text-[var(--neu-ink3)]'
                 }`}
                 style={filtro === f.id ? { background: 'var(--neu-card)', color: 'var(--accent-texto)' } : undefined}

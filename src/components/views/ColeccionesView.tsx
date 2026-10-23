@@ -3215,7 +3215,15 @@ function ModalAgregarArticulo({
   coleccionId: string
   modoOscuro: boolean
 }) {
-  const codigosStore = useStore((s) => s.codigos)
+  const todasLasNormas = useStore((s) => s.codigos)
+  // Solo los códigos (Constitución, civil, penal, procesales…): las leyes especiales son decenas y
+  // llenarían el selector. Quedan agrupados en el orden en que se estudian.
+  const codigosStore = useMemo(() => {
+    const orden = ['fundamentales', 'sustantivos', 'procedimentales']
+    return todasLasNormas
+      .filter((c) => orden.includes(c.categoria))
+      .sort((a, b) => orden.indexOf(a.categoria) - orden.indexOf(b.categoria))
+  }, [todasLasNormas])
   const coleccion = useStore((s) => s.colecciones.find((c) => c.id === coleccionId))
   const agregarArticulo = useStore((s) => s.agregarArticuloAColeccion)
   const [codigoTipo, setCodigoTipo] = useState<CodigoTipo | null>(null)
@@ -3270,7 +3278,7 @@ function ModalAgregarArticulo({
                   Agregar artículos
                 </h2>
                 <p className={`text-xs mt-0.5 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
-                  {totalAgregados} agregado{totalAgregados !== 1 ? 's' : ''} · elige el código y busca
+                  {totalAgregados} agregado{totalAgregados !== 1 ? 's' : ''} · elige el código y busca (las leyes especiales se agregan desde el Explorador)
                 </p>
               </div>
               <button

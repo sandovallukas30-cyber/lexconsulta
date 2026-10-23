@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { textosIntervalo, type NotaRepaso } from '../../services/fsrs'
+import { TarjetaDeslizable, type DireccionTarjeta } from './TarjetaDeslizable'
 import {
   aEstadoFSRS,
   estaPendiente,
@@ -194,36 +195,47 @@ export function RepasoApunte({ apunte, onCerrar }: Props) {
           </div>
         ) : (
           <div className="w-full max-w-xl">
-            <AnimatePresence mode="wait">
-              <motion.button
-                key={`${actual.id}-${indice}-${volteada}`}
-                initial={{ opacity: 0, rotateX: -8 }}
-                animate={{ opacity: 1, rotateX: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.18 }}
-                onClick={() => setVolteada((v) => !v)}
-                aria-label={volteada ? 'Ver el frente de la tarjeta' : 'Voltear la tarjeta'}
-                className={`w-full min-h-[240px] sm:min-h-[280px] rounded-2xl border shadow-sm p-6 sm:p-8 flex flex-col items-center justify-center text-center ${
-                  modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
-                }`}
-              >
-                <span className={`text-[11px] uppercase tracking-wider font-semibold mb-3 ${suave}`}>
-                  {actual.tipo === 'idea' ? 'Idea clave' : 'Término'}
-                  {actual.seccion && actual.tipo === 'termino' ? ` · ${actual.seccion}` : ''}
-                  {volteada ? ' · respuesta' : ''}
-                </span>
-                {volteada ? (
-                  <>
-                    {/* el frente queda visible arriba: reforzar la asociación pregunta → respuesta */}
-                    <p className={`text-sm font-semibold mb-3 ${suave}`}>{actual.frente}</p>
-                    <p className={`text-base sm:text-lg leading-relaxed whitespace-pre-line font-serif ${texto}`}>{actual.reverso}</p>
-                  </>
-                ) : (
-                  <p className={`text-xl sm:text-2xl font-serif font-bold ${texto}`}>{actual.frente}</p>
-                )}
-                {!volteada && <span className={`mt-4 text-xs ${suave}`}>Toca o presiona Espacio para ver la respuesta</span>}
-              </motion.button>
-            </AnimatePresence>
+            <TarjetaDeslizable
+              key={`${actual.id}-${indice}`}
+              habilitada={volteada}
+              etiquetas={{
+                izquierda: { texto: 'Otra vez', color: '#dc2626' },
+                derecha: { texto: 'Bien', color: '#16a34a' },
+                arriba: { texto: 'Fácil', color: '#0284c7' },
+              }}
+              onResponder={(dir: DireccionTarjeta) => responder(dir === 'izquierda' ? 1 : dir === 'derecha' ? 3 : 4)}
+            >
+              <AnimatePresence mode="wait">
+                <motion.button
+                  key={`${actual.id}-${indice}-${volteada}`}
+                  initial={{ opacity: 0, rotateX: -8 }}
+                  animate={{ opacity: 1, rotateX: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.18 }}
+                  onClick={() => setVolteada((v) => !v)}
+                  aria-label={volteada ? 'Ver el frente de la tarjeta' : 'Voltear la tarjeta'}
+                  className={`w-full min-h-[240px] sm:min-h-[280px] rounded-2xl border shadow-sm p-6 sm:p-8 flex flex-col items-center justify-center text-center ${
+                    modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
+                  }`}
+                >
+                  <span className={`text-[11px] uppercase tracking-wider font-semibold mb-3 ${suave}`}>
+                    {actual.tipo === 'idea' ? 'Idea clave' : 'Término'}
+                    {actual.seccion && actual.tipo === 'termino' ? ` · ${actual.seccion}` : ''}
+                    {volteada ? ' · respuesta' : ''}
+                  </span>
+                  {volteada ? (
+                    <>
+                      {/* el frente queda visible arriba: reforzar la asociación pregunta → respuesta */}
+                      <p className={`text-sm font-semibold mb-3 ${suave}`}>{actual.frente}</p>
+                      <p className={`text-base sm:text-lg leading-relaxed whitespace-pre-line font-serif ${texto}`}>{actual.reverso}</p>
+                    </>
+                  ) : (
+                    <p className={`text-xl sm:text-2xl font-serif font-bold ${texto}`}>{actual.frente}</p>
+                  )}
+                  {!volteada && <span className={`mt-4 text-xs ${suave}`}>Toca o presiona Espacio para ver la respuesta</span>}
+                </motion.button>
+              </AnimatePresence>
+            </TarjetaDeslizable>
 
             <div className="grid grid-cols-4 gap-2 sm:gap-3 mt-4">
               {([
@@ -243,6 +255,9 @@ export function RepasoApunte({ apunte, onCerrar }: Props) {
                 </button>
               ))}
             </div>
+            <p className={`sm:hidden text-center text-[11px] mt-3 ${suave}`}>
+              {volteada ? 'Desliza la tarjeta: ← otra vez · → bien · ↑ fácil' : 'Toca la tarjeta para ver la respuesta'}
+            </p>
             <p className={`hidden sm:block text-center text-[11px] mt-3 ${suave}`}>
               Espacio: voltear · 1 Otra vez · 2 Difícil · 3 Bien · 4 Fácil · Esc: salir
             </p>

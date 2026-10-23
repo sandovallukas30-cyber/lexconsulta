@@ -20,6 +20,27 @@ const DIAS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 const ICONO: Record<TipoItem, string> = { clase: 'ti-school', evaluacion: 'ti-clipboard-check', tarea: 'ti-checkbox' }
 const TODOS: TipoItem[] = ['clase', 'evaluacion', 'tarea']
 
+const MS_DIA = 86_400_000
+/** Cuántos días faltan para una fecha (negativo = ya pasó) y cómo decirlo. */
+function cuentaRegresiva(fecha: string, hoy: string) {
+  const d = Math.round((new Date(fecha + 'T12:00:00').getTime() - new Date(hoy + 'T12:00:00').getTime()) / MS_DIA)
+  const texto = d === 0 ? '¡Es hoy!' : d === 1 ? 'Mañana' : d > 1 ? `En ${d} días` : d === -1 ? 'Fue ayer' : `Hace ${-d} días`
+  return { dias: d, texto, urgente: d >= 0 && d <= 3 }
+}
+
+/** Bandera roja con la que se marca un día de evaluación (late cuando falta poco). */
+function BanderaEval({ urgente, className = '' }: { urgente: boolean; className?: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-white flex-shrink-0 ${urgente ? 'eval-latido' : ''} ${className}`}
+      style={{ background: 'var(--neu-danger)' }}
+    >
+      <i className="ti ti-flag-3 text-[11px]" />
+    </span>
+  )
+}
+
 function useEstilos() {
   const modoOscuro = useStore((s) => s.modoOscuro)
   return {
@@ -42,6 +63,36 @@ function ItemFila({ it }: { it: ItemCalendario }) {
   const ramos = useStore((s) => s.ramos)
   const color = colorRamo(it.ramoId, ramos)
   const ramo = nombreRamo(it.ramoId, ramos)
+  if (it.tipo === 'evaluacion') {
+    const cuenta = cuentaRegresiva(it.fecha, hoyISO())
+    return (
+      <button
+        onClick={() => abrirRamo(it.ramoId)}
+        className={`w-full flex items-center gap-3 p-3 rounded-xl text-left border-2 ${it.hecha ? 'opacity-70' : ''}`}
+        style={{
+          background: 'var(--neu-danger-soft)',
+          borderColor: it.hecha ? 'color-mix(in srgb, var(--neu-ok) 50%, transparent)' : 'color-mix(in srgb, var(--neu-danger) 55%, transparent)',
+        }}
+      >
+        <span
+          className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-white ${!it.hecha && cuenta.urgente ? 'eval-latido' : ''}`}
+          style={{ background: it.hecha ? 'var(--neu-ok)' : 'var(--neu-danger)' }}
+          aria-hidden="true"
+        >
+          <i className={`ti ${it.hecha ? 'ti-check' : 'ti-flag-3'} text-lg`} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[11px] font-extrabold uppercase tracking-[0.08em]" style={{ color: it.hecha ? 'var(--neu-ok)' : 'var(--neu-danger)' }}>
+            {it.hecha ? 'Evaluación rendida' : `Evaluación · ${cuenta.texto}`}
+          </span>
+          <span className="block text-[15px] font-bold truncate" style={{ color: 'var(--neu-ink)' }}>{it.titulo}</span>
+          <span className="block text-xs truncate" style={{ color: 'var(--neu-ink2)' }}>
+            {[ramo, it.detalle].filter(Boolean).join(' · ')}
+          </span>
+        </span>
+      </button>
+    )
+  }
   return (
     <button
       onClick={() => abrirRamo(it.ramoId)}
@@ -55,9 +106,6 @@ function ItemFila({ it }: { it: ItemCalendario }) {
           {[it.hora, ramo, it.detalle].filter(Boolean).join(' · ')}
         </span>
       </span>
-      {it.tipo === 'evaluacion' && !it.hecha && (
-        <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-md bg-red-500/10 text-red-600 flex-shrink-0">Evaluación</span>
-      )}
     </button>
   )
 }
@@ -66,6 +114,17 @@ function ItemFila({ it }: { it: ItemCalendario }) {
 function Etiqueta({ it }: { it: ItemCalendario }) {
   const ramos = useStore((s) => s.ramos)
   const color = colorRamo(it.ramoId, ramos)
+  if (it.tipo === 'evaluacion' && !it.hecha) {
+    return (
+      <span
+        className="flex items-center gap-1 truncate text-[11px] leading-tight px-1.5 py-0.5 rounded-md font-bold text-white"
+        style={{ background: 'var(--neu-danger)' }}
+      >
+        <i className="ti ti-flag-3 text-[11px] flex-shrink-0" aria-hidden="true" />
+        <span className="truncate">{it.titulo}</span>
+      </span>
+    )
+  }
   return (
     <span
       className={`block truncate text-[11px] leading-tight px-1.5 py-0.5 rounded-md font-medium ${it.hecha ? 'opacity-50 line-through' : ''}`}
@@ -94,24 +153,31 @@ function CeldaDia({
   const e = useEstilos()
   const dia = Number(fecha.slice(8))
   const hayEval = items.some((x) => x.tipo === 'evaluacion' && !x.hecha)
+  const urgente = hayEval && cuentaRegresiva(fecha, hoyISO()).urgente
   return (
     <button
       onClick={onElegir}
       aria-pressed={seleccionada}
-      className={`sin-tactil text-left min-h-[58px] sm:min-h-[76px] xl:min-h-[92px] p-1 sm:p-1.5 rounded-control flex flex-col gap-1 transition-colors border ${
+      className={`sin-tactil relative text-left min-h-[58px] sm:min-h-[76px] xl:min-h-[92px] p-1 sm:p-1.5 rounded-control flex flex-col gap-1 transition-colors border ${
         seleccionada
           ? 'border-[var(--accent-base)] bg-[color-mix(in_srgb,var(--accent-base)_8%,transparent)]'
+          : hayEval
+          ? 'border-[color-mix(in_srgb,var(--neu-danger)_55%,transparent)] bg-[var(--neu-danger-soft)]'
           : e.modoOscuro
           ? 'border-transparent hover:bg-zinc-800'
           : 'border-transparent hover:bg-zinc-50'
       } ${delMes ? '' : 'opacity-70'}`}
     >
+      {/* chincheta de evaluación: en la esquina de la celda, para que se vea de lejos */}
+      {hayEval && (
+        <BanderaEval urgente={urgente} className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 !w-4 !h-4 sm:!w-5 sm:!h-5 [&>i]:!text-[9px] sm:[&>i]:!text-[11px]" />
+      )}
       {/* el nombre accesible parte del texto visible (WCAG 2.5.3) y suma la fecha completa para el lector de pantalla */}
       <span className="sr-only">{`${fechaLarga(fecha)}${items.length ? `, ${items.length} ${items.length === 1 ? 'elemento' : 'elementos'}` : ''}. `}</span>
       <span
         aria-hidden="true"
-        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 ${esHoy ? 'text-white' : e.texto}`}
-        style={esHoy ? { background: 'var(--accent-base)' } : undefined}
+        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 ${esHoy ? 'text-white' : hayEval ? 'font-extrabold' : e.texto}`}
+        style={esHoy ? { background: 'var(--accent-base)' } : hayEval ? { color: 'var(--neu-danger)' } : undefined}
       >
         {dia}
       </span>
@@ -126,8 +192,8 @@ function CeldaDia({
       </span>
       {/* móvil: solo puntos */}
       <span className="flex xl:hidden gap-1 flex-wrap px-0.5">
-        {items.slice(0, 4).map((it) => (
-          <span key={it.id} className="w-2 h-2 rounded-full" style={{ background: it.tipo === 'evaluacion' ? '#dc2626' : 'var(--accent-base)', opacity: it.hecha ? 0.4 : 1 }} />
+        {items.filter((it) => !(it.tipo === 'evaluacion' && !it.hecha)).slice(0, 4).map((it) => (
+          <span key={it.id} className="w-2 h-2 rounded-full" style={{ background: it.tipo === 'evaluacion' ? 'var(--neu-ok)' : 'var(--accent-base)', opacity: it.hecha ? 0.4 : 1 }} />
         ))}
         {hayEval && <span className="sr-only">Hay una evaluación</span>}
       </span>
@@ -166,6 +232,34 @@ function ListaDelDia({ fecha, items }: { fecha: string; items: ItemCalendario[] 
   )
 }
 
+/** Cinta roja arriba del día cuando hay una evaluación pendiente: dice cuánto falta y anima a prepararse. */
+function AvisoEvaluacion({ fecha, items }: { fecha: string; items: ItemCalendario[] }) {
+  const pendientes = items.filter((x) => x.tipo === 'evaluacion' && !x.hecha)
+  if (pendientes.length === 0) return null
+  const c = cuentaRegresiva(fecha, hoyISO())
+  const frase =
+    c.dias === 0 ? '¡Hoy es el día! Respira, repasa lo esencial y mucha suerte.'
+    : c.dias === 1 ? 'Es mañana: un repaso corto hoy y a descansar.'
+    : c.dias > 1 ? `Faltan ${c.dias} días: todavía hay tiempo de repasar con calma.`
+    : 'Este día ya pasó: anota la nota en el ramo para que cuente en tu promedio.'
+  return (
+    <div
+      role="note"
+      className="flex items-center gap-3 rounded-xl px-3 py-2.5 mb-3 border-2"
+      style={{ background: 'var(--neu-danger-soft)', borderColor: 'color-mix(in srgb, var(--neu-danger) 45%, transparent)' }}
+    >
+      <BanderaEval urgente={c.urgente} className="!w-8 !h-8" />
+      <p className="text-[13px] leading-snug" style={{ color: 'var(--neu-ink)' }}>
+        <span className="font-extrabold" style={{ color: 'var(--neu-danger)' }}>
+          {pendientes.length === 1 ? 'Evaluación' : `${pendientes.length} evaluaciones`} · {c.texto}
+        </span>
+        <br />
+        {frase}
+      </p>
+    </div>
+  )
+}
+
 function PanelDia({ fecha, items }: { fecha: string; items: ItemCalendario[] }) {
   const e = useEstilos()
   const agregar = useStore((s) => s.agregarTareaPlan)
@@ -180,6 +274,7 @@ function PanelDia({ fecha, items }: { fecha: string; items: ItemCalendario[] }) 
   return (
     <section className={`${e.tarjeta} p-4`} aria-label={`Agenda del ${fechaLarga(fecha)}`}>
       <h2 className={`text-base font-bold mb-2 ${e.titulo}`}>{fechaLarga(fecha)}</h2>
+      <AvisoEvaluacion fecha={fecha} items={items} />
       <ListaDelDia fecha={fecha} items={items} />
       <form onSubmit={enviar} className="flex gap-2 mt-3">
         <input
@@ -391,13 +486,20 @@ export function CalendarioView() {
             {semana.map((f, i) => {
               const delDia = items.get(f) ?? []
               const esHoy = f === hoy
+              const hayEval = delDia.some((x) => x.tipo === 'evaluacion' && !x.hecha)
               return (
-                <section key={f} className={`${e.tarjeta} p-3 ${esHoy ? 'ring-2 ring-[var(--accent-base)]' : ''}`} aria-label={fechaLarga(f)}>
+                <section
+                  key={f}
+                  className={`${e.tarjeta} p-3 ${esHoy ? 'ring-2 ring-[var(--accent-base)]' : ''} ${hayEval ? '!border-2 !border-[var(--neu-danger)]' : ''}`}
+                  style={hayEval ? { background: 'var(--neu-danger-soft)' } : undefined}
+                  aria-label={fechaLarga(f)}
+                >
                   <div className="flex items-baseline gap-2 mb-1">
                     <span className={`text-xs font-semibold uppercase tracking-wide ${esHoy ? '' : e.suave}`} style={esHoy ? { color: 'var(--accent-texto)' } : undefined}>
                       {DIAS[i]}
                     </span>
                     <span className={`text-lg font-bold ${e.titulo}`}>{Number(f.slice(8))}</span>
+                    {hayEval && <BanderaEval urgente={cuentaRegresiva(f, hoy).urgente} className="ml-auto self-center" />}
                   </div>
                   <ListaDelDia fecha={f} items={delDia} />
                 </section>
