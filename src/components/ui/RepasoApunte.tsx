@@ -11,7 +11,8 @@ import {
   REINSERTAR_FALLADA_EN,
   type TarjetaRepaso,
 } from '../../services/tarjetasApunte'
-import { PistaGesto, esPantallaTactil } from './PistaGesto'
+import { PistaGesto } from './PistaGesto'
+import { esPantallaTactil } from '../../services/pantallaTactil'
 import type { ApunteModulo } from '../../types'
 
 const VERDE = 'var(--accent-base)'

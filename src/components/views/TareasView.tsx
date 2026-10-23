@@ -6,7 +6,8 @@ import { AnimatePresence } from 'framer-motion'
 import { FilaTarea } from '../ui/FilaTarea'
 import { ItemLista } from '../ui/ItemLista'
 import { SelectorRamo } from '../ui/SelectorRamo'
-import { PistaGesto, esPantallaTactil } from '../ui/PistaGesto'
+import { PistaGesto } from '../ui/PistaGesto'
+import { esPantallaTactil } from '../../services/pantallaTactil'
 import type { PrioridadTarea, TareaPlan } from '../../types'
 import {
   contarPorFiltro,

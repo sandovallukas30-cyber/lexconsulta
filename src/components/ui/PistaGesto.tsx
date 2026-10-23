@@ -1,8 +1,6 @@
 import { useEffect } from 'react'
 import { useAjustes } from '../../store/useAjustes'
 
-export const esPantallaTactil = () => typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches
-
 /** Aviso breve, una sola vez por dispositivo, que enseña un gesto que no se ve a simple vista (deslizar un artículo, una
  *  tarea o una tarjeta). Se cierra solo, al tocarlo o al marcarlo como visto. Con `activa` en false no aparece ni cuenta
  *  como visto (p. ej. en computador, donde el gesto no existe). */
