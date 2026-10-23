@@ -324,8 +324,12 @@ html, body, #root { height: 100%; width: 100%; overflow: hidden; }
 
 /* Número de cada inciso al margen (ajuste «Mostrar el número de cada inciso»): pequeño, tenue y fuera del texto copiable */
 .incisos-numerados { counter-reset: inciso; padding-left: 28px; }
-.incisos-numerados > p { counter-increment: inciso; position: relative; }
-.incisos-numerados > p::before {
+.incisos-numerados > p { position: relative; }
+/* los numerales y letras (1º., a)…) pertenecen al inciso anterior: no cuentan ni llevan número;
+   un numeral con incisos propios («1º.-» con párrafos debajo) reinicia la cuenta y es el inciso 1 */
+.incisos-numerados > p.reinicia-inciso { counter-set: inciso 1; } /* el set se aplica después del incremento: queda en 1 */
+.incisos-numerados > p:not(.es-numeral) { counter-increment: inciso; }
+.incisos-numerados > p:not(.es-numeral)::before {
   content: counter(inciso);
   position: absolute;
   right: 100%;

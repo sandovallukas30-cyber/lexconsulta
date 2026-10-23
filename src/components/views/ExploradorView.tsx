@@ -1997,6 +1997,24 @@ function separarNotas(texto: string): { principal: string; notas: { etiqueta: st
   return { principal, notas }
 }
 
+/** Los numerales y las letras de un inciso («1º.», «2.-», «a)», «i)») son parte de ese inciso, no incisos nuevos:
+ *  no reciben número propio al margen. */
+const NUMERAL = /^\s*(?:\d{1,2}\s*(?:[º°ª.)]|\.-)|[a-zñ]\)|[ivx]{1,4}\))/i
+const esNumeral = (parrafo: string) => NUMERAL.test(parrafo)
+/** «1º.-», «2º.-»: numeral al estilo de la Constitución (art. 19, 32…). */
+const NUMERAL_CON_GUION = /^\s*\d{1,2}\s*[º°]\s*\.?\s*-/
+/** Clase del párrafo para la numeración de incisos al margen:
+ *  - sin clase: inciso corriente (cuenta y lleva número);
+ *  - `es-numeral`: ítem de una enumeración (1º., a), 1)…): parte del inciso, ni cuenta ni lleva número;
+ *  - `reinicia-inciso`: numeral que trae incisos propios debajo (como los del art. 19 de la Constitución): él es el
+ *    inciso 1.º y la cuenta empieza de nuevo, que es como se citan («art. 19 N.º 3, inciso 6.º»). */
+function claseInciso(parrafos: string[], i: number): string {
+  if (!esNumeral(parrafos[i])) return ''
+  const siguiente = parrafos[i + 1]
+  if (NUMERAL_CON_GUION.test(parrafos[i]) && siguiente !== undefined && !esNumeral(siguiente)) return ' reinicia-inciso'
+  return ' es-numeral'
+}
+
 function ArticuloTexto({
   texto,
   modoOscuro,
@@ -2042,7 +2060,7 @@ function ArticuloTexto({
               texto={p}
               subrayados={frasesResaltadas}
               onQuitar={(frase) => quitarSubrayado(codigo, articulo, frase)}
-              className="leading-[1.8] mb-4 last:mb-0"
+              className={`leading-[1.8] mb-4 last:mb-0${claseInciso(parrafos, i)}`}
               style={{ fontSize: tamano, ...(i === 0 ? {} : { textIndent: '1.5rem' }) }}
             />
           ))}
