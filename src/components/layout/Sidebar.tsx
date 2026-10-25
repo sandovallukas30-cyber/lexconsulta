@@ -143,35 +143,43 @@ export function Sidebar() {
         {/* El botón de colapsar/expandir vive SIEMPRE en el mismo lugar (esquina superior izquierda de
             la tarjeta): se abre y se cierra tocando el mismo punto, sin mover el cursor ni el dedo. */}
         <div className="neu-raised flex-shrink-0 flex items-center gap-2.5 py-3 pl-[10px] pr-2">
-          <button
-            onClick={toggleSidebar}
-            title={esMovil ? 'Cerrar menú' : colapsado ? 'Expandir (Ctrl+B)' : 'Colapsar (Ctrl+B)'}
-            aria-label={esMovil ? 'Cerrar menú' : colapsado ? 'Expandir menú lateral' : 'Colapsar menú lateral'}
-            aria-expanded={esMovil ? undefined : !colapsado}
-            className="boton boton-fantasma w-11 h-11 flex-shrink-0 flex items-center justify-center rounded-[14px]"
-          >
-            {/* el set de íconos es recortado: «expandir» es el de «colapsar» espejado */}
-            <i
-              className={`ti ${esMovil ? 'ti-x' : 'ti-layout-sidebar-left-collapse'} text-xl`}
-              style={!esMovil && colapsado ? { transform: 'scaleX(-1)' } : undefined}
-            />
-          </button>
-          {!colapsado && (
-            <div className="anim-aparece flex-1 min-w-0 flex items-center gap-2.5">
-              <span
-                className="w-11 h-11 rounded-[14px] flex items-center justify-center flex-shrink-0"
-                style={{ background: VERDE }}
-                aria-hidden="true"
+          {esMovil ? (
+            <>
+              <button
+                onClick={toggleSidebar}
+                title="Cerrar menú"
+                aria-label="Cerrar menú"
+                className="boton boton-fantasma w-11 h-11 flex-shrink-0 flex items-center justify-center rounded-[14px]"
               >
-                <i className="ti ti-scale text-lg text-white" />
-              </span>
-              <div className="min-w-0">
-                <p className="text-[17px] font-extrabold leading-tight" style={{ color: 'var(--neu-ink)' }}>
-                  Prima Lex
-                </p>
-                <p className="sidebar-tagline text-[11px]" style={{ color: 'var(--neu-ink3)' }}>Tu cuaderno de Derecho</p>
-              </div>
-            </div>
+                <i className="ti ti-x text-xl" />
+              </button>
+              <MarcaPrimaLex />
+            </>
+          ) : (
+            <>
+              {/* En escritorio el propio logo es el botón: así la marca se ve siempre, también con el menú plegado, y
+                  sigue en el mismo punto de la tarjeta para plegar y desplegar sin mover el cursor. */}
+              <button
+                onClick={toggleSidebar}
+                title={colapsado ? 'Expandir (Ctrl+B)' : 'Colapsar (Ctrl+B)'}
+                aria-label={colapsado ? 'Expandir menú lateral' : 'Colapsar menú lateral'}
+                aria-expanded={!colapsado}
+                className="boton boton-fantasma flex items-center gap-2.5 min-w-0 flex-1 !p-0 !justify-start text-left rounded-[14px]"
+              >
+                <span className="w-11 h-11 rounded-[14px] flex items-center justify-center flex-shrink-0" style={{ background: VERDE }} aria-hidden="true">
+                  <i className="ti ti-scale text-lg text-white" />
+                </span>
+                {!colapsado && (
+                  <span className="anim-aparece min-w-0 block">
+                    <span className="block text-[17px] font-extrabold leading-tight" style={{ color: 'var(--neu-ink)' }}>Prima Lex</span>
+                    <span className="sidebar-tagline block text-[11px] font-normal" style={{ color: 'var(--neu-ink3)' }}>Tu cuaderno de Derecho</span>
+                  </span>
+                )}
+              </button>
+              {!colapsado && (
+                <i className="ti ti-layout-sidebar-left-collapse text-xl flex-shrink-0 mr-1" style={{ color: 'var(--neu-ink3)' }} aria-hidden="true" />
+              )}
+            </>
           )}
         </div>
 
@@ -367,5 +375,20 @@ function BotonNav({
       <Etiqueta visible={!colapsado}>{item.label}</Etiqueta>
       {item.id === 'enfoque' && <EnfoqueEnMenu colapsado={colapsado} />}
     </button>
+  )
+}
+
+/** Logo con el nombre, solo para mirar (en celular el botón de cerrar es la X de al lado). */
+function MarcaPrimaLex() {
+  return (
+    <div className="flex-1 min-w-0 flex items-center gap-2.5">
+      <span className="w-11 h-11 rounded-[14px] flex items-center justify-center flex-shrink-0" style={{ background: VERDE }} aria-hidden="true">
+        <i className="ti ti-scale text-lg text-white" />
+      </span>
+      <div className="min-w-0">
+        <p className="text-[17px] font-extrabold leading-tight" style={{ color: 'var(--neu-ink)' }}>Prima Lex</p>
+        <p className="sidebar-tagline text-[11px]" style={{ color: 'var(--neu-ink3)' }}>Tu cuaderno de Derecho</p>
+      </div>
+    </div>
   )
 }
