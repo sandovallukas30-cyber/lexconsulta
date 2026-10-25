@@ -15,6 +15,7 @@ import { tarjetasDe } from '../../services/tarjetasApunte'
 import { RepasoApunte } from './RepasoApunte'
 import { NotasMargen } from './NotasMargen'
 import { PanelConsultaArticulos } from './PanelConsultaArticulos'
+import { BusquedaEnApunte } from './BusquedaEnApunte'
 import type { ApunteModulo, SesionClase, CuadernoApuntes } from '../../types'
 
 const EditorApunte = lazy(() => import('./editorApunte/EditorApunte'))
@@ -115,6 +116,7 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
   const [indiceAbierto, setIndiceAbierto] = useState(false)
   const [repasando, setRepasando] = useState(false)
   const [consultaAbierta, setConsultaAbierta] = useState(false)
+  const [buscando, setBuscando] = useState(false)
   const [seccionActual, setSeccionActual] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const guardarPosicion = useStore((s) => s.guardarPosicionLectura)
@@ -147,6 +149,19 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [onCerrar, indiceAbierto, editando])
+
+  // Ctrl+F (⌘F) abre el buscador del apunte en lugar del del navegador, que no entiende nuestras marcas
+  useEffect(() => {
+    if (editando || repasando) return
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'f') {
+        e.preventDefault()
+        setBuscando(true)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [editando, repasando])
 
   // Flechas arriba/abajo (y Re Pág, Av Pág, Inicio, Fin) para moverse por el apunte sin tocar la pantalla. No actúan si se
   // está escribiendo (campos de texto, el editor) ni si hay una ventana de repaso encima.
@@ -300,6 +315,18 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
             <p className={`text-[11px] truncate ${tema.textSoft} ${desplazable && progreso > 0.01 ? 'hidden sm:block' : ''}`}>{metaPartes.join(' · ')}</p>
           )}
         </div>
+
+        {!editando && (
+          <button
+            onClick={() => setBuscando((v) => !v)}
+            title="Buscar una palabra en el apunte (Ctrl+F)"
+            aria-label="Buscar en el apunte"
+            aria-expanded={buscando}
+            className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${buscando ? `${tema.chipBg} ${tema.text}` : `${tema.textSoft} ${tema.hoverSuave}`}`}
+          >
+            <i className="ti ti-search text-lg" />
+          </button>
+        )}
 
         <button
           onClick={() => setConsultaAbierta((v) => !v)}
@@ -469,6 +496,7 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
         </Suspense>
       ) : (
         <>
+          {buscando && <BusquedaEnApunte raiz={raiz} scrollRef={scrollRef} temaLectura={temaLectura} onCerrar={() => setBuscando(false)} />}
           <div
             className={`h-[3px] flex-shrink-0 ${tema.chipBg}`}
             role="progressbar"

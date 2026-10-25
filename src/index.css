@@ -296,6 +296,8 @@ html, body, #root { height: 100%; width: 100%; overflow: hidden; }
 
 /* Coincidencia del buscador de apuntes (Omnibar → Modo Lectura) */
 ::highlight(prima-busqueda) { background-color: var(--marca-palabra); color: inherit; text-decoration: underline; text-decoration-color: var(--marca-trazo); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+/* Coincidencia ACTUAL del buscador dentro del apunte (las demás van con prima-busqueda) */
+::highlight(prima-busqueda-actual) { background-color: #fde047; color: #1c1917; }
 /* Colores de la marca de búsqueda: siguen el color de interfaz que eligió la persona (Configuración → Apariencia) */
 :root {
   --marca-trazo: var(--accent-base);

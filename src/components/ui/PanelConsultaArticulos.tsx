@@ -4,6 +4,7 @@ import { avisar } from '../../store/useAvisos'
 import { useCodigo } from '../../hooks/useCodigo'
 import { citaArticulo, copiarAlPortapapeles, textoConCita } from '../../services/citas'
 import { TEMAS_LECTURA } from '../../services/lecturaTema'
+import { fragmentoEn, normalizarConsulta } from '../../services/buscarApuntes'
 import type { CategoriaCodigo, CodigoTipo, TemaLectura } from '../../types'
 
 const ETIQUETA_CATEGORIA: Record<CategoriaCodigo, string> = {
@@ -49,15 +50,34 @@ export function PanelConsultaArticulos({ temaLectura, className = '', onCerrar }
 
   const grupos = useMemo(
     () =>
-      ORDEN_CATEGORIAS.map((cat) => ({ cat, items: normas.filter((c) => c.categoria === cat && c.activo) })).filter((g) => g.items.length > 0),
+      // todas las normas disponibles, también las que la persona desactivó en «Códigos»: consultar no requiere tenerlas activas
+      ORDEN_CATEGORIAS.map((cat) => ({ cat, items: normas.filter((c) => c.categoria === cat) })).filter((g) => g.items.length > 0),
     [normas]
   )
 
   const q = normalizar(consulta)
-  const exacto = useMemo(() => (q && articulos ? articulos.find((a) => normalizar(a.a) === q) ?? null : null), [q, articulos])
+  // Si lo escrito empieza con un número es un artículo; si son letras, se busca esa palabra dentro del texto de la norma
+  const porPalabra = consulta.trim().length >= 3 && !/^\s*(?:art(?:[íi]culo)?\.?\s*)?\d/i.test(consulta)
+  const textosNormalizados = useMemo(
+    () => articulos?.map((a) => a.t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()) ?? [],
+    [articulos]
+  )
+  const coincidenciasTexto = useMemo(() => {
+    if (!porPalabra || !articulos) return null
+    const palabras = normalizarConsulta(consulta)
+    const idx: number[] = []
+    textosNormalizados.forEach((t, i) => {
+      if (palabras.every((p) => t.includes(p))) idx.push(i)
+    })
+    return {
+      total: idx.length,
+      lista: idx.slice(0, 12).map((i) => ({ a: articulos[i].a, frag: fragmentoEn(articulos[i].t, palabras)?.fragmento ?? null })),
+    }
+  }, [porPalabra, consulta, articulos, textosNormalizados])
+  const exacto = useMemo(() => (q && articulos && !porPalabra ? articulos.find((a) => normalizar(a.a) === q) ?? null : null), [q, articulos, porPalabra])
   const sugerencias = useMemo(
-    () => (q && articulos && !exacto ? articulos.filter((a) => normalizar(a.a).startsWith(q)).slice(0, 8) : []),
-    [q, articulos, exacto]
+    () => (q && articulos && !exacto && !porPalabra ? articulos.filter((a) => normalizar(a.a).startsWith(q)).slice(0, 8) : []),
+    [q, articulos, exacto, porPalabra]
   )
   // la ficha muestra lo escrito si coincide exacto; si no, lo último que se eligió de las sugerencias o de los recientes
   const indice = articulos ? articulos.findIndex((a) => a.a === (exacto?.a ?? elegido)) : -1
@@ -125,7 +145,7 @@ export function PanelConsultaArticulos({ temaLectura, className = '', onCerrar }
               <optgroup key={g.cat} label={ETIQUETA_CATEGORIA[g.cat]}>
                 {g.items.map((c) => (
                   <option key={c.tipo} value={c.tipo}>
-                    {c.nombre}
+                    {c.nombre}{c.activo ? '' : ' (desactivada)'}
                   </option>
                 ))}
               </optgroup>
@@ -133,7 +153,7 @@ export function PanelConsultaArticulos({ temaLectura, className = '', onCerrar }
           </select>
         </label>
         <label className="grid gap-1">
-          <span className={`text-[11px] font-semibold uppercase tracking-wide ${tema.textSoft}`}>Número de artículo</span>
+          <span className={`text-[11px] font-semibold uppercase tracking-wide ${tema.textSoft}`}>Artículo o palabra</span>
           <input
             ref={refInput}
             value={consulta}
@@ -148,7 +168,7 @@ export function PanelConsultaArticulos({ temaLectura, className = '', onCerrar }
             onBlur={() => exacto && abrir(exacto.a)}
             inputMode="text"
             autoComplete="off"
-            placeholder="Por ejemplo: 19, 1445 o 63"
+            placeholder="Número (19, 1445) o una palabra"
             className={campo}
           />
         </label>
@@ -161,7 +181,28 @@ export function PanelConsultaArticulos({ temaLectura, className = '', onCerrar }
             ))}
           </div>
         )}
-        {q && articulos && !exacto && sugerencias.length === 0 && (
+        {coincidenciasTexto && (
+          <div className="grid gap-1.5">
+            <p className={`text-xs ${tema.textSoft}`}>
+              {coincidenciasTexto.total === 0
+                ? `Ninguna disposición de ${meta?.nombreCorto ?? 'esta norma'} contiene esas palabras.`
+                : `${coincidenciasTexto.total} artículo${coincidenciasTexto.total === 1 ? '' : 's'} con esas palabras${coincidenciasTexto.total > 12 ? ' (se muestran los 12 primeros)' : ''}:`}
+            </p>
+            {coincidenciasTexto.lista.map((r) => (
+              <button key={r.a} onClick={() => abrir(r.a)} className={`text-left rounded-lg px-3 py-2 ${tema.chipBg} ${tema.chipHover}`}>
+                <span className={`block text-xs font-bold ${tema.text}`}>{r.a}</span>
+                {r.frag && (
+                  <span className={`block text-xs mt-0.5 ${tema.textSoft}`}>
+                    {r.frag.antes}
+                    <mark className="rounded px-0.5" style={{ background: 'var(--marca-palabra)', color: 'inherit' }}>{r.frag.coincidencia}</mark>
+                    {r.frag.despues}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+        {q && articulos && !porPalabra && !exacto && sugerencias.length === 0 && (
           <p className={`text-xs ${tema.textSoft}`}>No hay un artículo «{consulta.trim()}» en {meta?.nombreCorto ?? 'esta norma'}.</p>
         )}
       </div>
