@@ -14,6 +14,7 @@ import { MenuCompartirApunte } from './MenuCompartirApunte'
 import { tarjetasDe } from '../../services/tarjetasApunte'
 import { RepasoApunte } from './RepasoApunte'
 import { NotasMargen } from './NotasMargen'
+import { PanelConsultaArticulos } from './PanelConsultaArticulos'
 import type { ApunteModulo, SesionClase, CuadernoApuntes } from '../../types'
 
 const EditorApunte = lazy(() => import('./editorApunte/EditorApunte'))
@@ -113,6 +114,7 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
   const [raiz, setRaiz] = useState<HTMLElement | null>(null)
   const [indiceAbierto, setIndiceAbierto] = useState(false)
   const [repasando, setRepasando] = useState(false)
+  const [consultaAbierta, setConsultaAbierta] = useState(false)
   const [seccionActual, setSeccionActual] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const guardarPosicion = useStore((s) => s.guardarPosicionLectura)
@@ -145,6 +147,38 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [onCerrar, indiceAbierto, editando])
+
+  // Flechas arriba/abajo (y Re Pág, Av Pág, Inicio, Fin) para moverse por el apunte sin tocar la pantalla. No actúan si se
+  // está escribiendo (campos de texto, el editor) ni si hay una ventana de repaso encima.
+  useEffect(() => {
+    if (editando || repasando) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return
+      const el = scrollRef.current
+      if (!el) return
+      const destino = e.target instanceof HTMLElement ? e.target : null
+      if (destino?.closest('input, textarea, select, [contenteditable="true"], [role="menu"], [role="dialog"]')) return
+      const pagina = Math.max(120, el.clientHeight * 0.9)
+      let delta: number | null = null
+      if (e.key === 'ArrowDown') delta = 80
+      else if (e.key === 'ArrowUp') delta = -80
+      else if (e.key === 'PageDown') delta = pagina
+      else if (e.key === 'PageUp') delta = -pagina
+      else if (e.key === ' ' && !destino?.closest('button, a')) delta = e.shiftKey ? -pagina : pagina
+      if (delta !== null) {
+        e.preventDefault()
+        el.scrollBy({ top: delta })
+      } else if (e.key === 'Home') {
+        e.preventDefault()
+        el.scrollTo({ top: 0 })
+      } else if (e.key === 'End') {
+        e.preventDefault()
+        el.scrollTo({ top: el.scrollHeight })
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [editando, repasando])
 
   const id = apunte.id
   const { ratio: progreso, scrollTop, desplazable } = useProgresoScroll(scrollRef, `${editando}-${indiceTamano}`)
@@ -249,7 +283,7 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
       className={`fixed inset-0 h-[100dvh] z-[80] flex flex-col ${tema.bg}`}
     >
       {!editando && <VistaImprimibleApunte apunte={apunte} bloques={bloques} clase={clase} cuaderno={cuaderno} />}
-      <div className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-3 border-b flex-shrink-0 ${tema.border}`}>
+      <div className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-3 border-b flex-shrink-0 overflow-x-auto [&::-webkit-scrollbar]:hidden ${tema.border}`}>
         {!editando && (
           <button
             onClick={onCerrar}
@@ -266,6 +300,16 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
             <p className={`text-[11px] truncate ${tema.textSoft} ${desplazable && progreso > 0.01 ? 'hidden sm:block' : ''}`}>{metaPartes.join(' · ')}</p>
           )}
         </div>
+
+        <button
+          onClick={() => setConsultaAbierta((v) => !v)}
+          title="Consultar un artículo de un código o ley sin salir del apunte"
+          aria-label="Consultar un artículo"
+          aria-expanded={consultaAbierta}
+          className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${consultaAbierta ? `${tema.chipBg} ${tema.text}` : `${tema.textSoft} ${tema.hoverSuave}`}`}
+        >
+          <i className="ti ti-book-2 text-lg" />
+        </button>
 
         {hayIndice && !editando && (
           <button
@@ -408,6 +452,8 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
         )}
       </div>
 
+      <div className="flex-1 min-h-0 flex flex-col md:flex-row">
+      <div className="flex-1 min-w-0 min-h-0 flex flex-col">
       {editando ? (
         <Suspense fallback={<div className={`flex-1 flex items-center justify-center text-sm ${tema.textSoft}`}>Cargando el editor…</div>}>
           <EditorApunte
@@ -530,6 +576,15 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
           </div>
         </>
       )}
+      </div>
+      {consultaAbierta && (
+        <PanelConsultaArticulos
+          temaLectura={temaLectura}
+          onCerrar={() => setConsultaAbierta(false)}
+          className="h-[46%] md:h-auto flex-shrink-0 border-t md:border-t-0 md:border-l md:w-[24rem] lg:w-[27rem]"
+        />
+      )}
+      </div>
       <AnimatePresence>{repasando && <RepasoApunte apunte={apunte} onCerrar={() => setRepasando(false)} />}</AnimatePresence>
     </motion.div>
   )
