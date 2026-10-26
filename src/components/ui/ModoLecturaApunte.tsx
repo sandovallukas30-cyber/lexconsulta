@@ -15,6 +15,7 @@ import { tarjetasDe } from '../../services/tarjetasApunte'
 import { RepasoApunte } from './RepasoApunte'
 import { NotasMargen } from './NotasMargen'
 import { PanelConsultaArticulos } from './PanelConsultaArticulos'
+import { FilaMenuCabecera, MenuCabeceraApunte } from './MenuCabeceraApunte'
 import { BusquedaEnApunte } from './BusquedaEnApunte'
 import type { ApunteModulo, SesionClase, CuadernoApuntes } from '../../types'
 
@@ -285,6 +286,10 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
       : [cuaderno?.nombre, clase?.tema, minutosLectura > 0 ? `~${minutosLectura} min` : null]
   ).filter((p): p is string => Boolean(p))
 
+  // botón cuadrado de la cabecera (todos del mismo tamaño)
+  const claseIcono = 'w-9 h-9 rounded-lg flex items-center justify-center transition-colors flex-shrink-0'
+  // los tres de «moverse y consultar»: en celular son botones con nombre; en pantallas anchas, íconos como los demás
+  const claseChip = 'h-9 px-3 sm:px-0 sm:w-9 gap-1.5 rounded-lg flex items-center justify-center transition-colors flex-shrink-0'
   const colorTexto = temaLectura === 'oscuro' ? 'text-zinc-200' : temaLectura === 'papel' ? 'text-[#3a2c1a]' : 'text-zinc-800'
   const hayIndice = encabezados.length >= 3
   const nTarjetas = useMemo(() => (editando ? 0 : tarjetasDe(apunte).length), [apunte, editando])
@@ -298,60 +303,66 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
       className={`fixed inset-0 z-[80] flex flex-col ${tema.bg}`}
     >
       {!editando && <VistaImprimibleApunte apunte={apunte} bloques={bloques} clase={clase} cuaderno={cuaderno} />}
-      <div className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-3 border-b flex-shrink-0 overflow-x-auto [&::-webkit-scrollbar]:hidden ${tema.border}`}>
+      <div className={`flex flex-wrap sm:flex-nowrap items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-3 border-b flex-shrink-0 ${tema.border}`}>
         {!editando && (
           <button
             onClick={onCerrar}
             aria-label="Cerrar modo lectura"
-            className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${tema.textSoft} ${tema.hoverSuave}`}
+            className={`${claseIcono} ${tema.textSoft} ${tema.hoverSuave}`}
           >
             <i className="ti ti-x text-lg" />
           </button>
         )}
 
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 px-1">
           <p className={`text-sm font-semibold truncate ${tema.text}`}>{editando ? `Editando · ${apunte.titulo}` : apunte.titulo}</p>
           {!editando && metaPartes.length > 0 && (
             <p className={`text-[11px] truncate ${tema.textSoft} ${desplazable && progreso > 0.01 ? 'hidden sm:block' : ''}`}>{metaPartes.join(' · ')}</p>
           )}
         </div>
 
+        {/* 1. Moverse y consultar: en celular van en una segunda fila, con su nombre */}
+        <div className="order-last basis-full sm:order-none sm:basis-auto flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
         {!editando && (
           <button
             onClick={() => setBuscando((v) => !v)}
             title="Buscar una palabra en el apunte (Ctrl+F)"
             aria-label="Buscar en el apunte"
             aria-expanded={buscando}
-            className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${buscando ? `${tema.chipBg} ${tema.text}` : `${tema.textSoft} ${tema.hoverSuave}`}`}
+            className={`${claseChip} ${buscando ? `${tema.chipBg} ${tema.text}` : `${tema.textSoft} ${tema.hoverSuave}`}`}
           >
             <i className="ti ti-search text-lg" />
+            <span className="sm:hidden text-xs font-semibold">Buscar</span>
           </button>
         )}
-
         <button
           onClick={() => setConsultaAbierta((v) => !v)}
           title="Consultar un artículo de un código o ley sin salir del apunte"
           aria-label="Consultar un artículo"
           aria-expanded={consultaAbierta}
-          className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${consultaAbierta ? `${tema.chipBg} ${tema.text}` : `${tema.textSoft} ${tema.hoverSuave}`}`}
+          className={`${claseChip} ${consultaAbierta ? `${tema.chipBg} ${tema.text}` : `${tema.textSoft} ${tema.hoverSuave}`}`}
         >
           <i className="ti ti-book-2 text-lg" />
+          <span className="sm:hidden text-xs font-semibold">Artículos</span>
         </button>
-
         {hayIndice && !editando && (
           <button
             onClick={() => setIndiceAbierto((v) => !v)}
             title="Índice de títulos"
             aria-label="Índice de títulos"
             aria-expanded={indiceAbierto}
-            className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${indiceAbierto ? `${tema.chipBg} ${tema.text}` : `${tema.textSoft} ${tema.hoverSuave}`}`}
+            className={`${claseChip} ${indiceAbierto ? `${tema.chipBg} ${tema.text}` : `${tema.textSoft} ${tema.hoverSuave}`}`}
           >
             <i className="ti ti-list-details text-lg" />
+            <span className="sm:hidden text-xs font-semibold">Índice</span>
           </button>
         )}
+        </div>
 
+        {/* 2. Acción principal */}
         {!editando && (
           <>
+            <span aria-hidden="true" className={`hidden sm:block w-px h-6 mx-1 flex-shrink-0 border-l ${tema.border}`} />
             <button
               onClick={() => {
                 voz.detener()
@@ -359,123 +370,99 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
                 setEditando(true)
               }}
               title="Editar aquí mismo: escribir, resaltar, agrandar, notas al margen…"
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-shrink-0 ${tema.chipBg} ${tema.text} ${tema.chipHover}`}
+              aria-label="Editar el apunte"
+              className={`flex items-center gap-1.5 px-3 h-9 rounded-lg text-xs font-semibold transition-colors flex-shrink-0 ${tema.chipBg} ${tema.text} ${tema.chipHover}`}
             >
               <i className="ti ti-pencil text-sm" />
               <span className="hidden sm:inline">Editar</span>
             </button>
-
-            {onEnfocar && (
-              <button
-                onClick={() => {
-                  voz.detener()
-                  onCerrar()
-                  onEnfocar()
-                }}
-                title={estudiado ? `Enfocar con este apunte · estudiado ${estudiado}` : 'Enfocar con este apunte: abre la Sala de estudio con él'}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-shrink-0 ${tema.chipBg} ${tema.text} ${tema.chipHover}`}
-              >
-                <i className="ti ti-hourglass-high text-sm" />
-                <span className="hidden sm:inline">Enfocar{estudiado ? ` · ${estudiado}` : ''}</span>
-              </button>
-            )}
-
-            {nTarjetas > 0 && (
-              <button
-                onClick={() => {
-                  voz.detener()
-                  setRepasando(true)
-                }}
-                title={`Repasar ${nTarjetas} tarjetas generadas desde este apunte`}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-shrink-0 ${tema.chipBg} ${tema.text} ${tema.chipHover}`}
-              >
-                <i className="ti ti-cards text-sm" />
-                <span className="hidden sm:inline">Repasar</span>
-              </button>
-            )}
-
-            <button
-              onClick={onEditar}
-              title="Propiedades: título, clase, cuaderno, artículo, editor de texto"
-              aria-label="Propiedades del apunte"
-              className={`hidden sm:flex w-9 h-9 rounded-lg items-center justify-center transition-colors flex-shrink-0 ${tema.textSoft} ${tema.hoverSuave}`}
-            >
-              <i className="ti ti-adjustments-horizontal text-lg" />
-            </button>
+            <MenuCompartirApunte
+              apunte={apunte}
+              onImprimir={() => imprimir('apunte')}
+              claseBoton={`${claseIcono} ${tema.textSoft} ${tema.hoverSuave}`}
+            />
           </>
         )}
 
-        {!editando && (
-          <MenuCompartirApunte
-            apunte={apunte}
-            onImprimir={() => imprimir('apunte')}
-            claseBoton={`flex w-9 h-9 rounded-lg items-center justify-center transition-colors ${tema.textSoft} ${tema.hoverSuave}`}
-          />
-        )}
-
-        {/* Tema de lectura */}
-        <button
-          onClick={() => setTemaLectura(tema.siguienteTema)}
-          title={tema.tituloBoton}
-          aria-label={tema.tituloBoton}
-          className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${tema.textSoft} ${tema.hoverSuave}`}
+        {/* 3. Cómo se lee: tema, tamaño de letra y voz */}
+        <MenuCabeceraApunte
+          icono="ti-text-size"
+          etiqueta="Lectura: tema, tamaño de letra y voz"
+          claseBoton={`${claseIcono} ${tema.textSoft} ${tema.hoverSuave}`}
+          claseBotonAbierto={`${claseIcono} ${tema.chipBg} ${tema.text}`}
         >
-          <i className={`ti ${tema.icono} text-lg`} />
-        </button>
+          {() => (
+            <>
+              <FilaMenuCabecera icono={tema.icono} titulo="Tema de lectura" detalle={tema.tituloBoton} onClick={() => setTemaLectura(tema.siguienteTema)} />
+              <FilaMenuCabecera
+                icono="ti-text-size"
+                titulo="Tamaño de letra"
+                derecha={
+                  <span className="flex items-center gap-1">
+                    <button onClick={() => cambiarTamano(-1)} disabled={indiceTamano === 0} aria-label="Letra más chica" className="w-9 h-9 rounded-md text-xs font-bold disabled:opacity-30 hover:bg-[var(--neu-bg3)]" style={{ color: 'var(--neu-ink)' }}>A-</button>
+                    <button onClick={() => cambiarTamano(1)} disabled={indiceTamano === TAMANOS_FUENTE.length - 1} aria-label="Letra más grande" className="w-9 h-9 rounded-md text-sm font-bold disabled:opacity-30 hover:bg-[var(--neu-bg3)]" style={{ color: 'var(--neu-ink)' }}>A+</button>
+                  </span>
+                }
+              />
+              {voz.soportado && !editando && (
+                <>
+                  {voz.estado === 'inactivo' && <FilaMenuCabecera icono="ti-volume" titulo="Escuchar el apunte" onClick={voz.reproducir} />}
+                  {voz.estado === 'reproduciendo' && <FilaMenuCabecera icono="ti-player-pause" titulo="Pausar la lectura" onClick={voz.pausar} />}
+                  {voz.estado === 'pausado' && <FilaMenuCabecera icono="ti-player-play" titulo="Reanudar la lectura" onClick={voz.reanudar} />}
+                  {voz.estado !== 'inactivo' && <FilaMenuCabecera icono="ti-player-stop" titulo="Detener la lectura" onClick={voz.detener} />}
+                </>
+              )}
+            </>
+          )}
+        </MenuCabeceraApunte>
 
-        {/* Tamaño de letra */}
-        <div className={`flex items-center gap-0.5 rounded-lg p-1 flex-shrink-0 ${tema.chipBg}`}>
-          <button
-            onClick={() => cambiarTamano(-1)}
-            disabled={indiceTamano === 0}
-            aria-label="Letra más chica"
-            className={`w-8 h-8 rounded-md flex items-center justify-center text-xs font-bold transition-colors disabled:opacity-30 ${tema.text} ${tema.chipHover}`}
+        {/* 4. Estudiar y propiedades */}
+        {!editando && (
+          <MenuCabeceraApunte
+            icono="ti-dots"
+            etiqueta="Más acciones del apunte"
+            claseBoton={`${claseIcono} ${tema.textSoft} ${tema.hoverSuave}`}
+            claseBotonAbierto={`${claseIcono} ${tema.chipBg} ${tema.text}`}
           >
-            A-
-          </button>
-          <button
-            onClick={() => cambiarTamano(1)}
-            disabled={indiceTamano === TAMANOS_FUENTE.length - 1}
-            aria-label="Letra más grande"
-            className={`w-8 h-8 rounded-md flex items-center justify-center text-sm font-bold transition-colors disabled:opacity-30 ${tema.text} ${tema.chipHover}`}
-          >
-            A+
-          </button>
-        </div>
-
-        {/* Voz */}
-        {/* voz: en móvil se oculta para dejarle espacio al título */}
-        {voz.soportado && !editando && (
-          <div className={`hidden sm:flex items-center gap-0.5 rounded-lg p-1 flex-shrink-0 ${tema.chipBg}`}>
-            {voz.estado === 'inactivo' && (
-              <button
-                onClick={voz.reproducir}
-                title="Escuchar el apunte"
-                className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${tema.text} ${tema.chipHover}`}
-              >
-                <i className="ti ti-volume text-base" />
-              </button>
+            {(cerrar) => (
+              <>
+                {onEnfocar && (
+                  <FilaMenuCabecera
+                    icono="ti-hourglass-high"
+                    titulo={`Enfocar con este apunte${estudiado ? ` · estudiado ${estudiado}` : ''}`}
+                    detalle="Abre la Sala de estudio con él"
+                    onClick={() => {
+                      cerrar()
+                      voz.detener()
+                      onCerrar()
+                      onEnfocar()
+                    }}
+                  />
+                )}
+                {nTarjetas > 0 && (
+                  <FilaMenuCabecera
+                    icono="ti-cards"
+                    titulo={`Repasar ${nTarjetas} tarjeta${nTarjetas === 1 ? '' : 's'}`}
+                    detalle="Las que se generan desde este apunte"
+                    onClick={() => {
+                      cerrar()
+                      voz.detener()
+                      setRepasando(true)
+                    }}
+                  />
+                )}
+                <FilaMenuCabecera
+                  icono="ti-adjustments-horizontal"
+                  titulo="Propiedades"
+                  detalle="Título, clase, cuaderno, artículo, editor de texto"
+                  onClick={() => {
+                    cerrar()
+                    onEditar()
+                  }}
+                />
+              </>
             )}
-            {voz.estado === 'reproduciendo' && (
-              <button onClick={voz.pausar} title="Pausar" className="w-8 h-8 rounded-md flex items-center justify-center" style={{ color: VERDE }}>
-                <i className="ti ti-player-pause text-base" />
-              </button>
-            )}
-            {voz.estado === 'pausado' && (
-              <button onClick={voz.reanudar} title="Reanudar" className="w-8 h-8 rounded-md flex items-center justify-center" style={{ color: VERDE }}>
-                <i className="ti ti-player-play text-base" />
-              </button>
-            )}
-            {voz.estado !== 'inactivo' && (
-              <button
-                onClick={voz.detener}
-                title="Detener"
-                className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${tema.text} ${tema.chipHover}`}
-              >
-                <i className="ti ti-player-stop text-base" />
-              </button>
-            )}
-          </div>
+          </MenuCabeceraApunte>
         )}
       </div>
 
