@@ -1,0 +1,20 @@
+# Avisos y propuestas de actualización de dependencias (gratis en repositorios públicos).
+# Dependabot abre una solicitud de cambios cuando una dependencia tiene una versión nueva o un aviso de seguridad.
+# Las de seguridad llegan siempre; las de versión, agrupadas por semana para no llenar la bandeja.
+
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      menores-y-parches:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

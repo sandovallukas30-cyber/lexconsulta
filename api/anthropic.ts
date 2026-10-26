@@ -7,7 +7,7 @@
 // necesitas garantías más fuertes (múltiples instancias de Vercel comparten
 // estado), migrar a Vercel KV o Upstash Redis.
 
-import type { VercelRequest, VercelResponse } from '@vercel/node'
+import type { VercelRequest, VercelResponse } from './_tipos'
 
 // Solo Haiku: los únicos usos de IA que quedan (Pasapalabra y Ahorcado) generan
 // palabras y definiciones, y Haiku alcanza y es el modelo más barato.

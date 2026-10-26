@@ -1,0 +1,31 @@
+# Análisis estático de seguridad del código (CodeQL de GitHub, gratis en repositorios públicos).
+# Busca en el código fuente patrones de vulnerabilidades conocidas (inyección, XSS, rutas inseguras, uso inseguro de
+# datos del usuario…). Los hallazgos aparecen en la pestaña «Security → Code scanning» del repositorio.
+
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '23 6 * * 1'
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  analizar:
+    name: Analizar JavaScript y TypeScript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          queries: security-extended
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:javascript-typescript

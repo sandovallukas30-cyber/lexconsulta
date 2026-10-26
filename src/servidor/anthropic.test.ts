@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import type { VercelRequest, VercelResponse } from '@vercel/node'
+import type { VercelRequest, VercelResponse } from '../../api/_tipos'
 
 // El cupo diario no debe depender de un correo declarado en el cuerpo del request.
 function respuesta() {

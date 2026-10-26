@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node'
+import type { VercelRequest, VercelResponse } from './_tipos'
 
 /** Recibe avisos técnicos anónimos de la app (errores y velocidad de carga) y
  *  los deja en el registro de Vercel (`[reporte] {...}`), que se puede leer
