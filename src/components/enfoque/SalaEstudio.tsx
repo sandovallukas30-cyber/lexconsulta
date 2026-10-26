@@ -270,7 +270,7 @@ export function SalaEstudio() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2, ease: [0.2, 0, 0, 1] }}
-      className="fixed inset-0 h-[100dvh] z-[85] flex flex-col"
+      className="fixed inset-0 z-[85] flex flex-col"
       style={{ background: 'var(--neu-bg)' }}
     >
       <header className="flex items-center gap-3 flex-wrap px-4 sm:px-6 py-3">
