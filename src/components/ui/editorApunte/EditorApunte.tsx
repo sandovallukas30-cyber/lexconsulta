@@ -148,6 +148,9 @@ export default function EditorApunte({ titulo, contenido, tema: temaLectura, tam
     autofocus: 'start',
     editorProps: {
       attributes: { class: 'ap-editor', spellcheck: 'true', 'aria-label': 'Contenido del apunte' },
+      // al escribir cerca del borde de abajo la pantalla baja antes y deja unas líneas libres (no queda pegada al borde)
+      scrollThreshold: { top: 80, bottom: 220, left: 0, right: 0 },
+      scrollMargin: { top: 80, bottom: 220, left: 0, right: 0 },
       // el menú de «/» se queda con las flechas, Enter y Escape mientras está abierto
       handleKeyDown: (_vista, e) => teclasMenu.current(e),
     },
@@ -460,7 +463,7 @@ export default function EditorApunte({ titulo, contenido, tema: temaLectura, tam
         )}
 
         <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto">
-          <div ref={setColumna} className={`ancho-lectura relative ${estado.ancho ? 'max-w-4xl' : 'max-w-2xl'} mx-auto px-5 sm:px-8 py-10`}>
+          <div ref={setColumna} className={`ancho-lectura relative ${estado.ancho ? 'max-w-4xl' : 'max-w-2xl'} mx-auto px-5 sm:px-8 pt-10 pb-[50vh]`}>
             <textarea
               ref={refTitulo}
               value={titulo}
