@@ -827,7 +827,7 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
   return (
     <div className={`h-full flex flex-col ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
       <div
-        className={`flex flex-wrap items-center gap-2 sm:gap-3 px-3 sm:px-6 py-2 sm:py-3 border-b ${
+        className={`flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 px-3 sm:px-6 py-2 sm:py-3 border-b ${
           modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
         }`}
       >
@@ -864,7 +864,7 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
           <button
             onClick={() => setEditandoTitulo(true)}
             title="Renombrar"
-            className="group/title flex-1 min-w-[7rem] text-left flex items-center gap-2"
+            className="group/title flex-1 min-w-[7rem] sm:min-w-0 text-left flex items-center gap-2"
           >
             <h1 className={`text-lg font-serif font-semibold truncate ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
               {coleccion.titulo}
@@ -893,7 +893,7 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
         <div className="basis-full h-0 sm:hidden" aria-hidden="true" />
 
         {coleccion.articulos.length > 0 && (
-          <span className={`text-xs flex-shrink-0 hidden sm:inline ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
+          <span className={`text-xs flex-shrink-0 hidden lg:inline ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
             {dominados}/{coleccion.articulos.length} dominados
           </span>
         )}
@@ -916,7 +916,7 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
             style={modoRepaso ? { background: VERDE } : undefined}
           >
             <i className="ti ti-brain text-base" />
-            <span className="hidden md:inline">Modo repaso</span>
+            <span className="hidden lg:inline">Modo repaso</span>
             {paraHoy > 0 && (
               <span
                 className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold leading-none ${
@@ -968,55 +968,6 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
         >
           <i className="ti ti-plus text-base" />
           <span className="hidden sm:inline">Agregar artículo</span>
-        </button>
-
-        <button
-          onClick={() => setModalVincular(true)}
-          title={mapaVinculado ? `Vinculada con el mapa mental "${mapaVinculado.titulo}"` : 'Vincular con un mapa mental sobre el mismo tema'}
-          className={`w-8 h-8 rounded-lg hidden sm:flex items-center justify-center transition-colors flex-shrink-0 ${
-            mapaVinculado
-              ? 'text-white'
-              : modoOscuro
-                ? 'text-zinc-400 hover:bg-zinc-800'
-                : 'text-zinc-500 hover:bg-zinc-100'
-          }`}
-          style={mapaVinculado ? { background: VERDE } : undefined}
-        >
-          <i className="ti ti-hierarchy-2 text-base" />
-        </button>
-
-        {coleccion.articulos.length > 0 && (
-          <button
-            onClick={() => setModalCompartir(true)}
-            title="Compartir esta colección con un link o un archivo"
-            className={`w-8 h-8 rounded-lg hidden sm:flex items-center justify-center transition-colors flex-shrink-0 ${
-              modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'
-            }`}
-          >
-            <i className="ti ti-share-2 text-base" />
-          </button>
-        )}
-
-        {coleccion.articulos.length > 0 && (
-          <button
-            onClick={() => window.print()}
-            title="Exportar a PDF: abre el diálogo de impresión, elige 'Guardar como PDF'"
-            className={`w-8 h-8 rounded-lg hidden sm:flex items-center justify-center transition-colors flex-shrink-0 ${
-              modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'
-            }`}
-          >
-            <i className="ti ti-printer text-base" />
-          </button>
-        )}
-
-        <button
-          onClick={() => eliminarColeccionConDeshacer(coleccion.id)}
-          title="Eliminar colección"
-          className={`w-8 h-8 rounded-lg hidden sm:flex items-center justify-center transition-colors flex-shrink-0 ${
-            modoOscuro ? 'text-zinc-500 hover:bg-zinc-800 hover:text-red-400' : 'text-zinc-400 hover:bg-zinc-100 hover:text-red-500'
-          }`}
-        >
-          <i className="ti ti-trash text-base" />
         </button>
       </div>
 
@@ -3417,7 +3368,8 @@ function formatearFecha(ts: number): string {
   return new Date(ts).toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-/** «⋯» de la cabecera de una colección en celular: reúne las acciones menos usadas para que el título tenga lugar. */
+/** «⋯» de la cabecera de una colección: reúne las acciones ocasionales (vincular mapa, compartir, PDF, eliminar) para que el título
+ *  y las acciones de uso constante tengan lugar. En celular va junto al título; en pantallas anchas, al final de la cabecera. */
 function MenuAccionesColeccion({ acciones }: { acciones: { icono: string; texto: string; onClick: () => void; peligro?: boolean }[] }) {
   const [abierto, setAbierto] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -3437,7 +3389,7 @@ function MenuAccionesColeccion({ acciones }: { acciones: { icono: string; texto:
     }
   }, [abierto])
   return (
-    <div ref={ref} className="relative flex-shrink-0 sm:hidden">
+    <div ref={ref} className="relative flex-shrink-0 sm:order-last">
       <button
         onClick={() => setAbierto((v) => !v)}
         aria-haspopup="menu"
