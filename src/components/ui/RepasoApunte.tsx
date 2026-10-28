@@ -13,6 +13,7 @@ import {
   type TarjetaRepaso,
 } from '../../services/tarjetasApunte'
 import { PistaGesto } from './PistaGesto'
+import { registrarUso } from '../../services/uso'
 import { esPantallaTactil } from '../../services/pantallaTactil'
 import type { ApunteModulo } from '../../types'
 
@@ -75,11 +76,15 @@ export function RepasoApunte({ apunte, onCerrar }: Props) {
 
   const pedirPista = () => {
     if (!actual || volteada) return
-    if (nivelPista === 0 || pista.hayMas) setNivelPista((n) => n + 1)
+    if (nivelPista === 0 || pista.hayMas) {
+      if (nivelPista === 0) registrarUso('repaso.pista')
+      setNivelPista((n) => n + 1)
+    }
   }
 
   const alternarBotones = () => {
     const nuevo = !cuatroBotones
+    if (nuevo) registrarUso('repaso.cuatroBotones')
     setCuatroBotones(nuevo)
     try {
       localStorage.setItem(CLAVE_CUATRO_BOTONES, nuevo ? '1' : '0')
@@ -90,6 +95,7 @@ export function RepasoApunte({ apunte, onCerrar }: Props) {
 
   const responder = (notaElegida: NotaRepaso) => {
     if (!actual || !volteada) return
+    registrarUso('repaso.respuesta')
     const usoPista = nivelPista > 0
     // con pista no se puede decir "Bien" ni "Fácil": cuenta como "Difícil" (se acordó con ayuda)
     const nota: NotaRepaso = usoPista && notaElegida > 2 ? 2 : notaElegida

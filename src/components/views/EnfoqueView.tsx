@@ -1,6 +1,7 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
+import { registrarUso } from '../../services/uso'
 import { useEnfoque, esFlow, msEnfocados, msMostrados } from '../../store/useEnfoque'
 import { useAhora } from '../../hooks/useMotorEnfoque'
 import { AnilloProgreso } from '../ui/AnilloProgreso'
@@ -510,7 +511,12 @@ export function EnfoqueView() {
           />
           {/* accesos a pantalla completa: arriba a la derecha, donde se ven desde cualquier pestaña */}
           <div className="flex items-center gap-2 ml-auto">
-            <button onClick={() => setConcentracion(true)} className="boton boton-suave" title="Pantalla completa con el temporizador y tu fondo">
+            <button
+              onClick={() => {
+                registrarUso('enfoque.concentracion')
+                setConcentracion(true)
+              }}
+              className="boton boton-suave" title="Pantalla completa con el temporizador y tu fondo">
               <i className="ti ti-arrows-maximize" aria-hidden="true" /> Modo concentración
             </button>
             <button onClick={() => useSala.getState().abrir()} className="boton boton-suave" title="Estudia con un video de YouTube y el temporizador a la vista">

@@ -1,4 +1,5 @@
 import { useAjustes, sumarTamanoCodigo, TAMANO_CODIGO_MIN, TAMANO_CODIGO_MAX } from '../../store/useAjustes'
+import { registrarUso } from '../../services/uso'
 import { useState, useMemo, useEffect, useRef, useCallback, type ReactNode, type TouchEvent } from 'react'
 import { createPortal, flushSync } from 'react-dom'
 import { motion, AnimatePresence, animate, useMotionValue } from 'framer-motion'
@@ -177,8 +178,17 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
   // el código completo, que es lo que imprime Ctrl+P en la vista normal)
   useImprimirConCtrlP('articulo', modoLecturaAbierto)
 
+  // estadística de uso: cada vez que se cambia de artículo (el primero que se abre solo no cuenta)
+  const articuloVisto = useRef<string | null>(null)
+  useEffect(() => {
+    const clave = seleccionado ? `${tipoActivo}:${seleccionado.a}` : null
+    if (clave && articuloVisto.current !== null && articuloVisto.current !== clave) registrarUso('explorador.articulo')
+    if (clave) articuloVisto.current = clave
+  }, [seleccionado, tipoActivo])
+
   const copiarConCita = async () => {
     if (!seleccionado) return
+    registrarUso('explorador.copiarCita')
     const ok = await copiarAlPortapapeles(textoConCita(tipoActivo, seleccionado))
     if (ok) avisar.exito(`Copiado: ${citaArticulo(tipoActivo, seleccionado.a)}`)
     else avisar.error('No se pudo copiar la cita. Inténtalo de nuevo.')
@@ -314,6 +324,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
         // en el Explorador, Ctrl+K busca en el código (lo dice el botón); sin
         // esto se abrían a la vez esta búsqueda y la Omnibar de App.tsx
         e.stopImmediatePropagation()
+        registrarUso('explorador.buscar')
         setBusquedaAbierta(true)
       }
       if (e.key === 'Escape') {
@@ -488,7 +499,10 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
         <div className="flex-1" />
 
         <button
-          onClick={() => setIndiceAbierto(true)}
+          onClick={() => {
+            registrarUso('explorador.indice')
+            setIndiceAbierto(true)
+          }}
           aria-label="Índice del código"
           className="boton boton-suave max-sm:boton-icono"
         >
@@ -497,7 +511,10 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
         </button>
 
         <button
-          onClick={() => setModoLecturaAbierto(true)}
+          onClick={() => {
+            registrarUso('explorador.lectura')
+            setModoLecturaAbierto(true)
+          }}
           title="Modo lectura: pantalla completa, letra ajustable y lectura en voz alta"
           aria-label="Modo lectura"
           className="boton boton-suave max-md:boton-icono"
@@ -507,7 +524,10 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
         </button>
 
         <button
-          onClick={() => setBusquedaAbierta(true)}
+          onClick={() => {
+            registrarUso('explorador.buscar')
+            setBusquedaAbierta(true)
+          }}
           aria-label="Buscar o ir a un artículo (Ctrl+K)"
           title="Buscar o ir a un artículo"
           className="boton boton-suave max-xl:boton-icono font-normal xl:min-w-[220px]"
@@ -800,6 +820,7 @@ function GuardarEnColeccion({ codigo, articulo, modoOscuro }: { codigo: CodigoTi
       avisar.info(`${articulo} quitado de «${c.titulo}»`)
     } else {
       agregar(c.id, { codigo, articulo })
+      registrarUso('explorador.guardar')
       avisar.exito(`${articulo} guardado en «${c.titulo}»`)
     }
   }

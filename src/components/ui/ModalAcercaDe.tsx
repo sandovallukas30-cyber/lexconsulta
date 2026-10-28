@@ -1,3 +1,5 @@
+import { usoDisponible } from '../../services/uso'
+
 /** Contenido de «Acerca de» y de las páginas legales. El marco (ventana y menú de secciones) está en ModalConfiguracion. */
 
 export function H({ children, modoOscuro }: { children: React.ReactNode; modoOscuro: boolean }) {
@@ -221,6 +223,18 @@ export function Privacidad({ modoOscuro }: { modoOscuro: boolean }) {
         carga. No incluyen tu nombre, tu correo ni tus apuntes, no se asocian a tu cuenta y no se usan para
         identificarte.
       </P>
+      {/* Solo aparece cuando el despliegue tiene activadas las estadísticas de uso (ver docs/ANALITICA_USO.md). */}
+      {usoDisponible() && (
+        <P modoOscuro={modoOscuro}>
+          Para saber qué partes de Prima Lex se usan y cuáles no, la aplicación envía a nuestro propio servidor{' '}
+          <strong>estadísticas de uso anónimas</strong>: cuántas veces se usa cada función (por ejemplo, «se creó un
+          apunte»), cuántos segundos de uso activo hubo en cada sección, el tipo de pantalla (celular, tableta o
+          computador) y si es la primera vez que ese navegador entra. Son solo contadores: no incluyen el contenido de
+          tus apuntes, lo que escribes o buscas, tu nombre, tu correo ni ningún identificador, no se asocian a tu cuenta
+          ni a tu dispositivo y no se usan para identificarte. Puedes desactivarlas en Configuración → Datos y
+          contenido, y respetamos la señal «No rastrear» de tu navegador.
+        </P>
+      )}
 
       <H modoOscuro={modoOscuro}>8. Tus derechos y cómo ejercerlos</H>
       <P modoOscuro={modoOscuro}>

@@ -10,6 +10,7 @@ import { precargar, obtenerCodigo } from '../../services/codigos'
 import { contarTarjetasVencidas } from '../../services/actividadEstudio'
 import { COLECCIONES_PLANTILLA } from '../../data/coleccionesPlantilla'
 import { obtenerMetadata, nombreCortoMetadata } from '../../data/codigosMetadata'
+import { registrarUso } from '../../services/uso'
 import { ContenedorResaltable, ParrafoResaltado } from '../ui/TextoResaltable'
 import { useReferenciasFiltradas } from '../../hooks/useReferencias'
 import { detectarReferencias } from '../../services/referencias'
@@ -882,7 +883,14 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
             { icono: 'ti-hierarchy-2', texto: mapaVinculado ? `Mapa vinculado: ${mapaVinculado.titulo}` : 'Vincular con un mapa mental', onClick: () => setModalVincular(true) },
             ...(coleccion.articulos.length > 0
               ? [
-                  { icono: 'ti-share-2', texto: 'Compartir esta colección', onClick: () => setModalCompartir(true) },
+                  {
+                    icono: 'ti-share-2',
+                    texto: 'Compartir esta colección',
+                    onClick: () => {
+                      registrarUso('coleccion.compartir')
+                      setModalCompartir(true)
+                    },
+                  },
                   { icono: 'ti-printer', texto: 'Exportar a PDF', onClick: () => window.print() },
                 ]
               : []),
@@ -900,7 +908,10 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
 
         {coleccion.articulos.length > 0 && (
           <button
-            onClick={() => setModoRepaso(!modoRepaso)}
+            onClick={() => {
+              if (!modoRepaso) registrarUso('coleccion.repaso')
+              setModoRepaso(!modoRepaso)
+            }}
             title={
               paraHoy > 0
                 ? `${paraHoy} artículo${paraHoy === 1 ? '' : 's'} te toca${paraHoy === 1 ? '' : 'n'} repasar hoy — en modo repaso, las fichas empiezan ocultas: intenta recordar antes de tocarlas`

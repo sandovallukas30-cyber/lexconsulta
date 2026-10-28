@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { CLAVES_FUNCIONES, FUNCIONES_USO, MAX_SEGUNDOS_POR_VISTA, MAX_VECES_POR_FUNCION, VISTAS_USO, sanearUso } from '../../api/_catalogoUso'
 import { AcumuladorUso } from './uso'
@@ -10,6 +12,34 @@ describe('estadísticas de uso: catálogo', () => {
       expect(FUNCIONES_USO[clave].length).toBeGreaterThan(5)
       expect(clave.length).toBeLessThanOrEqual(40) // el límite de la columna en la base
     }
+  })
+})
+
+function archivosDe(dir: string): string[] {
+  return readdirSync(dir).flatMap((n) => {
+    const ruta = join(dir, n)
+    return statSync(ruta).isDirectory() ? archivosDe(ruta) : /\.(ts|tsx)$/.test(n) && !/\.test\./.test(n) ? [ruta] : []
+  })
+}
+
+describe('estadísticas de uso: cada función del catálogo se cuenta en algún lugar de la app', () => {
+  it('no hay entradas muertas en el catálogo (una función que nunca se registra saldría siempre «sin uso»)', () => {
+    const codigo = archivosDe('src')
+      .filter((f) => !/services[\\/]uso\.ts$/.test(f))
+      .map((f) => readFileSync(f, 'utf8'))
+      .join('\n')
+    const sinMarca = CLAVES_FUNCIONES.filter((c) => !codigo.includes(`'${c}'`))
+    expect(sinMarca).toEqual([])
+  })
+
+  it('y todo lo que la app registra existe en el catálogo', () => {
+    const codigo = archivosDe('src')
+      .filter((f) => !/services[\\/]uso\.ts$/.test(f))
+      .map((f) => readFileSync(f, 'utf8'))
+      .join('\n')
+    const usadas = [...codigo.matchAll(/registrarUso\('([^']+)'\)/g)].map((m) => m[1])
+    expect(usadas.length).toBeGreaterThan(20)
+    expect(usadas.filter((u) => !CLAVES_FUNCIONES.includes(u as (typeof CLAVES_FUNCIONES)[number]))).toEqual([])
   })
 })
 

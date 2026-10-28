@@ -31,6 +31,7 @@ import { eliminarMapaMentalConDeshacer } from '../../services/deshacer'
 import type { MapaMental, NodoMapaMental, ConexionMapaMental, FormaNodoMental, TamanoTextoMental } from '../../types'
 import { MAPAS_MENTALES_PLANTILLA } from '../../data/mapasMentalesPlantilla'
 import { MenuCabeceraApunte, FilaMenuCabecera } from '../ui/MenuCabeceraApunte'
+import { registrarUso } from '../../services/uso'
 
 // Inter solo para Mapas mentales (.fuente-mapa-mental). Va con la propia app
 // (antes se pedía a Google Fonts, que recibía la IP de cada estudiante); como
@@ -1476,6 +1477,7 @@ function MapaMentalDetalle({
   // ============= ORGANIZAR AUTOMÁTICO =============
   const organizarAutomatico = useCallback(() => {
     if (nodesRef.current.length === 0) return
+    registrarUso('mapa.organizar')
     pushHistory()
     const posiciones = calcularLayoutMapaMental(
       nodesRef.current.map((n) => n.id),

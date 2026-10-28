@@ -17,6 +17,7 @@ import { NotasMargen } from './NotasMargen'
 import { PanelConsultaArticulos } from './PanelConsultaArticulos'
 import { FilaMenuCabecera, MenuCabeceraApunte } from './MenuCabeceraApunte'
 import { BusquedaEnApunte } from './BusquedaEnApunte'
+import { registrarUso } from '../../services/uso'
 import type { ApunteModulo, SesionClase, CuadernoApuntes } from '../../types'
 
 const EditorApunte = lazy(() => import('./editorApunte/EditorApunte'))
@@ -157,6 +158,7 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'f') {
         e.preventDefault()
+        registrarUso('apunte.buscar')
         setBuscando(true)
       }
     }
@@ -325,7 +327,10 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
         <div className="order-last basis-full sm:order-none sm:basis-auto flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
         {!editando && (
           <button
-            onClick={() => setBuscando((v) => !v)}
+            onClick={() => {
+              if (!buscando) registrarUso('apunte.buscar')
+              setBuscando((v) => !v)
+            }}
             title="Buscar una palabra en el apunte (Ctrl+F)"
             aria-label="Buscar en el apunte"
             aria-expanded={buscando}
@@ -336,7 +341,10 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
           </button>
         )}
         <button
-          onClick={() => setConsultaAbierta((v) => !v)}
+          onClick={() => {
+            if (!consultaAbierta) registrarUso('apunte.articulos')
+            setConsultaAbierta((v) => !v)
+          }}
           title="Consultar un artículo de un código o ley sin salir del apunte"
           aria-label="Consultar un artículo"
           aria-expanded={consultaAbierta}

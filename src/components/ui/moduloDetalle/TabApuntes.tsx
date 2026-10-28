@@ -13,6 +13,7 @@ import { useEnfoque } from '../../../store/useEnfoque'
 import { horasMin } from '../../../services/enfoque'
 import { enfocarConApunte } from '../../../services/enfoqueApunte'
 import { tarjetasDe } from '../../../services/tarjetasApunte'
+import { registrarUso } from '../../../services/uso'
 import { AnimatePresence } from 'framer-motion'
 import { convertirPdfNotion } from '../../../services/notionPdf/importarPdfNotion'
 import type { ApunteModulo, CuadernoApuntes, SesionClase } from '../../../types'
@@ -186,6 +187,7 @@ export function TabApuntes({
       fechaModificacion: ahora,
     }
     setApuntesModulo(moduloId, [...apuntes, nuevo])
+    registrarUso('apunte.nuevo')
     setMostrarForm(false)
     setEditandoId(null)
     setEditarAlAbrir(true)
@@ -292,6 +294,7 @@ export function TabApuntes({
     }
     setApuntesModulo(moduloId, [...apuntes, nuevo])
     avisar.exito(`Apunte "${nuevo.titulo}" importado`)
+    registrarUso('apunte.importar')
     setEditarAlAbrir(false)
     setApunteLeyendo(nuevo)
   }
@@ -340,10 +343,14 @@ export function TabApuntes({
   const acciones = useMemo<AccionesListaApuntes>(
     () => ({
       abrir: (a, editar) => {
+        registrarUso(editar ? 'apunte.editar' : 'apunte.abrir')
         setEditarAlAbrir(editar)
         setApunteLeyendo(a)
       },
-      repasar: (a) => setRepasando(a),
+      repasar: (a) => {
+        registrarUso('apunte.repasar')
+        setRepasando(a)
+      },
       enfocar: (a) => enfocarConApunte(moduloId, a.id),
       duplicar: (a) => duplicarApunte(moduloId, a),
       mover: (a) => setMoviendo(a),

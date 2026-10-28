@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
+import { registrarUso } from '../../services/uso'
 import { generarRosco, esRespuestaCorrecta } from '../../services/pasapalabra'
 import { generarPalabraAhorcado, ERRORES_MAXIMOS } from '../../services/ahorcado'
 import { useDestello } from '../../hooks/useDestello'
@@ -331,6 +332,7 @@ function SeleccionArea({
   const [modoEstudio, setModoEstudio] = useState(false)
 
   async function comenzar(area: AreaPractica) {
+    registrarUso('practica.jugar')
     setCargando(area)
     setError(null)
     try {
@@ -1070,6 +1072,7 @@ function SeleccionAreaAhorcado({
   const usadasRef = useRef<string[]>([])
 
   async function comenzar(area: AreaPractica) {
+    registrarUso('practica.jugar')
     setCargando(area)
     setError(null)
     try {

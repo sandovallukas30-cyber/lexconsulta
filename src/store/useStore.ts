@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { crearAlmacenamiento } from './almacenamiento'
+import { registrarUso } from '../services/uso'
 import type { TemaColorId } from '../theme'
 
 // Devuelve el índice de la próxima letra "pendiente" del rosco, partiendo desde
@@ -402,6 +403,7 @@ export const useStore = create<AppState>()(
       pedirNuevoRamo: () => set({ nuevoRamoPendiente: true, vistaActiva: 'modulos', moduloActivoId: null }),
       limpiarNuevoRamo: () => set({ nuevoRamoPendiente: false }),
       agregarTareaPlan: (t) => {
+        registrarUso('tarea.crear')
         const id = crypto.randomUUID()
         const ahora = Date.now()
         set((s) => ({
@@ -518,6 +520,7 @@ export const useStore = create<AppState>()(
         })),
       setCanvasActivo: (id) => set({ canvasActivoId: id }),
       crearMapaMental: (titulo) => {
+        registrarUso('mapa.crear')
         const id = crypto.randomUUID()
         const ahora = Date.now()
         // La fecha va PEGADA al título (no solo en fechaCreacion) porque la
@@ -553,6 +556,7 @@ export const useStore = create<AppState>()(
         })),
       setMapaMentalActivo: (id) => set({ mapaMentalActivoId: id }),
       crearColeccion: (titulo) => {
+        registrarUso('coleccion.crear')
         const id = crypto.randomUUID()
         const ahora = Date.now()
         set((s) => ({
@@ -1062,6 +1066,7 @@ export const useStore = create<AppState>()(
           diasActividadEstudio: agregarActividadHoy(s.diasActividadEstudio),
         })),
       crearRamo: (ramo) => {
+        registrarUso('ramo.crear')
         const id = crypto.randomUUID()
         set((s) => ({ ramos: [...s.ramos, { ...ramo, id }] }))
         return id

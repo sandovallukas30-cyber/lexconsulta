@@ -7,7 +7,7 @@
 - **Ingreso:** Google, Microsoft o enlace por correo, con Supabase. No hay contraseñas propias.
 - **Un solo rol real: el plan** (`gratis` o `pro`), en la tabla `perfiles`. Lo escribe únicamente el servidor (clave `service_role`, que nunca está en el navegador, el código ni el repositorio).
 - **Aislamiento:** cada cuenta solo puede leer, crear, modificar y borrar sus propias filas (políticas de seguridad por fila, ver `docs/supabase/esquema.sql`).
-- **No hay panel de administración** ni roles de desarrollador o moderador: la administración se hace en los paneles de Supabase y Vercel. Si algún día se agrega un rol, debe guardarse en `perfiles`, escribirse solo desde el servidor y comprobarse en las políticas de la base de datos, no solo en la pantalla.
+- **Administración:** no hay roles de desarrollador o moderador; la administración se hace en los paneles de Supabase y Vercel. La única excepción es el **panel de estadísticas de uso** (opcional y apagado por defecto, ver `docs/ANALITICA_USO.md`): quién puede verlo se guarda en la tabla `administradores`, que está cerrada a todo menos al servidor y a quien tenga acceso al SQL Editor, y **la base lo vuelve a comprobar en cada lectura** (`uso_resumen`), no solo la pantalla. Esa función necesita la clave `service_role` como variable del servidor en Vercel (`SUPABASE_SERVICE_ROLE_KEY`, nunca con prefijo `VITE_`).
 
 ## Comprobaciones y cómo repetirlas
 
@@ -20,6 +20,7 @@
 | 5 | Dependencias con avisos de seguridad | `npm audit` | 0 vulnerabilidades (antes 39) |
 | 6 | Análisis de código | CodeQL (`.github/workflows/codeql.yml`, corre en cada cambio y cada lunes) | Activado; los resultados salen en GitHub → Security → Code scanning |
 | 7 | Avisos y actualizaciones de dependencias | Dependabot (`.github/dependabot.yml`) | Activado |
+| 8 | Estadísticas de uso (si se activan): solo el servidor escribe, solo un administrador lee, entradas hostiles acotadas | `npm install @electric-sql/pglite --no-save` y `node scripts/probar_uso_sql.mjs` (Postgres local, 28 comprobaciones); `npm test` (endpoint y validación) | 28 + 7 correctas (28-oct-2026). **Falta repetirlo contra tu Supabase real** al activarlo |
 
 ## Hallazgos y decisiones
 

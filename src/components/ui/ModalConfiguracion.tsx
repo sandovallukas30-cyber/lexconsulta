@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { useAjustes } from '../../store/useAjustes'
@@ -6,6 +6,8 @@ import { useCuenta } from '../../store/useCuenta'
 import { useDialogo } from '../../hooks/useDialogo'
 import { cuentasDisponibles } from '../../services/supabase'
 import { fechaUltimoRespaldo } from '../../services/respaldo'
+import { usoDisponible } from '../../services/uso'
+import { esAdministrador } from '../../services/panelUso'
 import { TEMAS, type TemaColorId } from '../../theme'
 import { AVATARES_ANIMALES } from '../../data/avataresAnimales'
 import { BARRA_INFERIOR_DEFECTO, BARRA_INFERIOR_MAX, DESTINOS_NAVEGACION, barraInferiorValida } from '../../data/destinosNavegacion'
@@ -74,19 +76,44 @@ const GRUPOS: { nombre: string; secciones: Seccion[] }[] = [
     ],
   },
 ]
-const TODAS = GRUPOS.flatMap((g) => g.secciones)
+/** Solo la ven las cuentas de la tabla `administradores` (ver docs/ANALITICA_USO.md). La base vuelve a comprobarlo al leer los datos. */
+const GRUPO_ADMIN: { nombre: string; secciones: Seccion[] } = {
+  nombre: 'Administración',
+  secciones: [
+    { id: 'uso', etiqueta: 'Estadísticas de uso', icono: 'ti-chart-line', titulo: 'Estadísticas de uso', descripcion: 'Cuántos entran, dónde pasan el tiempo y qué funciones se usan. Solo lo ves tú.' },
+  ],
+}
+const PanelUso = lazy(() => import('./PanelUso'))
 
 export function ModalConfiguracion({ abierto, onCerrar, pestanaInicial = 'perfil' }: Props) {
   const modoOscuro = useStore((s) => s.modoOscuro)
   const [pestana, setPestana] = useState<PestanaConfig>(pestanaInicial)
   const dialogoRef = useDialogo<HTMLDivElement>(abierto, onCerrar)
+  const perfil = useCuenta((s) => s.perfil)
+  const [esAdmin, setEsAdmin] = useState(false)
 
   // Cada vez que se abre, ir a la sección pedida.
   useEffect(() => {
     if (abierto) setPestana(pestanaInicial)
   }, [abierto, pestanaInicial])
 
-  const seccion = TODAS.find((s) => s.id === pestana) ?? TODAS[0]
+  // ¿Es administradora esta cuenta? (la sección de estadísticas solo se ofrece entonces)
+  useEffect(() => {
+    if (!abierto || !perfil) return
+    let vigente = true
+    void esAdministrador().then((v) => {
+      if (vigente) setEsAdmin(v)
+    })
+    return () => {
+      vigente = false
+    }
+  }, [abierto, perfil])
+  // sin sesión (o con la ventana cerrada) no se ofrece nada, aunque antes se haya comprobado
+  const veAdmin = esAdmin && abierto && !!perfil
+
+  const grupos = useMemo(() => (veAdmin ? [...GRUPOS, GRUPO_ADMIN] : GRUPOS), [veAdmin])
+  const todas = useMemo(() => grupos.flatMap((g) => g.secciones), [grupos])
+  const seccion = todas.find((s) => s.id === pestana) ?? todas[0]
   const linea = modoOscuro ? 'border-zinc-800' : 'border-zinc-200'
 
   return (
@@ -120,7 +147,7 @@ export function ModalConfiguracion({ abierto, onCerrar, pestanaInicial = 'perfil
 
             {/* celular: las secciones van en una fila que se desliza */}
             <nav aria-label="Secciones de la configuración" className={`md:hidden flex gap-1 px-3 py-2 border-b overflow-x-auto flex-shrink-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${linea}`}>
-              {TODAS.map((s) => (
+              {todas.map((s) => (
                 <BotonSeccion key={s.id} s={s} activa={s.id === pestana} onClick={() => setPestana(s.id)} horizontal />
               ))}
             </nav>
@@ -128,7 +155,7 @@ export function ModalConfiguracion({ abierto, onCerrar, pestanaInicial = 'perfil
             <div className="flex-1 min-h-0 flex">
               {/* escritorio y tableta: menú lateral con las secciones agrupadas */}
               <nav aria-label="Secciones de la configuración" className={`hidden md:block w-56 flex-shrink-0 overflow-y-auto border-r p-3 ${linea}`}>
-                {GRUPOS.map((g) => (
+                {grupos.map((g) => (
                   <div key={g.nombre} className="mb-3">
                     <p className="px-3 pt-1 pb-1 text-[11px] font-bold uppercase tracking-[0.08em]" style={{ color: 'var(--neu-ink3)' }}>
                       {g.nombre}
@@ -154,6 +181,11 @@ export function ModalConfiguracion({ abierto, onCerrar, pestanaInicial = 'perfil
                 {pestana === 'disclaimer' && <Disclaimer modoOscuro={modoOscuro} />}
                 {pestana === 'privacidad' && <Privacidad modoOscuro={modoOscuro} />}
                 {pestana === 'terminos' && <Terminos modoOscuro={modoOscuro} />}
+                {pestana === 'uso' && veAdmin && (
+                  <Suspense fallback={<p className="text-sm" style={{ color: 'var(--neu-ink2)' }}>Cargando…</p>}>
+                    <PanelUso modoOscuro={modoOscuro} />
+                  </Suspense>
+                )}
               </div>
             </div>
           </motion.div>
@@ -528,6 +560,8 @@ function SeccionLectura() {
 
 function SeccionDatos({ modoOscuro }: { modoOscuro: boolean }) {
   const codigos = useStore((s) => s.codigos)
+  const compartirUso = useAjustes((s) => s.compartirUso)
+  const setAjustes = useAjustes((s) => s.set)
   const [respaldoAbierto, setRespaldoAbierto] = useState(false)
   const [codigosAbierto, setCodigosAbierto] = useState(false)
   const ultimo = fechaUltimoRespaldo()
@@ -556,6 +590,20 @@ function SeccionDatos({ modoOscuro }: { modoOscuro: boolean }) {
           <span className="text-xs" style={{ color: 'var(--neu-ink3)' }}>{activos} de {codigos.length} activas</span>
         </div>
       </Grupo>
+      {usoDisponible() && (
+        <Grupo
+          titulo="Estadísticas de uso"
+          descripcion="Ayudan a saber qué partes de Prima Lex sirven y cuáles no. Son solo contadores anónimos."
+          modoOscuro={modoOscuro}
+        >
+          <Interruptor
+            activo={compartirUso}
+            onChange={(v) => setAjustes({ compartirUso: v })}
+            etiqueta="Compartir estadísticas de uso anónimas"
+            descripcion="Se cuentan las veces que se usa cada función y los segundos de uso por sección, junto con el tipo de pantalla. Nunca se envía lo que escribes (apuntes, títulos, búsquedas), tu nombre ni tu correo, y no se asocian a tu cuenta ni a tu dispositivo. También respetamos la señal «No rastrear» del navegador."
+          />
+        </Grupo>
+      )}
       <AnimatePresence>{respaldoAbierto && <ModalRespaldo onCerrar={() => setRespaldoAbierto(false)} />}</AnimatePresence>
       <ModalCodigos abierto={codigosAbierto} onCerrar={() => setCodigosAbierto(false)} />
     </>

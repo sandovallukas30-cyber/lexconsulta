@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { registrarUso } from '../services/uso'
 
 /** Si la sala de estudio está abierta y, opcionalmente, qué video cargar al abrirla
  *  (cuando llegas desde un enlace compartido). No se guarda. */
@@ -12,7 +13,10 @@ interface EstadoSala {
 export const useSala = create<EstadoSala>((set) => ({
   abierta: false,
   videoInicial: null,
-  abrir: (video = null) => set({ abierta: true, videoInicial: video }),
+  abrir: (video = null) => {
+    registrarUso('enfoque.sala')
+    set({ abierta: true, videoInicial: video })
+  },
   cerrar: () => set({ abierta: false, videoInicial: null }),
 }))
 

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { avisar } from '../../store/useAvisos'
 import { descargarApunteMd } from '../../services/apunteArchivo'
+import { registrarUso } from '../../services/uso'
 import {
   compartirApunte,
   copiarApunteConFormato,
@@ -70,6 +71,7 @@ export function MenuCompartirApunte({ apunte, onImprimir, claseBoton }: Props) {
 
   const elegir = (accion: () => void | Promise<void>) => () => {
     setAbierto(false)
+    registrarUso('apunte.exportar')
     void accion()
   }
 

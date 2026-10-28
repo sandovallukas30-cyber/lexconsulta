@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { useStore } from './useStore'
+import { registrarUso } from '../services/uso'
 import { avisar } from './useAvisos'
 import { agregarActividadHoy } from '../services/actividadEstudio'
 import { useEnfoqueLocal } from './useEnfoqueLocal'
@@ -251,6 +252,7 @@ export const useEnfoque = create<EstadoEnfoque>()(
         iniciar: () => {
           const s = get()
           if (s.estado === 'corriendo') return
+          if (s.estado === 'detenido') registrarUso('enfoque.iniciar') // reanudar tras una pausa no cuenta como bloque nuevo
           const ahora = Date.now()
           const flow = esFlow(s)
           set({

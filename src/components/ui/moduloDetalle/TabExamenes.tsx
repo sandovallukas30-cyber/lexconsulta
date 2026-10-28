@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../../../store/useStore'
+import { registrarUso } from '../../../services/uso'
 import { eliminarDeListaConDeshacer } from '../../../services/deshacer'
 import type { EvaluacionModulo } from '../../../types'
 import { calcularPonderacionTotal } from '../../../services/modulosAcademico'
@@ -103,6 +104,7 @@ export function TabExamenes({
         nota: notaNum !== null && Number.isFinite(notaNum) ? notaNum : null,
       }
       setEvaluacionesModulo(moduloId, [...evaluaciones, nueva])
+      registrarUso('evaluacion.crear')
     }
     setMostrarForm(false)
     setEditandoId(null)
