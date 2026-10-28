@@ -454,15 +454,18 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
       >
         <button
           onClick={onCambiarCodigo}
-          className="boton boton-fantasma group px-2 gap-2 min-w-0 flex-shrink"
+          className="boton boton-fantasma group px-2 max-md:px-1 gap-2 max-md:gap-1 min-w-0 flex-shrink"
           title="Cambiar código"
           aria-label="Cambiar código"
         >
           <span
-            className="w-7 h-7 rounded-lg flex items-center justify-center"
+            className="w-7 h-7 rounded-lg flex items-center justify-center max-md:hidden"
             style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 15%, transparent)' : 'color-mix(in srgb, var(--accent-base) 6%, transparent)' }}
           >
             <i className="ti ti-book-2 text-base" style={{ color: 'var(--accent-texto)' }} />
+          </span>
+          <span className={`md:hidden text-sm font-semibold truncate min-w-0 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+            {nombreCortoMetadata(tipoActivo)}
           </span>
           <div className="hidden md:block text-left">
             <p className={`text-sm font-semibold leading-tight ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
@@ -474,7 +477,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
             </p>
           </div>
           <i
-            className={`ti ti-chevron-down text-xs opacity-0 group-hover:opacity-60 transition-opacity ${
+            className={`ti ti-chevron-down text-xs opacity-0 max-md:opacity-60 group-hover:opacity-60 transition-opacity ${
               modoOscuro ? 'text-zinc-400' : 'text-zinc-500'
             }`}
           />
