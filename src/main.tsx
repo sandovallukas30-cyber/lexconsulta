@@ -12,6 +12,7 @@ import { LimiteError } from './components/ui/LimiteError'
 import './services/navegacion'
 import { useStore } from './store/useStore'
 import { iniciarReporteTecnico } from './services/reporteTecnico'
+import { iniciarUso } from './services/uso'
 import { useEnfoque } from './store/useEnfoque'
 import { useCuenta } from './store/useCuenta'
 
@@ -55,6 +56,8 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
 
 // avisos técnicos anónimos (errores y velocidad); solo en producción
 iniciarReporteTecnico(() => useStore.getState().vistaActiva)
+// estadísticas de uso anónimas: apagadas salvo que el despliegue las habilite (VITE_USO_ACTIVO=1); ver docs/ANALITICA_USO.md
+iniciarUso(() => useStore.getState().vistaActiva)
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
