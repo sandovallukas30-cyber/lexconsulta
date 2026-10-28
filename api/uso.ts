@@ -1,5 +1,7 @@
 import type { VercelRequest, VercelResponse } from './_tipos'
-import { sanearUso } from './_catalogoUso'
+// OJO: con "type": "module" Node exige la extensión en los imports relativos de los endpoints (sin ella la función no carga y
+// Vercel responde 500 vacío). Los imports `import type` no cuentan porque se borran al compilar.
+import { sanearUso } from './_catalogoUso.js'
 
 /** Recibe las ESTADÍSTICAS DE USO anónimas de la app (qué pantallas se usan, cuánto tiempo y qué funciones se tocan) y las
  *  suma en contadores diarios de la base (tabla `uso_diario`, ver docs/supabase/uso.sql). No recibe ni guarda nombre, correo,

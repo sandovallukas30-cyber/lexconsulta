@@ -1,3 +1,4 @@
+import { readdirSync, readFileSync } from 'node:fs'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import type { VercelRequest, VercelResponse } from '../../api/_tipos'
 
@@ -18,6 +19,20 @@ function pedido(ip: string, body: unknown, extra: Record<string, string> = {}, m
   return { method: metodo, body, headers: { 'x-forwarded-for': ip, ...extra } } as unknown as VercelRequest
 }
 const envioValido = { v: 1, d: 'tablet', nueva: true, ses: true, e: { 'apunte.nuevo': 1 }, t: { hoy: 20 } }
+
+describe('api/: los endpoints se pueden cargar en Vercel (Node ESM)', () => {
+  it('todo import relativo que se queda en el código compilado lleva la extensión .js', () => {
+    const sinExtension: string[] = []
+    for (const archivo of readdirSync('api').filter((n) => n.endsWith('.ts'))) {
+      const texto = readFileSync(`api/${archivo}`, 'utf8')
+      // `import type …` se borra al compilar; cualquier otro import relativo llega tal cual a Node
+      for (const m of texto.matchAll(/^\s*(?:import|export)\s+(?!type\b)[^;'"]*?from\s+['"](\.{1,2}\/[^'"]+)['"]/gm)) {
+        if (!/\.(js|json)$/.test(m[1])) sinExtension.push(`${archivo}: ${m[1]}`)
+      }
+    }
+    expect(sinExtension).toEqual([])
+  })
+})
 
 describe('api/uso: estadísticas de uso anónimas', () => {
   beforeEach(() => {
