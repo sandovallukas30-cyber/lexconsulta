@@ -30,6 +30,7 @@ import { useStore } from '../../store/useStore'
 import { eliminarMapaMentalConDeshacer } from '../../services/deshacer'
 import type { MapaMental, NodoMapaMental, ConexionMapaMental, FormaNodoMental, TamanoTextoMental } from '../../types'
 import { MAPAS_MENTALES_PLANTILLA } from '../../data/mapasMentalesPlantilla'
+import { MenuCabeceraApunte, FilaMenuCabecera } from '../ui/MenuCabeceraApunte'
 
 // Inter solo para Mapas mentales (.fuente-mapa-mental). Va con la propia app
 // (antes se pedía a Google Fonts, que recibía la IP de cada estudiante); como
@@ -1622,189 +1623,196 @@ function MapaMentalDetalle({
     setEditandoTitulo(false)
   }
 
+  const claseIconoCabecera = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
+    modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'
+  }`
+
   return (
     <div className={`fuente-mapa-mental h-full flex flex-col ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
+      {/* Cabecera en dos niveles: arriba volver + título + menú ⋯ (en celular); abajo las herramientas que se usan todo el rato.
+          Lo ocasional (organizar, ver colección, exportar, eliminar) va dentro del menú ⋯. */}
       <div
-        className={`flex flex-wrap items-center gap-2 sm:gap-3 px-3 sm:px-6 py-2 sm:py-3 border-b flex-shrink-0 ${
+        className={`flex flex-wrap items-center gap-x-2 gap-y-1.5 sm:gap-x-3 px-3 sm:px-6 py-2 sm:py-3 border-b flex-shrink-0 ${
           modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
         }`}
       >
-        <button
-          onClick={onVolver}
-          title="Volver a Mapas mentales"
-          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
-            modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'
-          }`}
-        >
-          <i className="ti ti-arrow-left text-lg" />
-        </button>
-
-        {editandoTitulo ? (
-          <input
-            autoFocus
-            value={tituloTmp}
-            onChange={(e) => setTituloTmp(e.target.value)}
-            onBlur={guardarTitulo}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') guardarTitulo()
-              if (e.key === 'Escape') {
-                setTituloTmp(mapa.titulo)
-                setEditandoTitulo(false)
-              }
-            }}
-            className={`flex-1 min-w-0 bg-transparent outline-none border campo-foco-b-2 text-lg font-serif font-semibold px-0.5 ${
-              modoOscuro ? 'text-white' : 'text-zinc-900'
-            }`}
-            style={{ borderColor: VERDE }}
-          />
-        ) : (
-          <button
-            onClick={() => setEditandoTitulo(true)}
-            className="group/title flex-1 min-w-0 text-left flex items-center gap-2"
-          >
-            <h1 className={`text-lg font-serif font-semibold truncate ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
-              {mapa.titulo}
-            </h1>
-            <i
-              className={`ti ti-pencil text-xs opacity-0 group-hover/title:opacity-60 transition-opacity flex-shrink-0 ${
-                modoOscuro ? 'text-zinc-400' : 'text-zinc-500'
-              }`}
-            />
+        <div className="order-1 flex items-center gap-2 flex-1 min-w-0">
+          <button onClick={onVolver} title="Volver a Mapas mentales" aria-label="Volver a Mapas mentales" className={claseIconoCabecera}>
+            <i className="ti ti-arrow-left text-lg" />
           </button>
-        )}
 
-        {/* Agregar nodo: un botón por forma, siempre visibles (son la acción principal acá). */}
-        <div className={`flex items-center gap-0.5 p-0.5 rounded-lg flex-shrink-0 ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-100'}`}>
-          {FORMAS.map((f) => (
+          {editandoTitulo ? (
+            <input
+              autoFocus
+              value={tituloTmp}
+              onChange={(e) => setTituloTmp(e.target.value)}
+              onBlur={guardarTitulo}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') guardarTitulo()
+                if (e.key === 'Escape') {
+                  setTituloTmp(mapa.titulo)
+                  setEditandoTitulo(false)
+                }
+              }}
+              className={`flex-1 min-w-0 bg-transparent outline-none border campo-foco-b-2 text-lg font-serif font-semibold px-0.5 ${
+                modoOscuro ? 'text-white' : 'text-zinc-900'
+              }`}
+              style={{ borderColor: VERDE }}
+            />
+          ) : (
+            <button onClick={() => setEditandoTitulo(true)} className="group/title flex-1 min-w-0 text-left flex items-center gap-2">
+              <h1 className={`text-lg font-serif font-semibold truncate ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{mapa.titulo}</h1>
+              <i
+                className={`ti ti-pencil text-xs opacity-60 sm:opacity-0 group-hover/title:opacity-60 transition-opacity flex-shrink-0 ${
+                  modoOscuro ? 'text-zinc-400' : 'text-zinc-500'
+                }`}
+              />
+            </button>
+          )}
+        </div>
+
+        {/* Herramientas de uso constante. En celular bajan a su propia fila. */}
+        <div className="order-3 sm:order-2 max-sm:basis-full flex flex-wrap items-center gap-x-2 gap-y-1.5">
+          {/* Agregar nodo: un botón por forma, siempre visibles (son la acción principal acá). */}
+          <div className={`flex items-center gap-0.5 p-0.5 rounded-lg flex-shrink-0 ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-100'}`}>
+            {FORMAS.map((f) => (
+              <button
+                key={f.id}
+                onClick={() => agregarNodo(f.id)}
+                title={`Agregar ${f.label}`}
+                aria-label={`Agregar ${f.label.split(' — ')[0]}`}
+                className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${
+                  modoOscuro ? 'text-zinc-300 hover:bg-zinc-700' : 'text-zinc-600 hover:bg-white hover:shadow-sm'
+                }`}
+              >
+                <i className={`ti ${f.icono} text-base`} />
+              </button>
+            ))}
+          </div>
+
+          {busquedaAbierta && (
+            <div className={`flex items-center gap-1.5 px-2.5 h-8 rounded-lg flex-shrink-0 ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-100'}`}>
+              <i className={`ti ti-search text-sm ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`} />
+              <input
+                autoFocus
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setBusqueda('')
+                    setBusquedaAbierta(false)
+                  } else if (e.key === 'Enter' && coincidencias.length > 0) {
+                    const siguiente = (indiceCoincidencia + 1) % coincidencias.length
+                    setIndiceCoincidencia(siguiente)
+                    irACoincidencia(coincidencias[siguiente])
+                  }
+                }}
+                placeholder="Buscar en el mapa..."
+                className={`bg-transparent outline-none text-sm w-36 ${modoOscuro ? 'text-white placeholder:text-zinc-600' : 'text-zinc-900 placeholder:text-zinc-400'}`}
+              />
+              {busqueda && (
+                <span className={`text-xs whitespace-nowrap flex-shrink-0 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                  {coincidencias.length === 0 ? 'sin resultados' : `${indiceCoincidencia + 1} de ${coincidencias.length}`}
+                </span>
+              )}
+            </div>
+          )}
+          <button
+            onClick={() => {
+              setBusquedaAbierta((v) => !v)
+              if (busquedaAbierta) setBusqueda('')
+            }}
+            title="Buscar en el mapa"
+            aria-label="Buscar en el mapa"
+            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
+              busquedaAbierta ? 'text-white' : modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'
+            }`}
+            style={busquedaAbierta ? { background: VERDE } : undefined}
+          >
+            <i className="ti ti-search text-base" />
+          </button>
+
+          <div className={`flex items-center gap-0.5 p-0.5 rounded-lg flex-shrink-0 ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-100'}`}>
             <button
-              key={f.id}
-              onClick={() => agregarNodo(f.id)}
-              title={`Agregar ${f.label}`}
-              aria-label={`Agregar ${f.label.split(' — ')[0]}`}
+              onClick={undo}
+              title="Deshacer (Ctrl+Z)"
+              aria-label="Deshacer"
               className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${
                 modoOscuro ? 'text-zinc-300 hover:bg-zinc-700' : 'text-zinc-600 hover:bg-white hover:shadow-sm'
               }`}
             >
-              <i className={`ti ${f.icono} text-base`} />
+              <i className="ti ti-arrow-back-up text-base" />
             </button>
-          ))}
-        </div>
-
-        {busquedaAbierta && (
-          <div
-            className={`flex items-center gap-1.5 px-2.5 h-8 rounded-lg flex-shrink-0 ${
-              modoOscuro ? 'bg-zinc-800' : 'bg-zinc-100'
-            }`}
-          >
-            <i className={`ti ti-search text-sm ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`} />
-            <input
-              autoFocus
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Escape') {
-                  setBusqueda('')
-                  setBusquedaAbierta(false)
-                } else if (e.key === 'Enter' && coincidencias.length > 0) {
-                  const siguiente = (indiceCoincidencia + 1) % coincidencias.length
-                  setIndiceCoincidencia(siguiente)
-                  irACoincidencia(coincidencias[siguiente])
-                }
-              }}
-              placeholder="Buscar en el mapa..."
-              className={`bg-transparent outline-none text-sm w-36 ${modoOscuro ? 'text-white placeholder:text-zinc-600' : 'text-zinc-900 placeholder:text-zinc-400'}`}
-            />
-            {busqueda && (
-              <span className={`text-xs whitespace-nowrap flex-shrink-0 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                {coincidencias.length === 0 ? 'sin resultados' : `${indiceCoincidencia + 1} de ${coincidencias.length}`}
-              </span>
-            )}
+            <button
+              onClick={redo}
+              title="Rehacer (Ctrl+Y)"
+              aria-label="Rehacer"
+              className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${
+                modoOscuro ? 'text-zinc-300 hover:bg-zinc-700' : 'text-zinc-600 hover:bg-white hover:shadow-sm'
+              }`}
+            >
+              <i className="ti ti-arrow-forward-up text-base" />
+            </button>
           </div>
-        )}
-        <button
-          onClick={() => {
-            setBusquedaAbierta((v) => !v)
-            if (busquedaAbierta) setBusqueda('')
-          }}
-          title="Buscar en el mapa"
-          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
-            busquedaAbierta
-              ? 'text-white'
-              : modoOscuro
-              ? 'text-zinc-400 hover:bg-zinc-800'
-              : 'text-zinc-500 hover:bg-zinc-100'
-          }`}
-          style={busquedaAbierta ? { background: VERDE } : undefined}
-        >
-          <i className="ti ti-search text-base" />
-        </button>
-
-        <button
-          onClick={organizarAutomatico}
-          disabled={edges.length === 0}
-          title="Organizar automáticamente según las conexiones (sin IA: solo usa lo que ya conectaste)"
-          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 disabled:opacity-30 disabled:cursor-not-allowed ${
-            modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'
-          }`}
-        >
-          <i className="ti ti-sitemap text-base" />
-        </button>
-
-        <div className={`flex items-center gap-0.5 p-0.5 rounded-lg flex-shrink-0 ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-100'}`}>
-          <button
-            onClick={undo}
-            title="Deshacer (Ctrl+Z)"
-            className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors ${
-              modoOscuro ? 'text-zinc-300 hover:bg-zinc-700' : 'text-zinc-600 hover:bg-white hover:shadow-sm'
-            }`}
-          >
-            <i className="ti ti-arrow-back-up text-base" />
-          </button>
-          <button
-            onClick={redo}
-            title="Rehacer (Ctrl+Y)"
-            className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors ${
-              modoOscuro ? 'text-zinc-300 hover:bg-zinc-700' : 'text-zinc-600 hover:bg-white hover:shadow-sm'
-            }`}
-          >
-            <i className="ti ti-arrow-forward-up text-base" />
-          </button>
         </div>
 
-        {coleccionVinculada && (
-          <button
-            onClick={() => {
-              setColeccionActiva(coleccionVinculada.id)
-              setVistaActiva('colecciones')
-            }}
-            title={`Ver la colección vinculada: "${coleccionVinculada.titulo}"`}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-white flex-shrink-0 transition-opacity hover:opacity-90"
-            style={{ background: VERDE }}
+        <div className="order-2 sm:order-3">
+          <MenuCabeceraApunte
+            icono="ti-dots"
+            etiqueta="Más acciones del mapa"
+            claseBoton={claseIconoCabecera}
+            claseBotonAbierto={`${claseIconoCabecera} ${modoOscuro ? 'bg-zinc-800' : 'bg-zinc-100'}`}
           >
-            <i className="ti ti-stack-2 text-base" />
-            <span className="hidden md:inline">Ver colección</span>
-          </button>
-        )}
-
-        <button
-          onClick={() => window.print()}
-          title="Exportar a PDF: abre el diálogo de impresión, elige 'Guardar como PDF'"
-          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
-            modoOscuro ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'
-          }`}
-        >
-          <i className="ti ti-printer text-base" />
-        </button>
-
-        <button
-          onClick={() => eliminarMapaMentalConDeshacer(mapa.id)}
-          title="Eliminar mapa mental"
-          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
-            modoOscuro ? 'text-zinc-500 hover:bg-zinc-800 hover:text-red-400' : 'text-zinc-400 hover:bg-zinc-100 hover:text-red-500'
-          }`}
-        >
-          <i className="ti ti-trash text-base" />
-        </button>
+            {(cerrar) => (
+              <>
+                {coleccionVinculada && (
+                  <FilaMenuCabecera
+                    icono="ti-stack-2"
+                    titulo="Ver colección"
+                    detalle={`Colección vinculada: «${coleccionVinculada.titulo}»`}
+                    onClick={() => {
+                      cerrar()
+                      setColeccionActiva(coleccionVinculada.id)
+                      setVistaActiva('colecciones')
+                    }}
+                  />
+                )}
+                <FilaMenuCabecera
+                  icono="ti-sitemap"
+                  titulo="Organizar automáticamente"
+                  detalle={edges.length === 0 ? 'Primero conecta algunos nodos.' : 'Según las conexiones que ya hiciste. Sin IA.'}
+                  onClick={
+                    edges.length === 0
+                      ? undefined
+                      : () => {
+                          cerrar()
+                          organizarAutomatico()
+                        }
+                  }
+                />
+                <FilaMenuCabecera
+                  icono="ti-printer"
+                  titulo="Exportar a PDF"
+                  detalle="Abre el diálogo de impresión: elige «Guardar como PDF»."
+                  onClick={() => {
+                    cerrar()
+                    window.print()
+                  }}
+                />
+                <div className="my-1 mx-3 border-t" style={{ borderColor: 'var(--neu-line)' }} />
+                <FilaMenuCabecera
+                  icono="ti-trash"
+                  titulo="Eliminar mapa mental"
+                  detalle="Se puede deshacer justo después."
+                  onClick={() => {
+                    cerrar()
+                    eliminarMapaMentalConDeshacer(mapa.id)
+                  }}
+                />
+              </>
+            )}
+          </MenuCabeceraApunte>
+        </div>
       </div>
 
       <VistaImprimibleMapaMental mapa={mapa} />
