@@ -8,6 +8,7 @@ import {
   estaPendiente,
   generarTarjetas,
   ordenarParaSesion,
+  pistaDe,
   REINSERTAR_FALLADA_EN,
   type TarjetaRepaso,
 } from '../../services/tarjetasApunte'
@@ -18,6 +19,16 @@ import type { ApunteModulo } from '../../types'
 const VERDE = 'var(--accent-base)'
 /** Sesiones cortas: 80 tarjetas seguidas cansan y se abandona a la mitad. */
 const TARJETAS_POR_SESION = 20
+/** Preferencia de este dispositivo: ver los 4 botones (Otra vez, Difícil, Bien, Fácil) con sus tiempos en vez de solo Error / Acierto. */
+const CLAVE_CUATRO_BOTONES = 'prima-lex-repaso-cuatro-botones'
+
+function leerCuatroBotones(): boolean {
+  try {
+    return localStorage.getItem(CLAVE_CUATRO_BOTONES) === '1'
+  } catch {
+    return false
+  }
+}
 
 interface Props {
   apunte: ApunteModulo
@@ -25,9 +36,12 @@ interface Props {
 }
 
 /** Modo repaso de un apunte (B5): tarjetas generadas por reglas desde su
- *  texto, calificadas Otra vez / Difícil / Bien / Fácil. La repetición
- *  espaciada es FSRS (services/fsrs.ts): cada botón muestra cuándo vuelve la
- *  tarjeta, y las que fallas reaparecen unas tarjetas más adelante. */
+ *  texto. Por defecto se califican con dos botones, Error / Acierto (Otra vez
+ *  y Bien en FSRS); "Más opciones" muestra los cuatro (Otra vez / Difícil /
+ *  Bien / Fácil) con el tiempo en que vuelve cada tarjeta. La repetición
+ *  espaciada es FSRS (services/fsrs.ts) y las que fallas reaparecen unas
+ *  tarjetas más adelante. La pista (primeras palabras de la respuesta, sin IA)
+ *  baja un acierto a "Difícil". */
 export function RepasoApunte({ apunte, onCerrar }: Props) {
   const modoOscuro = useStore((s) => s.modoOscuro)
   const estados = useStore((s) => s.repasoApuntes)
@@ -48,19 +62,43 @@ export function RepasoApunte({ apunte, onCerrar }: Props) {
   // Cada respuesta se registra en FSRS (una fallada que luego aciertas sale
   // del aprendizaje). Para el resumen solo cuenta la PRIMERA de cada tarjeta.
   const [vistas, setVistas] = useState<Set<string>>(() => new Set())
+  const [cuatroBotones, setCuatroBotones] = useState(leerCuatroBotones)
+  // Pista de la tarjeta actual (0 = sin pista). Si se usó, la respuesta cuenta como "Difícil" como máximo.
+  const [nivelPista, setNivelPista] = useState(0)
 
   const actual = cola[indice]
   const terminado = indice >= cola.length
 
   const intervalos = useMemo(() => (actual ? textosIntervalo(aEstadoFSRS(estados[actual.id])) : null), [actual, estados])
 
-  const responder = (nota: NotaRepaso) => {
+  const pista = useMemo(() => (actual ? pistaDe(actual.reverso, nivelPista) : { texto: '', hayMas: false }), [actual, nivelPista])
+
+  const pedirPista = () => {
+    if (!actual || volteada) return
+    if (nivelPista === 0 || pista.hayMas) setNivelPista((n) => n + 1)
+  }
+
+  const alternarBotones = () => {
+    const nuevo = !cuatroBotones
+    setCuatroBotones(nuevo)
+    try {
+      localStorage.setItem(CLAVE_CUATRO_BOTONES, nuevo ? '1' : '0')
+    } catch {
+      /* sin almacenamiento: la preferencia vale solo para esta sesión */
+    }
+  }
+
+  const responder = (notaElegida: NotaRepaso) => {
     if (!actual || !volteada) return
+    const usoPista = nivelPista > 0
+    // con pista no se puede decir "Bien" ni "Fácil": cuenta como "Difícil" (se acordó con ayuda)
+    const nota: NotaRepaso = usoPista && notaElegida > 2 ? 2 : notaElegida
     const primera = !vistas.has(actual.id)
     registrar(actual.id, nota)
     if (primera) setVistas((s) => new Set(s).add(actual.id))
+    setNivelPista(0)
     if (nota > 1) {
-      if (primera) setSabidas((s) => new Set(s).add(actual.id))
+      if (primera && !usoPista) setSabidas((s) => new Set(s).add(actual.id))
     } else {
       setFalladas((s) => new Set(s).add(actual.id))
       // vuelve antes: unas tarjetas más adelante, no al final de la sesión
@@ -81,6 +119,7 @@ export function RepasoApunte({ apunte, onCerrar }: Props) {
     setSabidas(new Set())
     setFalladas(new Set())
     setVistas(new Set())
+    setNivelPista(0)
   }
 
   useEffect(() => {
@@ -95,6 +134,7 @@ export function RepasoApunte({ apunte, onCerrar }: Props) {
         setVolteada((v) => !v)
       } else if (e.key === 'ArrowLeft') responder(1)
       else if (e.key === 'ArrowRight') responder(3)
+      else if (e.key === 'p' || e.key === 'P') pedirPista()
       else if (e.key >= '1' && e.key <= '4') responder(Number(e.key) as NotaRepaso)
     }
     window.addEventListener('keydown', h)
@@ -197,14 +237,14 @@ export function RepasoApunte({ apunte, onCerrar }: Props) {
           </div>
         ) : (
           <div className="w-full max-w-xl">
-            <PistaGesto id="deslizar-tarjeta" activa={esPantallaTactil() && volteada} texto="Desliza la tarjeta: izquierda «Otra vez», derecha «Bien», arriba «Fácil»" />
+            <PistaGesto id="deslizar-tarjeta" activa={esPantallaTactil() && volteada} texto="Desliza la tarjeta: izquierda «Error», derecha «Acierto», arriba «Fácil»" />
             <TarjetaDeslizable
               key={`${actual.id}-${indice}`}
               habilitada={volteada}
               etiquetas={{
-                izquierda: { texto: 'Otra vez', color: '#dc2626' },
-                derecha: { texto: 'Bien', color: '#16a34a' },
-                arriba: { texto: 'Fácil', color: '#0284c7' },
+                izquierda: { texto: 'Error', color: '#dc2626' },
+                derecha: { texto: nivelPista > 0 ? 'Difícil' : 'Acierto', color: nivelPista > 0 ? '#d97706' : '#16a34a' },
+                arriba: { texto: nivelPista > 0 ? 'Difícil' : 'Fácil', color: nivelPista > 0 ? '#d97706' : '#0284c7' },
               }}
               onResponder={(dir: DireccionTarjeta) => responder(dir === 'izquierda' ? 1 : dir === 'derecha' ? 3 : 4)}
             >
@@ -235,18 +275,44 @@ export function RepasoApunte({ apunte, onCerrar }: Props) {
                   ) : (
                     <p className={`text-xl sm:text-2xl font-serif font-bold ${texto}`}>{actual.frente}</p>
                   )}
+                  {!volteada && nivelPista > 0 && pista.texto && (
+                    <p className={`mt-4 text-sm italic leading-relaxed font-serif ${suave}`}>
+                      <span className="not-italic font-semibold">Pista: </span>
+                      {pista.texto}
+                    </p>
+                  )}
                   {!volteada && <span className={`mt-4 text-xs ${suave}`}>Toca o presiona Espacio para ver la respuesta</span>}
                 </motion.button>
               </AnimatePresence>
             </TarjetaDeslizable>
 
-            <div className="grid grid-cols-4 gap-2 sm:gap-3 mt-4">
-              {([
-                [1, 'Otra vez', modoOscuro ? 'border-red-900 text-red-300 hover:bg-red-950/40' : 'border-red-200 text-red-700 hover:bg-red-50'],
-                [2, 'Difícil', modoOscuro ? 'border-amber-900 text-amber-300 hover:bg-amber-950/40' : 'border-amber-200 text-amber-700 hover:bg-amber-50'],
-                [3, 'Bien', modoOscuro ? 'border-emerald-900 text-emerald-300 hover:bg-emerald-950/40' : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'],
-                [4, 'Fácil', modoOscuro ? 'border-sky-900 text-sky-300 hover:bg-sky-950/40' : 'border-sky-200 text-sky-700 hover:bg-sky-50'],
-              ] as [NotaRepaso, string, string][]).map(([nota, nombre, color]) => (
+            {/* Pista (solo antes de voltear): las primeras palabras de la respuesta, sin IA. Ocupa siempre su lugar para que nada salte al voltear. */}
+            <div className={`flex justify-center mt-3 ${volteada ? 'invisible' : ''}`} aria-hidden={volteada}>
+              <button
+                onClick={pedirPista}
+                disabled={volteada || (nivelPista > 0 && !pista.hayMas)}
+                className={`min-h-[44px] px-4 rounded-xl text-sm font-semibold border flex items-center gap-2 transition-opacity disabled:opacity-40 ${
+                  modoOscuro ? 'border-zinc-700 text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-700 hover:bg-white'
+                }`}
+              >
+                <i className="ti ti-bulb text-base" aria-hidden />
+                {nivelPista === 0 ? 'Pista' : pista.hayMas ? 'Otra pista' : 'Sin más pistas'}
+              </button>
+            </div>
+
+            <div className={`grid gap-2 sm:gap-3 mt-3 ${cuatroBotones ? 'grid-cols-4' : 'grid-cols-2'}`}>
+              {(cuatroBotones
+                ? ([
+                    [1, 'Otra vez', modoOscuro ? 'border-red-900 text-red-300 hover:bg-red-950/40' : 'border-red-200 text-red-700 hover:bg-red-50'],
+                    [2, 'Difícil', modoOscuro ? 'border-amber-900 text-amber-300 hover:bg-amber-950/40' : 'border-amber-200 text-amber-700 hover:bg-amber-50'],
+                    [3, 'Bien', modoOscuro ? 'border-emerald-900 text-emerald-300 hover:bg-emerald-950/40' : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'],
+                    [4, 'Fácil', modoOscuro ? 'border-sky-900 text-sky-300 hover:bg-sky-950/40' : 'border-sky-200 text-sky-700 hover:bg-sky-50'],
+                  ] as [NotaRepaso, string, string][])
+                : ([
+                    [1, 'Error', modoOscuro ? 'border-red-900 text-red-300 hover:bg-red-950/40' : 'border-red-200 text-red-700 hover:bg-red-50'],
+                    [3, 'Acierto', modoOscuro ? 'border-emerald-900 text-emerald-300 hover:bg-emerald-950/40' : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'],
+                  ] as [NotaRepaso, string, string][])
+              ).map(([nota, nombre, color]) => (
                 <button
                   key={nota}
                   onClick={() => responder(nota)}
@@ -254,15 +320,21 @@ export function RepasoApunte({ apunte, onCerrar }: Props) {
                   className={`min-h-[56px] rounded-xl text-sm font-semibold border transition-opacity disabled:opacity-40 flex flex-col items-center justify-center ${color}`}
                 >
                   {nombre}
-                  <span className="text-[11px] font-normal opacity-80 tabular-nums">{intervalos?.[nota]}</span>
+                  {cuatroBotones && <span className="text-[11px] font-normal opacity-80 tabular-nums">{intervalos?.[nivelPista > 0 && nota > 2 ? 2 : nota]}</span>}
                 </button>
               ))}
             </div>
-            <p className={`sm:hidden text-center text-[11px] mt-3 ${suave}`}>
-              {volteada ? 'Desliza la tarjeta: ← otra vez · → bien · ↑ fácil' : 'Toca la tarjeta para ver la respuesta'}
+            {volteada && nivelPista > 0 && (
+              <p className={`text-center text-[11px] mt-2 ${suave}`}>Usaste pista: un acierto cuenta como «Difícil» y la tarjeta vuelve antes.</p>
+            )}
+            <button onClick={alternarBotones} className={`block mx-auto mt-2 min-h-[44px] px-3 text-xs underline underline-offset-2 ${suave}`}>
+              {cuatroBotones ? 'Solo Error / Acierto' : 'Más opciones: Difícil, Fácil y tiempos'}
+            </button>
+            <p className={`sm:hidden text-center text-[11px] mt-1 ${suave}`}>
+              {volteada ? 'Desliza la tarjeta: ← error · → acierto · ↑ fácil' : 'Toca la tarjeta para ver la respuesta'}
             </p>
-            <p className={`hidden sm:block text-center text-[11px] mt-3 ${suave}`}>
-              Espacio: voltear · 1 Otra vez · 2 Difícil · 3 Bien · 4 Fácil · Esc: salir
+            <p className={`hidden sm:block text-center text-[11px] mt-1 ${suave}`}>
+              Espacio: voltear · P pista · 1 Error · 3 Acierto · 2 Difícil · 4 Fácil · Esc: salir
             </p>
           </div>
         )}

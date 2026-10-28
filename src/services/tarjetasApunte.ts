@@ -95,6 +95,21 @@ export function generarTarjetas(apunte: Pick<ApunteModulo, 'id' | 'contenido'>):
   return tarjetas
 }
 
+/** Pista de una tarjeta, SIN IA: las primeras palabras de la respuesta. Cada nivel muestra 3 palabras más, hasta la mitad
+ *  de la respuesta (nunca la entrega completa). Con respuestas de una o dos palabras muestra solo las primeras letras. */
+export function pistaDe(reverso: string, nivel: number): { texto: string; hayMas: boolean } {
+  const palabras = reverso.replace(/\s+/g, ' ').trim().split(' ').filter(Boolean)
+  if (palabras.length === 0 || nivel <= 0) return { texto: '', hayMas: palabras.length > 0 }
+  if (palabras.length <= 2) {
+    const tope = 2
+    const n = Math.min(nivel, tope)
+    return { texto: palabras.map((p) => `${p.slice(0, Math.min(p.length - 1 || 1, n))}…`).join(' '), hayMas: n < tope }
+  }
+  const tope = Math.max(1, Math.floor(palabras.length / 2))
+  const n = Math.min(nivel * 3, tope)
+  return { texto: `${palabras.slice(0, n).join(' ')}…`, hayMas: n < tope }
+}
+
 /** generarTarjetas con caché por OBJETO apunte: al guardar un apunte (cada
  *  ~700 ms mientras se escribe) el store crea un objeto nuevo solo para ese;
  *  los demás conservan su identidad y no se vuelven a analizar. */
