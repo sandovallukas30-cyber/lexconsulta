@@ -9,7 +9,7 @@ import { ModalConfiguracion } from '../ui/ModalConfiguracion'
 import { EnfoqueEnMenu } from './EnfoqueEnMenu'
 import { useEsMovil } from '../../hooks/useEsMovil'
 import { BotonCuenta } from '../ui/ModalCuenta'
-import { LogoPrimaLex } from '../ui/LogoPrimaLex'
+import { LogoPrimaLex, NombrePrimaLex } from '../ui/LogoPrimaLex'
 import { cuentasDisponibles } from '../../services/supabase'
 import type { VistaId } from '../../types'
 
@@ -170,7 +170,7 @@ export function Sidebar() {
                 <LogoPrimaLex size={44} className="flex-shrink-0" />
                 {!colapsado && (
                   <span className="anim-aparece min-w-0 block">
-                    <span className="block text-[17px] font-extrabold leading-tight" style={{ color: 'var(--neu-ink)' }}>Prima Lex</span>
+                    <NombrePrimaLex className="block text-[17px] leading-tight" />
                     <span className="sidebar-tagline block text-[11px] font-normal" style={{ color: 'var(--neu-ink3)' }}>Tu cuaderno de Derecho</span>
                   </span>
                 )}
@@ -391,7 +391,7 @@ function MarcaPrimaLex() {
     <div className="flex-1 min-w-0 flex items-center gap-2.5">
       <LogoPrimaLex size={44} className="flex-shrink-0" />
       <div className="min-w-0">
-        <p className="text-[17px] font-extrabold leading-tight" style={{ color: 'var(--neu-ink)' }}>Prima Lex</p>
+        <p className="text-[17px] leading-tight" style={{ color: 'var(--neu-ink)' }}><NombrePrimaLex /></p>
         <p className="sidebar-tagline text-[11px]" style={{ color: 'var(--neu-ink3)' }}>Tu cuaderno de Derecho</p>
       </div>
     </div>

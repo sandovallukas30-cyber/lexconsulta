@@ -1,4 +1,4 @@
-import { LogoPrimaLex } from '../ui/LogoPrimaLex'
+import { LogoPrimaLex, NombrePrimaLex } from '../ui/LogoPrimaLex'
 import { useEffect } from 'react'
 import { Disclaimer, Privacidad, Terminos } from '../ui/ModalAcercaDe'
 import type { DocumentoLegal } from '../../services/rutasLegales'
@@ -28,7 +28,7 @@ export function PaginaLegal({ documento }: { documento: Documento }) {
         <a href="/" className="inline-flex items-center gap-3 mb-8" style={{ color: 'var(--neu-ink)' }}>
           <LogoPrimaLex size={44} />
           <span>
-            <span className="block text-lg font-extrabold leading-tight">Prima Lex</span>
+            <NombrePrimaLex className="block text-lg leading-tight" />
             <span className="block text-xs" style={{ color: 'var(--neu-ink3)' }}>Tu cuaderno de Derecho</span>
           </span>
         </a>
