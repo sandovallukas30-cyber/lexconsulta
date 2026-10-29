@@ -6,6 +6,7 @@ import type { EvaluacionModulo } from '../../../types'
 import { calcularPonderacionTotal } from '../../../services/modulosAcademico'
 import { formatoNota, NOTA_APROBAR, simular } from '../../../services/notas'
 import { formatearFechaCorta } from './utilidades'
+import { ConversorPuntaje } from './ConversorPuntaje'
 import { BotonAgregar, BotonEliminar, BotonesFormulario, CampoTexto, EstadoVacio, FechaConCountdown, FormularioRapido } from './comunes'
 
 function calcularNotaNecesaria(evaluaciones: EvaluacionModulo[], objetivo: number) {
@@ -240,6 +241,7 @@ export function TabExamenes({
             )}
           </div>
           <Simulador evaluaciones={evaluaciones} modoOscuro={modoOscuro} />
+          <ConversorPuntaje modoOscuro={modoOscuro} />
         </>
       )}
     </div>

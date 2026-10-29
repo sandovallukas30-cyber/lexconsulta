@@ -8,8 +8,8 @@ const CADA_MS = 2 * 60_000
 const ESPERA_CAMBIOS_MS = 8_000
 
 /** Se monta una vez en App: lee la sesión, escucha entradas y salidas, y
- *  mantiene la sincronización al día (al entrar, al volver a la pestaña, a
- *  los pocos segundos de cambiar algo y cada 2 minutos). Sin Supabase
+ *  mantiene la sincronización al día (al entrar, al volver a la pestaña, al
+ *  salir de ella, a los pocos segundos de cambiar algo y cada 2 minutos). Sin Supabase
  *  configurado no hace nada. */
 export function useCuentaInit() {
   const perfilId = useCuenta((s) => s.perfil?.id)
@@ -43,16 +43,24 @@ export function useCuentaInit() {
       if (s.sesiones !== prev.sesiones) alCambiar()
     })
     const intervalo = window.setInterval(sincronizar, CADA_MS)
+    // al volver se baja lo nuevo; al irse (pantalla bloqueada, otra app) se sube lo pendiente sin esperar los 8 s:
+    // iPadOS pausa los temporizadores de una app en segundo plano y el cambio se quedaba solo en ese equipo
     const alVolver = () => {
       if (document.visibilityState === 'visible') sincronizar()
+      else {
+        window.clearTimeout(temporizador)
+        sincronizar()
+      }
     }
     document.addEventListener('visibilitychange', alVolver)
+    window.addEventListener('pagehide', sincronizar)
     return () => {
       a()
       b()
       window.clearTimeout(temporizador)
       window.clearInterval(intervalo)
       document.removeEventListener('visibilitychange', alVolver)
+      window.removeEventListener('pagehide', sincronizar)
     }
   }, [perfilId])
 }
