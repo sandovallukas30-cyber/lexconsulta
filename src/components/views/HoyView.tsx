@@ -8,9 +8,11 @@ import { SelectorRamo } from '../ui/SelectorRamo'
 import { useEnfoque, msMostrados } from '../../store/useEnfoque'
 import { useAhora } from '../../hooks/useMotorEnfoque'
 import { horasMin, minutosEnFecha, mmss, type Tecnica } from '../../services/enfoque'
-import { calcularRachaEstudio, contarTarjetasVencidas, fechaLocalISO } from '../../services/actividadEstudio'
+import { calcularRachaEstudio, contarTarjetasVencidas } from '../../services/actividadEstudio'
 import { claseEnCurso } from '../../services/loQueSigue'
-import { filtrarTareas, hoyISO, nombreRamo, ETIQUETA_PRIORIDAD } from '../../services/tareasPlan'
+import { filtrarTareas, hoyISO, nombreRamo, sumarDiasISO, ETIQUETA_PRIORIDAD } from '../../services/tareasPlan'
+import { fechaLarga as fechaLargaISO } from '../../services/calendario'
+import { etiquetaSemana, resumenSemana } from '../../services/miSemana'
 
 function saludo(): string {
   const h = new Date().getHours()
@@ -46,6 +48,7 @@ function Tarjeta({
 
 type ItemDia =
   | { tipo: 'clase'; orden: string; moduloId: string; id: string; tema: string; hora?: string; sala?: string; asistio?: boolean }
+  | { tipo: 'evaluacion'; orden: string; moduloId: string; id: string; nombre: string; ponderacion: number; nota: number | null }
   | { tipo: 'tarea'; orden: string; id: string; titulo: string; ramoId: string | null; prioridad: 'alta' | 'media' | 'baja' }
 
 export function HoyView() {
@@ -60,6 +63,8 @@ export function HoyView() {
   const setVistaActiva = useStore((s) => s.setVistaActiva)
   const setClasesModulo = useStore((s) => s.setClasesModulo)
   const [nueva, setNueva] = useState('')
+  // el día que se mira en «Tu día»: se elige en «Mi semana» (por defecto, hoy)
+  const [diaSel, setDiaSel] = useState(() => hoyISO())
   const sesionesFoco = useEnfoque((e) => e.sesiones)
   const metaFoco = useEnfoque((e) => e.ajustes.metaDia)
   const estadoEnfoque = useEnfoque((e) => e.estado)
@@ -82,18 +87,27 @@ export function HoyView() {
   const hechasHoy = useMemo(() => tareas.filter((t) => t.hecha && t.hechaEn === hoy).length, [tareas, hoy])
   const enCurso = useMemo(() => claseEnCurso(academico, ramos, hoy, ahora), [academico, ramos, hoy, ahora])
 
-  // clases y tareas de hoy en una sola línea de tiempo (también las clases ya vistas: se marca la asistencia)
+  const esHoy = diaSel === hoy
+  const futuro = diaSel > hoy
+  // tareas del día: hoy incluye las atrasadas; otro día, solo las pendientes con esa fecha
+  const tareasDia = useMemo(() => (esHoy ? paraHoy : tareas.filter((t) => !t.hecha && t.fecha === diaSel)), [esHoy, paraHoy, tareas, diaSel])
+  const hechasDia = useMemo(() => (esHoy ? hechasHoy : tareas.filter((t) => t.hecha && t.fecha === diaSel).length), [esHoy, hechasHoy, tareas, diaSel])
+
+  // evaluaciones, clases y tareas del día elegido en una sola línea de tiempo (también lo ya visto: se marca la asistencia)
   const lineaDeTiempo = useMemo(() => {
     const out: ItemDia[] = []
     for (const [moduloId, d] of Object.entries(academico)) {
       for (const c of d.clases ?? []) {
-        if (c.fecha === hoy) out.push({ tipo: 'clase', orden: c.hora ?? '99:99', moduloId, id: c.id, tema: c.tema, hora: c.hora, sala: c.sala, asistio: c.asistio })
+        if (c.fecha === diaSel) out.push({ tipo: 'clase', orden: c.hora ?? '99:99', moduloId, id: c.id, tema: c.tema, hora: c.hora, sala: c.sala, asistio: c.asistio })
+      }
+      for (const ev of d.evaluaciones ?? []) {
+        if (ev.fecha === diaSel) out.push({ tipo: 'evaluacion', orden: '00:00', moduloId, id: ev.id, nombre: ev.nombre, ponderacion: ev.ponderacion, nota: ev.nota })
       }
     }
     out.sort((a, b) => a.orden.localeCompare(b.orden))
-    for (const t of paraHoy) out.push({ tipo: 'tarea', orden: '99:99', id: t.id, titulo: t.titulo, ramoId: t.ramoId, prioridad: t.prioridad })
+    for (const t of tareasDia) out.push({ tipo: 'tarea', orden: '99:99', id: t.id, titulo: t.titulo, ramoId: t.ramoId, prioridad: t.prioridad })
     return out
-  }, [academico, hoy, paraHoy])
+  }, [academico, diaSel, tareasDia])
 
   const marcarAsistencia = (moduloId: string, claseId: string, valor: boolean) => {
     const lista = useStore.getState().academicoModulos[moduloId]?.clases ?? []
@@ -111,38 +125,16 @@ export function HoyView() {
     e.preventDefault()
     const t = nueva.trim()
     if (!t) return
-    agregar({ titulo: t, ramoId: null, fecha: hoy, prioridad: 'media' })
+    agregar({ titulo: t, ramoId: null, fecha: diaSel, prioridad: 'media' })
     setNueva('')
   }
 
-  // semana de lunes a domingo: qué hay cada día
-  const semana = useMemo(() => {
-    const base = new Date()
-    base.setHours(12, 0, 0, 0)
-    const lunes = new Date(base)
-    lunes.setDate(base.getDate() - ((base.getDay() + 6) % 7))
-    return Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(lunes)
-      d.setDate(lunes.getDate() + i)
-      const iso = fechaLocalISO(d)
-      let clases = 0
-      let evals: string[] = []
-      for (const datos of Object.values(academico)) {
-        clases += (datos.clases ?? []).filter((c) => c.fecha === iso).length
-        evals = evals.concat((datos.evaluaciones ?? []).filter((e) => e.fecha === iso && e.nota === null).map((e) => e.nombre))
-      }
-      const tareasDia = tareas.filter((t) => !t.hecha && t.fecha === iso).length
-      return {
-        iso,
-        dia: d.toLocaleDateString('es-CL', { weekday: 'short' }).replace('.', '').toUpperCase(),
-        numero: d.getDate(),
-        esHoy: iso === hoy,
-        clases,
-        tareas: tareasDia,
-        evals,
-      }
-    })
-  }, [academico, tareas, hoy])
+  // la semana que contiene el día elegido: qué hay cada día
+  const semana = useMemo(() => resumenSemana({ academicoModulos: academico, tareasPlan: tareas, ramos }, diaSel), [academico, tareas, ramos, diaSel])
+  const nombreDia = (iso: string) => {
+    const [anio, mes, dia] = iso.split('-').map(Number)
+    return new Date(anio, mes - 1, dia).toLocaleDateString('es-CL', { weekday: 'short' }).replace('.', '').toUpperCase()
+  }
 
   const iniciarEnfoque = () => {
     if (estadoEnfoque === 'detenido') useEnfoque.getState().iniciar()
@@ -180,43 +172,105 @@ export function HoyView() {
           </section>
         )}
 
+        <section className="neu-raised p-3 sm:p-4" aria-label="Mi semana">
+          <div className="flex items-center gap-2 px-1 mb-2">
+            <h2 className="text-[15px] font-bold flex-1 min-w-0 truncate" style={{ color: 'var(--neu-ink)', fontFamily: 'var(--font-head)' }}>
+              Mi semana <span className="font-medium text-[13px]" style={{ color: suave }}>· {etiquetaSemana(diaSel, hoy)}</span>
+            </h2>
+            {!esHoy && (
+              <button onClick={() => setDiaSel(hoy)} className="boton boton-chico boton-suave">
+                Hoy
+              </button>
+            )}
+            <button onClick={() => setDiaSel(sumarDiasISO(diaSel, -7))} className="boton boton-chico boton-suave" aria-label="Semana anterior">
+              <i className="ti ti-chevron-left" aria-hidden="true" />
+            </button>
+            <button onClick={() => setDiaSel(sumarDiasISO(diaSel, 7))} className="boton boton-chico boton-suave" aria-label="Semana siguiente">
+              <i className="ti ti-chevron-right" aria-hidden="true" />
+            </button>
+          </div>
+          <ul className="grid grid-cols-4 sm:grid-cols-7 gap-1">
+            {semana.map((d) => {
+              const elegido = d.fecha === diaSel
+              const esDiaHoy = d.fecha === hoy
+              const resumen =
+                d.evaluaciones.length > 0
+                  ? d.evaluaciones[0]
+                  : [d.clases > 0 && `${d.clases} ${d.clases === 1 ? 'clase' : 'clases'}`, d.tareas > 0 && `${d.tareas} ${d.tareas === 1 ? 'tarea' : 'tareas'}`].filter(Boolean).join(' · ')
+              return (
+                <li key={d.fecha}>
+                  <button
+                    onClick={() => setDiaSel(d.fecha)}
+                    className="w-full text-left rounded-xl px-2.5 py-2 transition-colors hover:bg-[var(--neu-bg3)]"
+                    style={{
+                      background: elegido ? 'color-mix(in srgb, var(--accent-base) 14%, transparent)' : undefined,
+                      boxShadow: elegido ? 'inset 0 0 0 2px var(--accent-base)' : undefined,
+                    }}
+                    aria-pressed={elegido}
+                    aria-current={esDiaHoy ? 'date' : undefined}
+                    aria-label={`${fechaLargaISO(d.fecha)}${resumen ? `: ${resumen}` : ''}`}
+                  >
+                    <span className="block text-[13px] font-bold tracking-wide" style={{ color: esDiaHoy || elegido ? 'var(--accent-texto)' : 'var(--neu-ink3)' }}>
+                      {nombreDia(d.fecha)} <span className="text-[17px]" style={{ color: esDiaHoy || elegido ? 'var(--accent-texto)' : 'var(--neu-ink)' }}>{Number(d.fecha.slice(8))}</span>
+                      {esDiaHoy && <span className="inline-block w-1.5 h-1.5 rounded-full ml-1.5 align-middle" style={{ background: 'var(--accent-base)' }} aria-hidden="true" />}
+                    </span>
+                    <span className="block text-[12px] leading-tight min-h-[1.1rem] line-clamp-2" style={{ color: d.evaluaciones.length ? 'var(--neu-danger)' : 'var(--neu-ink3)' }}>
+                      {resumen}
+                    </span>
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        </section>
+
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] gap-4 items-start">
           <Tarjeta
-            titulo="Tu día"
+            titulo={esHoy ? 'Tu día' : fechaLargaISO(diaSel)}
             derecha={
-              hechasHoy + paraHoy.length > 0 ? (
+              hechasDia + tareasDia.length > 0 ? (
                 <span className="text-[13px]" style={{ color: suave }}>
-                  {hechasHoy} de {hechasHoy + paraHoy.length} {hechasHoy + paraHoy.length === 1 ? 'tarea hecha' : 'tareas hechas'}
+                  {hechasDia} de {hechasDia + tareasDia.length} {hechasDia + tareasDia.length === 1 ? 'tarea hecha' : 'tareas hechas'}
                 </span>
               ) : undefined
             }
           >
             {lineaDeTiempo.length === 0 ? (
               <p className="text-sm py-3" style={{ color: suave }}>
-                No hay clases con fecha de hoy ni tareas para hoy. Las clases salen de la pestaña Clases de cada asignatura (el horario por sí solo no alcanza).
+                {esHoy
+                  ? 'No hay clases con fecha de hoy ni tareas para hoy. Las clases salen de la pestaña Clases de cada asignatura (el horario por sí solo no alcanza).'
+                  : 'Nada con fecha este día. Puedes agregar una tarea aquí abajo.'}
               </p>
             ) : (
               <ol className="relative">
                 {lineaDeTiempo.map((it, i) => {
                   const esClase = it.tipo === 'clase'
+                  const esEval = it.tipo === 'evaluacion'
                   const actual = esClase && enCurso?.claseId === it.id
                   const ultimo = i === lineaDeTiempo.length - 1
                   return (
                     <li key={`${it.tipo}-${it.id}`} className="grid grid-cols-[3rem_1.25rem_minmax(0,1fr)] sm:grid-cols-[3.25rem_1.25rem_minmax(0,1fr)_auto] gap-x-3 items-start">
                       <span
                         className={`pt-3.5 text-[13px] tabular-nums ${esClase ? 'font-semibold' : 'font-bold uppercase tracking-wide text-[11px]'}`}
-                        style={{ color: actual ? 'var(--accent-texto)' : 'var(--neu-ink3)' }}
+                        style={{ color: actual ? 'var(--accent-texto)' : esEval ? 'var(--neu-danger)' : 'var(--neu-ink3)' }}
                       >
-                        {esClase ? it.hora ?? '—' : 'Tarea'}
+                        {esClase ? it.hora ?? '—' : esEval ? 'Eval.' : 'Tarea'}
                       </span>
                       <span className="relative flex justify-center self-stretch" aria-hidden="true">
                         {!ultimo && <span className="absolute top-8 bottom-0 w-px" style={{ background: 'var(--neu-line)' }} />}
                         <span
                           className="mt-4 w-3.5 h-3.5 rounded-full border-2 bg-[var(--neu-card)]"
-                          style={{ borderColor: actual ? 'var(--accent-base)' : 'var(--neu-ink3)', background: actual ? 'var(--accent-base)' : undefined }}
+                          style={{ borderColor: actual ? 'var(--accent-base)' : esEval ? 'var(--neu-danger)' : 'var(--neu-ink3)', background: actual ? 'var(--accent-base)' : undefined }}
                         />
                       </span>
-                      {esClase ? (
+                      {esEval ? (
+                        <button onClick={() => abrirModulo(it.moduloId)} className="min-w-0 py-2.5 text-left">
+                          <span className="block text-[15px] font-bold sm:truncate" style={{ color: 'var(--neu-ink)' }}>{it.nombre}</span>
+                          <span className="block text-[13px] truncate" style={{ color: suave }}>
+                            {nombreRamo(it.moduloId, ramos) ?? 'Asignatura'} · {it.nota !== null ? `Nota ${String(it.nota).replace('.', ',')}` : `vale ${it.ponderacion} %`}
+                          </span>
+                        </button>
+                      ) : esClase ? (
                         <button onClick={() => abrirModulo(it.moduloId)} className="min-w-0 py-2.5 text-left">
                           <span className="block text-[15px] font-bold sm:truncate" style={{ color: 'var(--neu-ink)' }}>{it.tema || nombreRamo(it.moduloId, ramos) || 'Clase'}</span>
                           <span className="block text-[13px] truncate" style={{ color: suave }}>
@@ -240,8 +294,12 @@ export function HoyView() {
                         </div>
                       )}
                       <span className="col-start-3 sm:col-start-auto pb-2 sm:py-2 flex gap-1.5 flex-shrink-0 items-center">
-                        {esClase ? (
-                          actual ? (
+                        {esEval ? (
+                          <button onClick={() => abrirModulo(it.moduloId)} className="boton boton-chico boton-suave">
+                            Ver
+                          </button>
+                        ) : esClase ? (
+                          futuro ? null : actual ? (
                             <span className="text-[13px] font-bold px-3 py-1.5 rounded-full" style={{ background: 'color-mix(in srgb, var(--accent-base) 14%, transparent)', color: 'var(--accent-texto)' }}>
                               En curso
                             </span>
@@ -275,8 +333,8 @@ export function HoyView() {
               <input
                 value={nueva}
                 onChange={(e) => setNueva(e.target.value)}
-                aria-label="Agregar tarea para hoy"
-                placeholder="Agregar algo para hoy…"
+                aria-label={esHoy ? 'Agregar tarea para hoy' : `Agregar tarea para el ${fechaLargaISO(diaSel).toLowerCase()}`}
+                placeholder={esHoy ? 'Agregar algo para hoy…' : `Agregar algo para el ${fechaLargaISO(diaSel).split(',')[0].toLowerCase()}…`}
                 maxLength={200}
                 className={`flex-1 min-w-0 h-control px-3 rounded-control border text-sm outline-none campo-foco ${
                   modoOscuro
@@ -345,30 +403,6 @@ export function HoyView() {
             </section>
           </div>
         </div>
-
-        <section className="neu-raised p-2 sm:p-3" aria-label="Esta semana">
-          <ul className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-1">
-            {semana.map((d) => (
-              <li key={d.iso}>
-                <button
-                  onClick={() => setVistaActiva('calendario')}
-                  className="w-full text-left rounded-xl px-3 py-2.5 transition-colors hover:bg-[var(--neu-bg3)]"
-                  style={d.esHoy ? { background: 'color-mix(in srgb, var(--accent-base) 12%, transparent)' } : undefined}
-                  aria-current={d.esHoy ? 'date' : undefined}
-                >
-                  <span className="block text-[13px] font-bold tracking-wide" style={{ color: d.esHoy ? 'var(--accent-texto)' : 'var(--neu-ink3)' }}>
-                    {d.dia} <span className="text-[17px]" style={{ color: d.esHoy ? 'var(--accent-texto)' : 'var(--neu-ink)' }}>{d.numero}</span>
-                  </span>
-                  <span className="block text-[12px] min-h-[1.1rem]" style={{ color: d.evals.length ? 'var(--neu-danger)' : 'var(--neu-ink3)' }}>
-                    {d.evals.length > 0
-                      ? d.evals[0]
-                      : [d.clases > 0 && `${d.clases} ${d.clases === 1 ? 'clase' : 'clases'}`, d.tareas > 0 && `${d.tareas} ${d.tareas === 1 ? 'tarea' : 'tareas'}`].filter(Boolean).join(' · ')}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
 
         {!sinNada && (
           <Tarjeta titulo="Repaso y constancia">
