@@ -36,6 +36,7 @@ export const FUNCIONES_USO = {
   'explorador.lectura': 'Abrir el modo lectura de un código',
   'explorador.copiarCita': 'Copiar un artículo con su cita',
   'explorador.guardar': 'Guardar un artículo en una colección',
+  'explorador.nota': 'Escribir una nota sobre un artículo',
   // Colecciones y mapas
   'coleccion.crear': 'Crear una colección',
   'coleccion.repaso': 'Usar el modo repaso de una colección',

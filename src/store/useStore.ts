@@ -1,3 +1,4 @@
+import { MAX_NOTA_ARTICULO, type NotaArticulo } from '../services/notasArticulo'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { crearAlmacenamiento } from './almacenamiento'
@@ -290,6 +291,9 @@ interface AppState {
    *  una clave por apunte: no iba en el respaldo. */
   posicionLectura: Record<string, { ratio: number; fecha: number }>
   guardarPosicionLectura: (apunteId: string, ratio: number) => void
+  /** «Mi nota» sobre un artículo de un código (clave: `codigo:articulo`). Texto vacío la borra. */
+  notasArticulo: Record<string, NotaArticulo>
+  guardarNotaPropia: (clave: string, texto: string) => void
   /** Último artículo abierto en cada código del Explorador (C7): al volver a
    *  un código se retoma ahí y no en el Art. 1. */
   ultimoArticuloExplorador: Partial<Record<CodigoActivo['tipo'], string>>
@@ -438,6 +442,7 @@ export const useStore = create<AppState>()(
       diasActividadEstudio: [],
       repasoApuntes: {},
       posicionLectura: {},
+      notasArticulo: {},
       ultimoArticuloExplorador: {},
 
       setPerfil: (perfil) => set({ perfil, modalPerfilAbierto: false }),
@@ -1109,6 +1114,13 @@ export const useStore = create<AppState>()(
           else posicionLectura[apunteId] = { ratio, fecha: Date.now() }
           return { posicionLectura }
         }),
+      guardarNotaPropia: (clave, texto) =>
+        set((s) => {
+          const notasArticulo = { ...s.notasArticulo }
+          if (!texto.trim()) delete notasArticulo[clave]
+          else notasArticulo[clave] = { texto: texto.slice(0, MAX_NOTA_ARTICULO), fecha: Date.now() }
+          return { notasArticulo }
+        }),
       restaurarColeccion: (coleccion) =>
         set((s) => ({
           colecciones: s.colecciones.some((c) => c.id === coleccion.id) ? s.colecciones : [coleccion, ...s.colecciones],
@@ -1151,6 +1163,7 @@ export const useStore = create<AppState>()(
         diasActividadEstudio: s.diasActividadEstudio,
         repasoApuntes: s.repasoApuntes,
         posicionLectura: s.posicionLectura,
+        notasArticulo: s.notasArticulo,
         // C7: al recargar se vuelve a la última vista (y módulo/código)
         vistaActiva: s.vistaActiva,
         moduloActivoId: s.moduloActivoId,

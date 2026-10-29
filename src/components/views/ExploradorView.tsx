@@ -1,5 +1,6 @@
 import { useAjustes, sumarTamanoCodigo, TAMANO_CODIGO_MIN, TAMANO_CODIGO_MAX } from '../../store/useAjustes'
 import { registrarUso } from '../../services/uso'
+import { NotaArticulo } from '../ui/NotaArticulo'
 import { useState, useMemo, useEffect, useRef, useCallback, type ReactNode, type TouchEvent } from 'react'
 import { createPortal, flushSync } from 'react-dom'
 import { motion, AnimatePresence, animate, useMotionValue } from 'framer-motion'
@@ -453,6 +454,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
             articulo={seleccionado.a}
           />
           <VinculosArticulo codigo={tipoActivo} articulo={seleccionado.a} modoOscuro={modoOscuro} />
+          <NotaArticulo key={`${tipoActivo}:${seleccionado.a}`} codigo={tipoActivo} articulo={seleccionado.a} modoOscuro={modoOscuro} />
         </motion.article>
   ) : null
 

@@ -8,7 +8,7 @@ import type { ArchivoRespaldo } from './respaldo'
 const vacio: EstadoSync = { versionNube: null, huellaSubida: null, ultimaSync: null }
 const archivo = (extra: object = {}): ArchivoRespaldo => ({
   app: 'prima-lex', version: 1, fecha: 'x',
-  datos: { ramos: [], academicoModulos: {}, progresoModulos: {}, diasActividadEstudio: [], colecciones: [], subrayados: {}, mapasMentales: [], repasoApuntes: {}, posicionLectura: {}, tareasPlan: [], sesionesFoco: [], ...extra },
+  datos: { ramos: [], academicoModulos: {}, progresoModulos: {}, diasActividadEstudio: [], colecciones: [], subrayados: {}, mapasMentales: [], repasoApuntes: {}, posicionLectura: {}, notasArticulo: {}, tareasPlan: [], sesionesFoco: [], ...extra },
 })
 
 describe('huella', () => {

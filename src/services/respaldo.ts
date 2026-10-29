@@ -1,3 +1,4 @@
+import { notasArticuloValidas, unirNotasArticulo, type NotaArticulo } from './notasArticulo'
 import { useStore } from '../store/useStore'
 import { useEnfoque } from '../store/useEnfoque'
 import type { SesionFoco } from './enfoque'
@@ -36,6 +37,8 @@ export interface DatosRespaldo {
   repasoApuntes: Record<string, EstadoTarjetaRepaso>
   /** Hasta dónde se leyó cada apunte (desde persist v31). */
   posicionLectura: Record<string, { ratio: number; fecha: number }>
+  /** Notas propias sobre artículos de los códigos. Faltan en respaldos antiguos. */
+  notasArticulo: Record<string, NotaArticulo>
   /** Tareas del plan personal (persist v35). Faltan en respaldos antiguos. */
   tareasPlan: TareaPlan[]
   /** Sesiones del temporizador Enfoque. Faltan en respaldos antiguos. */
@@ -89,6 +92,7 @@ export function crearRespaldo(): ArchivoRespaldo {
       mapasMentales: s.mapasMentales,
       repasoApuntes: s.repasoApuntes,
       posicionLectura: s.posicionLectura,
+      notasArticulo: s.notasArticulo,
       tareasPlan: s.tareasPlan,
       sesionesFoco: useEnfoque.getState().sesiones,
     },
@@ -112,6 +116,7 @@ export function vaciarDatosLocales() {
         mapasMentales: ini.mapasMentales,
         repasoApuntes: ini.repasoApuntes,
         posicionLectura: ini.posicionLectura,
+        notasArticulo: ini.notasArticulo,
         tareasPlan: ini.tareasPlan,
         sesionesFoco: useEnfoque.getInitialState().sesiones,
       },
@@ -230,6 +235,7 @@ export function validarRespaldo(texto: string): ResultadoValidacion {
     mapasMentales: (d.mapasMentales as MapaMental[]) ?? [],
     repasoApuntes: (d.repasoApuntes as Record<string, EstadoTarjetaRepaso>) ?? {},
     posicionLectura: esObjeto(d.posicionLectura) ? (d.posicionLectura as Record<string, { ratio: number; fecha: number }>) : {},
+    notasArticulo: notasArticuloValidas(d.notasArticulo),
     tareasPlan: (d.tareasPlan as TareaPlan[]) ?? [],
     sesionesFoco: (d.sesionesFoco as SesionFoco[]) ?? [],
   }
@@ -348,6 +354,7 @@ export function aplicarRespaldo(respaldo: ArchivoRespaldo, modo: ModoImportacion
     mapasMentales: s.mapasMentales,
     repasoApuntes: s.repasoApuntes,
     posicionLectura: s.posicionLectura,
+    notasArticulo: s.notasArticulo,
     tareasPlan: s.tareasPlan,
   }
   const sesionesPrevias = useEnfoque.getState().sesiones
@@ -376,6 +383,7 @@ function aplicarSinVerificar(respaldo: ArchivoRespaldo, modo: ModoImportacion) {
       mapasMentales: d.mapasMentales,
       repasoApuntes: d.repasoApuntes,
       posicionLectura: d.posicionLectura,
+      notasArticulo: d.notasArticulo,
       tareasPlan: d.tareasPlan,
       moduloActivoId: null,
       coleccionActivaId: null,
@@ -395,6 +403,8 @@ function aplicarSinVerificar(respaldo: ArchivoRespaldo, modo: ModoImportacion) {
   // repaso y posición de lectura: en la nube gana lo más reciente de cada tarjeta/apunte
   const repasoApuntes = { ...d.repasoApuntes, ...s.repasoApuntes }
   const posicionLectura = { ...d.posicionLectura, ...s.posicionLectura }
+  // notas de artículos: en la nube gana la más reciente; al importar un archivo, lo que ya tienes aquí
+  const notasArticulo = nube ? unirNotasArticulo(s.notasArticulo, d.notasArticulo) : { ...d.notasArticulo, ...s.notasArticulo }
   if (nube) {
     for (const [id, e] of Object.entries(d.repasoApuntes)) {
       const l = s.repasoApuntes[id]
@@ -415,6 +425,7 @@ function aplicarSinVerificar(respaldo: ArchivoRespaldo, modo: ModoImportacion) {
     mapasMentales: unir(s.mapasMentales, d.mapasMentales),
     repasoApuntes,
     posicionLectura,
+    notasArticulo,
     tareasPlan: unir(s.tareasPlan, d.tareasPlan),
   })
   useEnfoque.setState((e) => ({ sesiones: unirPorId(e.sesiones, d.sesionesFoco).sort((x, y) => y.inicio - x.inicio) }))
