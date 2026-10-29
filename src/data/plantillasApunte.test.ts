@@ -39,8 +39,4 @@ describe('plantillas de apunte', () => {
       expect(contar(parsearApunte(p.contenido), 'cita'), p.id).toBeGreaterThanOrEqual(1)
     }
   })
-  it('el título de la plantilla de clase lleva la fecha', () => {
-    const clase = PLANTILLAS_APUNTE.find((p) => p.id === 'clase')!
-    expect(clase.titulo(new Date(2026, 9, 28))).toBe('Clase del 28 de octubre')
-  })
 })

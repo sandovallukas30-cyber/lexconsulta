@@ -600,12 +600,23 @@ export interface EvaluacionModulo {
   nota: number | null // null = aún no rendida o sin calificar
 }
 
+/** Archivo que la persona adjuntó a un texto. El archivo en sí vive solo en el dispositivo (ver services/almacenArchivos.ts);
+ *  aquí van sus datos, que sí viajan con el respaldo. */
+export interface ArchivoTexto {
+  id: string
+  nombre: string
+  tamano: number
+  tipo: string
+}
+
 export interface TextoObligatorio {
   id: string
   titulo: string
   autor?: string
   leido: boolean
   enlace?: string
+  /** PDF u otro archivo adjunto desde este dispositivo. */
+  archivo?: ArchivoTexto
   /** Artículo del código del propio Módulo al que se refiere este texto (ej.
    *  "Art. 1545") -- el código en sí es el `codigoRelacionado` del Módulo
    *  contenedor, no hace falta repetirlo acá. */

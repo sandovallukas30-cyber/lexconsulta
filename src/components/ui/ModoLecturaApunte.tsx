@@ -16,7 +16,6 @@ import { RepasoApunte } from './RepasoApunte'
 import { NotasMargen } from './NotasMargen'
 import { PanelConsultaArticulos } from './PanelConsultaArticulos'
 import { FilaMenuCabecera, MenuCabeceraApunte } from './MenuCabeceraApunte'
-import { PlantillasApunte } from './PlantillasApunte'
 import { BusquedaEnApunte } from './BusquedaEnApunte'
 import { registrarUso } from '../../services/uso'
 import type { ApunteModulo, SesionClase, CuadernoApuntes } from '../../types'
@@ -119,8 +118,6 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
   const [indiceAbierto, setIndiceAbierto] = useState(false)
   const [repasando, setRepasando] = useState(false)
   const [consultaAbierta, setConsultaAbierta] = useState(false)
-  // al elegir una plantilla el editor se vuelve a montar con el contenido nuevo
-  const [versionEditor, setVersionEditor] = useState(0)
   const [buscando, setBuscando] = useState(false)
   const [seccionActual, setSeccionActual] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -480,23 +477,8 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
       <div className="flex-1 min-h-0 flex flex-col md:flex-row">
       <div className="flex-1 min-w-0 min-h-0 flex flex-col">
       {editando ? (
-        <>
-        {apunte.contenido.trim() === '' && (
-          <PlantillasApunte
-            claseBorde={tema.border}
-            claseSuave={tema.textSoft}
-            claseTexto={tema.text}
-            claseChip={tema.chipBg}
-            onElegir={(p) => {
-              registrarUso('apunte.plantilla')
-              onCambiar({ ...(apunte.titulo.trim() ? {} : { titulo: p.titulo(new Date()) }), contenido: p.contenido })
-              setVersionEditor((v) => v + 1)
-            }}
-          />
-        )}
         <Suspense fallback={<div className={`flex-1 flex items-center justify-center text-sm ${tema.textSoft}`}>Cargando el editor…</div>}>
           <EditorApunte
-            key={versionEditor}
             titulo={apunte.titulo}
             contenido={apunte.contenido}
             tema={temaLectura}
@@ -507,7 +489,6 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
             onTerminar={() => (apunte.contenido.trim() === '' ? onCerrar() : setEditando(false))}
           />
         </Suspense>
-        </>
       ) : (
         <>
           {buscando && <BusquedaEnApunte raiz={raiz} scrollRef={scrollRef} temaLectura={temaLectura} onCerrar={() => setBuscando(false)} />}

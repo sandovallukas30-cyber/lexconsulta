@@ -1,5 +1,5 @@
 /** Plantillas para empezar un apunte: la estructura con la que se suele estudiar Derecho, ya escrita en el formato de
- *  apuntes de Prima Lex (títulos, viñetas, recuadros y tablas). Se ofrecen cuando el apunte está vacío.
+ *  apuntes de Prima Lex (títulos, viñetas, recuadros y tablas). Se insertan desde el menú «/» del editor (escribiendo «/pla…»), sin ocupar un lugar vistoso al empezar un apunte.
  *
  *  Por diseño NO traen tarjetas de repaso a medio llenar: los recuadros 🎯 y 💡 y las líneas «- **Término:** …» son lo
  *  que el repaso convierte en tarjeta, así que aquí van solo con puntos suspensivos o con recuadros 📝, ⚖️ y ⚠️.
@@ -11,12 +11,8 @@ export interface PlantillaApunte {
   descripcion: string
   /** Ícono Tabler (debe estar en el set recortado de la app). */
   icono: string
-  /** Título con el que parte el apunte si aún no tiene uno. */
-  titulo: (hoy: Date) => string
   contenido: string
 }
-
-const fechaLarga = (d: Date) => d.toLocaleDateString('es-CL', { day: 'numeric', month: 'long' })
 
 export const PLANTILLAS_APUNTE: PlantillaApunte[] = [
   {
@@ -24,7 +20,6 @@ export const PLANTILLAS_APUNTE: PlantillaApunte[] = [
     nombre: 'Clase',
     descripcion: 'Lo que vimos, conceptos, normas citadas y dudas.',
     icono: 'ti-school',
-    titulo: (hoy) => `Clase del ${fechaLarga(hoy)}`,
     contenido: [
       '> 📝 Profesor/a, tema de hoy y lectura asignada.',
       '',
@@ -53,7 +48,6 @@ export const PLANTILLAS_APUNTE: PlantillaApunte[] = [
     nombre: 'Fallo (IRAC)',
     descripcion: 'Hechos, cuestión jurídica, norma, análisis y conclusión.',
     icono: 'ti-scale',
-    titulo: () => 'Fallo: ',
     contenido: [
       '> 📝 Tribunal, rol, fecha y partes.',
       '',
@@ -83,7 +77,6 @@ export const PLANTILLAS_APUNTE: PlantillaApunte[] = [
     nombre: 'Institución jurídica',
     descripcion: 'Concepto, naturaleza, requisitos, efectos y clasificación.',
     icono: 'ti-building-bank',
-    titulo: () => 'Institución: ',
     contenido: [
       '> 📝 Una frase que la defina, con tus palabras.',
       '',
@@ -122,7 +115,6 @@ export const PLANTILLAS_APUNTE: PlantillaApunte[] = [
     nombre: 'Acción o recurso',
     descripcion: 'Procedencia, plazo, tribunal, sujetos y tramitación.',
     icono: 'ti-gavel',
-    titulo: () => 'Acción: ',
     contenido: [
       '## Qué es y para qué sirve',
       '- …',
@@ -158,7 +150,6 @@ export const PLANTILLAS_APUNTE: PlantillaApunte[] = [
     nombre: 'Lectura',
     descripcion: 'Tesis, argumentos, conceptos, críticas y tu opinión.',
     icono: 'ti-book-2',
-    titulo: () => 'Lectura: ',
     contenido: [
       '> 📝 Autor/a, título, año y páginas.',
       '',
@@ -187,7 +178,6 @@ export const PLANTILLAS_APUNTE: PlantillaApunte[] = [
     nombre: 'Preparar una solemne',
     descripcion: 'Materias, esquema por unidad, datos a memorizar y preguntas.',
     icono: 'ti-clipboard-check',
-    titulo: () => 'Preparación: ',
     contenido: [
       '> 📝 Fecha, materias que entran y tipo de prueba.',
       '',

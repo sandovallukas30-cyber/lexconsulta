@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react'
 import type { Editor } from '@tiptap/react'
 import { useAjustes } from '../../../store/useAjustes'
+import { PLANTILLAS_APUNTE } from '../../../data/plantillasApunte'
+import { textoADoc } from '../../../services/apunteDoc'
+import { registrarUso } from '../../../services/uso'
 
 /** Menú de «/» al estilo Notion: al escribir una barra en una línea (sola o
  *  después de un espacio) se abre una lista de bloques —títulos, listas,
@@ -14,6 +17,8 @@ interface Comando {
   icono: string
   /** Palabras con las que también se encuentra (sin tildes). */
   claves: string
+  /** No sale en la lista de entrada: solo cuando lo que se escribe después de «/» lo nombra. */
+  soloBusqueda?: boolean
   ejecutar: (ed: Editor, rango: { from: number; to: number }) => void
 }
 
@@ -34,6 +39,20 @@ const COMANDOS: Comando[] = [
   { id: 'columnas', etiqueta: 'Dos columnas', ayuda: 'Una cosa al lado de la otra', icono: 'ti-columns', claves: 'columnas dos lado a lado', ejecutar: (e, r) => cadena(e, r).insertarColumnas(2).run() },
   { id: 'separador', etiqueta: 'Línea separadora', ayuda: 'Divide el apunte en partes', icono: 'ti-separator-horizontal', claves: 'linea separador divisor', ejecutar: (e, r) => cadena(e, r).setHorizontalRule().run() },
 ]
+
+/** Las plantillas de apunte, como bloques que se insertan donde está el cursor (sin ocupar un lugar vistoso). */
+const PLANTILLAS: Comando[] = PLANTILLAS_APUNTE.map((p) => ({
+  id: `plantilla-${p.id}`,
+  etiqueta: `Plantilla: ${p.nombre}`,
+  ayuda: p.descripcion,
+  icono: p.icono,
+  claves: `plantilla modelo estructura ${p.id} ${p.nombre.toLowerCase()}`,
+  soloBusqueda: true,
+  ejecutar: (e, r) => {
+    registrarUso('apunte.plantilla')
+    e.chain().focus().deleteRange(r).insertContent(textoADoc(p.contenido).content ?? []).run()
+  },
+}))
 
 const sinTildes = (t: string) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 
@@ -85,7 +104,7 @@ export function MenuComandos({ editor, teclas }: { editor: Editor | null; teclas
   const filtrados = useMemo(() => {
     if (!visible) return []
     const q = sinTildes(visible.consulta)
-    return COMANDOS.filter((c) => !q || sinTildes(c.etiqueta).includes(q) || c.claves.includes(q))
+    return [...COMANDOS, ...PLANTILLAS].filter((c) => (c.soloBusqueda ? q.length >= 2 : true) && (!q || sinTildes(c.etiqueta).includes(q) || c.claves.includes(q)))
   }, [visible])
 
   // el índice nunca se sale de la lista al filtrar

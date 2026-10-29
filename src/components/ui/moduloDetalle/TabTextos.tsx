@@ -1,7 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useStore } from '../../../store/useStore'
 import { eliminarDeListaConDeshacer } from '../../../services/deshacer'
-import type { SesionClase, TextoObligatorio } from '../../../types'
+import type { ArchivoTexto, SesionClase, TextoObligatorio } from '../../../types'
+import { guardarArchivo, limpiarArchivosHuerfanos, problemaArchivo } from '../../../services/almacenArchivos'
+import { registrarUso } from '../../../services/uso'
+import { CampoArchivo, EnlaceArchivo } from './ArchivoTexto'
 import { VERDE } from './utilidades'
 import { BotonAgregar, BotonEliminar, BotonesFormulario, FormularioRapido, CampoSelectClase, CampoTexto, EstadoVacio, EtiquetaArticulo, EtiquetaClase } from './comunes'
 
@@ -14,8 +17,40 @@ export function TabTextos({ moduloId, textos, clases, modoOscuro }: { moduloId: 
   const [enlace, setEnlace] = useState('')
   const [claseId, setClaseId] = useState('')
   const [articuloRelacionado, setArticuloRelacionado] = useState('')
+  const [archivoActual, setArchivoActual] = useState<ArchivoTexto | undefined>(undefined)
+  const [archivoNuevo, setArchivoNuevo] = useState<File | null>(null)
+  const [archivoQuitado, setArchivoQuitado] = useState(false)
+  const [errorArchivo, setErrorArchivo] = useState<string | null>(null)
+
+  // al abrir la pestaña se liberan los archivos de textos que ya no existen (si se acaba de eliminar uno, sigue ahí
+  // para poder deshacer: esto corre solo al entrar)
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      const usados = new Set<string>()
+      for (const d of Object.values(useStore.getState().academicoModulos)) for (const x of d.textos ?? []) if (x.archivo) usados.add(x.archivo.id)
+      void limpiarArchivosHuerfanos(usados)
+    }, 1500)
+    return () => window.clearTimeout(t)
+  }, [])
+
+  const reiniciarArchivo = (actual?: ArchivoTexto) => {
+    setArchivoActual(actual)
+    setArchivoNuevo(null)
+    setArchivoQuitado(false)
+    setErrorArchivo(null)
+  }
+
+  const elegirArchivo = (f: File) => {
+    const problema = problemaArchivo(f)
+    setErrorArchivo(problema)
+    if (!problema) {
+      setArchivoNuevo(f)
+      setArchivoQuitado(false)
+    }
+  }
 
   const iniciarNuevo = () => {
+    reiniciarArchivo(undefined)
     setEditandoId(null)
     setTitulo('')
     setAutor('')
@@ -32,14 +67,29 @@ export function TabTextos({ moduloId, textos, clases, modoOscuro }: { moduloId: 
     setEnlace(t.enlace ?? '')
     setClaseId(t.claseId ?? '')
     setArticuloRelacionado(t.articuloRelacionado ?? '')
+    reiniciarArchivo(t.archivo)
     setMostrarForm(true)
   }
 
-  const guardar = () => {
+  const guardar = async () => {
     if (!titulo.trim()) return
+    // el archivo se guarda primero: si no cabe, el texto no queda apuntando a algo que no existe
+    let archivo: ArchivoTexto | undefined = archivoQuitado ? undefined : archivoActual
+    if (archivoNuevo) {
+      const id = crypto.randomUUID()
+      try {
+        await guardarArchivo(id, archivoNuevo)
+      } catch (e) {
+        setErrorArchivo(e instanceof Error ? e.message : 'No se pudo guardar el archivo.')
+        return
+      }
+      archivo = { id, nombre: archivoNuevo.name, tamano: archivoNuevo.size, tipo: archivoNuevo.type }
+      registrarUso('biblioteca.archivo')
+    }
+    const lista = useStore.getState().academicoModulos[moduloId]?.textos ?? textos
     if (editandoId) {
-      setTextosModulo(moduloId, textos.map((t) => (t.id === editandoId
-        ? { ...t, titulo: titulo.trim(), autor: autor.trim() || undefined, enlace: enlace.trim() || undefined, claseId: claseId || undefined, articuloRelacionado: articuloRelacionado.trim() || undefined }
+      setTextosModulo(moduloId, lista.map((t) => (t.id === editandoId
+        ? { ...t, titulo: titulo.trim(), autor: autor.trim() || undefined, enlace: enlace.trim() || undefined, claseId: claseId || undefined, articuloRelacionado: articuloRelacionado.trim() || undefined, archivo }
         : t)))
     } else {
       const nuevo: TextoObligatorio = {
@@ -49,12 +99,14 @@ export function TabTextos({ moduloId, textos, clases, modoOscuro }: { moduloId: 
         enlace: enlace.trim() || undefined,
         claseId: claseId || undefined,
         articuloRelacionado: articuloRelacionado.trim() || undefined,
+        archivo,
         leido: false,
       }
-      setTextosModulo(moduloId, [...textos, nuevo])
+      setTextosModulo(moduloId, [...lista, nuevo])
     }
     setMostrarForm(false)
     setEditandoId(null)
+    reiniciarArchivo(undefined)
   }
 
   const toggleLeido = (id: string) => {
@@ -88,6 +140,19 @@ export function TabTextos({ moduloId, textos, clases, modoOscuro }: { moduloId: 
             <CampoTexto label="Autor (opcional)" valor={autor} onChange={setAutor} modoOscuro={modoOscuro} placeholder="Ej: René Abeliuk" />
             <CampoTexto label="Enlace (opcional)" valor={enlace} onChange={setEnlace} modoOscuro={modoOscuro} placeholder="https://..." />
           </div>
+          <CampoArchivo
+            actual={archivoActual}
+            nuevo={archivoNuevo}
+            quitado={archivoQuitado}
+            error={errorArchivo}
+            onElegir={elegirArchivo}
+            onQuitar={() => {
+              setArchivoNuevo(null)
+              setArchivoQuitado(true)
+              setErrorArchivo(null)
+            }}
+            modoOscuro={modoOscuro}
+          />
           <CampoTexto label="Artículo relacionado (opcional)" valor={articuloRelacionado} onChange={setArticuloRelacionado} modoOscuro={modoOscuro} placeholder="Ej: Art. 1545" />
           {clases.length > 0 && (
             <CampoSelectClase label="Lectura para la clase (opcional)" valor={claseId} onChange={setClaseId} clases={clases} modoOscuro={modoOscuro} />
@@ -122,6 +187,7 @@ export function TabTextos({ moduloId, textos, clases, modoOscuro }: { moduloId: 
                   <EtiquetaArticulo articulo={t.articuloRelacionado} modoOscuro={modoOscuro} />
                   <EtiquetaClase clase={clases.find((c) => c.id === t.claseId)} modoOscuro={modoOscuro} />
                 </div>
+                {t.archivo && <EnlaceArchivo archivo={t.archivo} modoOscuro={modoOscuro} />}
                 {t.enlace && (
                   <a href={t.enlace} target="_blank" rel="noopener noreferrer" className="text-xs block mt-0.5 hover:underline" style={{ color: 'var(--accent-texto)' }}>
                     Ver enlace

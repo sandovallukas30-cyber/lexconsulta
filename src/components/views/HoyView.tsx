@@ -193,10 +193,10 @@ export function HoyView() {
             {semana.map((d) => {
               const elegido = d.fecha === diaSel
               const esDiaHoy = d.fecha === hoy
-              const resumen =
-                d.evaluaciones.length > 0
-                  ? d.evaluaciones[0]
-                  : [d.clases > 0 && `${d.clases} ${d.clases === 1 ? 'clase' : 'clases'}`, d.tareas > 0 && `${d.tareas} ${d.tareas === 1 ? 'tarea' : 'tareas'}`].filter(Boolean).join(' · ')
+              // la evaluación va en rojo y sin esconder lo demás del día: clases y tareas siguen contándose debajo
+              const evaluacion = d.evaluaciones.length > 0 ? `${d.evaluaciones[0]}${d.evaluaciones.length > 1 ? ` +${d.evaluaciones.length - 1}` : ''}` : ''
+              const cuentas = [d.clases > 0 && `${d.clases} ${d.clases === 1 ? 'clase' : 'clases'}`, d.tareas > 0 && `${d.tareas} ${d.tareas === 1 ? 'tarea' : 'tareas'}`].filter(Boolean).join(' · ')
+              const resumen = [evaluacion, cuentas].filter(Boolean).join(' · ')
               return (
                 <li key={d.fecha}>
                   <button
@@ -214,8 +214,13 @@ export function HoyView() {
                       {nombreDia(d.fecha)} <span className="text-[17px]" style={{ color: esDiaHoy || elegido ? 'var(--accent-texto)' : 'var(--neu-ink)' }}>{Number(d.fecha.slice(8))}</span>
                       {esDiaHoy && <span className="inline-block w-1.5 h-1.5 rounded-full ml-1.5 align-middle" style={{ background: 'var(--accent-base)' }} aria-hidden="true" />}
                     </span>
-                    <span className="block text-[12px] leading-tight min-h-[1.1rem] line-clamp-2" style={{ color: d.evaluaciones.length ? 'var(--neu-danger)' : 'var(--neu-ink3)' }}>
-                      {resumen}
+                    {evaluacion && (
+                      <span className="block text-[12px] leading-tight font-semibold line-clamp-2" style={{ color: 'var(--neu-danger)' }}>
+                        {evaluacion}
+                      </span>
+                    )}
+                    <span className="block text-[12px] leading-tight min-h-[1.1rem]" style={{ color: 'var(--neu-ink3)' }}>
+                      {cuentas}
                     </span>
                   </button>
                 </li>
