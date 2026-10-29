@@ -121,7 +121,7 @@
 }
 
 /* el cursor ya indica dónde se escribe: sin el marco de foco alrededor de toda la hoja */
-div.ap-editor.ap-editor.ap-editor:focus-visible { outline: none; border-radius: 0.5rem; box-shadow: 0 0 0 1px color-mix(in srgb, currentColor 18%, transparent); }
+div.ap-editor.ap-editor.ap-editor:focus-visible { outline: none; }
 
 /* el título es texto grande con cursor visible: en vez del marco de foco, un subrayado suave */
 textarea.ap-titulo.ap-titulo:focus-visible { outline: none; box-shadow: 0 1px 0 0 color-mix(in srgb, currentColor 18%, transparent); }
