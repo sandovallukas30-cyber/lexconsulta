@@ -1,3 +1,4 @@
+import { SelectPrima } from '../ui/SelectPrima'
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { fondoModal, panelModal } from '../ui/animacionModal'
@@ -91,12 +92,12 @@ function SesionForm({ sesion, onClose }: { sesion?: SesionFoco; onClose: () => v
           </label>
           <label className="block">
             <span className={etiqueta} style={{ color: 'var(--neu-ink2)' }}>Tarea</span>
-            <select value={tareaId} onChange={(e) => setTareaId(e.target.value)} aria-label="Tarea" className="w-full h-control px-3 text-sm">
+            <SelectPrima value={tareaId} onChange={(e) => setTareaId(e.target.value)} aria-label="Tarea" className="w-full h-control px-3 text-sm">
               <option value="">Sin tarea</option>
               {tareas.filter((t) => !t.hecha || t.id === sesion?.tareaId).map((t) => (
                 <option key={t.id} value={t.id}>{t.titulo}</option>
               ))}
-            </select>
+            </SelectPrima>
           </label>
           <div>
             <span className={etiqueta} style={{ color: 'var(--neu-ink2)' }}>Concentración</span>

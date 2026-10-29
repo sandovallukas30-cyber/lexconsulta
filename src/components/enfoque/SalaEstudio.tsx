@@ -1,3 +1,4 @@
+import { SelectPrima } from '../ui/SelectPrima'
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from '../../store/useStore'
 import { useEnfoque } from '../../store/useEnfoque'
@@ -294,7 +295,7 @@ export function SalaEstudio() {
         <span className="flex-1" />
         <label className="flex items-center gap-2 text-xs font-semibold" style={{ color: 'var(--neu-ink2)' }}>
           Temporizador
-          <select
+          <SelectPrima
             value={d}
             onChange={(e) => cambiarSala({ disposicion: e.target.value as DisposicionSala })}
             aria-label="Dónde va el temporizador"
@@ -303,14 +304,14 @@ export function SalaEstudio() {
             {DISPOSICIONES.map(([id, nombre]) => (
               <option key={id} value={id}>{nombre}</option>
             ))}
-          </select>
+          </SelectPrima>
         </label>
         {sala.material === 'video' && (
-          <select value={sala.tamano} onChange={(e) => cambiarSala({ tamano: e.target.value as TamanoVideo })} aria-label="Tamaño del video" className="h-control-sm px-3 text-xs">
+          <SelectPrima value={sala.tamano} onChange={(e) => cambiarSala({ tamano: e.target.value as TamanoVideo })} aria-label="Tamaño del video" className="h-control-sm px-3 text-xs">
             {TAMANOS.map(([t, n]) => (
               <option key={t} value={t}>Video: {n}</option>
             ))}
-          </select>
+          </SelectPrima>
         )}
         {d === 'minimo' && <PomodoroCompacto variante="pildora" selectores={false} />}
         <button onClick={cerrar} className="boton boton-suave boton-icono" aria-label="Cerrar la sala de estudio" title="Cerrar (Esc)">
@@ -397,14 +398,14 @@ export function SalaEstudio() {
             </>
           ) : opciones.length > 0 ? (
             <>
-              <select value={apunteSel} onChange={(e) => {
+              <SelectPrima value={apunteSel} onChange={(e) => {
                 cambiarSala({ apunte: e.target.value })
                 useEnfoque.setState({ apunteId: e.target.value.split(':')[1] || null })
               }} aria-label="Apunte a mostrar" className="h-control px-3 text-sm">
                 {opciones.map((o) => (
                   <option key={o.valor} value={o.valor}>{o.texto}</option>
                 ))}
-              </select>
+              </SelectPrima>
               <ApunteEditable key={apunteSel} ramoId={apRamo} apunteId={apId} />
             </>
           ) : (

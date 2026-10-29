@@ -1,3 +1,4 @@
+import { SelectPrima } from '../SelectPrima'
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { useStore } from '../../../store/useStore'
 import { eliminarDeListaConDeshacer } from '../../../services/deshacer'
@@ -515,7 +516,7 @@ export function TabApuntes({
               </div>
             ) : (
               <div className="flex gap-2">
-                <select
+                <SelectPrima
                   aria-label="Cuaderno"
                   value={cuadernoId}
                   onChange={(e) => setCuadernoId(e.target.value)}
@@ -525,7 +526,7 @@ export function TabApuntes({
                 >
                   <option value="">Sin cuaderno</option>
                   {cuadernos.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-                </select>
+                </SelectPrima>
                 <button onClick={() => setMostrarNuevoCuaderno(true)} className="boton boton-suave boton-chico">
                   + Nuevo
                 </button>

@@ -1,3 +1,4 @@
+import { SelectPrima } from '../ui/SelectPrima'
 import { useEnfoque, esFlow, msEnfocados, msMostrados } from '../../store/useEnfoque'
 import { useStore } from '../../store/useStore'
 import { useAhora } from '../../hooks/useMotorEnfoque'
@@ -102,7 +103,7 @@ export function PomodoroCompacto({ selectores = true, variante = 'vertical', gra
       {selectores && (
         <div className="w-full space-y-2">
           <SelectorRamo valor={s.ramoId} onChange={(v) => s.setObjetivo(v, v === s.ramoId ? s.tareaId : null)} className="w-full h-control px-3 text-sm" etiqueta="Asignatura de la sesión" />
-          <select
+          <SelectPrima
             value={s.tareaId ?? ''}
             onChange={(ev) => {
               const t = tareas.find((x) => x.id === ev.target.value)
@@ -115,7 +116,7 @@ export function PomodoroCompacto({ selectores = true, variante = 'vertical', gra
             {pendientes.map((t) => (
               <option key={t.id} value={t.id}>{t.titulo}</option>
             ))}
-          </select>
+          </SelectPrima>
         </div>
       )}
       <div className="w-full"><CalificarSesion /></div>

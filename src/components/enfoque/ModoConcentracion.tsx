@@ -1,3 +1,4 @@
+import { SelectPrima } from '../ui/SelectPrima'
 import { motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../../store/useStore'
@@ -205,14 +206,14 @@ export function ModoConcentracion({ onCerrar }: { onCerrar: () => void }) {
               <label className="enf-etiqueta" htmlFor="enf-tarea">
                 Tarea en foco
               </label>
-              <select id="enf-tarea" className="enf-input" value={tareaId ?? ''} onChange={(e) => setObjetivo(ramoId, e.target.value || null)}>
+              <SelectPrima id="enf-tarea" className="enf-input" value={tareaId ?? ''} onChange={(e) => setObjetivo(ramoId, e.target.value || null)}>
                 <option value="">Ninguna</option>
                 {pendientes.map((tp) => (
                   <option key={tp.id} value={tp.id}>
                     {tp.titulo}
                   </option>
                 ))}
-              </select>
+              </SelectPrima>
             </div>
             {tarea && (
               <button

@@ -146,7 +146,8 @@ main[data-vista='explorador'], main[data-vista='colecciones'] { --font-serif: va
 /* ---------- campos de texto ---------- */
 input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not(.bg-transparent):not(.sin-neu),
 textarea:not(.bg-transparent):not(.sin-neu),
-select:not(.bg-transparent):not(.sin-neu) {
+select:not(.bg-transparent):not(.sin-neu),
+.select-prima:not(.bg-transparent):not(.sin-neu) {
   background-color: var(--neu-card);
   border-color: transparent;
   border-radius: 14px;
@@ -154,12 +155,12 @@ select:not(.bg-transparent):not(.sin-neu) {
   color: var(--neu-ink);
 }
 input::placeholder, textarea::placeholder { color: var(--neu-ink3); }
-input:not(.sin-neu):focus-visible, textarea:not(.sin-neu):focus-visible, select:not(.sin-neu):focus-visible {
+input:not(.sin-neu):focus-visible, textarea:not(.sin-neu):focus-visible, select:not(.sin-neu):focus-visible, .select-prima:not(.sin-neu):focus-visible {
   box-shadow: var(--neu-presionada-chica);
 }
 /* Foco de los campos: anillo sólido (antes un halo al 55 % que quedaba bajo 3:1 de contraste, WCAG 1.4.11).
    Va fuera de las capas de Tailwind, así que gana sobre `outline-none` de las clases de cada campo. */
-input:focus-visible, textarea:focus-visible, select:focus-visible {
+input:focus-visible, textarea:focus-visible, select:focus-visible, .select-prima:focus-visible {
   outline: 2px solid var(--anillo-foco);
   outline-offset: 1px;
 }

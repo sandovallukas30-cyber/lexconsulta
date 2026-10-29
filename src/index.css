@@ -284,9 +284,9 @@ html, body, #root { height: 100%; width: 100%; overflow: hidden; }
   main button:not(.sin-tactil), header button, aside button:not(.sin-tactil), [role='dialog'] button:not(.sin-tactil) { min-height: 44px; }
   /* botones de solo ícono escritos con w-8/w-9/w-10: también 44 px de ancho */
   button[class*="w-8"][class*="h-8"], button[class*="w-9"][class*="h-9"], button[class*="w-10"][class*="h-10"] { min-width: 44px; min-height: 44px; }
-  main select, [role='dialog'] select { min-height: 44px; }
+  main select, [role='dialog'] select, main .select-prima, [role='dialog'] .select-prima { min-height: 44px; }
   /* iOS hace zoom al enfocar un campo de menos de 16 px y deja la página desplazada */
-  input:not([type='checkbox']):not([type='radio']):not([type='range']), textarea, select { font-size: max(16px, 1em); }
+  input:not([type='checkbox']):not([type='radio']):not([type='range']), textarea, select, .select-prima { font-size: max(16px, 1em); }
   /* sin el retraso de doble toque y sin rebote que arrastra la página entera */
   button, [role='button'], [role='tab'], a, label, select, summary { touch-action: manipulation; }
   html, body { overscroll-behavior-y: none; }

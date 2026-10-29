@@ -1,3 +1,4 @@
+import { SelectPrima } from './SelectPrima'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from '../../store/useStore'
 import { avisar } from '../../store/useAvisos'
@@ -129,7 +130,7 @@ export function PanelConsultaArticulos({ temaLectura, className = '', onCerrar }
       <div className="px-4 pt-3 pb-2 grid gap-2 flex-shrink-0">
         <label className="grid gap-1">
           <span className={`text-[11px] font-semibold uppercase tracking-wide ${tema.textSoft}`}>Código o ley</span>
-          <select
+          <SelectPrima
             value={tipo ?? ''}
             onChange={(e) => {
               const nuevo = e.target.value as CodigoTipo
@@ -150,7 +151,7 @@ export function PanelConsultaArticulos({ temaLectura, className = '', onCerrar }
                 ))}
               </optgroup>
             ))}
-          </select>
+          </SelectPrima>
         </label>
         <label className="grid gap-1">
           <span className={`text-[11px] font-semibold uppercase tracking-wide ${tema.textSoft}`}>Artículo o palabra</span>

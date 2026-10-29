@@ -1,3 +1,4 @@
+import { SelectPrima } from '../ui/SelectPrima'
 import { useMemo, useState } from 'react'
 import { useStore } from '../../store/useStore'
 import { avisar } from '../../store/useAvisos'
@@ -114,7 +115,7 @@ function NuevaTarea({ onCreada }: { onCreada: () => void }) {
         <button type="button" onClick={() => setFecha(proximoDiaISO(1))} aria-pressed={fecha === proximoDiaISO(1)} className="boton boton-borde">
           Lunes
         </button>
-        <select
+        <SelectPrima
           aria-label="Prioridad"
           value={prioridad}
           onChange={(e) => setPrioridad(e.target.value as PrioridadTarea)}
@@ -125,7 +126,7 @@ function NuevaTarea({ onCreada }: { onCreada: () => void }) {
               Prioridad {ETIQUETA_PRIORIDAD[p].toLowerCase()}
             </option>
           ))}
-        </select>
+        </SelectPrima>
       </div>
     </form>
   )
@@ -170,7 +171,7 @@ function EditorTarea({ tarea, onCerrar }: { tarea: TareaPlan; onCerrar: () => vo
           onChange={(e) => actualizar(tarea.id, { fecha: e.target.value || null })}
           className={c.campo}
         />
-        <select
+        <SelectPrima
           aria-label="Prioridad"
           value={tarea.prioridad}
           onChange={(e) => actualizar(tarea.id, { prioridad: e.target.value as PrioridadTarea })}
@@ -181,7 +182,7 @@ function EditorTarea({ tarea, onCerrar }: { tarea: TareaPlan; onCerrar: () => vo
               Prioridad {ETIQUETA_PRIORIDAD[p].toLowerCase()}
             </option>
           ))}
-        </select>
+        </SelectPrima>
       </div>
 
       <div>
@@ -311,7 +312,7 @@ export function TareasView() {
             ))}
           </div>
           {ramosConTareas.size > 0 && (
-            <select
+            <SelectPrima
               aria-label="Filtrar por asignatura"
               value={ramoFiltro ?? ''}
               onChange={(e) => setRamoFiltro(e.target.value || null)}
@@ -323,7 +324,7 @@ export function TareasView() {
                   {ramos.find((r) => r.id === id)?.nombre ?? MODULOS.find((m) => m.id === id)?.nombre ?? 'Asignatura eliminada'}
                 </option>
               ))}
-            </select>
+            </SelectPrima>
           )}
         </div>
 

@@ -1,3 +1,4 @@
+import { SelectPrima } from './SelectPrima'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
@@ -385,7 +386,7 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
                   <div className="space-y-2">
                     {bloques.map((b, i) => (
                       <div key={i} className="flex items-center gap-2">
-                        <select
+                        <SelectPrima
                           aria-label="Día"
                           value={b.dia}
                           onChange={(e) => setBloques((l) => l.map((x, j) => (j === i ? { ...x, dia: Number(e.target.value) } : x)))}
@@ -394,7 +395,7 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
                           {DIAS_LARGOS.map((n, d) => (
                             <option key={n} value={d}>{n}</option>
                           ))}
-                        </select>
+                        </SelectPrima>
                         <input
                           type="time"
                           aria-label="Hora de inicio"

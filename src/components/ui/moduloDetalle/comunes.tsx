@@ -1,3 +1,4 @@
+import { SelectPrima } from '../SelectPrima'
 import { useEffect, useRef } from 'react'
 import type { SesionClase } from '../../../types'
 import { diasHasta, formatearCountdown, urgenciaDe } from '../../../services/modulosAcademico'
@@ -157,7 +158,7 @@ export function CampoSelectClase({
   return (
     <label className="block">
       <span className={`block text-xs font-medium mb-1 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>{label}</span>
-      <select
+      <SelectPrima
         value={valor}
         onChange={(e) => onChange(e.target.value)}
         className={`w-full rounded-control px-3 py-2 text-sm outline-none border campo-foco ${
@@ -168,7 +169,7 @@ export function CampoSelectClase({
         {ordenadas.map((c) => (
           <option key={c.id} value={c.id}>{formatearFechaCorta(c.fecha)} — {c.tema}</option>
         ))}
-      </select>
+      </SelectPrima>
     </label>
   )
 }

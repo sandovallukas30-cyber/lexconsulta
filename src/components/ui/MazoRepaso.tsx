@@ -1,3 +1,4 @@
+import { SelectPrima } from './SelectPrima'
 import { useMemo, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
@@ -102,14 +103,14 @@ export function MazoRepaso({ onVolver }: { onVolver: () => void }) {
             {secciones.length > 1 && (
               <label className="block">
                 <span className={etiqueta} style={{ color: 'var(--neu-ink3)' }}>Sección del apunte</span>
-                <select value={filtros.seccion} onChange={(e) => setFiltros((f) => ({ ...f, seccion: e.target.value }))} className="w-full h-control px-3 rounded-control border text-sm bg-[var(--neu-bg)] border-zinc-200 text-[var(--neu-ink)]">
+                <SelectPrima value={filtros.seccion} onChange={(e) => setFiltros((f) => ({ ...f, seccion: e.target.value }))} className="w-full h-control px-3 rounded-control border text-sm bg-[var(--neu-bg)] border-zinc-200 text-[var(--neu-ink)]">
                   <option value="">Todas las secciones</option>
                   {secciones.map((s) => (
                     <option key={s.seccion} value={s.seccion}>
                       {s.seccion} ({s.n})
                     </option>
                   ))}
-                </select>
+                </SelectPrima>
               </label>
             )}
 

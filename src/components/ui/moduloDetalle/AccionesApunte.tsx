@@ -1,3 +1,4 @@
+import { SelectPrima } from '../SelectPrima'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useStore } from '../../../store/useStore'
@@ -225,7 +226,7 @@ export function ModalMoverApunte({
         </div>
         <label className="block">
           <span className={etiqueta}>Asignatura o área del derecho</span>
-          <select
+          <SelectPrima
             className={campo}
             value={destino}
             onChange={(e) => {
@@ -247,11 +248,11 @@ export function ModalMoverApunte({
                 </optgroup>
               )
             })}
-          </select>
+          </SelectPrima>
         </label>
         <label className="block">
           <span className={etiqueta}>Cuaderno</span>
-          <select className={campo} value={cuaderno} onChange={(e) => setCuaderno(e.target.value)}>
+          <SelectPrima className={campo} value={cuaderno} onChange={(e) => setCuaderno(e.target.value)}>
             <option value="">Sin cuaderno</option>
             {cuadernos.map((c) => (
               <option key={c.id} value={c.id}>
@@ -259,7 +260,7 @@ export function ModalMoverApunte({
               </option>
             ))}
             <option value="__nuevo__">+ Cuaderno nuevo…</option>
-          </select>
+          </SelectPrima>
         </label>
         {cuaderno === '__nuevo__' && (
           <input

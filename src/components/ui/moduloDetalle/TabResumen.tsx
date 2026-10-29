@@ -1,3 +1,4 @@
+import { SelectPrima } from '../SelectPrima'
 import { useMemo, useState } from 'react'
 import type { SesionClase, EvaluacionModulo, TextoObligatorio, ApunteModulo, BriefCaso, Coleccion, MapaMental } from '../../../types'
 import { useStore } from '../../../store/useStore'
@@ -291,7 +292,7 @@ function VinculoModuloSeccion({
         </div>
       )}
       {disponibles.length > 0 && (
-        <select
+        <SelectPrima
           aria-label={placeholder}
           value=""
           onChange={(e) => { if (e.target.value) onVincular(e.target.value) }}
@@ -303,7 +304,7 @@ function VinculoModuloSeccion({
           {disponibles.map((d) => (
             <option key={d.id} value={d.id}>{d.label}</option>
           ))}
-        </select>
+        </SelectPrima>
       )}
     </div>
   )

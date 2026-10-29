@@ -1,3 +1,4 @@
+import { SelectPrima } from '../ui/SelectPrima'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
@@ -250,7 +251,7 @@ function Temporizador({ concentracion }: { concentracion: boolean }) {
         </label>
         <label className="block">
           <span className={`block text-xs font-medium mb-1 ${e.suave}`}>¿Con qué tarea?</span>
-          <select
+          <SelectPrima
             aria-label="Tarea de la sesión"
             value={s.tareaId ?? ''}
             onChange={(ev) => {
@@ -265,7 +266,7 @@ function Temporizador({ concentracion }: { concentracion: boolean }) {
                 {t.titulo}
               </option>
             ))}
-          </select>
+          </SelectPrima>
         </label>
       </div>
 

@@ -1,3 +1,4 @@
+import { SelectPrima } from './SelectPrima'
 import { useStore } from '../../store/useStore'
 import { MODULOS } from '../../data/modulos'
 
@@ -17,7 +18,7 @@ export function SelectorRamo({
 }) {
   const ramos = useStore((s) => s.ramos)
   return (
-    <select aria-label={etiqueta} value={valor ?? ''} onChange={(e) => onChange(e.target.value || null)} className={className}>
+    <SelectPrima aria-label={etiqueta} value={valor ?? ''} onChange={(e) => onChange(e.target.value || null)} className={className}>
       <option value="">{textoVacio}</option>
       {ramos.length > 0 && (
         <optgroup label="Mis asignaturas">
@@ -35,6 +36,6 @@ export function SelectorRamo({
           </option>
         ))}
       </optgroup>
-    </select>
+    </SelectPrima>
   )
 }

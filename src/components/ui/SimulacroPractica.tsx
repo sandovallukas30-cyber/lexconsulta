@@ -1,3 +1,4 @@
+import { SelectPrima } from './SelectPrima'
 import { useEffect, useMemo, useState } from 'react'
 import { useStore } from '../../store/useStore'
 import { nombreRamo } from '../../services/tareasPlan'
@@ -129,14 +130,14 @@ export function SimulacroPractica({ onVolver }: { onVolver: () => void }) {
             <section className="neu-raised p-5 space-y-4" aria-label="Armar simulacro">
               <label className="block">
                 <span className="block text-[11px] font-bold uppercase tracking-[0.08em] mb-1" style={{ color: 'var(--neu-ink3)' }}>Material</span>
-                <select value={seleccion} onChange={(e) => setSeleccion(e.target.value)} className="w-full h-control px-3 rounded-control border text-sm bg-[var(--neu-bg)] border-zinc-200 text-[var(--neu-ink)]">
+                <SelectPrima value={seleccion} onChange={(e) => setSeleccion(e.target.value)} className="w-full h-control px-3 rounded-control border text-sm bg-[var(--neu-bg)] border-zinc-200 text-[var(--neu-ink)]">
                   <option value="todas">Todas mis asignaturas ({tarjetasParaSimulacro(todas).length} tarjetas)</option>
                   {opcionesRamo.map((r) => (
                     <option key={r.id} value={r.id}>
                       {r.nombre} ({r.n} {r.n === 1 ? 'tarjeta' : 'tarjetas'})
                     </option>
                   ))}
-                </select>
+                </SelectPrima>
               </label>
               <div>
                 <span className="block text-[11px] font-bold uppercase tracking-[0.08em] mb-1" style={{ color: 'var(--neu-ink3)' }}>Preguntas</span>

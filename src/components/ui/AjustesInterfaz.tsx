@@ -1,3 +1,4 @@
+import { SelectPrima } from './SelectPrima'
 import { sumarTamanoCodigo, TAMANO_CODIGO_DEFECTO, TAMANO_CODIGO_MIN, TAMANO_CODIGO_MAX } from '../../store/useAjustes'
 import { useAjustes, ZOOMS, prefiereMenosMovimiento } from '../../store/useAjustes'
 import { Segmentado } from './Segmentado'
@@ -118,7 +119,7 @@ export function AjusteAvisos() {
       />
       <label className="flex items-center gap-3 text-sm mt-2" style={{ color: 'var(--neu-ink2)', opacity: a.recordatorios ? 1 : 0.5 }}>
         Hora del resumen
-        <select
+        <SelectPrima
           disabled={!a.recordatorios}
           value={a.horaResumen}
           onChange={(e) => a.set({ horaResumen: Number(e.target.value) })}
@@ -128,7 +129,7 @@ export function AjusteAvisos() {
           {[6, 7, 8, 9, 10, 11, 12, 18, 20].map((h) => (
             <option key={h} value={h}>{String(h).padStart(2, '0')}:00</option>
           ))}
-        </select>
+        </SelectPrima>
       </label>
       {a.recordatorios && typeof Notification !== 'undefined' && Notification.permission === 'denied' && (
         <p className="text-xs mt-2" style={{ color: 'var(--neu-danger)' }}>

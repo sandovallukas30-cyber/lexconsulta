@@ -1,3 +1,4 @@
+import { SelectPrima } from '../ui/SelectPrima'
 import { useEffect, useMemo, useState } from 'react'
 import { useStore } from '../../store/useStore'
 import { LoQueSigue } from '../hoy/LoQueSigue'
@@ -391,7 +392,7 @@ export function HoyView() {
                 </label>
                 <label className="min-w-0">
                   <span className="block text-[11px] font-bold uppercase tracking-[0.08em] mb-1" style={{ color: 'var(--neu-ink3)' }}>Técnica</span>
-                  <select
+                  <SelectPrima
                     value={tecnica}
                     onChange={(e) => useEnfoque.getState().setTecnica(e.target.value as Tecnica)}
                     disabled={estadoEnfoque !== 'detenido'}
@@ -399,7 +400,7 @@ export function HoyView() {
                   >
                     <option value="pomodoro">Pomodoro</option>
                     <option value="flowtime">Flowtime</option>
-                  </select>
+                  </SelectPrima>
                 </label>
               </div>
               <button onClick={iniciarEnfoque} className="boton boton-primario w-full mt-4">

@@ -1,3 +1,4 @@
+import { SelectPrima } from '../SelectPrima'
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { EditorContent, useEditor, useEditorState, type Editor } from '@tiptap/react'
 import { TEMAS_LECTURA } from '../../../services/lecturaTema'
@@ -331,7 +332,7 @@ export default function EditorApunte({ titulo, contenido, tema: temaLectura, tam
             <Boton icono="ti-arrow-back-up" titulo="Deshacer (Ctrl+Z)" deshabilitado={!estado.deshacer} onClick={() => editor.chain().focus().undo().run()} />
             <Boton icono="ti-arrow-forward-up" titulo="Rehacer (Ctrl+Y)" deshabilitado={!estado.rehacer} onClick={() => editor.chain().focus().redo().run()} />
             <Separador />
-            <select
+            <SelectPrima
               aria-label="Estilo del párrafo"
               value={estado.nivelTitulo}
               disabled={estado.enLista}
@@ -347,7 +348,7 @@ export default function EditorApunte({ titulo, contenido, tema: temaLectura, tam
               <option value={1}>Título</option>
               <option value={2}>Subtítulo</option>
               <option value={3}>Sección</option>
-            </select>
+            </SelectPrima>
             <Separador />
             {barraFormato}
             <Boton icono="ti-clear-formatting" titulo="Quitar formato" onClick={() => editor.chain().focus().unsetAllMarks().run()} />
