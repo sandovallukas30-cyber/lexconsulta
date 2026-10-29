@@ -478,7 +478,7 @@ export default function EditorApunte({ titulo, contenido, tema: temaLectura, tam
               }}
               aria-label="Título del apunte"
               placeholder="Título"
-              className={`w-full bg-transparent outline-none resize-none overflow-hidden text-2xl sm:text-3xl zona-lectura font-serif font-bold mb-6 placeholder:opacity-40 ${tema.text}`}
+              className={`ap-titulo w-full bg-transparent outline-none resize-none overflow-hidden text-2xl sm:text-3xl zona-lectura font-serif font-bold mb-6 placeholder:opacity-40 ${tema.text}`}
             />
             <div
               className={`zona-lectura ap-tema-${temaLectura} ${temaLectura === 'oscuro' ? 'text-zinc-200' : temaLectura === 'papel' ? 'text-[#3a2c1a]' : 'text-zinc-800'}`}
