@@ -107,7 +107,10 @@
 .ap-editor th { background: var(--ap-cabecera); font-weight: 600; }
 .ap-editor td p, .ap-editor th p { margin: 0; }
 .ap-editor .selectedCell::after { content: ''; position: absolute; inset: 0; background: var(--ap-seleccion); pointer-events: none; }
-.ap-editor .tableWrapper { overflow-x: auto; }
+/* una tabla más ancha que la hoja se desplaza hacia el lado (también con el dedo) en vez de apretar las columnas */
+/* con columnas de ancho propio la tabla toma la suma de sus anchos (min-width que pone el editor) en vez de estirarse al 100 % y apretarlas */
+.ap-editor table:has(col[style*="; width:"]) { width: 0; }
+.ap-editor .tableWrapper { overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
 /* arrastrar el borde de una columna para cambiar su ancho (como en Notion) */
 .ap-editor .column-resize-handle { position: absolute; right: -2px; top: 0; bottom: -2px; width: 4px; background: var(--accent-base); opacity: 0.55; pointer-events: none; z-index: 2; }
 .ap-editor.resize-cursor { cursor: col-resize; }

@@ -1,6 +1,7 @@
 import { SelectPrima } from './SelectPrima'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useStore } from '../../store/useStore'
+import { useAjustes } from '../../store/useAjustes'
 import { avisar } from '../../store/useAvisos'
 import { useCodigo } from '../../hooks/useCodigo'
 import { citaArticulo, copiarAlPortapapeles, textoConCita } from '../../services/citas'
@@ -16,6 +17,21 @@ const ETIQUETA_CATEGORIA: Record<CategoriaCodigo, string> = {
   tratados: 'Tratados',
 }
 const ORDEN_CATEGORIAS: CategoriaCodigo[] = ['fundamentales', 'sustantivos', 'procedimentales', 'especiales', 'tratados']
+
+/** El panel solo se puede hacer más angosto que su medida de siempre (la que tiene en ModoLecturaApunte: 24 rem, y 27 rem en
+ *  pantallas anchas). La medida elegida se recuerda en este dispositivo. */
+const CLAVE_ANCHO = 'primalex.consulta.ancho'
+const ANCHO_MINIMO = 256
+const PASO_TECLADO = 24
+const anchoPorDefecto = () => (window.matchMedia('(min-width: 1024px)').matches ? 432 : 384)
+function anchoGuardado(): number | null {
+  try {
+    const n = Number(localStorage.getItem(CLAVE_ANCHO))
+    return n >= ANCHO_MINIMO && n < anchoPorDefecto() ? n : null
+  } catch {
+    return null
+  }
+}
 
 // Se recuerda mientras la app esté abierta: al volver a abrir el panel queda el mismo código.
 let ultimoCodigo: CodigoTipo | null = null
@@ -40,6 +56,21 @@ export function PanelConsultaArticulos({ temaLectura, className = '', onCerrar }
   const [elegido, setElegido] = useState<string | null>(null)
   const [recientes, setRecientes] = useState<{ tipo: CodigoTipo; a: string }[]>([])
   const refInput = useRef<HTMLInputElement>(null)
+  const refPanel = useRef<HTMLElement>(null)
+  const arrastre = useRef<{ x: number; ancho: number } | null>(null)
+  const [ancho, setAncho] = useState<number | null>(anchoGuardado)
+
+  const fijarAncho = (px: number | null) => {
+    const maximo = anchoPorDefecto()
+    const valor = px === null || px >= maximo ? null : Math.max(ANCHO_MINIMO, Math.round(px))
+    setAncho(valor)
+    try {
+      if (valor === null) localStorage.removeItem(CLAVE_ANCHO)
+      else localStorage.setItem(CLAVE_ANCHO, String(valor))
+    } catch {
+      /* sin almacenamiento: vale para esta sesión */
+    }
+  }
 
   const { codigo, cargando, error, reintentar } = useCodigo(tipo)
   const articulos = codigo?.articulos
@@ -109,8 +140,10 @@ export function PanelConsultaArticulos({ temaLectura, className = '', onCerrar }
 
   return (
     <aside
+      ref={refPanel}
       aria-label="Consultar un artículo"
-      className={`flex flex-col min-h-0 ${tema.bg} ${tema.border} print:hidden ${className}`}
+      style={ancho ? ({ '--ancho-panel': `${ancho}px` } as CSSProperties) : undefined}
+      className={`relative flex flex-col min-h-0 ${tema.bg} ${tema.border} print:hidden ${className}`}
       // Esc cierra solo el panel (no la nota)
       onKeyDown={(e) => {
         if (e.key === 'Escape') {
@@ -119,6 +152,45 @@ export function PanelConsultaArticulos({ temaLectura, className = '', onCerrar }
         }
       }}
     >
+      {/* tirador del borde izquierdo (solo cuando el panel va al costado): arrastrar, flechas o doble toque para volver a la medida de siempre */}
+      <div
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Ancho del panel. Flechas izquierda y derecha para cambiarlo; Inicio lo restablece"
+        aria-valuemin={ANCHO_MINIMO}
+        aria-valuemax={anchoPorDefecto()}
+        aria-valuenow={ancho ?? anchoPorDefecto()}
+        tabIndex={0}
+        title="Arrastra para hacer el panel más angosto (doble toque: medida original)"
+        onPointerDown={(e) => {
+          arrastre.current = { x: e.clientX, ancho: refPanel.current?.offsetWidth ?? anchoPorDefecto() }
+          e.currentTarget.setPointerCapture(e.pointerId)
+        }}
+        onPointerMove={(e) => {
+          const a = arrastre.current
+          if (!a) return
+          const z = useAjustes.getState().zoom || 1
+          fijarAncho(a.ancho - (e.clientX - a.x) / z)
+        }}
+        onPointerUp={() => {
+          arrastre.current = null
+        }}
+        onPointerCancel={() => {
+          arrastre.current = null
+        }}
+        onDoubleClick={() => fijarAncho(null)}
+        onKeyDown={(e) => {
+          const actual = ancho ?? anchoPorDefecto()
+          if (e.key === 'ArrowRight') fijarAncho(actual - PASO_TECLADO)
+          else if (e.key === 'ArrowLeft') fijarAncho(actual + PASO_TECLADO)
+          else if (e.key === 'Home') fijarAncho(null)
+          else return
+          e.preventDefault()
+        }}
+        className="group hidden md:block absolute left-0 top-0 bottom-0 w-4 -translate-x-1/2 z-10 cursor-col-resize touch-none select-none"
+      >
+        <span className="absolute inset-y-0 left-1/2 w-[3px] -translate-x-1/2 rounded-full bg-transparent transition-colors group-hover:bg-[var(--accent-base)] group-focus-visible:bg-[var(--accent-base)] group-active:bg-[var(--accent-base)]" />
+      </div>
       <div className={`flex items-center gap-2 px-4 py-2.5 border-b flex-shrink-0 ${tema.border}`}>
         <i className="ti ti-book-2 text-lg" style={{ color: 'var(--accent-texto)' }} aria-hidden="true" />
         <h2 className={`text-sm font-bold flex-1 ${tema.text}`}>Consultar artículo</h2>

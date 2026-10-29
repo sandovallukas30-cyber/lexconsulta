@@ -9,6 +9,7 @@ import { useEstadoGuardado, vaciarEscrituraPendiente } from '../../../store/alma
 import { avisar } from '../../../store/useAvisos'
 import { crearExtensiones, ICONOS_RECUADRO } from './extensiones'
 import { MenuComandos } from './MenuComandos'
+import { cambiarAnchoColumna, PASO_ANCHO_COLUMNA } from './anchoColumna'
 import './editorApunte.css'
 
 const VERDE = 'var(--accent-base)'
@@ -388,6 +389,11 @@ export default function EditorApunte({ titulo, contenido, tema: temaLectura, tam
                 <Boton icono="ti-column-insert-right" titulo="Agregar columna a la tabla" onClick={() => editor.chain().focus().addColumnAfter().run()} />
                 <Boton icono="ti-row-remove" titulo="Quitar fila" onClick={() => editor.chain().focus().deleteRow().run()} />
                 <Boton icono="ti-column-remove" titulo="Quitar columna de la tabla" onClick={() => editor.chain().focus().deleteColumn().run()} />
+                <Separador />
+                <Boton icono="ti-minus" titulo="Columna más angosta" onClick={() => cambiarAnchoColumna(editor, -PASO_ANCHO_COLUMNA)} />
+                <Boton icono="ti-arrows-horizontal" titulo="Ancho automático de la columna" onClick={() => cambiarAnchoColumna(editor, null)} />
+                <Boton icono="ti-plus" titulo="Columna más ancha (la tabla se desplaza hacia el lado si no cabe)" onClick={() => cambiarAnchoColumna(editor, PASO_ANCHO_COLUMNA)} />
+                <Separador />
                 <Boton icono="ti-table-off" titulo="Eliminar tabla" color="text-red-500" onClick={() => editor.chain().focus().deleteTable().run()} />
               </>
             )}

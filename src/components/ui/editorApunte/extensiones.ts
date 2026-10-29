@@ -229,7 +229,7 @@ export function crearExtensiones() {
     }),
     ParrafoSangria,
     PuntoLista,
-    Table.configure({ resizable: true, cellMinWidth: 60 }),
+    Table.configure({ resizable: true, cellMinWidth: 110 }),
     TableRow,
     CeldaEncabezado,
     CeldaTabla,

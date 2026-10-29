@@ -212,10 +212,11 @@ function BloqueView({ b, modo, depth }: { b: Bloque; modo: Modo; depth: number }
     case 'tabla': {
       const cuerpo = b.encabezado ? b.filas.slice(1) : b.filas
       return (
-        <div data-tabla className={`overflow-x-auto mb-4 rounded-lg border ${paleta.borde}`}>
+        <div data-tabla className={`overflow-x-auto overscroll-x-contain mb-4 rounded-lg border ${paleta.borde}`}>
           <table
             className={`border-collapse text-[0.92em] ${b.anchos ? '' : 'w-full'}`}
-            style={b.anchos ? { width: b.anchos.reduce((s, w) => s + (w || 150), 0), tableLayout: 'fixed' } : undefined}
+            // sin anchos propios: cada columna pide al menos 110 px y, si no caben, la tabla se desplaza hacia el lado
+            style={b.anchos ? { width: b.anchos.reduce((s, w) => s + (w || 110), 0), tableLayout: 'fixed' } : { minWidth: b.filas[0].length * 110 }}
           >
             {b.anchos && (
               <colgroup>

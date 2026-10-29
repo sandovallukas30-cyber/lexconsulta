@@ -604,7 +604,7 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
         <PanelConsultaArticulos
           temaLectura={temaLectura}
           onCerrar={() => setConsultaAbierta(false)}
-          className="h-[46%] md:h-auto flex-shrink-0 border-t md:border-t-0 md:border-l md:w-[24rem] lg:w-[27rem]"
+          className="h-[46%] md:h-auto flex-shrink-0 border-t md:border-t-0 md:border-l md:w-[var(--ancho-panel,24rem)] lg:w-[var(--ancho-panel,27rem)]"
         />
       )}
       </div>
