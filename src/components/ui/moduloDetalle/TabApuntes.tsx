@@ -5,6 +5,7 @@ import { avisar } from '../../../store/useAvisos'
 import { confirmarSalida, registrarGuardia } from '../../../services/guardiaCambios'
 import { ModoLecturaApunte } from '../ModoLecturaApunte'
 import { markdownAApunte } from '../../../services/apunteArchivo'
+import { esMazo, mazoAApunte } from '../../../services/mazoImportado'
 import { duplicarApunte } from '../../../services/accionesApunte'
 import { ModalMoverApunte } from './AccionesApunte'
 import { ListaApuntes, type AccionesListaApuntes } from './ListaApuntes'
@@ -254,11 +255,12 @@ export function TabApuntes({
     setAvisoImportar(null)
     const esPdf = /\.pdf$/i.test(archivo.name) || archivo.type === 'application/pdf'
     if (!esPdf && /\.(docx?|pptx?|xlsx?)$/i.test(archivo.name)) {
-      setErrorImportar('Se importan archivos .md, .txt o un PDF exportado de Notion. De un Word, copiá el texto y pegalo en un apunte nuevo.')
+      setErrorImportar('Se importan archivos .md, .txt, .csv (mazos de Anki o Quizlet) o un PDF exportado de Notion. De un Word, copiá el texto y pegalo en un apunte nuevo.')
       return
     }
     let tituloArchivo: string | null
     let cuerpo: string
+    let detalleMazo = ''
     if (esPdf) {
       try {
         setImportando('Preparando…')
@@ -279,9 +281,22 @@ export function TabApuntes({
       }
       // mismo algoritmo que la exportación a .md (services/apunteArchivo.ts):
       // exportar e importar deja el apunte idéntico
-      const importado = markdownAApunte(await archivo.text(), archivo.name)
-      tituloArchivo = importado.titulo
-      cuerpo = importado.contenido
+      const textoArchivo = await archivo.text()
+      if (esMazo(archivo.name, textoArchivo)) {
+        // mazo de Anki o Quizlet: cada fila pasa a «- **frente:** reverso» y el repaso la convierte en tarjeta
+        const mazo = mazoAApunte(textoArchivo, archivo.name)
+        if (mazo.tarjetas === 0) {
+          setErrorImportar('No se encontraron tarjetas: el archivo necesita dos columnas (frente y reverso) separadas por tabulador, coma o punto y coma.')
+          return
+        }
+        detalleMazo = ` · ${mazo.tarjetas} ${mazo.tarjetas === 1 ? 'tarjeta' : 'tarjetas'}${mazo.omitidas > 0 ? ` (${mazo.omitidas} filas incompletas omitidas)` : ''}`
+        tituloArchivo = mazo.titulo
+        cuerpo = mazo.contenido
+      } else {
+        const importado = markdownAApunte(textoArchivo, archivo.name)
+        tituloArchivo = importado.titulo
+        cuerpo = importado.contenido
+      }
     }
     const ahora = Date.now()
     const nuevo: ApunteModulo = {
@@ -293,7 +308,7 @@ export function TabApuntes({
       fechaModificacion: ahora,
     }
     setApuntesModulo(moduloId, [...apuntes, nuevo])
-    avisar.exito(`Apunte "${nuevo.titulo}" importado`)
+    avisar.exito(`Apunte "${nuevo.titulo}" importado${detalleMazo}`)
     registrarUso('apunte.importar')
     setEditarAlAbrir(false)
     setApunteLeyendo(nuevo)
@@ -393,13 +408,13 @@ export function TabApuntes({
           <button
             onClick={() => refArchivo.current?.click()}
             disabled={!!importando}
-            title="Importar un archivo .md, .txt o un PDF de Notion como apunte"
+            title="Importar un archivo .md, .txt, un mazo de Anki o Quizlet (.txt, .csv) o un PDF de Notion como apunte"
             className="boton boton-borde boton-chico"
           >
             <i className={`ti ${importando ? 'ti-loader-2 animate-spin' : 'ti-file-import'} text-sm`} />
             Importar
           </button>
-          <input ref={refArchivo} type="file" accept=".md,.markdown,.txt,.pdf,text/plain,text/markdown,application/pdf" className="hidden" onChange={importarArchivo} />
+          <input ref={refArchivo} type="file" accept=".md,.markdown,.txt,.csv,.tsv,.pdf,text/plain,text/markdown,text/csv,text/tab-separated-values,application/pdf" className="hidden" onChange={importarArchivo} />
           <BotonAgregar label="Nuevo apunte" onClick={iniciarNuevo} modoOscuro={modoOscuro} />
         </div>
       </div>
