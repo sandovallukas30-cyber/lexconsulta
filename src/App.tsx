@@ -1,8 +1,7 @@
 import { Sidebar } from './components/layout/Sidebar'
 import { Topbar } from './components/layout/Topbar'
-import { PARAM_IMPORTAR, decodificarColeccion } from './services/compartirColeccion'
-import type { ColeccionCompartida } from './types'
-import { useState, useEffect, useRef, lazy, Suspense } from 'react'
+import { PARAM_IMPORTAR, coleccionDeOrigen, decodificarColeccion } from './services/compartirColeccion'
+import { useEffect, useRef, lazy, Suspense } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { useStore } from './store/useStore'
 import { useAplicarAjustes } from './hooks/useAplicarAjustes'
@@ -80,7 +79,10 @@ function App() {
     useSala.getState().abrir(video.slice(0, 500))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-  const [coleccionParaImportar, setColeccionParaImportar] = useState<ColeccionCompartida | null>(null)
+  const coleccionParaImportar = useStore((s) => s.coleccionPorImportar)
+  const setColeccionParaImportar = useStore((s) => s.setColeccionPorImportar)
+  const colecciones = useStore((s) => s.colecciones)
+  const actualizarColeccionOficial = useStore((s) => s.actualizarColeccionOficial)
 
   // Detecta un link de Colección compartida (?colImportar=...) al entrar a
   // la app — a nivel raíz, no dentro de ColeccionesView, porque la vista
@@ -177,12 +179,22 @@ function App() {
         <Suspense fallback={null}>
         <ModalConfirmarImportacion
           compartida={coleccionParaImportar}
+          existente={coleccionDeOrigen(colecciones, coleccionParaImportar)}
           onCancelar={() => setColeccionParaImportar(null)}
           onConfirmar={() => {
             const id = importarColeccion(coleccionParaImportar)
             avisar.exito(`Colección "${coleccionParaImportar.titulo}" importada`)
             setColeccionParaImportar(null)
             setColeccionActiva(id)
+            setVistaActiva('colecciones')
+          }}
+          onActualizar={() => {
+            const mia = coleccionDeOrigen(colecciones, coleccionParaImportar)
+            if (!mia) return
+            actualizarColeccionOficial(mia.id, coleccionParaImportar)
+            avisar.exito(`Colección "${coleccionParaImportar.titulo}" actualizada a la versión ${coleccionParaImportar.oficial?.version ?? ''}`)
+            setColeccionParaImportar(null)
+            setColeccionActiva(mia.id)
             setVistaActiva('colecciones')
           }}
         />

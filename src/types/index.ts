@@ -391,6 +391,19 @@ export interface Coleccion {
    * solo lado guarda el vínculo (acá); Mapas mentales solo lo consulta,
    * para no tener que mantener sincronizados dos punteros. */
   mapaMentalVinculado?: string
+  /** Si es una «colección del curso»: publicada por quien la armó (o recibida de él) con una versión, para que
+   *  al llegar una versión nueva se actualice esta en vez de duplicarla. Ver services/compartirColeccion.ts. */
+  oficial?: PublicacionColeccion
+}
+
+/** Datos de una colección publicada para un curso. Prima Lex no verifica quién la publicó. */
+export interface PublicacionColeccion {
+  /** Identifica la colección entre versiones: lo crea quien la publica por primera vez. */
+  origenId: string
+  /** Curso o asignatura a la que va dirigida, p. ej. «Derecho Civil I, sección 2». */
+  curso: string
+  autor?: string
+  version: number
 }
 
 /** Lo mínimo que hace falta para reconstruir una Colección al importarla
@@ -403,6 +416,7 @@ export interface ColeccionCompartida {
   articulos: ArticuloColeccion[]
   conexiones?: ConexionColeccion[]
   grupos?: GrupoColeccion[]
+  oficial?: PublicacionColeccion
 }
 
 export interface ConsultaHistorial {

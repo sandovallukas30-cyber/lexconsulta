@@ -6,7 +6,7 @@
 // anotaciones propias del que compartió (nota, estado, función, conexiones,
 // grupos). Esto mantiene el link corto incluso para una colección grande.
 
-import type { ColeccionCompartida, Coleccion } from '../types'
+import type { ArticuloColeccion, ColeccionCompartida, Coleccion, PublicacionColeccion } from '../types'
 
 /** Nombre del parámetro de URL que dispara la importación al abrir un link
  * compartido — ver el efecto que lo lee en ColeccionesView.tsx. */
@@ -17,17 +17,20 @@ export const PARAM_IMPORTAR = 'colImportar'
  * coordenadas de la pizarra de quien la creó, no significan nada para
  * quien la recibe). */
 function aCompartida(coleccion: Coleccion): ColeccionCompartida {
+  const oficial = coleccion.oficial
   return {
     titulo: coleccion.titulo,
     articulos: coleccion.articulos.map((a) => ({
       codigo: a.codigo,
       articulo: a.articulo,
-      estado: a.estado,
+      // lo que el autor marcó como «dominado» es de él: en una del curso no viaja
+      ...(oficial ? {} : { estado: a.estado }),
       nota: a.nota,
       funcion: a.funcion,
     })),
     conexiones: coleccion.conexiones,
     grupos: coleccion.grupos,
+    ...(oficial ? { oficial } : {}),
   }
 }
 
@@ -89,8 +92,59 @@ function esColeccionCompartidaValida(valor: unknown): valor is ColeccionComparti
 export function decodificarColeccion(json: string): ColeccionCompartida | null {
   try {
     const valor = JSON.parse(json)
-    return esColeccionCompartidaValida(valor) ? valor : null
+    if (!esColeccionCompartidaValida(valor)) return null
+    const oficial = publicacionValida((valor as { oficial?: unknown }).oficial)
+    const { oficial: _descartado, ...resto } = valor as ColeccionCompartida
+    void _descartado
+    return oficial ? { ...resto, oficial } : resto
   } catch {
     return null
+  }
+}
+
+/** Los datos de «colección del curso» que llegan en un link se revisan campo por campo: lo que no cuadra se
+ *  descarta y la colección se importa como una normal. */
+export function publicacionValida(v: unknown): PublicacionColeccion | null {
+  if (!v || typeof v !== 'object') return null
+  const { origenId, curso, autor, version } = v as Record<string, unknown>
+  if (typeof origenId !== 'string' || !origenId.trim() || origenId.length > 64) return null
+  if (typeof curso !== 'string' || !curso.trim() || curso.length > 80) return null
+  if (typeof version !== 'number' || !Number.isInteger(version) || version < 1 || version > 9999) return null
+  const resultado: PublicacionColeccion = { origenId, curso: curso.trim(), version }
+  if (typeof autor === 'string' && autor.trim() && autor.length <= 60) resultado.autor = autor.trim()
+  return resultado
+}
+
+/** La colección que ya tienes de la misma publicación (mismo origen), si hay. */
+export function coleccionDeOrigen(colecciones: Coleccion[], compartida: ColeccionCompartida): Coleccion | undefined {
+  const id = compartida.oficial?.origenId
+  return id ? colecciones.find((c) => c.oficial?.origenId === id) : undefined
+}
+
+/** Pone al día una colección del curso con una versión nueva, sin perder lo tuyo: tu progreso de repaso (estado,
+ *  caja y próximo repaso) y tu vínculo con un mapa mental se conservan; la lista de artículos, las funciones, las
+ *  conexiones y los grupos pasan a ser los del autor. Si ambos anotaron un artículo, queda la nota del autor; si
+ *  solo anotaste tú, se conserva la tuya. */
+export function fusionarOficial(local: Coleccion, nueva: ColeccionCompartida, ahora: number = Date.now()): Coleccion {
+  const articulos: ArticuloColeccion[] = nueva.articulos.map((a) => {
+    const mio = local.articulos.find((x) => x.codigo === a.codigo && x.articulo === a.articulo)
+    return {
+      codigo: a.codigo,
+      articulo: a.articulo,
+      ...(a.funcion ? { funcion: a.funcion } : mio?.funcion ? { funcion: mio.funcion } : {}),
+      ...(a.nota ? { nota: a.nota } : mio?.nota ? { nota: mio.nota } : {}),
+      ...(mio?.estado ? { estado: mio.estado } : {}),
+      ...(mio?.caja !== undefined ? { caja: mio.caja } : {}),
+      ...(mio?.proximoRepaso !== undefined ? { proximoRepaso: mio.proximoRepaso } : {}),
+    }
+  })
+  return {
+    ...local,
+    titulo: nueva.titulo,
+    articulos,
+    conexiones: nueva.conexiones,
+    grupos: nueva.grupos,
+    oficial: nueva.oficial,
+    fechaModificacion: ahora,
   }
 }

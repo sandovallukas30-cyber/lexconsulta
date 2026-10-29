@@ -58,14 +58,23 @@ export function ColeccionesView() {
  * estaba parado en Colecciones (que ni siquiera es la vista por defecto). */
 export function ModalConfirmarImportacion({
   compartida,
+  existente,
   onCancelar,
   onConfirmar,
+  onActualizar,
 }: {
   compartida: ColeccionCompartida
+  /** La colección que ya tienes de la misma publicación del curso, si hay. */
+  existente?: Coleccion
   onCancelar: () => void
   onConfirmar: () => void
+  onActualizar?: () => void
 }) {
   const modoOscuro = useStore((s) => s.modoOscuro)
+  const oficial = compartida.oficial
+  const versionMia = existente?.oficial?.version
+  const yaTienes = !!existente && versionMia !== undefined && oficial !== undefined && versionMia >= oficial.version
+  const hayNueva = !!existente && !yaTienes && !!onActualizar
   const codigosPresentes = useMemo(
     () => Array.from(new Set(compartida.articulos.map((a) => a.codigo))),
     [compartida]
@@ -83,7 +92,7 @@ export function ModalConfirmarImportacion({
         <div className={`px-5 py-4 border-b ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
           <h2 className={`text-base font-serif font-semibold flex items-center gap-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
             <i className="ti ti-download text-lg" style={{ color: 'var(--accent-texto)' }} />
-            Importar colección compartida
+            {oficial ? 'Colección del curso' : 'Importar colección compartida'}
           </h2>
         </div>
         <div className="px-5 py-4">
@@ -91,9 +100,28 @@ export function ModalConfirmarImportacion({
           <p className={`text-xs ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
             {compartida.articulos.length} artículo{compartida.articulos.length === 1 ? '' : 's'} · {codigosPresentes.map((c) => nombreCortoMetadata(c)).join(', ')}
           </p>
-          <p className={`text-xs mt-3 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
-            Se agrega como una colección nueva propia — no reemplaza ni toca ninguna de las tuyas.
-          </p>
+          {oficial && (
+            <p className="text-xs mt-2 font-semibold" style={{ color: 'var(--accent-texto)' }}>
+              {oficial.curso}
+              {oficial.autor ? ` · por ${oficial.autor}` : ''} · versión {oficial.version}
+            </p>
+          )}
+          {hayNueva ? (
+            <p className={`text-xs mt-3 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
+              Ya tienes la versión {versionMia}. Al actualizar conservas tu progreso de repaso y tus notas donde el autor no escribió; donde ambos anotaron un artículo, queda la del autor.
+            </p>
+          ) : yaTienes ? (
+            <p className={`text-xs mt-3 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>Ya tienes esta versión (o una más nueva) en tus colecciones.</p>
+          ) : (
+            <p className={`text-xs mt-3 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
+              Se agrega como una colección nueva propia — no reemplaza ni toca ninguna de las tuyas.
+            </p>
+          )}
+          {oficial && (
+            <p className={`text-xs mt-2 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
+              Prima Lex no verifica quién la publicó: impórtala solo si te la mandó alguien de confianza.
+            </p>
+          )}
         </div>
         <div className={`px-5 py-3 border-t flex justify-end gap-2 ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
           <button
@@ -104,13 +132,33 @@ export function ModalConfirmarImportacion({
           >
             Descartar
           </button>
-          <button
-            onClick={onConfirmar}
-            className="px-4 py-2 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90"
-            style={{ background: VERDE }}
-          >
-            Importar
-          </button>
+          {(hayNueva || yaTienes) && (
+            <button
+              onClick={onConfirmar}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${modoOscuro ? 'text-zinc-300 hover:bg-zinc-800' : 'text-zinc-600 hover:bg-zinc-100'}`}
+            >
+              Importar como nueva
+            </button>
+          )}
+          {hayNueva ? (
+            <button
+              onClick={onActualizar}
+              className="px-4 py-2 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              style={{ background: VERDE }}
+            >
+              Actualizar la que tengo
+            </button>
+          ) : (
+            !yaTienes && (
+              <button
+                onClick={onConfirmar}
+                className="px-4 py-2 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                style={{ background: VERDE }}
+              >
+                Importar
+              </button>
+            )
+          )}
         </div>
       </div>
     </div>
@@ -125,7 +173,7 @@ function ListaColecciones() {
   const modoOscuro = useStore((s) => s.modoOscuro)
   const colecciones = useStore((s) => s.colecciones)
   const setColeccionActiva = useStore((s) => s.setColeccionActiva)
-  const importarColeccion = useStore((s) => s.importarColeccion)
+  const setColeccionPorImportar = useStore((s) => s.setColeccionPorImportar)
   const [modalNueva, setModalNueva] = useState(false)
   const inputArchivoRef = useRef<HTMLInputElement>(null)
 
@@ -144,10 +192,8 @@ function ListaColecciones() {
       avisar.error('Ese archivo no es una colección de Prima Lex válida.')
       return
     }
-    if (!confirm(`¿Importar "${decodificada.titulo}" (${decodificada.articulos.length} artículos) como colección nueva?`)) return
-    const id = importarColeccion(decodificada)
-    avisar.exito(`Colección "${decodificada.titulo}" importada`)
-    setColeccionActiva(id)
+    // la confirmación (y, si es una del curso que ya tienes, la opción de actualizar) la muestra App
+    setColeccionPorImportar(decodificada)
   }
 
   return (
@@ -1181,6 +1227,77 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
   )
 }
 
+/** «Publicar como colección del curso»: quien la publica le pone el curso y un número de versión; quien la recibe la
+ *  ve como «del curso» y, si más adelante llega una versión nueva, puede actualizar la suya sin duplicarla. */
+function PublicarCurso({ coleccion, modoOscuro }: { coleccion: Coleccion; modoOscuro: boolean }) {
+  const publicar = useStore((s) => s.publicarColeccion)
+  const quitar = useStore((s) => s.quitarPublicacionColeccion)
+  const oficial = coleccion.oficial
+  const [abierto, setAbierto] = useState(false)
+  const [curso, setCurso] = useState(oficial?.curso ?? '')
+  const [autor, setAutor] = useState(oficial?.autor ?? '')
+  const campo = `w-full rounded-lg px-3 py-2 text-sm border outline-none ${
+    modoOscuro ? 'bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500' : 'bg-white border-zinc-200 text-zinc-900 placeholder:text-zinc-400'
+  }`
+  const suave = modoOscuro ? 'text-zinc-400' : 'text-zinc-600'
+
+  if (!oficial && !abierto) {
+    return (
+      <button
+        onClick={() => setAbierto(true)}
+        className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors border border-dashed ${
+          modoOscuro ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-300 text-zinc-700 hover:bg-zinc-50'
+        }`}
+      >
+        <i className="ti ti-school text-base flex-shrink-0" aria-hidden="true" />
+        Publicar como colección del curso…
+      </button>
+    )
+  }
+  return (
+    <div className={`rounded-lg border p-3 space-y-2 ${modoOscuro ? 'border-zinc-700 bg-zinc-800/40' : 'border-zinc-200 bg-zinc-50'}`}>
+      <p className={`text-xs font-semibold flex items-center gap-1.5 ${modoOscuro ? 'text-zinc-200' : 'text-zinc-800'}`}>
+        <i className="ti ti-school" aria-hidden="true" />
+        {oficial ? `Publicada · versión ${oficial.version}` : 'Colección del curso'}
+      </p>
+      <p className={`text-xs ${suave}`}>
+        Quienes importen tu link la verán como «del curso». Si después mandas una versión nueva, podrán actualizar la suya sin duplicarla y sin perder su progreso de repaso. Lo que marcaste como dominado no se comparte.
+      </p>
+      <input value={curso} onChange={(e) => setCurso(e.target.value)} maxLength={80} placeholder="Curso (p. ej. Derecho Civil I, sección 2)" aria-label="Curso" className={campo} />
+      <input value={autor} onChange={(e) => setAutor(e.target.value)} maxLength={60} placeholder="Tu nombre (opcional)" aria-label="Autor" className={campo} />
+      <div className="flex gap-2">
+        <button
+          onClick={() => {
+            publicar(coleccion.id, { curso, autor })
+            avisar.exito(oficial ? `Versión ${oficial.version + 1} lista: copia el link o descarga el archivo` : 'Publicada: copia el link o descarga el archivo')
+          }}
+          disabled={!curso.trim()}
+          className="px-3 py-2 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+          style={{ background: VERDE }}
+        >
+          {oficial ? `Publicar versión ${oficial.version + 1}` : 'Publicar versión 1'}
+        </button>
+        {oficial ? (
+          <button
+            onClick={() => {
+              quitar(coleccion.id)
+              setAbierto(false)
+            }}
+            className={`px-3 py-2 rounded-lg text-sm font-medium ${modoOscuro ? 'text-zinc-300 hover:bg-zinc-800' : 'text-zinc-600 hover:bg-zinc-100'}`}
+          >
+            Dejar de publicar
+          </button>
+        ) : (
+          <button onClick={() => setAbierto(false)} className={`px-3 py-2 rounded-lg text-sm font-medium ${modoOscuro ? 'text-zinc-300 hover:bg-zinc-800' : 'text-zinc-600 hover:bg-zinc-100'}`}>
+            Cancelar
+          </button>
+        )}
+      </div>
+      {oficial && <p className={`text-[11px] ${suave}`}>El link y el archivo de abajo llevan la versión {oficial.version}.</p>}
+    </div>
+  )
+}
+
 /** Compartir la colección actual como link (copiar al portapapeles) o como
  * archivo .json descargable — ver services/compartirColeccion.ts para el
  * porqué de este formato (sin backend, todo el estado vive en el propio
@@ -1228,6 +1345,7 @@ function ModalCompartirColeccion({ coleccion, onCerrar }: { coleccion: Coleccion
           </p>
         </div>
         <div className="px-5 py-4 space-y-2.5">
+          <PublicarCurso coleccion={coleccion} modoOscuro={modoOscuro} />
           <button
             onClick={copiarLink}
             className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${

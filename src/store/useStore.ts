@@ -1,3 +1,4 @@
+import { fusionarOficial } from '../services/compartirColeccion'
 import { MAX_NOTA_ARTICULO, type NotaArticulo } from '../services/notasArticulo'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
@@ -155,6 +156,14 @@ interface AppState {
    * services/compartirColeccion.ts) — id y fechas propias, para que nunca
    * choque con una colección que el usuario ya tenía. Devuelve el id nuevo. */
   importarColeccion: (compartida: ColeccionCompartida) => string
+  /** Colección recibida por link o archivo que espera la confirmación de la persona (la muestra App). No se guarda. */
+  coleccionPorImportar: ColeccionCompartida | null
+  setColeccionPorImportar: (c: ColeccionCompartida | null) => void
+  /** Publica la colección como «del curso»: la primera vez le da un origen; cada vez sube la versión. */
+  publicarColeccion: (id: string, datos: { curso: string; autor?: string }) => void
+  quitarPublicacionColeccion: (id: string) => void
+  /** Pone al día una colección del curso con una versión nueva, conservando tu progreso (ver fusionarOficial). */
+  actualizarColeccionOficial: (id: string, compartida: ColeccionCompartida) => void
   /** Vincula (o, con null, desvincula) una Colección con un Mapa mental
    * sobre el mismo tema — ver Coleccion.mapaMentalVinculado. */
   vincularMapaMental: (coleccionId: string, mapaMentalId: string | null) => void
@@ -443,6 +452,7 @@ export const useStore = create<AppState>()(
       repasoApuntes: {},
       posicionLectura: {},
       notasArticulo: {},
+      coleccionPorImportar: null,
       ultimoArticuloExplorador: {},
 
       setPerfil: (perfil) => set({ perfil, modalPerfilAbierto: false }),
@@ -711,6 +721,7 @@ export const useStore = create<AppState>()(
               articulos: compartida.articulos,
               conexiones: compartida.conexiones,
               grupos: compartida.grupos,
+              ...(compartida.oficial ? { oficial: compartida.oficial } : {}),
               fechaCreacion: ahora,
               fechaModificacion: ahora,
             },
@@ -719,6 +730,35 @@ export const useStore = create<AppState>()(
         }))
         return id
       },
+      setColeccionPorImportar: (c) => set({ coleccionPorImportar: c }),
+      publicarColeccion: (id, datos) =>
+        set((s) => ({
+          colecciones: s.colecciones.map((c) =>
+            c.id !== id
+              ? c
+              : {
+                  ...c,
+                  oficial: {
+                    origenId: c.oficial?.origenId ?? crypto.randomUUID(),
+                    curso: datos.curso.trim().slice(0, 80),
+                    ...(datos.autor?.trim() ? { autor: datos.autor.trim().slice(0, 60) } : {}),
+                    version: (c.oficial?.version ?? 0) + 1,
+                  },
+                  fechaModificacion: Date.now(),
+                }
+          ),
+        })),
+      quitarPublicacionColeccion: (id) =>
+        set((s) => ({
+          colecciones: s.colecciones.map((c) => {
+            if (c.id !== id || !c.oficial) return c
+            const { oficial: _quitada, ...resto } = c
+            void _quitada
+            return { ...resto, fechaModificacion: Date.now() }
+          }),
+        })),
+      actualizarColeccionOficial: (id, compartida) =>
+        set((s) => ({ colecciones: s.colecciones.map((c) => (c.id === id ? fusionarOficial(c, compartida) : c)) })),
       vincularMapaMental: (coleccionId, mapaMentalId) =>
         set((s) => ({
           colecciones: s.colecciones.map((c) =>
