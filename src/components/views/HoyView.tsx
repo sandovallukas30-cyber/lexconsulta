@@ -165,7 +165,7 @@ export function HoyView() {
             <p className="text-sm mb-4" style={{ color: suave }}>Con esto, Hoy te muestra tus clases, evaluaciones y repaso.</p>
             <ol className="space-y-2">
               {[
-                { n: 1, texto: 'Crea tu primer ramo', accion: () => useStore.getState().pedirNuevoRamo(), primario: true },
+                { n: 1, texto: 'Crea tu primera asignatura', accion: () => useStore.getState().pedirNuevoRamo(), primario: true },
                 { n: 2, texto: 'Carga una evaluación y su fecha', accion: () => useStore.getState().setVistaActiva('modulos'), primario: false },
                 { n: 3, texto: 'Haz tu primer bloque de enfoque', accion: () => useStore.getState().setVistaActiva('enfoque'), primario: false },
               ].map((paso) => (
@@ -193,7 +193,7 @@ export function HoyView() {
           >
             {lineaDeTiempo.length === 0 ? (
               <p className="text-sm py-3" style={{ color: suave }}>
-                No hay clases con fecha de hoy ni tareas para hoy. Las clases salen de la pestaña Clases de cada ramo (el horario por sí solo no alcanza).
+                No hay clases con fecha de hoy ni tareas para hoy. Las clases salen de la pestaña Clases de cada asignatura (el horario por sí solo no alcanza).
               </p>
             ) : (
               <ol className="relative">
@@ -220,7 +220,7 @@ export function HoyView() {
                         <button onClick={() => abrirModulo(it.moduloId)} className="min-w-0 py-2.5 text-left">
                           <span className="block text-[15px] font-bold sm:truncate" style={{ color: 'var(--neu-ink)' }}>{it.tema || nombreRamo(it.moduloId, ramos) || 'Clase'}</span>
                           <span className="block text-[13px] truncate" style={{ color: suave }}>
-                            {nombreRamo(it.moduloId, ramos) ?? 'Ramo'}{it.sala ? ` · ${it.sala}` : ''}
+                            {nombreRamo(it.moduloId, ramos) ?? 'Asignatura'}{it.sala ? ` · ${it.sala}` : ''}
                           </span>
                         </button>
                       ) : (
@@ -296,7 +296,7 @@ export function HoyView() {
                 titulo="Evaluaciones"
                 derecha={
                   <button onClick={() => setVistaActiva('modulos')} className="text-[13px] font-semibold hover:underline" style={{ color: 'var(--accent-texto)' }}>
-                    Mis ramos
+                    Mis asignaturas
                   </button>
                 }
               >
@@ -318,11 +318,11 @@ export function HoyView() {
               </div>
               <div className="grid grid-cols-2 gap-3 mt-4">
                 <label className="min-w-0">
-                  <span className="block text-[11px] font-bold uppercase tracking-[0.08em] mb-1" style={{ color: 'var(--neu-ink3)' }}>Ramo</span>
+                  <span className="block text-[11px] font-bold uppercase tracking-[0.08em] mb-1" style={{ color: 'var(--neu-ink3)' }}>Asignatura</span>
                   <SelectorRamo
                     valor={ramoEnfoque}
                     onChange={(v) => useEnfoque.getState().setObjetivo(v, null)}
-                    textoVacio="Sin ramo"
+                    textoVacio="Sin asignatura"
                     className="w-full h-control px-3 rounded-control border text-sm bg-[var(--neu-bg)] border-zinc-200 text-[var(--neu-ink)]"
                   />
                 </label>

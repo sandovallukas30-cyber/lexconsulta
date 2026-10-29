@@ -6,8 +6,8 @@ export function SelectorRamo({
   valor,
   onChange,
   className,
-  etiqueta = 'Ramo',
-  textoVacio = 'Sin ramo',
+  etiqueta = 'Asignatura',
+  textoVacio = 'Sin asignatura',
 }: {
   valor: string | null
   onChange: (v: string | null) => void
@@ -20,7 +20,7 @@ export function SelectorRamo({
     <select aria-label={etiqueta} value={valor ?? ''} onChange={(e) => onChange(e.target.value || null)} className={className}>
       <option value="">{textoVacio}</option>
       {ramos.length > 0 && (
-        <optgroup label="Mis ramos">
+        <optgroup label="Mis asignaturas">
           {ramos.map((r) => (
             <option key={r.id} value={r.id}>
               {r.nombre}

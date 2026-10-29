@@ -6,7 +6,7 @@ const titulos: Record<string, string> = {
   tareas: 'Tareas',
   enfoque: 'Enfoque',
   calendario: 'Calendario',
-  modulos: 'Mis ramos',
+  modulos: 'Mis asignaturas',
   mapasmentales: 'Mapas mentales',
   explorador: 'Explorador de códigos',
   colecciones: 'Colecciones',

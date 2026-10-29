@@ -9,7 +9,7 @@ const NOMBRE_VISTA: Record<VistaUso, string> = {
   tareas: 'Tareas',
   enfoque: 'Enfoque',
   calendario: 'Calendario',
-  modulos: 'Mis ramos',
+  modulos: 'Mis asignaturas',
   explorador: 'Explorador',
   colecciones: 'Colecciones',
   mapasmentales: 'Mapas mentales',

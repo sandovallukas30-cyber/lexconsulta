@@ -150,10 +150,10 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
     }
     if (ramoEditando) {
       actualizarRamo(ramoEditando.id, datos)
-      avisar.exito('Ramo actualizado')
+      avisar.exito('Asignatura actualizada')
     } else {
       const id = crearRamo(datos)
-      avisar.conDeshacer(`Ramo "${datos.nombre}" creado`, () => useStore.getState().eliminarRamo(id))
+      avisar.conDeshacer(`Asignatura "${datos.nombre}" creada`, () => useStore.getState().eliminarRamo(id))
     }
     onCerrar()
   }
@@ -203,7 +203,7 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
         >
           <div className={`px-6 py-4 border-b flex items-center justify-between ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
             <h2 id="titulo-modal-ramo" className={`text-lg font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
-              {ramoEditando ? 'Editar ramo' : 'Nuevo ramo'}
+              {ramoEditando ? 'Editar asignatura' : 'Nueva asignatura'}
             </h2>
             <button
               onClick={onCerrar}
@@ -223,7 +223,7 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
                 <i className={`ti ${icono} text-xl`} style={{ color }} aria-hidden="true" />
               </div>
               <label className="block flex-1">
-                <span className={labelClase}>Nombre del ramo</span>
+                <span className={labelClase}>Nombre de la asignatura</span>
                 <input
                   data-autofocus
                   className={inputClase}
@@ -238,7 +238,7 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
               <div>
                 <span className={labelClase}>{profesores.length > 1 ? 'Profesores' : 'Profesor o profesores'}</span>
                 {profesores.length > 0 && (
-                  <ul className="flex flex-wrap gap-1.5 mb-2" aria-label="Profesores del ramo">
+                  <ul className="flex flex-wrap gap-1.5 mb-2" aria-label="Profesores de la asignatura">
                     {profesores.map((nombre) => (
                       <li
                         key={nombre}
@@ -283,7 +283,7 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
               </div>
             <div>
               <span className={labelClase}>Color</span>
-              <div className="flex flex-wrap gap-2" role="group" aria-label="Color del ramo">
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Color de la asignatura">
                 {COLORES_RAMO.map((c, i) => (
                   <button
                     key={c}
@@ -306,7 +306,7 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
 
             <div>
               <span className={labelClase}>Diseño de la ficha</span>
-              <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label="Diseño de la ficha del ramo">
+              <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label="Diseño de la ficha de la asignatura">
                 {DISENOS.map((d) => (
                   <button
                     key={d.id}
@@ -338,7 +338,7 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
               <div className="space-y-3">
                 <div>
                   <span className={labelClase}>Ícono</span>
-                  <div className="flex flex-wrap gap-1.5" role="group" aria-label="Ícono del ramo">
+                  <div className="flex flex-wrap gap-1.5" role="group" aria-label="Ícono de la asignatura">
                     {ICONOS_RAMO.map((ic) => {
                       const activo = ic === icono
                       return (
@@ -494,15 +494,15 @@ export function ModalRamo({ abierto, ramoEditando, onCerrar }: Props) {
 
           <div className={`px-6 py-4 border-t flex items-center justify-between gap-2 ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
             {ramoEditando ? (
-              <button onClick={eliminar} className={`text-xs font-medium hover:underline min-h-[36px] ${modoOscuro ? 'text-red-400' : 'text-red-700'}`}>Eliminar ramo</button>
+              <button onClick={eliminar} className={`text-xs font-medium hover:underline min-h-[36px] ${modoOscuro ? 'text-red-400' : 'text-red-700'}`}>Eliminar asignatura</button>
             ) : <span />}
             <div className="flex gap-2">
               <button onClick={onCerrar} className="boton boton-fantasma boton-chico">Cancelar</button>
               {!campos.nombre.trim() && (
-                <span className={`self-center text-xs ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`} role="status">Escribe el nombre del ramo</span>
+                <span className={`self-center text-xs ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`} role="status">Escribe el nombre de la asignatura</span>
               )}
               <button onClick={guardar} disabled={!campos.nombre.trim()} className="boton boton-primario boton-chico">
-                {ramoEditando ? 'Guardar' : 'Crear ramo'}
+                {ramoEditando ? 'Guardar' : 'Crear asignatura'}
               </button>
             </div>
           </div>

@@ -14,9 +14,11 @@ describe('rutas de las secciones', () => {
     expect(vistaDeRuta('/')).toBeNull()
     expect(rutaConocida('/ruta-que-no-existe')).toBe(false)
   })
-  it('la dirección antigua /modulos sigue llevando a Mis ramos', () => {
+  it('las direcciones antiguas /modulos y /mis-ramos siguen llevando a Mis asignaturas', () => {
     expect(vistaDeRuta('/modulos')).toBe('modulos')
-    expect(RUTAS.modulos).toBe('/mis-ramos')
+    expect(vistaDeRuta('/mis-ramos')).toBe('modulos')
+    expect(rutaConocida('/mis-ramos')).toBe(true)
+    expect(RUTAS.modulos).toBe('/mis-asignaturas')
   })
   it('el título lleva el nombre de la sección', () => {
     expect(tituloDeVista('tareas')).toBe('Tareas · Prima Lex')

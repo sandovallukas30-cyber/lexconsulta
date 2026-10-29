@@ -82,7 +82,7 @@ export function PomodoroCompacto({ selectores = true, variante = 'vertical', gra
         </div>
         <div className="flex-1 min-w-[120px]">{barra}</div>
         {botones}
-        {selectores && <SelectorRamo valor={s.ramoId} onChange={(v) => s.setObjetivo(v, null)} className="h-control px-3 text-sm" etiqueta="Ramo de la sesión" />}
+        {selectores && <SelectorRamo valor={s.ramoId} onChange={(v) => s.setObjetivo(v, null)} className="h-control px-3 text-sm" etiqueta="Asignatura de la sesión" />}
         <CalificarSesion />
       </div>
     )
@@ -101,7 +101,7 @@ export function PomodoroCompacto({ selectores = true, variante = 'vertical', gra
       )}
       {selectores && (
         <div className="w-full space-y-2">
-          <SelectorRamo valor={s.ramoId} onChange={(v) => s.setObjetivo(v, v === s.ramoId ? s.tareaId : null)} className="w-full h-control px-3 text-sm" etiqueta="Ramo de la sesión" />
+          <SelectorRamo valor={s.ramoId} onChange={(v) => s.setObjetivo(v, v === s.ramoId ? s.tareaId : null)} className="w-full h-control px-3 text-sm" etiqueta="Asignatura de la sesión" />
           <select
             value={s.tareaId ?? ''}
             onChange={(ev) => {

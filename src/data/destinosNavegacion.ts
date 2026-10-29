@@ -15,7 +15,7 @@ export const DESTINOS_NAVEGACION: DestinoNavegacion[] = [
   { id: 'tareas', icono: 'ti-checkbox', corto: 'Tareas', largo: 'Tareas' },
   { id: 'calendario', icono: 'ti-calendar', corto: 'Calendario', largo: 'Calendario' },
   { id: 'enfoque', icono: 'ti-hourglass-high', corto: 'Enfoque', largo: 'Enfoque' },
-  { id: 'modulos', icono: 'ti-layout-grid', corto: 'Ramos', largo: 'Mis ramos' },
+  { id: 'modulos', icono: 'ti-layout-grid', corto: 'Asignaturas', largo: 'Mis asignaturas' },
   { id: 'explorador', icono: 'ti-book-2', corto: 'Explorar', largo: 'Explorador' },
   { id: 'colecciones', icono: 'ti-stack-2', corto: 'Colecciones', largo: 'Colecciones' },
   { id: 'mapasmentales', icono: 'ti-hierarchy-2', corto: 'Mapas', largo: 'Mapas mentales' },

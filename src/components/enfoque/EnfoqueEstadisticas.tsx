@@ -151,23 +151,23 @@ export function EnfoqueEstadisticas() {
 
       <section className="neu-raised p-5">
         <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-          <h2 className="text-[15px] font-bold" style={{ color: 'var(--neu-ink)' }}>Por ramo</h2>
+          <h2 className="text-[15px] font-bold" style={{ color: 'var(--neu-ink)' }}>Por asignatura</h2>
           <Segmentado<'7' | '30' | '0'> id="rango" etiqueta="Período" valor={rango} onChange={setRango} opciones={[{ valor: '7', texto: '7 días' }, { valor: '30', texto: '30 días' }, { valor: '0', texto: 'Todo' }]} />
         </div>
         {porRamo.length === 0 ? (
           <p className="text-sm" style={{ color: 'var(--neu-ink2)' }}>Sin sesiones en este período.</p>
         ) : (
           <>
-            <div className="flex h-3 rounded-full overflow-hidden" style={{ boxShadow: 'var(--neu-presionada-chica)' }} role="img" aria-label={`Reparto por ramo: ${porRamo.map((m) => `${nombreRamo(m.ramoId, ramos) ?? 'Sin ramo'} ${Math.round((m.minutos / totalRango) * 100)} %`).join(', ')}`}>
+            <div className="flex h-3 rounded-full overflow-hidden" style={{ boxShadow: 'var(--neu-presionada-chica)' }} role="img" aria-label={`Reparto por asignatura: ${porRamo.map((m) => `${nombreRamo(m.ramoId, ramos) ?? 'Sin asignatura'} ${Math.round((m.minutos / totalRango) * 100)} %`).join(', ')}`}>
               {porRamo.map((m) => (
-                <i key={m.ramoId ?? 'x'} style={{ width: `${(m.minutos / totalRango) * 100}%`, background: colorRamo(m.ramoId, ramos) }} title={`${nombreRamo(m.ramoId, ramos) ?? 'Sin ramo'}: ${horasMin(m.minutos)}`} />
+                <i key={m.ramoId ?? 'x'} style={{ width: `${(m.minutos / totalRango) * 100}%`, background: colorRamo(m.ramoId, ramos) }} title={`${nombreRamo(m.ramoId, ramos) ?? 'Sin asignatura'}: ${horasMin(m.minutos)}`} />
               ))}
             </div>
             <div className="mt-3">
               {porRamo.map((m) => (
                 <div key={m.ramoId ?? 'x'} className="flex items-center gap-3 py-1.5">
                   <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: colorRamo(m.ramoId, ramos) }} />
-                  <span className="flex-1 min-w-0 truncate text-sm font-semibold" style={{ color: 'var(--neu-ink)' }}>{nombreRamo(m.ramoId, ramos) ?? 'Sin ramo'}</span>
+                  <span className="flex-1 min-w-0 truncate text-sm font-semibold" style={{ color: 'var(--neu-ink)' }}>{nombreRamo(m.ramoId, ramos) ?? 'Sin asignatura'}</span>
                   <span className="text-xs" style={{ color: 'var(--neu-ink2)' }}>{Math.round((m.minutos / totalRango) * 100)} %</span>
                   <span className="neu-chip px-3 py-1 text-xs font-bold tabular-nums min-w-[76px] text-center" style={{ color: 'var(--neu-ink)' }}>{horasMin(m.minutos)}</span>
                 </div>

@@ -342,7 +342,7 @@ function AvisoEvaluacion({ fecha, items }: { fecha: string; items: ItemCalendari
     c.dias === 0 ? '¡Hoy es el día! Respira, repasa lo esencial y mucha suerte.'
     : c.dias === 1 ? 'Es mañana: un repaso corto hoy y a descansar.'
     : c.dias > 1 ? `Faltan ${c.dias} días: todavía hay tiempo de repasar con calma.`
-    : 'Este día ya pasó: anota la nota en el ramo para que cuente en tu promedio.'
+    : 'Este día ya pasó: anota la nota en la asignatura para que cuente en tu promedio.'
   return (
     <div
       role="note"

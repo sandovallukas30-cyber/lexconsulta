@@ -169,7 +169,7 @@ function MisRamos({
     <section aria-labelledby="titulo-mis-ramos">
       <div className="flex flex-wrap justify-between items-center gap-x-4 gap-y-2 mb-3">
         <div className="flex items-baseline gap-3 flex-wrap">
-          <h2 id="titulo-mis-ramos" className={`text-sm font-semibold ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>Mis ramos</h2>
+          <h2 id="titulo-mis-ramos" className={`text-sm font-semibold ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>Mis asignaturas</h2>
           {general !== null && (
             <span className={`text-xs ${suave}`}>
               Promedio general <strong className={modoOscuro ? 'text-white' : 'text-zinc-900'}>{formatoNota(general)}</strong>
@@ -185,7 +185,7 @@ function MisRamos({
           modoOscuro ? 'border-zinc-800 text-zinc-500' : 'border-zinc-300 text-zinc-400'
         }`}>
           <i className="ti ti-school text-2xl mb-2 opacity-60" aria-hidden="true" />
-          <p className="text-sm">Agrega los ramos que cursas este semestre, con sus profesores y horario.</p>
+          <p className="text-sm">Agrega las asignaturas que cursas este semestre, con sus profesores y horario.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -277,12 +277,12 @@ export function ModulosView() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
         <div className="flex flex-wrap items-start gap-3">
           <div className="flex-1 min-w-0">
-            <h1 className="titulo-pagina">Mis ramos</h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--neu-ink2)' }}>Tus ramos del semestre, lo que viene y las áreas del derecho para explorar</p>
+            <h1 className="titulo-pagina">Mis asignaturas</h1>
+            <p className="text-sm mt-1" style={{ color: 'var(--neu-ink2)' }}>Tus asignaturas del semestre, lo que viene y las áreas del derecho para explorar</p>
           </div>
           <button
             onClick={() => setRespaldoAbierto(true)}
-            title="Exportar o importar un respaldo de tus ramos, apuntes, colecciones y mapas"
+            title="Exportar o importar un respaldo de tus asignaturas, apuntes, colecciones y mapas"
             className="boton boton-suave flex-shrink-0"
           >
             <i className="ti ti-database-export text-sm" aria-hidden="true" />
@@ -290,7 +290,7 @@ export function ModulosView() {
           </button>
           <button onClick={abrirNuevoRamo} className="boton boton-primario flex-shrink-0">
             <i className="ti ti-plus text-sm" aria-hidden="true" />
-            Agregar ramo
+            Agregar asignatura
           </button>
         </div>
 

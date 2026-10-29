@@ -78,7 +78,7 @@ export function LoQueSigue() {
   }
 
   if (!siguiente) return null
-  const ramoNombre = nombreRamo(siguiente.moduloId, ramos) ?? 'Ramo'
+  const ramoNombre = nombreRamo(siguiente.moduloId, ramos) ?? 'Asignatura'
   const clase = siguiente.tipo === 'clase' ? academico[siguiente.moduloId]?.clases.find((c) => c.id === siguiente.claseId) : undefined
   const t = textoSiguiente(
     { tipo: siguiente.tipo, ramo: ramoNombre, titulo: siguiente.titulo, fecha: siguiente.fecha, hora: siguiente.hora, sala: clase?.sala, dias: diasHasta(siguiente.fecha) },
@@ -112,7 +112,7 @@ export function LoQueSigue() {
           <i className="ti ti-hourglass-high" aria-hidden="true" /> Enfocar 25 min
         </button>
         <button onClick={() => verRamo(siguiente.moduloId)} className="boton boton-fantasma boton-chico">
-          Ver ramo <i className="ti ti-chevron-right" aria-hidden="true" />
+          Ver asignatura <i className="ti ti-chevron-right" aria-hidden="true" />
         </button>
       </div>
     </motion.section>

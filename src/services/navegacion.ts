@@ -28,7 +28,7 @@ const NOMBRES_VISTA: Partial<Record<VistaId, string>> = {
   tareas: 'Tareas',
   enfoque: 'Enfoque',
   calendario: 'Calendario',
-  modulos: 'Mis ramos',
+  modulos: 'Mis asignaturas',
   mapasmentales: 'Mapas mentales',
   explorador: 'Explorador',
   colecciones: 'Colecciones',

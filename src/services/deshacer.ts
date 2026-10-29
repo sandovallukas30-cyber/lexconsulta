@@ -23,7 +23,7 @@ export function eliminarMapaMentalConDeshacer(id: string) {
 export function eliminarRamoConDeshacer(id: string) {
   const borrado = useStore.getState().eliminarRamo(id)
   if (!borrado) return
-  avisar.conDeshacer(`Ramo "${borrado.ramo.nombre}" eliminado`, () => useStore.getState().restaurarRamo(borrado.ramo, borrado.datos))
+  avisar.conDeshacer(`Asignatura "${borrado.ramo.nombre}" eliminada`, () => useStore.getState().restaurarRamo(borrado.ramo, borrado.datos))
 }
 
 /** Para las listas de un módulo (apuntes, clases, evaluaciones, textos,

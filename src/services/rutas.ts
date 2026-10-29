@@ -6,7 +6,7 @@ export const RUTAS: Record<VistaId, string> = {
   tareas: '/tareas',
   enfoque: '/enfoque',
   calendario: '/calendario',
-  modulos: '/mis-ramos',
+  modulos: '/mis-asignaturas',
   explorador: '/explorador',
   colecciones: '/colecciones',
   mapasmentales: '/mapas-mentales',
@@ -18,7 +18,7 @@ const TITULOS: Record<VistaId, string> = {
   tareas: 'Tareas',
   enfoque: 'Enfoque',
   calendario: 'Calendario',
-  modulos: 'Mis ramos',
+  modulos: 'Mis asignaturas',
   explorador: 'Explorador de códigos',
   colecciones: 'Colecciones',
   mapasmentales: 'Mapas mentales',
@@ -32,7 +32,7 @@ function normalizar(ruta: string): string {
 }
 
 /** Direcciones antiguas que siguen funcionando (enlaces guardados). */
-const ALIAS: Record<string, VistaId> = { '/modulos': 'modulos' }
+const ALIAS: Record<string, VistaId> = { '/modulos': 'modulos', '/mis-ramos': 'modulos' }
 
 /** La sección que pide la dirección, o null si no es una sección. */
 export function vistaDeRuta(ruta: string): VistaId | null {

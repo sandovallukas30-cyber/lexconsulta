@@ -223,7 +223,7 @@ export function TabExamenes({
                 Ya está toda la ponderación evaluada — nota final: {(promedioActual ?? 0).toFixed(2)}
               </p>
             ) : notaNecesaria !== null && notaNecesaria <= 1 ? (
-              <p className="text-sm font-medium text-emerald-600">Ya tienes el ramo matemáticamente aprobado.</p>
+              <p className="text-sm font-medium text-emerald-600">Ya tienes la asignatura matemáticamente aprobada.</p>
             ) : notaNecesaria !== null && notaNecesaria > 7 ? (
               <p className="text-sm font-medium text-red-600">
                 No alcanzas un {objetivoNum} aunque saques 7.0 en lo que falta por evaluar ({ponderacionPendiente}% de la nota final).

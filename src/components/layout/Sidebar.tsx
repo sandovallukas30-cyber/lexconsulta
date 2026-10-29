@@ -27,7 +27,7 @@ const itemsSemana: ItemMenu[] = [
 ]
 
 const itemsAcademicos: ItemMenu[] = [
-  { id: 'modulos', icono: 'ti-layout-grid', label: 'Mis ramos' },
+  { id: 'modulos', icono: 'ti-layout-grid', label: 'Mis asignaturas' },
   { id: 'explorador', icono: 'ti-book-2', label: 'Explorador' },
   { id: 'colecciones', icono: 'ti-stack-2', label: 'Colecciones' },
   { id: 'mapasmentales', icono: 'ti-hierarchy-2', label: 'Mapas mentales' },

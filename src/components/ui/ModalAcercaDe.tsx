@@ -30,13 +30,13 @@ export function Acerca({ modoOscuro }: { modoOscuro: boolean }) {
       <H modoOscuro={modoOscuro}>Objetivo</H>
       <P modoOscuro={modoOscuro}>
         Una plataforma de estudio para estudiantes de Derecho en Chile: los textos legales oficiales, tus apuntes
-        y tus ramos, y herramientas para repasar, todo en un mismo lugar.
+        y tus asignaturas, y herramientas para repasar, todo en un mismo lugar.
       </P>
 
       <H modoOscuro={modoOscuro}>Funciones disponibles</H>
       <ul className={`text-sm space-y-2 mb-4 ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>
-        <Feat icono="ti-layout-grid" titulo="Mis ramos">
-          Organiza tus ramos con clases, evaluaciones y calculadora de notas, textos, apuntes y casos.
+        <Feat icono="ti-layout-grid" titulo="Mis asignaturas">
+          Organiza tus asignaturas con clases, evaluaciones y calculadora de notas, textos, apuntes y casos.
         </Feat>
         <Feat icono="ti-book-2" titulo="Explorador">
           Navega los códigos artículo por artículo con búsqueda rápida (Ctrl+K), índice jerárquico y modernización
@@ -166,7 +166,7 @@ export function Privacidad({ modoOscuro }: { modoOscuro: boolean }) {
 
       <H modoOscuro={modoOscuro}>2. Sin cuenta: todo queda en tu dispositivo</H>
       <P modoOscuro={modoOscuro}>
-        No necesitas cuenta para usar Prima Lex. Lo que creas (ramos, evaluaciones, tareas, apuntes, colecciones, mapas
+        No necesitas cuenta para usar Prima Lex. Lo que creas (asignaturas, evaluaciones, tareas, apuntes, colecciones, mapas
         mentales, sesiones de enfoque, progreso de estudio y preferencias) se guarda en el almacenamiento local de tu
         navegador y no se envía a nuestros servidores. Si borras los datos del sitio, se pierden: usa la opción de
         respaldo para guardar una copia.
@@ -270,7 +270,7 @@ export function Terminos({ modoOscuro }: { modoOscuro: boolean }) {
       <H modoOscuro={modoOscuro}>2. Naturaleza del servicio</H>
       <P modoOscuro={modoOscuro}>
         Prima Lex es una <strong>herramienta de estudio</strong> que reúne textos legales oficiales chilenos con
-        funciones para organizar ramos, tomar apuntes y repasar. <strong>No constituye asesoría legal</strong>, no
+        funciones para organizar asignaturas, tomar apuntes y repasar. <strong>No constituye asesoría legal</strong>, no
         genera relación abogado-cliente y no sustituye la consulta con un profesional titulado.
       </P>
 

@@ -570,7 +570,7 @@ function SeccionDatos({ modoOscuro }: { modoOscuro: boolean }) {
     <>
       <Grupo
         titulo="Respaldo"
-        descripcion="Todo lo que creas (ramos, apuntes, tareas, colecciones…) vive en este navegador. Guarda una copia por si cambias de equipo o borras los datos del sitio."
+        descripcion="Todo lo que creas (asignaturas, apuntes, tareas, colecciones…) vive en este navegador. Guarda una copia por si cambias de equipo o borras los datos del sitio."
         modoOscuro={modoOscuro}
       >
         <div className="flex flex-wrap items-center gap-3">

@@ -24,7 +24,7 @@ interface Props {
 function textoResumen(r: ResumenRespaldo): string {
   const n = (v: number, uno: string, varios: string) => (v > 0 ? `${v} ${v === 1 ? uno : varios}` : '')
   const partes = [
-    n(r.ramos, 'ramo', 'ramos'),
+    n(r.ramos, 'asignatura', 'asignaturas'),
     n(r.apuntes, 'apunte', 'apuntes'),
     n(r.clases, 'clase', 'clases'),
     n(r.evaluaciones, 'evaluación', 'evaluaciones'),
@@ -164,7 +164,7 @@ export function ModalRespaldo({ onCerrar }: Props) {
 
         <div className="px-5 sm:px-6 py-4 overflow-y-auto space-y-5">
           <p className={`text-xs leading-relaxed ${suave}`}>
-            Tus ramos, apuntes, colecciones y mapas se guardan solo en este navegador. Si borras los datos del navegador o
+            Tus asignaturas, apuntes, colecciones y mapas se guardan solo en este navegador. Si borras los datos del navegador o
             cambias de equipo, se pierden: descarga un respaldo de vez en cuando.
           </p>
 

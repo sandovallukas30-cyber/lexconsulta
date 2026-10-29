@@ -23,7 +23,7 @@ export function Solemnes() {
   const hace7 = sumarDiasISO(hoy, -6)
 
   if (proximas.length === 0) {
-    return <p className="text-sm py-2" style={{ color: 'var(--neu-ink2)' }}>No tienes evaluaciones próximas registradas. Agrégalas en la pestaña Exámenes de cada ramo y aquí aparece la cuenta regresiva.</p>
+    return <p className="text-sm py-2" style={{ color: 'var(--neu-ink2)' }}>No tienes evaluaciones próximas registradas. Agrégalas en la pestaña Exámenes de cada asignatura y aquí aparece la cuenta regresiva.</p>
   }
 
   const crearPlan = (moduloId: string, evaluacion: { id: string; nombre: string; fecha: string }) => {
@@ -33,7 +33,7 @@ export function Solemnes() {
     const pendientes = apuntes.reduce((n, a) => n + tarjetasDe(a).filter((t) => estaPendiente(st.repasoApuntes[t.id])).length, 0)
     const pasos = generarPlan({
       evaluacion: evaluacion.nombre,
-      ramo: nombreRamo(moduloId, st.ramos) ?? 'el ramo',
+      ramo: nombreRamo(moduloId, st.ramos) ?? 'la asignatura',
       fechaEval: evaluacion.fecha,
       hoy: hoyISO(),
       apuntes: apuntes.map((a) => a.titulo || 'Apunte sin título'),
@@ -79,7 +79,7 @@ export function Solemnes() {
         const proximo = x.dias <= 7
         const fondo = urgente ? 'var(--neu-danger-soft)' : proximo ? 'var(--neu-warn-soft)' : 'var(--neu-bg)'
         const tinta = urgente ? 'var(--neu-danger)' : proximo ? 'var(--neu-warn)' : 'var(--neu-ink)'
-        const detalle = `${nombreRamo(x.moduloId, ramos) ?? 'Ramo'} · ${x.evaluacion.ponderacion} % · ${etiquetaFecha(x.evaluacion.fecha).texto.toLowerCase()}`
+        const detalle = `${nombreRamo(x.moduloId, ramos) ?? 'Asignatura'} · ${x.evaluacion.ponderacion} % · ${etiquetaFecha(x.evaluacion.fecha).texto.toLowerCase()}`
         const etiquetaDias = x.dias === 0 ? 'Es hoy' : x.dias === 1 ? 'Es mañana' : `Faltan ${x.dias} días`
         if (!destacada) {
           return (
@@ -118,7 +118,7 @@ export function Solemnes() {
             </div>
             <p className="text-[12.5px] mt-1" style={{ color: 'var(--neu-ink2)' }}>
               {fraseCuentaRegresiva(x.dias, plan.length > 0 ? { hechas, total: plan.length } : undefined)}
-              {minutos > 0 ? ` En los últimos 7 días llevas ${horasMin(minutos)} de enfoque en este ramo.` : ''}
+              {minutos > 0 ? ` En los últimos 7 días llevas ${horasMin(minutos)} de enfoque en esta asignatura.` : ''}
             </p>
             <div className="flex gap-2 mt-2.5 flex-wrap">
               {x.dias >= 1 && x.dias <= 30 && (

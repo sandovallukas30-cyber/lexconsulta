@@ -86,7 +86,7 @@ function SesionForm({ sesion, onClose }: { sesion?: SesionFoco; onClose: () => v
             <input type="number" min={1} max={960} value={minutos} onChange={(e) => { setMinutos(e.target.value); setError('') }} aria-label="Duración en minutos" data-autofocus className="w-full h-control px-3 text-sm" />
           </label>
           <label className="block">
-            <span className={etiqueta} style={{ color: 'var(--neu-ink2)' }}>Ramo</span>
+            <span className={etiqueta} style={{ color: 'var(--neu-ink2)' }}>Asignatura</span>
             <SelectorRamo valor={ramoId} onChange={setRamoId} className="w-full h-control px-3 text-sm" />
           </label>
           <label className="block">
@@ -172,7 +172,7 @@ export function EnfoqueHistorial() {
                   <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: colorRamo(s.ramoId, ramos) }} />
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm font-semibold break-words" style={{ color: 'var(--neu-ink)' }}>
-                      {nombre ?? 'Sin ramo'}{tarea ? ` · ${tarea.titulo}` : ''}
+                      {nombre ?? 'Sin asignatura'}{tarea ? ` · ${tarea.titulo}` : ''}
                     </span>
                     <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs" style={{ color: 'var(--neu-ink2)' }}>
                       <span>{horaDe(s.inicio)}</span>

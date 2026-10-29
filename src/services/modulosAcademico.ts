@@ -147,7 +147,7 @@ export function moduloDesdeRamo(ramo: Ramo, modulosVinculados: Modulo[]): Modulo
   return {
     id: ramo.id,
     nombre: ramo.nombre,
-    descripcion: detalle || ramo.semestre || 'Ramo propio',
+    descripcion: detalle || ramo.semestre || 'Asignatura propia',
     icono: ramo.icono ?? ICONO_RAMO_DEFECTO,
     color: ramo.color ?? VERDE,
     orden: 0,

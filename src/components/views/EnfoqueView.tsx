@@ -239,13 +239,13 @@ function Temporizador({ concentracion }: { concentracion: boolean }) {
 
       <div className="w-full max-w-md mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
         <label className="block">
-          <span className={`block text-xs font-medium mb-1 ${e.suave}`}>¿De qué ramo?</span>
+          <span className={`block text-xs font-medium mb-1 ${e.suave}`}>¿De qué asignatura?</span>
           <SelectorRamo
             valor={s.ramoId}
             onChange={(v) => s.setObjetivo(v, v === s.ramoId ? s.tareaId : null)}
             className={e.campo}
-            etiqueta="Ramo de la sesión"
-            textoVacio="Sin ramo"
+            etiqueta="Asignatura de la sesión"
+            textoVacio="Sin asignatura"
           />
         </label>
         <label className="block">
@@ -398,13 +398,13 @@ function Resumen() {
       </section>
 
       {porRamo.length > 0 && (
-        <section className={e.tarjeta} aria-label="Esta semana por ramo">
-          <h2 className={`text-sm font-semibold mb-3 ${e.modoOscuro ? 'text-zinc-200' : 'text-zinc-800'}`}>Esta semana por ramo</h2>
+        <section className={e.tarjeta} aria-label="Esta semana por asignatura">
+          <h2 className={`text-sm font-semibold mb-3 ${e.modoOscuro ? 'text-zinc-200' : 'text-zinc-800'}`}>Esta semana por asignatura</h2>
           <ul className="space-y-2.5">
             {porRamo.map((r) => (
               <li key={r.ramoId ?? 'sin'}>
                 <div className="flex justify-between text-xs mb-1">
-                  <span className={`truncate ${e.modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>{nombreRamo(r.ramoId, ramos) ?? 'Sin ramo'}</span>
+                  <span className={`truncate ${e.modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>{nombreRamo(r.ramoId, ramos) ?? 'Sin asignatura'}</span>
                   <span className={`flex-shrink-0 ml-2 ${e.suave}`}>{horasMin(r.minutos)}</span>
                 </div>
                 <div className={`h-2 rounded-full overflow-hidden ${e.modoOscuro ? 'bg-zinc-800' : 'bg-zinc-100'}`}>
@@ -447,7 +447,7 @@ function SesionesDeHoy() {
                   <div className={`text-sm font-medium ${e.titulo}`}>
                     {horasMin(x.minutos)} <span className={`font-normal ${e.suave}`}>· {hora}</span>
                   </div>
-                  <div className={`text-xs truncate ${e.suave}`}>{[nombreRamo(x.ramoId, ramos), tarea].filter(Boolean).join(' · ') || 'Sin ramo'}</div>
+                  <div className={`text-xs truncate ${e.suave}`}>{[nombreRamo(x.ramoId, ramos), tarea].filter(Boolean).join(' · ') || 'Sin asignatura'}</div>
                 </div>
                 <button onClick={() => eliminar(x.id)} aria-label="Eliminar sesión" className="boton boton-fantasma boton-chico boton-icono">
                   <i className="ti ti-trash text-sm" aria-hidden="true" />

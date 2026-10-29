@@ -25,7 +25,7 @@ const ATAJOS: { grupo: string; items: [string[], string][] }[] = [
     ],
   },
   {
-    grupo: 'Ramos y apuntes',
+    grupo: 'Asignaturas y apuntes',
     items: [
       [['←', '→'], 'Cambiar de pestaña (con el foco en las pestañas)'],
       [['Ctrl', 'S'], 'Guardar el apunte ahora'],

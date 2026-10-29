@@ -124,7 +124,7 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEdit
         <nav aria-label="Migas" className="flex items-center gap-1 -ml-2.5 mb-4 min-w-0">
           <button onClick={onVolver} className="boton boton-fantasma boton-chico">
             <i className="ti ti-arrow-left text-sm" />
-            Mis ramos
+            Mis asignaturas
           </button>
         </nav>
 
@@ -150,7 +150,7 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEdit
                 {onEditar && (
                   <button onClick={onEditar} className={botonBanda} style={estiloBotonBanda}>
                     <i className="ti ti-pencil text-sm" aria-hidden="true" />
-                    Editar ramo
+                    Editar asignatura
                   </button>
                 )}
                 {modulo.codigoRelacionado && (
@@ -193,7 +193,7 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEdit
 
         <div
           role="tablist"
-          aria-label="Secciones del ramo"
+          aria-label="Secciones de la asignatura"
           className={`flex gap-1 mb-5 border-b overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden -mx-4 px-4 sm:mx-0 sm:px-0 ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}
         >
           {GRUPOS.map((g, i) => (

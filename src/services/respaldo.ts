@@ -190,7 +190,7 @@ export function validarRespaldo(texto: string): ResultadoValidacion {
   }
   const d = crudo.datos
   const problemas: string[] = []
-  if (d.ramos !== undefined && !listaValida(d.ramos, ramoValido)) problemas.push('ramos')
+  if (d.ramos !== undefined && !listaValida(d.ramos, ramoValido)) problemas.push('asignaturas')
   if (d.academicoModulos !== undefined && !(esObjeto(d.academicoModulos) && Object.values(d.academicoModulos).every(datosAcademicosValidos)))
     problemas.push('apuntes y datos de los módulos')
   if (d.progresoModulos !== undefined && !esObjeto(d.progresoModulos)) problemas.push('progreso')

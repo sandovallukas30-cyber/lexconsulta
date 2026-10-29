@@ -97,7 +97,7 @@ export function TabResumen({
                 <p className="text-xs" style={suave}>No quedan clases por delante.</p>
               ) : (
                 <div>
-                  <p className="text-xs mb-1" style={suave}>Aún no hay clases con fecha. El horario del ramo no basta: carga las clases para verlas en Hoy y en el Calendario.</p>
+                  <p className="text-xs mb-1" style={suave}>Aún no hay clases con fecha. El horario de la asignatura no basta: carga las clases para verlas en Hoy y en el Calendario.</p>
                   <button onClick={() => onIrA('clases')} className="sin-neu text-xs font-semibold" style={{ color: 'var(--accent-texto)' }}>
                     Cargar las clases del semestre
                   </button>
@@ -132,7 +132,7 @@ export function TabResumen({
                   onChange={(e) => setNuevaTarea(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Escape') setNuevaTarea(null) }}
                   placeholder="Ej: Leer capítulo 1"
-                  aria-label="Nueva tarea de este ramo"
+                  aria-label="Nueva tarea de esta asignatura"
                   className="flex-1 min-w-0 h-control-sm px-3 text-sm"
                 />
                 <button type="submit" disabled={!nuevaTarea.trim()} className="boton boton-primario boton-chico">Agregar</button>
@@ -156,7 +156,7 @@ export function TabResumen({
               ))}
             </ul>
           ) : (
-            <p className="text-xs" style={suave}>Todavía no tienes apuntes en este ramo.</p>
+            <p className="text-xs" style={suave}>Todavía no tienes apuntes en esta asignatura.</p>
           )}
           <div className="flex flex-wrap items-center gap-2 mt-auto">
             <button onClick={onNuevoApunte} className="boton boton-primario boton-chico">
@@ -190,7 +190,7 @@ export function TabResumen({
                 {notas.estado === 'posible' && notas.necesaria !== null && <>Necesitas {formatoNota(notas.necesaria)} en lo que falta</>}
                 {notas.estado === 'asegurado' && <>Aprobado asegurado</>}
                 {notas.estado === 'imposible' && <>Ya no alcanza el 4,0</>}
-                {notas.estado === 'completo' && notas.promedio !== null && <>{notas.promedio >= 4 ? 'Ramo aprobado' : 'Ramo reprobado'}</>}
+                {notas.estado === 'completo' && notas.promedio !== null && <>{notas.promedio >= 4 ? 'Asignatura aprobada' : 'Asignatura reprobada'}</>}
               </div>
               <button onClick={() => onIrA('examenes')} className="boton boton-fantasma boton-chico self-start mt-auto">Ver evaluaciones</button>
             </>
@@ -203,7 +203,7 @@ export function TabResumen({
           <i className="ti ti-books text-2xl" style={{ color: 'var(--accent-texto)' }} aria-hidden="true" />
           <span className="min-w-0">
             <span className="block text-sm font-bold" style={{ color: 'var(--neu-ink)' }}>Textos · {textosLeidos}/{datos.textos.length} leídos</span>
-            <span className="block text-xs" style={suave}>Lecturas del ramo</span>
+            <span className="block text-xs" style={suave}>Lecturas de la asignatura</span>
           </span>
         </button>
         <button onClick={() => onIrA('casos')} className="neu-raised p-4 text-left flex items-center gap-3">
@@ -218,7 +218,7 @@ export function TabResumen({
       {colecciones.length > 0 && (
         <div className="mt-6">
           <h2 className={`text-sm font-semibold mb-3 ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>
-            Colecciones de este ramo
+            Colecciones de esta asignatura
           </h2>
           <div className="space-y-2">
             {colecciones.map((c) => (
@@ -240,7 +240,7 @@ export function TabResumen({
       )}
 
       <VinculoModuloSeccion
-        titulo="Mapas mentales de este ramo"
+        titulo="Mapas mentales de esta asignatura"
         icono="ti-hierarchy-2"
         vinculados={mapas.map((m) => ({ id: m.id, label: m.titulo }))}
         disponibles={mapasDisponibles.map((m) => ({ id: m.id, label: m.titulo }))}

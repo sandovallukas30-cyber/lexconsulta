@@ -87,7 +87,7 @@ function VistaPrevia({ onCerrar }: { onCerrar: () => void }) {
         </div>
         <label className="flex items-center gap-2 text-sm mb-3" style={{ color: 'var(--neu-ink2)' }}>
           <input type="checkbox" checked={conRamo} onChange={(e) => setConRamo(e.target.checked)} />
-          Mostrar el ramo que más estudié
+          Mostrar la asignatura que más estudié
         </label>
         <p className="text-xs mb-3" style={{ color: 'var(--neu-ink3)' }}>La imagen solo lleva cifras de la semana: sin tu nombre ni tu correo.</p>
         <div className="flex gap-2">

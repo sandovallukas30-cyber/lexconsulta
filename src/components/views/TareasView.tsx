@@ -312,15 +312,15 @@ export function TareasView() {
           </div>
           {ramosConTareas.size > 0 && (
             <select
-              aria-label="Filtrar por ramo"
+              aria-label="Filtrar por asignatura"
               value={ramoFiltro ?? ''}
               onChange={(e) => setRamoFiltro(e.target.value || null)}
               className={`${c.campo} ml-auto max-w-[210px] h-control-sm`}
             >
-              <option value="">Todos los ramos</option>
+              <option value="">Todas las asignaturas</option>
               {[...ramosConTareas].map((id) => (
                 <option key={id} value={id}>
-                  {ramos.find((r) => r.id === id)?.nombre ?? MODULOS.find((m) => m.id === id)?.nombre ?? 'Ramo eliminado'}
+                  {ramos.find((r) => r.id === id)?.nombre ?? MODULOS.find((m) => m.id === id)?.nombre ?? 'Asignatura eliminada'}
                 </option>
               ))}
             </select>

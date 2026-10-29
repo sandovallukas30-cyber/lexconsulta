@@ -149,8 +149,8 @@ export function RamoFicha({ ramo, modulos, onClick, onEditar }: Props) {
       </button>
       <button
         onClick={onEditar}
-        title="Editar ramo"
-        aria-label={`Editar ramo ${ramo.nombre}`}
+        title="Editar asignatura"
+        aria-label={`Editar asignatura ${ramo.nombre}`}
         className="sin-neu absolute top-2 right-2 w-10 h-10 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
         style={{ background: 'rgba(255,255,255,.65)', color: tinta, backdropFilter: 'blur(4px)' }}
       >

@@ -30,7 +30,7 @@ describe('validarRespaldo', () => {
     const r = validarRespaldo(archivo({ ramos: [{ sinId: true }], tareasPlan: 'no' }))
     expect(r.ok).toBe(false)
     if (!r.ok) {
-      expect(r.error).toContain('ramos')
+      expect(r.error).toContain('asignaturas')
       expect(r.error).toContain('tareas')
     }
   })

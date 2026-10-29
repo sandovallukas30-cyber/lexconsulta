@@ -168,7 +168,7 @@ function VentanaTemporizador() {
           onClick={() => setAbierta((v) => !v)}
           aria-expanded={abierta}
           aria-label={abierta ? 'Contraer el temporizador' : 'Ver más opciones del temporizador'}
-          title={abierta ? 'Contraer' : 'Ramo, tarea y más'}
+          title={abierta ? 'Contraer' : 'Asignatura, tarea y más'}
           className="boton boton-fantasma boton-chico boton-icono"
         >
           <i className={`ti ${abierta ? 'ti-chevron-down' : 'ti-chevron-up'}`} aria-hidden="true" />
@@ -241,7 +241,7 @@ export function SalaEstudio() {
     const lista: { valor: string; texto: string; primero: boolean }[] = []
     for (const [mid, datos] of Object.entries(academico)) {
       for (const a of datos.apuntes) {
-        lista.push({ valor: `${mid}:${a.id}`, texto: `${nombreRamo(mid, ramos) ?? 'Ramo'} · ${a.titulo || 'Apunte sin título'}`, primero: mid === ramoId })
+        lista.push({ valor: `${mid}:${a.id}`, texto: `${nombreRamo(mid, ramos) ?? 'Asignatura'} · ${a.titulo || 'Apunte sin título'}`, primero: mid === ramoId })
       }
     }
     return lista.sort((a, b) => Number(b.primero) - Number(a.primero))
@@ -409,7 +409,7 @@ export function SalaEstudio() {
             </>
           ) : (
             <p className="text-sm" style={{ color: 'var(--neu-ink2)' }}>
-              Todavía no tienes apuntes. Crea uno en la pestaña Apuntes de un ramo y podrás escribirlo aquí mientras ves el video.
+              Todavía no tienes apuntes. Crea uno en la pestaña Apuntes de una asignatura y podrás escribirlo aquí mientras ves el video.
             </p>
           )}
         </section>

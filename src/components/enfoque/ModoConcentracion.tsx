@@ -162,9 +162,9 @@ export function ModoConcentracion({ onCerrar }: { onCerrar: () => void }) {
           className="enf-foco-tarea enf-ocultable"
           style={!tarea && nombre ? { borderLeft: `4px solid ${colorRamo(ramoId, ramos)}` } : undefined}
           onClick={() => setOpciones(true)}
-          aria-label={chip ? `En foco: ${chip}. Abrir los ajustes` : 'Elegir ramo o tarea'}
+          aria-label={chip ? `En foco: ${chip}. Abrir los ajustes` : 'Elegir asignatura o tarea'}
         >
-          {chip || 'Elegir ramo o tarea'}
+          {chip || 'Elegir asignatura o tarea'}
         </button>
         {modo !== 'foco' && tecnica === 'pomodoro' && <Respiracion compacta />}
 
@@ -198,8 +198,8 @@ export function ModoConcentracion({ onCerrar }: { onCerrar: () => void }) {
           <section className="enf-seccion" aria-label="Qué estás estudiando">
             <h3 className="enf-seccion-titulo">Qué estás estudiando</h3>
             <div className="enf-campo">
-              <span className="enf-etiqueta">Ramo</span>
-              <SelectorRamo valor={ramoId} onChange={(v) => setObjetivo(v, tareaId)} etiqueta="Ramo en foco" className="enf-input" />
+              <span className="enf-etiqueta">Asignatura</span>
+              <SelectorRamo valor={ramoId} onChange={(v) => setObjetivo(v, tareaId)} etiqueta="Asignatura en foco" className="enf-input" />
             </div>
             <div className="enf-campo">
               <label className="enf-etiqueta" htmlFor="enf-tarea">

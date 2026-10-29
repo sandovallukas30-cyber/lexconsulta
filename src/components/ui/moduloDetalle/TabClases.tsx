@@ -122,7 +122,7 @@ export function TabClases({ moduloId, clases, modoOscuro }: { moduloId: string; 
         <EstadoVacio
           icono="ti-calendar-event"
           texto="Aún no has agregado sesiones de clase."
-          detalle={hayHorario ? 'Tienes tu horario definido: genera todas las clases del semestre de una vez.' : ramo ? 'Tip: define tu horario en Editar ramo y generas todas las clases del semestre de una vez.' : 'Agrega el cronograma del semestre: verás cuánto falta para cada clase y podrás vincular apuntes y lecturas.'}
+          detalle={hayHorario ? 'Tienes tu horario definido: genera todas las clases del semestre de una vez.' : ramo ? 'Tip: define tu horario en Editar asignatura y generas todas las clases del semestre de una vez.' : 'Agrega el cronograma del semestre: verás cuánto falta para cada clase y podrás vincular apuntes y lecturas.'}
           acciones={[
             ...(hayHorario ? [{ label: 'Generar las clases del semestre', icono: 'ti-wand', onClick: () => setGenerando(true) }] : []),
             { label: 'Agregar clase', icono: 'ti-plus', onClick: iniciarNuevo },
