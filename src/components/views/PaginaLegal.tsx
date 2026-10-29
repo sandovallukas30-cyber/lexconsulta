@@ -1,3 +1,4 @@
+import { LogoPrimaLex } from '../ui/LogoPrimaLex'
 import { useEffect } from 'react'
 import { Disclaimer, Privacidad, Terminos } from '../ui/ModalAcercaDe'
 import type { DocumentoLegal } from '../../services/rutasLegales'
@@ -25,9 +26,7 @@ export function PaginaLegal({ documento }: { documento: Documento }) {
     <div className="h-full overflow-y-auto" style={{ background: 'var(--neu-bg)' }}>
       <main className="max-w-2xl mx-auto px-5 py-10">
         <a href="/" className="inline-flex items-center gap-3 mb-8" style={{ color: 'var(--neu-ink)' }}>
-          <span className="w-11 h-11 rounded-[14px] flex items-center justify-center" style={{ background: 'var(--accent-base)', boxShadow: 'var(--neu-plana)' }}>
-            <i className="ti ti-scale text-lg text-white" aria-hidden="true" />
-          </span>
+          <LogoPrimaLex size={44} />
           <span>
             <span className="block text-lg font-extrabold leading-tight">Prima Lex</span>
             <span className="block text-xs" style={{ color: 'var(--neu-ink3)' }}>Tu cuaderno de Derecho</span>

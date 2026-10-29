@@ -4,8 +4,9 @@
  *  - Nunca toca /api/ ni la verificación de correo.
  *  Para forzar una actualización de todo, sube el número de VERSION.
  * v2: nunca guarda una página HTML como si fuera un archivo de /assets/
- * (el caché dañado de v1 se borra al activarse). */
-const VERSION = 'v2'
+ * (el caché dañado de v1 se borra al activarse).
+ * v3: logo nuevo (favicon e íconos). */
+const VERSION = 'v3'
 const CACHE = `prima-lex-${VERSION}`
 
 self.addEventListener('install', (e) => {

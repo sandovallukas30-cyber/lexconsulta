@@ -9,6 +9,7 @@ import { ModalConfiguracion } from '../ui/ModalConfiguracion'
 import { EnfoqueEnMenu } from './EnfoqueEnMenu'
 import { useEsMovil } from '../../hooks/useEsMovil'
 import { BotonCuenta } from '../ui/ModalCuenta'
+import { LogoPrimaLex } from '../ui/LogoPrimaLex'
 import { cuentasDisponibles } from '../../services/supabase'
 import type { VistaId } from '../../types'
 
@@ -142,7 +143,7 @@ export function Sidebar() {
       >
         {/* El botón de colapsar/expandir vive SIEMPRE en el mismo lugar (esquina superior izquierda de
             la tarjeta): se abre y se cierra tocando el mismo punto, sin mover el cursor ni el dedo. */}
-        <div className="neu-raised flex-shrink-0 flex items-center gap-2.5 py-3 pl-[10px] pr-2">
+        <div className={`neu-raised flex-shrink-0 flex items-center gap-2.5 py-3 ${!esMovil && colapsado ? 'justify-center px-0' : 'pl-[10px] pr-2'}`}>
           {esMovil ? (
             <>
               <button
@@ -164,11 +165,9 @@ export function Sidebar() {
                 title={colapsado ? 'Expandir (Ctrl+B)' : 'Colapsar (Ctrl+B)'}
                 aria-label={colapsado ? 'Expandir menú lateral' : 'Colapsar menú lateral'}
                 aria-expanded={!colapsado}
-                className="boton boton-fantasma flex items-center gap-2.5 min-w-0 flex-1 !p-0 !justify-start text-left rounded-[14px]"
+                className={`boton boton-fantasma flex items-center gap-2.5 min-w-0 !p-0 text-left rounded-[14px] ${colapsado ? 'flex-none !justify-center' : 'flex-1 !justify-start'}`}
               >
-                <span className="w-11 h-11 rounded-[14px] flex items-center justify-center flex-shrink-0" style={{ background: VERDE }} aria-hidden="true">
-                  <i className="ti ti-scale text-lg text-white" />
-                </span>
+                <LogoPrimaLex size={44} className="flex-shrink-0" />
                 {!colapsado && (
                   <span className="anim-aparece min-w-0 block">
                     <span className="block text-[17px] font-extrabold leading-tight" style={{ color: 'var(--neu-ink)' }}>Prima Lex</span>
@@ -177,7 +176,15 @@ export function Sidebar() {
                 )}
               </button>
               {!colapsado && (
-                <i className="ti ti-layout-sidebar-left-collapse text-xl flex-shrink-0 mr-1" style={{ color: 'var(--neu-ink3)' }} aria-hidden="true" />
+                <button
+                  onClick={toggleSidebar}
+                  title="Colapsar el menú (Ctrl+B)"
+                  aria-label="Colapsar menú lateral"
+                  className="boton boton-fantasma boton-icono flex-shrink-0 mr-0.5"
+                  style={{ color: 'var(--neu-ink3)' }}
+                >
+                  <i className="ti ti-layout-sidebar-left-collapse text-xl" aria-hidden="true" />
+                </button>
               )}
             </>
           )}
@@ -382,9 +389,7 @@ function BotonNav({
 function MarcaPrimaLex() {
   return (
     <div className="flex-1 min-w-0 flex items-center gap-2.5">
-      <span className="w-11 h-11 rounded-[14px] flex items-center justify-center flex-shrink-0" style={{ background: VERDE }} aria-hidden="true">
-        <i className="ti ti-scale text-lg text-white" />
-      </span>
+      <LogoPrimaLex size={44} className="flex-shrink-0" />
       <div className="min-w-0">
         <p className="text-[17px] font-extrabold leading-tight" style={{ color: 'var(--neu-ink)' }}>Prima Lex</p>
         <p className="sidebar-tagline text-[11px]" style={{ color: 'var(--neu-ink3)' }}>Tu cuaderno de Derecho</p>
