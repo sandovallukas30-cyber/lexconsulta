@@ -56,6 +56,7 @@ export const FUNCIONES_USO = {
   'practica.mazo': 'Repasar un mazo con filtros',
   'mapa.apunte': 'Crear un apunte desde un mapa mental',
   'apunte.mapa': 'Crear un mapa mental desde un apunte',
+  'apunte.plantilla': 'Empezar un apunte con una plantilla',
 } as const
 export type FuncionUso = keyof typeof FUNCIONES_USO
 export const CLAVES_FUNCIONES = Object.keys(FUNCIONES_USO) as FuncionUso[]
