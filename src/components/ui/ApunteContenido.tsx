@@ -213,7 +213,17 @@ function BloqueView({ b, modo, depth }: { b: Bloque; modo: Modo; depth: number }
       const cuerpo = b.encabezado ? b.filas.slice(1) : b.filas
       return (
         <div data-tabla className={`overflow-x-auto mb-4 rounded-lg border ${paleta.borde}`}>
-          <table className="w-full border-collapse text-[0.92em]">
+          <table
+            className={`border-collapse text-[0.92em] ${b.anchos ? '' : 'w-full'}`}
+            style={b.anchos ? { width: b.anchos.reduce((s, w) => s + (w || 150), 0), tableLayout: 'fixed' } : undefined}
+          >
+            {b.anchos && (
+              <colgroup>
+                {b.filas[0].map((_, i) => (
+                  <col key={i} style={b.anchos?.[i] ? { width: b.anchos[i] } : undefined} />
+                ))}
+              </colgroup>
+            )}
             {b.encabezado && (
               <thead>
                 <tr>

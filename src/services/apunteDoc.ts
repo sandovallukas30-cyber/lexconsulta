@@ -261,6 +261,7 @@ function bloqueADoc(b: Bloque): NodoDoc[] {
             type: 'tableRow',
             content: Array.from({ length: ancho }, (_, c) => ({
               type: b.encabezado && i === 0 ? 'tableHeader' : 'tableCell',
+              ...(b.anchos?.[c] ? { attrs: { colwidth: [b.anchos[c]] } } : {}),
               content: [parrafo(fila[c] ?? '')],
             })),
           })),
@@ -379,9 +380,12 @@ function bloquesATexto(nodos: NodoDoc[]): string[] {
           lineas.push(`| ${f.join(' | ')} |`)
           if (i === 0 && encabezado) lineas.push(`|${f.map(() => '---').join('|')}|`)
         })
-        if (!encabezado && filas.length > 0) {
-          // la sintaxis marca el encabezado con la fila |---|: sin ella la primera fila es de datos
-        }
+        // anchos arrastrados en el editor (la primera fila manda; 0 = automático)
+        const anchos = (n.content?.[0]?.content ?? []).map((c) => {
+          const w = (c.attrs?.colwidth as number[] | null | undefined)?.[0]
+          return typeof w === 'number' && w > 0 ? Math.round(w) : 0
+        })
+        if (anchos.some((w) => w > 0)) lineas.push(`%%anchos ${anchos.join(' ')}`)
         break
       }
       default:

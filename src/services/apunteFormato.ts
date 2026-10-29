@@ -27,7 +27,7 @@ export type Bloque =
   | { t: 'lista'; items: ItemLista[] }
   | { t: 'cita'; icono: string; hijos: Bloque[] }
   | { t: 'cols'; cols: Bloque[][] }
-  | { t: 'tabla'; filas: string[][]; encabezado: boolean }
+  | { t: 'tabla'; filas: string[][]; encabezado: boolean; anchos?: number[] }
 
 export interface ItemLista {
   /** 'vineta' para "- ", o el texto literal de la numeración ("1.", "2)"). */
@@ -38,6 +38,8 @@ export interface ItemLista {
 
 const RE_EMOJI_INICIAL = /^\p{Extended_Pictographic}[\u{FE0F}]?/u
 const RE_ITEM = /^(\t*)(?:-(?![-\s]|$)\s?|-\s+(?=\S)|(\d{1,3}[.)])\s+)(.*)$/
+/** Anchos de columna (px) que se arrastraron en el editor: `%%anchos 220 180`, justo debajo de la tabla (0 = automático). */
+const RE_ANCHOS_TABLA = /^%%anchos((?:\s+\d{1,4})+)\s*$/
 const RE_SEPARADOR_TABLA = /^\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/
 
 interface Item {
@@ -191,7 +193,14 @@ function parsearBloques(lineas: string[], contador: { h: number }): Bloque[] {
         }
         j++
       }
-      if (filas.length > 0) salida.push({ t: 'tabla', filas, encabezado })
+      let anchos: number[] | undefined
+      const marcaAnchos = j < lineas.length ? RE_ANCHOS_TABLA.exec(lineas[j].trim()) : null
+      if (marcaAnchos) {
+        const valores = marcaAnchos[1].trim().split(/\s+/).map(Number)
+        if (valores.some((v) => v > 0)) anchos = valores
+        j++
+      }
+      if (filas.length > 0) salida.push(anchos ? { t: 'tabla', filas, encabezado, anchos } : { t: 'tabla', filas, encabezado })
       i = j
       continue
     }
@@ -358,7 +367,7 @@ export function textoPlanoDe(texto: string): string {
   const salida: string[] = []
   for (const cruda of normalizarTexto(texto).split('\n')) {
     let l = cruda.trim()
-    if (!l || /^:::/.test(l) || /^(-{3,}|\*{3,}|_{3,})$/.test(l) || RE_SEPARADOR_TABLA.test(l)) continue
+    if (!l || /^:::/.test(l) || /^(-{3,}|\*{3,}|_{3,})$/.test(l) || RE_SEPARADOR_TABLA.test(l) || RE_ANCHOS_TABLA.test(l)) continue
     l = l.replace(/^#{1,3}\s+/, '').replace(/^>\s?/, '')
     if (l.startsWith('|')) l = dividirCeldas(l).filter(Boolean).join(', ')
     l = l.replace(/^(?:-(?![-\s])\s?|-\s+)/, '').replace(/^(\d{1,3})[.)]\s+/, '$1. ')

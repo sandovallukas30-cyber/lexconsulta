@@ -108,6 +108,9 @@
 .ap-editor td p, .ap-editor th p { margin: 0; }
 .ap-editor .selectedCell::after { content: ''; position: absolute; inset: 0; background: var(--ap-seleccion); pointer-events: none; }
 .ap-editor .tableWrapper { overflow-x: auto; }
+/* arrastrar el borde de una columna para cambiar su ancho (como en Notion) */
+.ap-editor .column-resize-handle { position: absolute; right: -2px; top: 0; bottom: -2px; width: 4px; background: var(--accent-base); opacity: 0.55; pointer-events: none; z-index: 2; }
+.ap-editor.resize-cursor { cursor: col-resize; }
 
 .ap-editor .ProseMirror-gapcursor:after { border-top-color: currentColor; }
 
