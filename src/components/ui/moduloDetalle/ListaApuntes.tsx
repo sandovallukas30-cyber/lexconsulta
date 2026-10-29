@@ -15,6 +15,7 @@ export interface AccionesListaApuntes {
   enfocar: (a: ApunteModulo) => void
   duplicar: (a: ApunteModulo) => void
   mover: (a: ApunteModulo) => void
+  crearMapa: (a: ApunteModulo) => void
   eliminar: (id: string) => void
 }
 
@@ -127,7 +128,7 @@ const FilaApunte = memo(function FilaApunte({
               {pendientes > 0 ? pendientes : nTarjetas}
             </button>
           )}
-          <MenuAccionesApunte apunte={a} onDuplicar={() => acciones.duplicar(a)} onMover={() => acciones.mover(a)} modoOscuro={modoOscuro} />
+          <MenuAccionesApunte apunte={a} onDuplicar={() => acciones.duplicar(a)} onMover={() => acciones.mover(a)} onCrearMapa={() => acciones.crearMapa(a)} modoOscuro={modoOscuro} />
           <BotonEliminar onClick={() => acciones.eliminar(a.id)} modoOscuro={modoOscuro} />
         </div>
       </div>

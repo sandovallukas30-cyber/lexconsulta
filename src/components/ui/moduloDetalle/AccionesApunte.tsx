@@ -10,11 +10,12 @@ import type { ApunteModulo, CuadernoApuntes } from '../../../types'
 
 /** Menú "⋯" de cada apunte de la lista. */
 export function MenuAccionesApunte({
-  apunte, onDuplicar, onMover, modoOscuro,
+  apunte, onDuplicar, onMover, onCrearMapa, modoOscuro,
 }: {
   apunte: ApunteModulo
   onDuplicar: () => void
   onMover: () => void
+  onCrearMapa: () => void
   modoOscuro: boolean
 }) {
   const [abierto, setAbierto] = useState(false)
@@ -93,6 +94,9 @@ export function MenuAccionesApunte({
           </button>
           <button role="menuitem" className={item} onClick={elegir(onMover)}>
             <i className="ti ti-folder-symlink text-base" /> Mover a…
+          </button>
+          <button role="menuitem" className={item} onClick={elegir(onCrearMapa)}>
+            <i className="ti ti-sitemap text-base" /> Crear mapa mental
           </button>
           <button
             role="menuitem"

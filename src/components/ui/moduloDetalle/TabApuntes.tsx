@@ -6,6 +6,7 @@ import { confirmarSalida, registrarGuardia } from '../../../services/guardiaCamb
 import { ModoLecturaApunte } from '../ModoLecturaApunte'
 import { markdownAApunte } from '../../../services/apunteArchivo'
 import { esMazo, mazoAApunte } from '../../../services/mazoImportado'
+import { crearMapaDesdeApunte } from '../../../services/crearMapaDesdeApunte'
 import { duplicarApunte } from '../../../services/accionesApunte'
 import { ModalMoverApunte } from './AccionesApunte'
 import { ListaApuntes, type AccionesListaApuntes } from './ListaApuntes'
@@ -369,6 +370,7 @@ export function TabApuntes({
       enfocar: (a) => enfocarConApunte(moduloId, a.id),
       duplicar: (a) => duplicarApunte(moduloId, a),
       mover: (a) => setMoviendo(a),
+      crearMapa: (a) => crearMapaDesdeApunte(a, moduloId),
       eliminar: (id) => {
         eliminarDeListaConDeshacer(
           id,
