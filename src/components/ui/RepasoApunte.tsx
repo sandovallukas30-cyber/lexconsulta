@@ -32,7 +32,10 @@ function leerCuatroBotones(): boolean {
 }
 
 interface Props {
-  apunte: ApunteModulo
+  /** Repaso de un apunte: sus tarjetas se generan del texto. */
+  apunte?: ApunteModulo
+  /** Repaso de un mazo armado con filtros (varias asignaturas): llega con las tarjetas ya elegidas. */
+  mazo?: { titulo: string; tarjetas: TarjetaRepaso[] }
   onCerrar: () => void
 }
 
@@ -43,18 +46,20 @@ interface Props {
  *  espaciada es FSRS (services/fsrs.ts) y las que fallas reaparecen unas
  *  tarjetas más adelante. La pista (primeras palabras de la respuesta, sin IA)
  *  baja un acierto a "Difícil". */
-export function RepasoApunte({ apunte, onCerrar }: Props) {
+export function RepasoApunte({ apunte, mazo, onCerrar }: Props) {
   const modoOscuro = useStore((s) => s.modoOscuro)
   const estados = useStore((s) => s.repasoApuntes)
   const registrar = useStore((s) => s.registrarRepasoTarjeta)
-  const tarjetas = useMemo(() => generarTarjetas(apunte), [apunte])
+  const tarjetas = useMemo(() => (mazo ? mazo.tarjetas : apunte ? generarTarjetas(apunte) : []), [apunte, mazo])
+  const titulo = mazo?.titulo ?? apunte?.titulo ?? ''
   const pendientesAlInicio = useMemo(
     () => tarjetas.filter((t) => estaPendiente(useStore.getState().repasoApuntes[t.id])).length,
     [tarjetas]
   )
 
   const [cola, setCola] = useState<TarjetaRepaso[]>(() =>
-    ordenarParaSesion(tarjetas, useStore.getState().repasoApuntes, true).slice(0, TARJETAS_POR_SESION)
+    // un apunte parte por lo que toca hoy; un mazo filtrado trae justo lo que se pidió (aunque no toque hoy)
+    ordenarParaSesion(tarjetas, useStore.getState().repasoApuntes, !mazo).slice(0, TARJETAS_POR_SESION)
   )
   const [indice, setIndice] = useState(0)
   const [volteada, setVolteada] = useState(false)
@@ -162,7 +167,7 @@ export function RepasoApunte({ apunte, onCerrar }: Props) {
       className={`fixed inset-0 z-[90] flex flex-col ${modoOscuro ? 'bg-zinc-950' : 'bg-zinc-50'}`}
       role="dialog"
       aria-modal="true"
-      aria-label={`Repaso: ${apunte.titulo}`}
+      aria-label={`Repaso: ${titulo}`}
     >
       <div className={`flex items-center gap-3 px-4 sm:px-6 py-3 border-b ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
         <button
@@ -173,7 +178,7 @@ export function RepasoApunte({ apunte, onCerrar }: Props) {
           <i className="ti ti-x text-lg" />
         </button>
         <div className="flex-1 min-w-0">
-          <p className={`text-sm font-semibold truncate ${texto}`}>Repaso · {apunte.titulo}</p>
+          <p className={`text-sm font-semibold truncate ${texto}`}>Repaso · {titulo}</p>
           <p className={`text-[11px] ${suave}`}>
             {tarjetas.length} tarjeta{tarjetas.length === 1 ? '' : 's'} · {pendientesAlInicio} para hoy
           </p>
@@ -192,7 +197,7 @@ export function RepasoApunte({ apunte, onCerrar }: Props) {
       <div className="flex-1 min-h-0 overflow-y-auto flex items-center justify-center p-4 sm:p-8">
         {tarjetas.length === 0 ? (
           <div className={`max-w-md text-sm leading-relaxed ${suave}`}>
-            <p className={`text-base font-semibold mb-2 ${texto}`}>Este apunte aún no tiene tarjetas</p>
+            <p className={`text-base font-semibold mb-2 ${texto}`}>{mazo ? 'No hay tarjetas con estos filtros' : 'Este apunte aún no tiene tarjetas'}</p>
             <p className="mb-3">Las tarjetas se crean solas a partir de dos formatos del apunte:</p>
             <pre className={`text-xs rounded-lg p-3 mb-3 whitespace-pre-wrap ${modoOscuro ? 'bg-zinc-900 text-zinc-300' : 'bg-white border border-zinc-200 text-zinc-700'}`}>
               {'- **Obligación:** vínculo jurídico entre personas determinadas\n> 🎯 El contrato es ley para las partes (art. 1545)'}

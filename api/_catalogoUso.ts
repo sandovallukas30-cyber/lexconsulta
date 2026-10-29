@@ -53,6 +53,7 @@ export const FUNCIONES_USO = {
   // Práctica
   'practica.jugar': 'Empezar un juego de práctica',
   'practica.simulacro': 'Hacer un simulacro con tus apuntes',
+  'practica.mazo': 'Repasar un mazo con filtros',
 } as const
 export type FuncionUso = keyof typeof FUNCIONES_USO
 export const CLAVES_FUNCIONES = Object.keys(FUNCIONES_USO) as FuncionUso[]

@@ -7,6 +7,7 @@ import { generarPalabraAhorcado, ERRORES_MAXIMOS } from '../../services/ahorcado
 import { useDestello } from '../../hooks/useDestello'
 import { RepasoColecciones } from '../ui/RepasoColecciones'
 import { SimulacroPractica } from '../ui/SimulacroPractica'
+import { MazoRepaso } from '../ui/MazoRepaso'
 import { contarTarjetasVencidas } from '../../services/actividadEstudio'
 import { obtenerCodigosConPreguntas } from '../../data/destelloPreguntas'
 import type { AreaPractica, EntradaRosco, PartidaPasapalabra, PartidaAhorcado, CodigoActivo, CodigoTipo } from '../../types'
@@ -38,7 +39,7 @@ const AREAS: { id: AreaPractica; nombre: string; icono: string; descripcion: str
   { id: 'recursos_naturales', nombre: 'Minería y Aguas', icono: 'ti-mountain', descripcion: 'Código de Minería y Código de Aguas' },
 ]
 
-type JuegoSeleccionado = 'none' | 'pasapalabra' | 'quiz' | 'ahorcado' | 'repaso' | 'simulacro'
+type JuegoSeleccionado = 'none' | 'pasapalabra' | 'quiz' | 'ahorcado' | 'repaso' | 'simulacro' | 'mazo'
 
 export function PracticaView() {
   const partida = useStore((s) => s.partidaPasapalabra)
@@ -124,6 +125,10 @@ export function PracticaView() {
     return <RepasoColecciones onVolver={() => setJuegoSeleccionado('none')} />
   }
 
+  if (juegoSeleccionado === 'mazo') {
+    return <MazoRepaso onVolver={() => setJuegoSeleccionado('none')} />
+  }
+
   if (juegoSeleccionado === 'simulacro') {
     return <SimulacroPractica onVolver={() => setJuegoSeleccionado('none')} />
   }
@@ -197,6 +202,30 @@ function MenuSeleccionJuegos({
               </div>
             </motion.button>
           )}
+
+          {/* Mazo de repaso con filtros */}
+          <motion.button
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => onSeleccionar('mazo')}
+            className={`group text-left rounded-2xl border-2 p-6 transition-all hover:shadow-lg hover:-translate-y-1 md:col-span-2 lg:col-span-3 ${
+              modoOscuro ? 'bg-zinc-800/40 border-zinc-800 hover:border-[var(--accent-700)]' : 'bg-white border-zinc-200 hover:border-[var(--accent-500)]'
+            }`}
+          >
+            <div className="flex items-center gap-4">
+              <span className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'color-mix(in srgb, var(--accent-base) 14%, transparent)' }}>
+                <i className="ti ti-adjustments-horizontal text-2xl" style={{ color: 'var(--accent-texto)' }} />
+              </span>
+              <div className="flex-1 min-w-0">
+                <h2 className={`text-xl font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>Repaso con filtros</h2>
+                <p className={`text-sm leading-relaxed ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                  Junta las tarjetas de tus apuntes de varias asignaturas y elige: lo que te toca hoy, lo que te cuesta, lo nuevo, o una sección en particular.
+                </p>
+              </div>
+              <i className="ti ti-arrow-right text-lg transition-transform group-hover:translate-x-1" style={{ color: 'var(--accent-texto)' }} />
+            </div>
+          </motion.button>
 
           {/* Simulacro con tus apuntes */}
           <motion.button
