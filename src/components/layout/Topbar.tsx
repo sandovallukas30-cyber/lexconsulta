@@ -10,7 +10,7 @@ const titulos: Record<string, string> = {
   mapasmentales: 'Mapas mentales',
   explorador: 'Explorador de códigos',
   colecciones: 'Colecciones',
-  practica: 'Práctica · Pasapalabra',
+  practica: 'Práctica',
 }
 
 export function Topbar() {
