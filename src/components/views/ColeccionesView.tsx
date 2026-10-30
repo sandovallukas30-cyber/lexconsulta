@@ -199,7 +199,7 @@ function ListaColecciones() {
   return (
     <div className={`h-full overflow-y-auto ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
-        <div className="flex items-start justify-between gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 mb-6">
           <div>
             <h1 className="titulo-pagina">Colecciones</h1>
             <p className={`text-sm mt-1.5 max-w-md ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
@@ -252,7 +252,7 @@ function ListaColecciones() {
               <TarjetaColeccion
                 key={c.id}
                 coleccion={c}
-                delay={i * 0.03}
+                delay={Math.min(i, 6) * 0.03}
                 onAbrir={() => setColeccionActiva(c.id)}
                 onEliminar={() => eliminarColeccionConDeshacer(c.id)}
                 modoOscuro={modoOscuro}
@@ -405,6 +405,8 @@ function TarjetaColeccion({
 }) {
   const dominados = coleccion.articulos.filter((a) => a.estado === 'dominado').length
   const porRepasar = contarTarjetasVencidas([coleccion])
+  // si ningún artículo se ha estudiado todavía, «por repasar» engaña: aún no hay nada que repasar
+  const sinEstudiar = coleccion.articulos.length > 0 && coleccion.articulos.every((a) => !a.proximoRepaso)
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -413,6 +415,16 @@ function TarjetaColeccion({
       layout="position"
       transition={{ duration: 0.25, delay }}
       onClick={onAbrir}
+      role="button"
+      tabIndex={0}
+      aria-label={`Abrir la colección ${coleccion.titulo}`}
+      onKeyDown={(e) => {
+        // solo cuando el foco está en la tarjeta misma (no en la papelera de adentro)
+        if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault()
+          onAbrir()
+        }
+      }}
       className={`group relative text-left rounded-2xl border p-5 cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 ${
         modoOscuro
           ? 'bg-[var(--neu-card)] border-[var(--neu-line)] hover:border-[var(--accent-700)]'
@@ -425,14 +437,15 @@ function TarjetaColeccion({
           onEliminar()
         }}
         title="Eliminar colección"
-        className={`absolute top-3 right-3 w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ${
+        aria-label={`Eliminar la colección ${coleccion.titulo}`}
+        className={`absolute top-2 right-2 w-11 h-11 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 focus-visible:opacity-100 max-md:opacity-100 transition-opacity ${
           modoOscuro ? 'text-zinc-500 hover:bg-zinc-800 hover:text-red-400' : 'text-zinc-400 hover:bg-zinc-100 hover:text-red-500'
         }`}
       >
         <i className="ti ti-trash text-sm" />
       </button>
 
-      <h3 className="text-[19px] font-serif font-semibold leading-tight mb-1 pr-6" style={{ color: 'var(--neu-ink)' }}>
+      <h3 className="text-[19px] font-serif font-semibold leading-snug mb-1 pr-8 line-clamp-2" title={coleccion.titulo} style={{ color: 'var(--neu-ink)' }}>
         {coleccion.titulo}
       </h3>
       <p className="text-[13px] mb-3" style={{ color: 'var(--neu-ink2)' }}>
@@ -453,7 +466,7 @@ function TarjetaColeccion({
         </div>
       ) : (
         <p className="text-[13px] mb-3 rounded-xl border border-dashed p-4" style={{ color: 'var(--neu-ink2)', borderColor: 'var(--neu-line)' }}>
-          Aún no tienes artículos adjuntos.
+          Aún no hay artículos. Abre la colección para agregarlos.
         </p>
       )}
 
@@ -461,7 +474,7 @@ function TarjetaColeccion({
         <span>Modificada {formatearFecha(coleccion.fechaModificacion)}</span>
         {porRepasar > 0 && (
           <span className="px-2.5 py-0.5 rounded-full text-[12px] font-bold" style={{ background: 'color-mix(in srgb, var(--accent-base) 12%, transparent)', color: 'var(--accent-texto)' }}>
-            {porRepasar} por repasar
+            {porRepasar} {sinEstudiar ? 'sin estudiar' : 'por repasar'}
           </span>
         )}
       </div>
@@ -486,7 +499,7 @@ function VistaPreviaArticulo({ codigo, articulo }: { codigo: CodigoTipo; articul
   const texto = obtenerCodigo(codigo)?.articulos.find((x) => x.a === articulo)?.t ?? ''
   return (
     <div className="rounded-xl px-3 py-2" style={{ background: 'var(--neu-bg)' }}>
-      <p className="text-[11px] font-bold uppercase tracking-[0.06em]" style={{ color: 'var(--neu-danger)' }}>
+      <p className="text-[11px] font-bold uppercase tracking-[0.06em]" style={{ color: 'var(--accent-texto)' }}>
         {nombreCortoMetadata(codigo)} · {articulo}
       </p>
       <p className="text-[14px] leading-snug line-clamp-2" style={{ color: 'var(--neu-ink)', fontFamily: 'var(--font-serif)' }}>
@@ -1044,7 +1057,7 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
           <i className="ti ti-alert-triangle text-sm flex-shrink-0 mt-0.5" />
           <p>
             <strong>{codigosResumen.map((t) => nombreCortoMetadata(t)).join(', ')}</strong>: el texto de estos artículos es un
-            resumen propio de Prima Lex, no la transcripción oficial — verificá contra la fuente antes de citarlo en un examen.
+            resumen propio de Prima Lex, no la transcripción oficial — verifica contra la fuente antes de citarlo en un examen.
           </p>
         </div>
       )}
