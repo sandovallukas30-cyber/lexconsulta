@@ -1667,7 +1667,7 @@ function CuerpoNodo({
     // Ficha de artículo: fondo neutro y una barra de color al costado (como la ficha del panel de consulta)
     return (
       <div
-        className="w-full h-full flex items-center px-3 py-2"
+        className="w-full h-full flex items-stretch px-3 py-2"
         style={{
           background: modoOscuro ? '#18181b' : '#ffffff',
           border: `1px solid ${modoOscuro ? '#3f3f46' : '#e4e4e7'}`,
@@ -1825,7 +1825,11 @@ function NodoMental(props: NodeProps<NodoFlow>) {
     const el = medicionRef.current
     if (!el) return
     const PADDING_VERTICAL = data.forma === 'ninguna' ? 8 : 16 // ver py-1/py-2 en CuerpoNodo
-    const deseada = Math.max(MIN_TAMANO[data.forma].h, Math.ceil(el.scrollHeight + PADDING_VERTICAL))
+    // la ficha de artículo mide su encabezado + el texto completo, con tope: lo demás se lee con scroll
+    const natural = data.articulo
+      ? Math.min(320, ((el.firstElementChild as HTMLElement | null)?.offsetHeight ?? 0) + ((el.lastElementChild as HTMLElement | null)?.scrollHeight ?? 0) + 6)
+      : el.scrollHeight
+    const deseada = Math.max(MIN_TAMANO[data.forma].h, Math.ceil(natural + PADDING_VERTICAL))
     updateNode(id, (n) => {
       const actual = typeof n.style?.height === 'number' ? n.style.height : 0
       return deseada > actual ? { style: { ...n.style, height: deseada } } : {}
@@ -2109,18 +2113,31 @@ function NodoMental(props: NodeProps<NodoFlow>) {
             />
           ) : (
             data.articulo ? (
-              <div ref={medicionRef} className="w-full text-left">
-                <div className="flex items-center gap-1.5 pb-1 mb-1 border-b" style={{ borderColor: modoOscuro ? '#3f3f46' : '#e4e4e7', color }}>
+              <div ref={medicionRef} className="w-full h-full min-h-0 flex flex-col text-left">
+                <div className="flex-shrink-0 flex items-center gap-1.5 pb-1 mb-1 border-b" style={{ borderColor: modoOscuro ? '#3f3f46' : '#e4e4e7', color }}>
                   <i className="ti ti-book-2 text-sm flex-shrink-0" aria-hidden="true" />
                   <span className="text-[11px] font-bold uppercase tracking-wide truncate">{data.articulo}</span>
                 </div>
                 <div
-                  className={`nodrag nowheel max-h-[220px] overflow-y-auto pr-1 text-[11px] leading-snug whitespace-pre-wrap break-words ${
+                  className={`nodrag nowheel flex-1 min-h-0 overflow-y-auto pr-1 text-[11px] leading-snug break-words ${
                     modoOscuro ? 'text-zinc-100' : 'text-zinc-800'
                   }`}
                   style={{ fontFamily: 'var(--font-lectura)' }}
                 >
-                  {renderTextoEnriquecido(data.texto.replace(/^\*[^*\n]+\*\n?/, ''))}
+                  {data.texto
+                    .replace(/^\*[^*\n]+\*\n?/, '')
+                    .split('\n')
+                    .filter((p) => p.trim())
+                    .map((p, i) => {
+                      // los incisos (1º.-, a), 1)) llevan su número en negrita y un espacio propio entre sí
+                      const m = /^(\d+\s?[º°]?\s?[.)]?-?|[a-zñ]\))\s+/i.exec(p)
+                      return (
+                        <p key={i} className="mb-1.5 last:mb-0">
+                          {m ? <strong style={{ color }}>{m[1]} </strong> : null}
+                          {renderTextoEnriquecido(m ? p.slice(m[0].length) : p)}
+                        </p>
+                      )
+                    })}
                 </div>
               </div>
             ) : (
