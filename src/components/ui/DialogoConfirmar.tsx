@@ -49,7 +49,7 @@ function Cuerpo({ pendiente }: { pendiente: ConfirmacionPendiente }) {
                 color: pendiente.peligro ? 'var(--neu-danger)' : 'var(--accent-base)',
               }}
             >
-              <i className={`ti ${pendiente.peligro ? 'ti-trash' : 'ti-help-circle'} text-xl`} />
+              <i className={`ti ${pendiente.peligro ? 'ti-trash' : 'ti-info-circle'} text-xl`} />
             </span>
             <div className="min-w-0">
               <h2 id="titulo-confirmar" className={`text-base font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
