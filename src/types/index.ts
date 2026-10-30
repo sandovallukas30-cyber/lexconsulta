@@ -589,6 +589,8 @@ export interface SesionClase {
   tema: string
   notas?: string
   completada: boolean
+  /** Cuándo se tocó por última vez (la pone el store): al sincronizar entre dispositivos gana la copia más reciente. */
+  actualizada?: number
 }
 
 export interface EvaluacionModulo {
@@ -598,6 +600,8 @@ export interface EvaluacionModulo {
   ponderacion: number // 0-100, % que vale sobre la nota final del ramo
   notaMaxima: number // ej. 7 (escala chilena) o 100
   nota: number | null // null = aún no rendida o sin calificar
+  /** Cuándo se tocó por última vez (la pone el store): al sincronizar entre dispositivos gana la copia más reciente. */
+  actualizada?: number
 }
 
 /** Archivo que la persona adjuntó a un texto. El archivo en sí vive solo en el dispositivo (ver services/almacenArchivos.ts);
@@ -623,6 +627,8 @@ export interface TextoObligatorio {
   articuloRelacionado?: string
   /** Sesión de clase (SesionClase['id']) para la que es lectura asignada. */
   claseId?: string
+  /** Cuándo se tocó por última vez (la pone el store): al sincronizar entre dispositivos gana la copia más reciente. */
+  actualizada?: number
 }
 
 export interface ApunteModulo {

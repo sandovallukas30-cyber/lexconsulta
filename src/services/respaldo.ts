@@ -11,6 +11,7 @@ import type {
   MapaMental,
   ProgresoModulo,
   Ramo,
+  SesionClase,
   TareaPlan,
 } from '../types'
 
@@ -296,6 +297,20 @@ export function unirPorIdReciente<T extends { id: string }>(locales: T[], entran
   return [...base, ...entrantes.filter((x) => !ids.has(x.id))]
 }
 
+/** Clases: como unirPorIdReciente, pero si ninguna de las dos copias guarda fecha (datos de antes de que existiera
+ *  `actualizada`) se queda con la que tiene asistencia registrada: así lo que marcaste en un dispositivo no se pierde. */
+function unirClases(locales: SesionClase[], entrantes: SesionClase[]): SesionClase[] {
+  const entrantePorId = new Map(entrantes.map((x) => [x.id, x]))
+  const ids = new Set(locales.map((x) => x.id))
+  const base = locales.map((l) => {
+    const e = entrantePorId.get(l.id)
+    if (!e) return l
+    if (tocado(e) !== tocado(l)) return tocado(e) > tocado(l) ? e : l
+    return l.asistio === undefined && e.asistio !== undefined ? e : l
+  })
+  return [...base, ...entrantes.filter((x) => !ids.has(x.id))]
+}
+
 export function combinarAcademicos(
   locales: Record<string, DatosAcademicosModulo>,
   entrantes: Record<string, DatosAcademicosModulo>,
@@ -307,9 +322,9 @@ export function combinarAcademicos(
     const l = out[id]
     out[id] = l
       ? {
-          clases: unirPorId(l.clases, e.clases),
-          evaluaciones: unirPorId(l.evaluaciones, e.evaluaciones),
-          textos: unirPorId(l.textos, e.textos),
+          clases: reciente ? unirClases(l.clases, e.clases) : unirPorId(l.clases, e.clases),
+          evaluaciones: unirNotas(l.evaluaciones, e.evaluaciones),
+          textos: unirNotas(l.textos, e.textos),
           apuntes: unirNotas(l.apuntes, e.apuntes),
           cuadernos: unirPorId(l.cuadernos ?? [], e.cuadernos),
           briefs: unirPorId(l.briefs ?? [], e.briefs),

@@ -57,6 +57,7 @@ import { siguienteEstado } from '../services/tarjetasApunte'
 import type { NotaRepaso } from '../services/fsrs'
 import { confirmarSalida } from '../services/guardiaCambios'
 import { agregarActividadHoy, fechaLocalISO } from '../services/actividadEstudio'
+import { sellarCambios } from '../services/sellarCambios'
 import { aplicarResultadoPracticaATodos, aplicarResultadoQuizATodos } from '../services/progresoModulos'
 
 interface AppState {
@@ -1067,7 +1068,7 @@ export const useStore = create<AppState>()(
         set((s) => ({
           academicoModulos: {
             ...s.academicoModulos,
-            [moduloId]: { ...(s.academicoModulos[moduloId] ?? datosAcademicosVacios), clases },
+            [moduloId]: { ...(s.academicoModulos[moduloId] ?? datosAcademicosVacios), clases: sellarCambios(s.academicoModulos[moduloId]?.clases, clases) },
           },
           diasActividadEstudio: agregarActividadHoy(s.diasActividadEstudio),
         })),
@@ -1075,7 +1076,7 @@ export const useStore = create<AppState>()(
         set((s) => ({
           academicoModulos: {
             ...s.academicoModulos,
-            [moduloId]: { ...(s.academicoModulos[moduloId] ?? datosAcademicosVacios), evaluaciones },
+            [moduloId]: { ...(s.academicoModulos[moduloId] ?? datosAcademicosVacios), evaluaciones: sellarCambios(s.academicoModulos[moduloId]?.evaluaciones, evaluaciones) },
           },
           diasActividadEstudio: agregarActividadHoy(s.diasActividadEstudio),
         })),
@@ -1083,7 +1084,7 @@ export const useStore = create<AppState>()(
         set((s) => ({
           academicoModulos: {
             ...s.academicoModulos,
-            [moduloId]: { ...(s.academicoModulos[moduloId] ?? datosAcademicosVacios), textos },
+            [moduloId]: { ...(s.academicoModulos[moduloId] ?? datosAcademicosVacios), textos: sellarCambios(s.academicoModulos[moduloId]?.textos, textos) },
           },
           diasActividadEstudio: agregarActividadHoy(s.diasActividadEstudio),
         })),
