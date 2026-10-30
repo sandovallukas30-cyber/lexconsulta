@@ -192,14 +192,9 @@ export function Sidebar() {
 
         <nav className={`neu-raised min-h-0 overflow-y-auto py-3 ${colapsado ? 'px-2' : 'px-3'}`}>
           {GRUPOS.map((g, i) => (
-            <div key={g.titulo} className={i > 0 ? 'mt-3' : ''}>
-              {colapsado ? (
-                i > 0 && <div aria-hidden="true" className="h-px mx-2 mb-2" style={{ background: 'var(--neu-line)' }} />
-              ) : (
-                <p className="px-3.5 pt-1 pb-1 text-[11px] font-bold uppercase tracking-[0.08em]" style={{ color: 'var(--neu-ink3)' }}>
-                  {g.titulo}
-                </p>
-              )}
+            <div key={g.titulo} role="group" aria-label={g.titulo} className={i > 0 ? 'mt-3' : ''}>
+              {/* los títulos de sección son solo una línea fina que separa los grupos */}
+              {i > 0 && <div aria-hidden="true" className={`h-px mb-2 ${colapsado ? 'mx-2' : 'mx-3.5'}`} style={{ background: 'var(--neu-line)' }} />}
               <div className="space-y-1">
                 {g.items.map((item) => (
                   <BotonNav
