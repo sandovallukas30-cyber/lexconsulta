@@ -50,3 +50,33 @@ export function eliminarDeListaConDeshacer<T extends { id: string }>(
     escribir(copia)
   })
 }
+
+/** Quitar un artículo de una colección con «Deshacer»: guarda el artículo con su lugar en la lista, las conexiones y los
+ *  grupos que se llevaba, y al deshacer los devuelve sin tocar lo demás que se haya cambiado en esos segundos. */
+export function quitarArticuloConDeshacer(coleccionId: string, ref: { codigo: string; articulo: string }) {
+  const antes = useStore.getState().colecciones.find((c) => c.id === coleccionId)
+  if (!antes) return
+  const es = (r: { codigo: string; articulo: string }) => r.codigo === ref.codigo && r.articulo === ref.articulo
+  const indice = antes.articulos.findIndex(es)
+  if (indice < 0) return
+  const articulo = antes.articulos[indice]
+  const conexiones = (antes.conexiones ?? []).filter((cx) => es(cx.desde) || es(cx.hasta))
+  const gruposAntes = antes.grupos ?? []
+  useStore.getState().quitarArticuloDeColeccion(coleccionId, articulo)
+  avisar.conDeshacer(`${articulo.articulo} quitado de la colección`, () => {
+    useStore.setState((s) => ({
+      colecciones: s.colecciones.map((c) => {
+        if (c.id !== coleccionId || c.articulos.some(es)) return c
+        const articulos = [...c.articulos]
+        articulos.splice(Math.min(indice, articulos.length), 0, articulo)
+        const idsConexiones = new Set((c.conexiones ?? []).map((x) => x.id))
+        const grupos = (c.grupos ?? []).map((g) => {
+          const original = gruposAntes.find((x) => x.id === g.id)
+          return original && original.articulos.some(es) && !g.articulos.some(es) ? { ...g, articulos: [...g.articulos, { codigo: articulo.codigo, articulo: articulo.articulo }] } : g
+        })
+        for (const original of gruposAntes) if (original.articulos.some(es) && !grupos.some((g) => g.id === original.id)) grupos.push(original)
+        return { ...c, articulos, conexiones: [...(c.conexiones ?? []), ...conexiones.filter((x) => !idsConexiones.has(x.id))], grupos, fechaModificacion: Date.now() }
+      }),
+    }))
+  })
+}

@@ -8,6 +8,7 @@ import { eliminarColeccionConDeshacer } from '../../services/deshacer'
 import { useCodigo } from '../../hooks/useCodigo'
 import { precargar, obtenerCodigo } from '../../services/codigos'
 import { contarTarjetasVencidas } from '../../services/actividadEstudio'
+import { quitarArticuloConDeshacer } from '../../services/deshacer'
 import { COLECCIONES_PLANTILLA } from '../../data/coleccionesPlantilla'
 import { obtenerMetadata, nombreCortoMetadata } from '../../data/codigosMetadata'
 import { registrarUso } from '../../services/uso'
@@ -790,7 +791,7 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
   const modoOscuro = useStore((s) => s.modoOscuro)
   const setColeccionActiva = useStore((s) => s.setColeccionActiva)
   const renombrarColeccion = useStore((s) => s.renombrarColeccion)
-  const quitarArticulo = useStore((s) => s.quitarArticuloDeColeccion)
+  const quitarArticulo = quitarArticuloConDeshacer
   const moverArticulo = useStore((s) => s.moverArticuloColeccion)
   const marcarEstado = useStore((s) => s.marcarEstadoArticulo)
   const guardarNota = useStore((s) => s.guardarNotaArticulo)
@@ -1327,7 +1328,7 @@ function ModalCompartirColeccion({ coleccion, onCerrar }: { coleccion: Coleccion
       setCopiado(true)
       setTimeout(() => setCopiado(false), 2000)
     } catch {
-      prompt('Copiá el link manualmente:', link)
+      prompt('Copia el link manualmente:', link)
     }
   }
 
@@ -1411,6 +1412,7 @@ function ModalVincularMapaMental({
 }) {
   const modoOscuro = useStore((s) => s.modoOscuro)
   const vinculado = mapasMentales.find((m) => m.id === coleccion.mapaMentalVinculado)
+  const crearMapaMental = useStore((s) => s.crearMapaMental)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }} onClick={onCerrar}>
@@ -1450,9 +1452,12 @@ function ModalVincularMapaMental({
         )}
 
         <div className="px-5 py-4 max-h-72 overflow-y-auto">
+          <button onClick={() => onVincular(crearMapaMental(coleccion.titulo))} className="boton boton-borde w-full justify-center mb-3">
+            <i className="ti ti-plus" aria-hidden="true" /> Crear un mapa nuevo con el nombre de la colección
+          </button>
           {mapasMentales.length === 0 ? (
-            <p className={`text-sm text-center py-6 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
-              Todavía no tienes ningún mapa mental creado.
+            <p className={`text-sm text-center py-3 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
+              Todavía no tienes otros mapas mentales.
             </p>
           ) : (
             <div className="space-y-1">
@@ -1733,7 +1738,7 @@ function TarjetaArticulo({
                 onClick={() => onMover(-1)}
                 disabled={posicion === 0}
                 title="Mover antes"
-                className={`w-5 h-5 flex items-center justify-center rounded disabled:opacity-20 disabled:cursor-not-allowed ${
+                className={`w-9 h-9 md:w-5 md:h-5 flex items-center justify-center rounded disabled:opacity-20 disabled:cursor-not-allowed ${
                   modoOscuro ? 'hover:bg-zinc-800 text-zinc-500' : 'hover:bg-zinc-200 text-zinc-400'
                 }`}
               >
@@ -1743,7 +1748,7 @@ function TarjetaArticulo({
                 onClick={() => onMover(1)}
                 disabled={posicion === total - 1}
                 title="Mover después"
-                className={`w-5 h-5 flex items-center justify-center rounded disabled:opacity-20 disabled:cursor-not-allowed ${
+                className={`w-9 h-9 md:w-5 md:h-5 flex items-center justify-center rounded disabled:opacity-20 disabled:cursor-not-allowed ${
                   modoOscuro ? 'hover:bg-zinc-800 text-zinc-500' : 'hover:bg-zinc-200 text-zinc-400'
                 }`}
               >
@@ -1755,7 +1760,7 @@ function TarjetaArticulo({
             <button
               onClick={() => onCambiarEstado(ESTADO_SIGUIENTE[item.estado])}
               title={`${estadoInfo.label} · clic para cambiar`}
-              className={`w-5 h-5 flex items-center justify-center rounded transition-colors ${
+              className={`w-9 h-9 md:w-5 md:h-5 flex items-center justify-center rounded transition-colors ${
                 modoOscuro ? estadoInfo.colorDark : estadoInfo.colorLight
               } ${modoOscuro ? 'hover:bg-zinc-800' : 'hover:bg-zinc-200'}`}
             >
@@ -1764,7 +1769,8 @@ function TarjetaArticulo({
             <button
               onClick={onQuitar}
               title="Quitar de la colección"
-              className={`w-5 h-5 flex items-center justify-center rounded transition-colors ${
+              aria-label="Quitar de la colección"
+              className={`w-9 h-9 md:w-5 md:h-5 flex items-center justify-center rounded transition-colors ${
                 modoOscuro ? 'text-zinc-500 hover:bg-zinc-800 hover:text-red-400' : 'text-zinc-400 hover:bg-zinc-200 hover:text-red-500'
               }`}
             >
