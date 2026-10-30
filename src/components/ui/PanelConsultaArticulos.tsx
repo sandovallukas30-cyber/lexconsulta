@@ -44,11 +44,13 @@ interface Props {
   /** Disposición: a un costado de la nota (pantallas anchas) o debajo de ella (celular). La decide el contenedor. */
   className?: string
   onCerrar: () => void
+  /** Si viene, la ficha del artículo muestra «Agregar al mapa»: entrega una copia del texto del artículo tal como está ahora. */
+  onAgregar?: (a: { cita: string; texto: string }) => void
 }
 
 /** Mini buscador de artículos para consultar un código o ley sin salir del apunte: se elige la norma, se escribe el número
  *  y aparece la ficha del artículo. Va al lado (o debajo) de la nota, nunca encima de su contenido. */
-export function PanelConsultaArticulos({ temaLectura, className = '', onCerrar }: Props) {
+export function PanelConsultaArticulos({ temaLectura, className = '', onCerrar, onAgregar }: Props) {
   const tema = TEMAS_LECTURA[temaLectura]
   const normas = useStore((s) => s.codigos)
   const [tipo, setTipo] = useState<CodigoTipo | null>(() => ultimoCodigo ?? normas.find((c) => c.tipo === 'con')?.tipo ?? normas[0]?.tipo ?? null)
@@ -312,6 +314,16 @@ export function PanelConsultaArticulos({ temaLectura, className = '', onCerrar }
                 </p>
               ))}
             </div>
+            {onAgregar && tipo && (
+              <div className={`px-3 py-2 border-t ${tema.border}`}>
+                <button
+                  onClick={() => onAgregar({ cita: `${actual.a} · ${meta?.nombreCorto ?? tipo}`, texto: parrafos.join('\n') })}
+                  className="boton boton-primario w-full justify-center"
+                >
+                  <i className="ti ti-plus" aria-hidden="true" /> Agregar al mapa
+                </button>
+              </div>
+            )}
           </article>
         )}
 

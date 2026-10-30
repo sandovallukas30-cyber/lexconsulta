@@ -40,6 +40,8 @@ import { ModalApunteDesdeMapa } from '../ui/ModalApunteDesdeMapa'
 // (antes se pedía a Google Fonts, que recibía la IP de cada estudiante); como
 // esta vista es lazy, la fuente no pesa en el arranque (C8).
 import '@fontsource-variable/inter'
+import { PanelConsultaArticulos } from '../ui/PanelConsultaArticulos'
+import { avisar } from '../../store/useAvisos'
 
 const VERDE = 'var(--accent-base)'
 /** Paleta CON significado fijo, no un selector de color libre: la idea es
@@ -554,7 +556,7 @@ interface CajaNodoImpreso {
 function calcularCajaNodoImpreso(n: NodoMapaMental): CajaNodoImpreso {
   const ancho = n.ancho ?? (n.tamanoTexto === 'titulo' ? 200 : 155)
   const { maxCaracteresPorLinea, altoLinea, fuente } = medidasTextoImpreso(ancho, n.tamanoTexto)
-  const lineas = envolverTextoImpreso(n.texto, maxCaracteresPorLinea)
+  const lineas = envolverTextoImpreso(n.texto.replace(/\*([^*\n]+)\*/g, '$1').replace(/_([^_\n]+)_/g, '$1'), maxCaracteresPorLinea)
   const alto = n.alto ?? Math.max(44, lineas.length * altoLinea + 16)
   return { nodo: n, x: n.posicion.x, y: n.posicion.y, ancho, alto, lineas, fuente, altoLinea }
 }
@@ -1045,6 +1047,29 @@ function MapaMentalDetalle({
   // del mapa, antes el nodo aparecía fuera de la vista y había que salir a
   // buscarlo. `screenToFlowPosition` traduce coordenadas de pantalla a
   // coordenadas del "mundo" del lienzo, sea cual sea el pan/zoom actual.
+  const [panelArticulos, setPanelArticulos] = useState(false)
+
+  /** Copia fija de un artículo como nodo del mapa: la cita en negrita y el texto debajo. No se actualiza si el código cambia. */
+  const agregarArticulo = ({ cita, texto }: { cita: string; texto: string }) => {
+    pushHistory()
+    const rect = wrapperRef.current?.getBoundingClientRect()
+    const centroPantalla = rect ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 } : { x: 400, y: 300 }
+    const centro = rfRef.current?.screenToFlowPosition(centroPantalla) ?? { x: 200, y: 200 }
+    const jitter = () => (Math.random() - 0.5) * 60
+    const ancho = 300
+    const nuevo: NodoFlow = {
+      id: crypto.randomUUID(),
+      type: 'mental',
+      position: { x: centro.x - ancho / 2 + jitter(), y: centro.y - 60 + jitter() },
+      data: { texto: `*${cita}*\n${texto}`, forma: 'rectangulo', tamanoTexto: 'texto' },
+      style: { width: ancho },
+      initialWidth: ancho,
+      initialHeight: Math.min(600, 50 + Math.ceil(texto.length / 48) * 16),
+    }
+    setNodes((nds) => [...nds.map((n) => (n.selected ? { ...n, selected: false } : n)), nuevo])
+    avisar.exito(`${cita} agregado al mapa`)
+  }
+
   const agregarNodo = (forma: FormaNodoMental) => {
     pushHistory()
     const rect = wrapperRef.current?.getBoundingClientRect()
@@ -1368,6 +1393,19 @@ function MapaMentalDetalle({
                 <i className={`ti ${f.icono} text-base`} />
               </button>
             ))}
+            <button
+              onClick={() => setPanelArticulos((v) => !v)}
+              title="Agregar un artículo de un código al mapa (copia del texto)"
+              aria-label="Agregar un artículo de un código al mapa"
+              aria-pressed={panelArticulos}
+              className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${
+                panelArticulos
+                  ? modoOscuro ? 'bg-zinc-700 text-zinc-100' : 'bg-white shadow-sm text-zinc-900'
+                  : modoOscuro ? 'text-zinc-300 hover:bg-zinc-700' : 'text-zinc-600 hover:bg-white hover:shadow-sm'
+              }`}
+            >
+              <i className="ti ti-book-2 text-base" />
+            </button>
           </div>
 
           {busquedaAbierta && (
@@ -1507,7 +1545,8 @@ function MapaMentalDetalle({
       <VistaImprimibleMapaMental mapa={mapa} />
       {crearApunte && <ModalApunteDesdeMapa mapa={mapa} onCerrar={() => setCrearApunte(false)} />}
 
-      <div ref={wrapperRef} className="flex-1 relative" onDoubleClick={alDobleClicLienzo}>
+      <div className="flex-1 min-h-0 flex flex-col md:flex-row">
+      <div ref={wrapperRef} className="flex-1 relative min-w-0 min-h-0" onDoubleClick={alDobleClicLienzo}>
         <MentalContext.Provider value={ctxValue}>
           <ReactFlow
             onInit={(instance) => {
@@ -1578,6 +1617,15 @@ function MapaMentalDetalle({
             Tab: rama nueva · Enter: otro del mismo nivel · doble clic: nodo suelto
           </div>
         )}
+      </div>
+      {panelArticulos && (
+        <PanelConsultaArticulos
+          temaLectura={modoOscuro ? 'oscuro' : 'claro'}
+          onCerrar={() => setPanelArticulos(false)}
+          onAgregar={agregarArticulo}
+          className="h-[46%] md:h-auto flex-shrink-0 border-t md:border-t-0 md:border-l md:w-[var(--ancho-panel,24rem)] lg:w-[var(--ancho-panel,27rem)]"
+        />
+      )}
       </div>
     </div>
   )
