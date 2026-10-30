@@ -33,6 +33,16 @@ function anchoGuardado(): number | null {
   }
 }
 
+/** «Compactar»: esconde los campos de código y artículo para que la ficha tenga más espacio. Se recuerda en este dispositivo. */
+const CLAVE_COMPACTO = 'primalex.consulta.compacto'
+function compactoGuardado(): boolean {
+  try {
+    return localStorage.getItem(CLAVE_COMPACTO) === '1'
+  } catch {
+    return false
+  }
+}
+
 // Se recuerda mientras la app esté abierta: al volver a abrir el panel queda el mismo código.
 let ultimoCodigo: CodigoTipo | null = null
 
@@ -61,6 +71,17 @@ export function PanelConsultaArticulos({ temaLectura, className = '', onCerrar, 
   const refPanel = useRef<HTMLElement>(null)
   const arrastre = useRef<{ x: number; ancho: number } | null>(null)
   const [ancho, setAncho] = useState<number | null>(anchoGuardado)
+  const [compacto, setCompacto] = useState(compactoGuardado)
+  const alternarCompacto = () => {
+    const nuevo = !compacto
+    setCompacto(nuevo)
+    try {
+      if (nuevo) localStorage.setItem(CLAVE_COMPACTO, '1')
+      else localStorage.removeItem(CLAVE_COMPACTO)
+    } catch {
+      /* sin almacenamiento: vale para esta sesión */
+    }
+  }
 
   const fijarAncho = (px: number | null) => {
     const maximo = anchoPorDefecto()
@@ -195,13 +216,25 @@ export function PanelConsultaArticulos({ temaLectura, className = '', onCerrar, 
       </div>
       <div className={`flex items-center gap-2 px-4 py-2.5 border-b flex-shrink-0 ${tema.border}`}>
         <i className="ti ti-book-2 text-lg" style={{ color: 'var(--accent-texto)' }} aria-hidden="true" />
-        <h2 className={`text-sm font-bold flex-1 ${tema.text}`}>Consultar artículo</h2>
+        <h2 className={`text-sm font-bold flex-1 min-w-0 truncate ${tema.text}`}>
+          Consultar artículo
+          {compacto && actual && <span className={`font-normal ${tema.textSoft}`}> · {meta?.nombreCorto ?? tipo} {actual.a}</span>}
+        </h2>
+        <button
+          onClick={alternarCompacto}
+          aria-expanded={!compacto}
+          aria-label={compacto ? 'Mostrar los campos de código y artículo' : 'Compactar: esconder los campos de código y artículo'}
+          title={compacto ? 'Mostrar el buscador' : 'Compactar (más espacio para el artículo)'}
+          className={`w-8 h-8 rounded-lg flex items-center justify-center ${tema.textSoft} ${tema.hoverSuave}`}
+        >
+          <i className={`ti ${compacto ? 'ti-chevron-down' : 'ti-chevron-up'} text-base`} />
+        </button>
         <button onClick={onCerrar} aria-label="Cerrar la consulta" className={`w-8 h-8 rounded-lg flex items-center justify-center ${tema.textSoft} ${tema.hoverSuave}`}>
           <i className="ti ti-x text-base" />
         </button>
       </div>
 
-      <div className="px-4 pt-3 pb-2 grid gap-2 flex-shrink-0">
+      <div className={`px-4 pt-3 pb-2 grid gap-2 flex-shrink-0 ${compacto ? 'hidden' : ''}`}>
         <label className="grid gap-1">
           <span className={`text-[11px] font-semibold uppercase tracking-wide ${tema.textSoft}`}>Código o ley</span>
           <SelectPrima
