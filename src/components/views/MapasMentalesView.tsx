@@ -10,7 +10,6 @@ import {
   addEdge,
   Handle,
   Position,
-  MiniMap,
   NodeToolbar,
   NodeResizer,
   EdgeLabelRenderer,
@@ -1590,15 +1589,7 @@ function MapaMentalDetalle({
                 border: `1px solid ${modoOscuro ? '#27272a' : '#e4e4e7'}`,
               }}
             />
-            <MiniMap
-              nodeColor={(n) => (n.data as NodoData).color ?? VERDE}
-              maskColor={modoOscuro ? 'rgba(24,24,27,0.7)' : 'rgba(255,255,255,0.7)'}
-              style={{
-                background: modoOscuro ? '#18181b' : '#ffffff',
-                border: `1px solid ${modoOscuro ? '#27272a' : '#e4e4e7'}`,
-              }}
-            />
-          </ReactFlow>
+                      </ReactFlow>
         </MentalContext.Provider>
 
         {nodes.length === 0 && (
@@ -1646,8 +1637,10 @@ function CuerpoNodo({
   color,
   modoOscuro,
   seleccionado,
+  ficha,
   children,
 }: {
+  ficha?: boolean
   forma: FormaNodoMental
   color: string
   modoOscuro: boolean
@@ -1670,6 +1663,23 @@ function CuerpoNodo({
     : modoOscuro
     ? '0 2px 6px rgba(0,0,0,0.35)'
     : '0 2px 6px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)'
+  if (ficha) {
+    // Ficha de artículo: fondo neutro y una barra de color al costado (como la ficha del panel de consulta)
+    return (
+      <div
+        className="w-full h-full flex items-center px-3 py-2"
+        style={{
+          background: modoOscuro ? '#18181b' : '#ffffff',
+          border: `1px solid ${modoOscuro ? '#3f3f46' : '#e4e4e7'}`,
+          borderLeft: `4px solid ${color}`,
+          borderRadius: 8,
+          boxShadow: sombraCaja,
+        }}
+      >
+        {children}
+      </div>
+    )
+  }
   if (forma === 'ninguna') {
     // Texto "pelado": sin caja ni fondo, solo subrayado — el nivel que en un
     // apunte de mano no se enmarca (ej. un subtítulo de sección). El aro de
@@ -2078,7 +2088,7 @@ function NodoMental(props: NodeProps<NodoFlow>) {
           </button>
         )}
 
-        <CuerpoNodo forma={data.forma} color={color} modoOscuro={modoOscuro} seleccionado={!!selected}>
+        <CuerpoNodo ficha={!!data.articulo && !editando} forma={data.forma} color={color} modoOscuro={modoOscuro} seleccionado={!!selected}>
           {editando ? (
             <textarea
               ref={ref}
@@ -2100,7 +2110,7 @@ function NodoMental(props: NodeProps<NodoFlow>) {
           ) : (
             data.articulo ? (
               <div ref={medicionRef} className="w-full text-left">
-                <div className="flex items-center gap-1.5 pb-1 mb-1 border-b" style={{ borderColor: `color-mix(in srgb, ${color} 35%, transparent)`, color }}>
+                <div className="flex items-center gap-1.5 pb-1 mb-1 border-b" style={{ borderColor: modoOscuro ? '#3f3f46' : '#e4e4e7', color }}>
                   <i className="ti ti-book-2 text-sm flex-shrink-0" aria-hidden="true" />
                   <span className="text-[11px] font-bold uppercase tracking-wide truncate">{data.articulo}</span>
                 </div>
