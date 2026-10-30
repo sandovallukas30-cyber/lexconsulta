@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { registrarUso } from '../../services/uso'
+import { confirmar } from '../../services/confirmar'
 import { generarRosco, esRespuestaCorrecta } from '../../services/pasapalabra'
 import { generarPalabraAhorcado, ERRORES_MAXIMOS } from '../../services/ahorcado'
 import { useDestello } from '../../hooks/useDestello'
@@ -630,7 +631,13 @@ function Pasapalabra({ partida, modoOscuro }: { partida: PartidaPasapalabra; mod
           )}
           <button
             onClick={() => {
-              if (confirm('¿Abandonar la partida en curso? Se perderá el progreso.')) abandonar()
+              void confirmar({
+                titulo: '¿Abandonar la partida?',
+                mensaje: 'Se perderá el progreso de la partida en curso.',
+                etiquetaConfirmar: 'Abandonar',
+                peligro: true,
+                clave: 'abandonar-partida',
+              }).then((ok) => ok && abandonar())
             }}
             className={`text-xs px-2.5 py-1 rounded-md ${modoOscuro ? 'text-zinc-500 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'}`}
             title="Abandonar partida"
@@ -1299,7 +1306,13 @@ function Ahorcado({ partida, modoOscuro }: { partida: PartidaAhorcado; modoOscur
           </div>
           <button
             onClick={() => {
-              if (confirm('¿Abandonar la partida en curso? Se perderá el progreso.')) abandonar()
+              void confirmar({
+                titulo: '¿Abandonar la partida?',
+                mensaje: 'Se perderá el progreso de la partida en curso.',
+                etiquetaConfirmar: 'Abandonar',
+                peligro: true,
+                clave: 'abandonar-partida',
+              }).then((ok) => ok && abandonar())
             }}
             className={`text-xs px-2.5 py-1 rounded-md ${modoOscuro ? 'text-zinc-500 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-zinc-100'}`}
             title="Abandonar partida"

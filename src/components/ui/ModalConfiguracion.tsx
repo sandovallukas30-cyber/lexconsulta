@@ -21,6 +21,7 @@ import { ModalRespaldo } from './ModalRespaldo'
 import {
   AjusteAnimaciones,
   AjusteAvisos,
+  AjusteConfirmaciones,
   AjusteContraste,
   AjusteTamanoInterfaz,
   AjusteTextoCodigos,
@@ -174,7 +175,7 @@ export function ModalConfiguracion({ abierto, onCerrar, pestanaInicial = 'perfil
                 {pestana === 'perfil' && <SeccionPerfil modoOscuro={modoOscuro} />}
                 {pestana === 'apariencia' && <SeccionApariencia modoOscuro={modoOscuro} />}
                 {pestana === 'lectura' && <SeccionLectura />}
-                {pestana === 'avisos' && <Grupo modoOscuro={modoOscuro}><AjusteAvisos /></Grupo>}
+                {pestana === 'avisos' && <><Grupo modoOscuro={modoOscuro}><AjusteAvisos /></Grupo><div className="mt-4"><Grupo modoOscuro={modoOscuro}><AjusteConfirmaciones /></Grupo></div></>}
                 {pestana === 'datos' && <SeccionDatos modoOscuro={modoOscuro} />}
                 {pestana === 'guia' && <SeccionGuia />}
                 {pestana === 'acerca' && <Acerca modoOscuro={modoOscuro} />}

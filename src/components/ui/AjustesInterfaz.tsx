@@ -140,6 +140,25 @@ export function AjusteAvisos() {
   )
 }
 
+/** Preguntas de «¿seguro?» silenciadas con «No volver a preguntar». */
+export function AjusteConfirmaciones() {
+  const omitidas = useAjustes((s) => s.confirmacionesOmitidas)
+  const set = useAjustes((s) => s.set)
+  return (
+    <div>
+      <h3 className={titulo} style={{ color: 'var(--neu-ink)' }}>Preguntas de confirmación</h3>
+      <p className="text-xs mb-2" style={{ color: 'var(--neu-ink2)' }}>
+        {omitidas.length === 0
+          ? 'Prima Lex te pregunta antes de eliminar un nodo o abandonar una partida. Si marcas «No volver a preguntar», esa pregunta deja de aparecer y puedes reactivarla aquí.'
+          : `Dejaste de ver ${omitidas.length === 1 ? '1 pregunta' : `${omitidas.length} preguntas`} de confirmación en este dispositivo.`}
+      </p>
+      <button onClick={() => set({ confirmacionesOmitidas: [] })} disabled={omitidas.length === 0} className="boton boton-suave boton-chico">
+        Volver a preguntar siempre
+      </button>
+    </div>
+  )
+}
+
 /** Animaciones y celebraciones. */
 export function AjusteAnimaciones() {
   const a = useAjustes()

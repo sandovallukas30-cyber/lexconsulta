@@ -262,6 +262,9 @@ export interface NodoMapaMental {
    * "(ej: art. 494 N°14 CP)" al lado de un concepto, como en un apunte de
    * mano real). Se muestra siempre visible, chica, junto al nodo. */
   nota?: string
+  /** Si el nodo es la ficha de un artículo de un código: su cita («Art. 19 · Constitución»).
+   * El texto del nodo es una copia fija del artículo; esto solo cambia cómo se dibuja. */
+  articulo?: string
 }
 
 export interface ConexionMapaMental {

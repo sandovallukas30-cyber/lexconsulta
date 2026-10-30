@@ -434,3 +434,6 @@ main[data-vista] > *:not(.esqueleto-contenedor) { animation: aparece var(--dur-l
   animation: esqueleto-late 1.4s ease-in-out infinite;
 }
 .dark .esqueleto-bloque, [data-tema="oscuro"] .esqueleto-bloque { background: var(--color-zinc-800); }
+
+/* Mapas mentales: sobre el lienzo vacío el cursor es la flecha de siempre (la manito de «agarrar» no se veía en algunos equipos); sigue arrastrándose igual. */
+.react-flow .react-flow__pane.draggable, .react-flow .react-flow__pane.dragging { cursor: default; }

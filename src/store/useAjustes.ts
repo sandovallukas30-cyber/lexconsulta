@@ -53,6 +53,8 @@ export interface AjustesUI {
   pistasVistas: string[]
   /** Contar de forma anónima qué pantallas y funciones se usan (solo hace algo si el despliegue lo habilita; ver services/uso.ts). */
   compartirUso: boolean
+  /** Preguntas de «¿seguro?» que la persona pidió no volver a ver (claves de services/confirmar.ts). */
+  confirmacionesOmitidas: string[]
   set: (p: Partial<Omit<AjustesUI, 'set'>>) => void
 }
 
@@ -73,11 +75,12 @@ export const useAjustes = create<AjustesUI>()(
       fuenteLectura: FUENTE_LECTURA_DEFECTO,
       pistasVistas: [],
       compartirUso: true,
+      confirmacionesOmitidas: [],
       set: (p) => set(p),
     }),
     {
       name: 'prima-lex-ajustes-v1',
-      partialize: (s) => ({ zoom: s.zoom, contraste: s.contraste, animaciones: s.animaciones, celebraciones: s.celebraciones, recordatorios: s.recordatorios, horaResumen: s.horaResumen, tamanoCodigo: s.tamanoCodigo, catalogoAbierto: s.catalogoAbierto, avatarAnimal: s.avatarAnimal, numerarIncisos: s.numerarIncisos, barraInferior: s.barraInferior, fuenteLectura: s.fuenteLectura, pistasVistas: s.pistasVistas, compartirUso: s.compartirUso }),
+      partialize: (s) => ({ zoom: s.zoom, contraste: s.contraste, animaciones: s.animaciones, celebraciones: s.celebraciones, recordatorios: s.recordatorios, horaResumen: s.horaResumen, tamanoCodigo: s.tamanoCodigo, catalogoAbierto: s.catalogoAbierto, avatarAnimal: s.avatarAnimal, numerarIncisos: s.numerarIncisos, barraInferior: s.barraInferior, fuenteLectura: s.fuenteLectura, pistasVistas: s.pistasVistas, compartirUso: s.compartirUso, confirmacionesOmitidas: s.confirmacionesOmitidas }),
     }
   )
 )

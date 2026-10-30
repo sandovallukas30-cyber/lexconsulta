@@ -14,6 +14,7 @@ import { aplicarTema } from './theme'
 import { Omnibar } from './components/ui/Omnibar'
 import { PanelAtajos } from './components/ui/PanelAtajos'
 import { Avisos } from './components/ui/Avisos'
+import { DialogoConfirmar } from './components/ui/DialogoConfirmar'
 import { RightSidebar } from './components/layout/RightSidebar'
 import { useRutas } from './hooks/useRutas'
 import { useActualizacion } from './hooks/useActualizacion'
@@ -171,6 +172,7 @@ function App() {
       </AnimatePresence>
       <ModalCuenta />
       <Avisos />
+      <DialogoConfirmar />
       <PanelAtajos />
       <AnimatePresence>
         {omnibarAbierto && <Omnibar onClose={() => setOmnibarAbierto(false)} />}

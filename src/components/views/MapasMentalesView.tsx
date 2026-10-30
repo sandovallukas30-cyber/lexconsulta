@@ -42,6 +42,7 @@ import { ModalApunteDesdeMapa } from '../ui/ModalApunteDesdeMapa'
 import '@fontsource-variable/inter'
 import { PanelConsultaArticulos } from '../ui/PanelConsultaArticulos'
 import { avisar } from '../../store/useAvisos'
+import { confirmar } from '../../services/confirmar'
 
 const VERDE = 'var(--accent-base)'
 /** Paleta CON significado fijo, no un selector de color libre: la idea es
@@ -91,6 +92,8 @@ type NodoData = {
   tamanoTexto: TamanoTextoMental
   color?: string
   nota?: string
+  /** Cita del artículo si el nodo es una ficha de artículo (ver NodoMapaMental.articulo). */
+  articulo?: string
   /** Solo pantalla (no se guarda): el nodo entra directo en modo edición. */
   autoEditar?: boolean
 }
@@ -752,7 +755,7 @@ function MapaMentalDetalle({
         id: n.id,
         type: 'mental',
         position: n.posicion,
-        data: { texto: n.texto, forma: migrarForma(n.forma), tamanoTexto: n.tamanoTexto, color: n.color, nota: n.nota },
+        data: { texto: n.texto, forma: migrarForma(n.forma), tamanoTexto: n.tamanoTexto, color: n.color, nota: n.nota, articulo: n.articulo },
         style: { width: n.ancho ?? 180, height: n.alto },
       })),
     // Solo al montar: el mapa se remonta entero al volver a la lista (key={mapa.id}), así que no hace
@@ -854,6 +857,7 @@ function MapaMentalDetalle({
       tamanoTexto: n.data.tamanoTexto,
       color: n.data.color,
       nota: n.data.nota,
+      articulo: n.data.articulo,
       ancho: typeof n.style?.width === 'number' ? n.style.width : 180,
       alto: typeof n.style?.height === 'number' ? n.style.height : undefined,
     }))
@@ -1061,7 +1065,7 @@ function MapaMentalDetalle({
       id: crypto.randomUUID(),
       type: 'mental',
       position: { x: centro.x - ancho / 2 + jitter(), y: centro.y - 60 + jitter() },
-      data: { texto: `*${cita}*\n${texto}`, forma: 'rectangulo', tamanoTexto: 'texto' },
+      data: { texto: `*${cita}*\n${texto}`, forma: 'rectangulo', tamanoTexto: 'texto', articulo: cita, color: '#1d4ed8' },
       style: { width: ancho },
       initialWidth: ancho,
       initialHeight: Math.min(600, 50 + Math.ceil(texto.length / 48) * 16),
@@ -2000,7 +2004,17 @@ function NodoMental(props: NodeProps<NodoFlow>) {
             icono="ti-trash"
             label="Eliminar"
             onClick={() => {
-              if (confirm('¿Eliminar este nodo?')) callbacks.eliminar(id)
+              void confirmar({
+                titulo: data.articulo ? '¿Eliminar esta ficha?' : '¿Eliminar este nodo?',
+                mensaje: tieneHijos(id)
+                  ? 'Se quitan también sus conexiones; las ramas que cuelgan de él quedan sueltas.'
+                  : 'Se quitan también sus conexiones.',
+                vistaPrevia: data.articulo ?? data.texto.replace(/\*([^*\n]+)\*/g, '$1').replace(/_([^_\n]+)_/g, '$1').trim(),
+                nota: 'Puedes deshacerlo con Ctrl+Z.',
+                etiquetaConfirmar: 'Eliminar',
+                peligro: true,
+                clave: 'eliminar-nodo',
+              }).then((ok) => ok && callbacks.eliminar(id))
             }}
             modoOscuro={modoOscuro}
             destructivo
@@ -2084,14 +2098,31 @@ function NodoMental(props: NodeProps<NodoFlow>) {
               }`}
             />
           ) : (
-            <div
-              ref={medicionRef}
-              className={`${TAMANO_CLASE[data.tamanoTexto]} whitespace-pre-wrap break-words ${
-                modoOscuro ? 'text-zinc-100' : 'text-zinc-900'
-              }`}
-            >
-              {data.texto ? renderTextoEnriquecido(data.texto) : 'Doble clic para escribir'}
-            </div>
+            data.articulo ? (
+              <div ref={medicionRef} className="w-full text-left">
+                <div className="flex items-center gap-1.5 pb-1 mb-1 border-b" style={{ borderColor: `color-mix(in srgb, ${color} 35%, transparent)`, color }}>
+                  <i className="ti ti-book-2 text-sm flex-shrink-0" aria-hidden="true" />
+                  <span className="text-[11px] font-bold uppercase tracking-wide truncate">{data.articulo}</span>
+                </div>
+                <div
+                  className={`nodrag nowheel max-h-[220px] overflow-y-auto pr-1 text-[11px] leading-snug whitespace-pre-wrap break-words ${
+                    modoOscuro ? 'text-zinc-100' : 'text-zinc-800'
+                  }`}
+                  style={{ fontFamily: 'var(--font-lectura)' }}
+                >
+                  {renderTextoEnriquecido(data.texto.replace(/^\*[^*\n]+\*\n?/, ''))}
+                </div>
+              </div>
+            ) : (
+              <div
+                ref={medicionRef}
+                className={`${TAMANO_CLASE[data.tamanoTexto]} whitespace-pre-wrap break-words ${
+                  modoOscuro ? 'text-zinc-100' : 'text-zinc-900'
+                }`}
+              >
+                {data.texto ? renderTextoEnriquecido(data.texto) : 'Doble clic para escribir'}
+              </div>
+            )
           )}
         </CuerpoNodo>
 
