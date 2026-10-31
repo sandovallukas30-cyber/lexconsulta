@@ -1,4 +1,5 @@
 import { notasArticuloValidas, unirNotasArticulo, type NotaArticulo } from './notasArticulo'
+import { sanearColeccionPropia } from './compartirColeccion'
 import { useStore } from '../store/useStore'
 import { useEnfoque } from '../store/useEnfoque'
 import type { SesionFoco } from './enfoque'
@@ -8,7 +9,9 @@ import type {
   Coleccion,
   DatosAcademicosModulo,
   EstadoTarjetaRepaso,
+  ConexionMapaMental,
   MapaMental,
+  NodoMapaMental,
   ProgresoModulo,
   Ramo,
   SesionClase,
@@ -162,9 +165,74 @@ function listaValida(v: unknown, item: (x: unknown) => boolean): boolean {
 
 const ramoValido = (r: unknown) => conId(r) && esTexto((r as Ramo).nombre) && Array.isArray((r as Ramo).modulosVinculados)
 const apunteValido = (a: unknown) => conId(a) && esTexto((a as ApunteModulo).titulo) && esTexto((a as ApunteModulo).contenido)
-const coleccionValida = (c: unknown) => conId(c) && esTexto((c as Coleccion).titulo) && Array.isArray((c as Coleccion).articulos)
-const mapaValido = (m: unknown) =>
-  conId(m) && esTexto((m as MapaMental).titulo) && Array.isArray((m as MapaMental).nodos) && Array.isArray((m as MapaMental).conexiones)
+// Colecciones y mapas se revisan pieza por pieza (ver sanearColeccionPropia y sanearMapa): un artículo de un código
+// inexistente, un estado raro o un nodo sin posición rompían la sección entera, y como el respaldo también es la copia
+// de la nube, el error volvía en cada dispositivo. Lo dañado se descarta y lo demás se conserva.
+const finito = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v)
+const FORMAS = ['rectangulo', 'ovalo', 'ninguna', 'nube', 'rombo'] // nube y rombo: antiguas, el mapa las migra al abrirse
+const TAMANOS = ['titulo', 'subtitulo', 'texto']
+
+function sanearNodo(v: unknown): NodoMapaMental | null {
+  if (!conId(v)) return null
+  const n = v as Record<string, unknown>
+  const pos = esObjeto(n.posicion) && finito(n.posicion.x) && finito(n.posicion.y) ? { x: n.posicion.x, y: n.posicion.y } : null
+  if (!pos) return null
+  return {
+    id: (n.id as string).slice(0, 64),
+    posicion: pos,
+    texto: esTexto(n.texto) ? n.texto.slice(0, 20000) : '',
+    forma: (FORMAS.includes(n.forma as string) ? n.forma : 'rectangulo') as NodoMapaMental['forma'],
+    tamanoTexto: (TAMANOS.includes(n.tamanoTexto as string) ? n.tamanoTexto : 'texto') as NodoMapaMental['tamanoTexto'],
+    ...(esTexto(n.color) && n.color.length <= 40 ? { color: n.color } : {}),
+    ...(finito(n.ancho) && n.ancho > 0 ? { ancho: n.ancho } : {}),
+    ...(finito(n.alto) && n.alto > 0 ? { alto: n.alto } : {}),
+    ...(esTexto(n.nota) && n.nota ? { nota: n.nota.slice(0, 2000) } : {}),
+    ...(esTexto(n.articulo) && n.articulo ? { articulo: n.articulo.slice(0, 120) } : {}),
+  }
+}
+
+export function sanearMapa(v: unknown, ahora = Date.now()): MapaMental | null {
+  if (!conId(v)) return null
+  const m = v as Record<string, unknown>
+  if (!esTexto(m.titulo) || !Array.isArray(m.nodos)) return null
+  const nodos: NodoMapaMental[] = []
+  const ids = new Set<string>()
+  for (const crudo of m.nodos.slice(0, 5000)) {
+    const n = sanearNodo(crudo)
+    if (n && !ids.has(n.id)) {
+      ids.add(n.id)
+      nodos.push(n)
+    }
+  }
+  const conexiones: ConexionMapaMental[] = []
+  for (const crudo of Array.isArray(m.conexiones) ? m.conexiones.slice(0, 10000) : []) {
+    if (!conId(crudo)) continue
+    const c = crudo as Record<string, unknown>
+    if (!esTexto(c.desde) || !esTexto(c.hasta) || !ids.has(c.desde) || !ids.has(c.hasta)) continue
+    conexiones.push({
+      id: (c.id as string).slice(0, 64),
+      desde: c.desde,
+      hasta: c.hasta,
+      ...(esTexto(c.desdeHandle) ? { desdeHandle: c.desdeHandle.slice(0, 20) } : {}),
+      ...(esTexto(c.hastaHandle) ? { hastaHandle: c.hastaHandle.slice(0, 20) } : {}),
+      ...(esTexto(c.etiqueta) && c.etiqueta ? { etiqueta: c.etiqueta.slice(0, 200) } : {}),
+    })
+  }
+  return {
+    id: (m.id as string).slice(0, 64),
+    titulo: m.titulo.slice(0, 200),
+    nodos,
+    conexiones,
+    fechaCreacion: finito(m.fechaCreacion) ? m.fechaCreacion : ahora,
+    fechaModificacion: finito(m.fechaModificacion) ? m.fechaModificacion : ahora,
+    ...(esTexto(m.moduloId) && m.moduloId ? { moduloId: m.moduloId.slice(0, 64) } : {}),
+  }
+}
+
+/** Saca de la lista lo que no se pudo reconstruir. */
+function sanearLista<T>(v: unknown, sanear: (x: unknown) => T | null): T[] {
+  return Array.isArray(v) ? v.map((x) => sanear(x)).filter((x): x is T => x !== null) : []
+}
 
 function datosAcademicosValidos(d: unknown): boolean {
   if (!esObjeto(d)) return false
@@ -202,10 +270,10 @@ export function validarRespaldo(texto: string): ResultadoValidacion {
   if (d.progresoModulos !== undefined && !esObjeto(d.progresoModulos)) problemas.push('progreso')
   if (d.diasActividadEstudio !== undefined && !listaValida(d.diasActividadEstudio, (x) => esTexto(x) && /^\d{4}-\d{2}-\d{2}$/.test(x)))
     problemas.push('días de estudio')
-  if (d.colecciones !== undefined && !listaValida(d.colecciones, coleccionValida)) problemas.push('colecciones')
+  if (d.colecciones !== undefined && !Array.isArray(d.colecciones)) problemas.push('colecciones')
   if (d.subrayados !== undefined && !(esObjeto(d.subrayados) && Object.values(d.subrayados).every((v) => listaValida(v, esTexto))))
     problemas.push('subrayados')
-  if (d.mapasMentales !== undefined && !listaValida(d.mapasMentales, mapaValido)) problemas.push('mapas mentales')
+  if (d.mapasMentales !== undefined && !Array.isArray(d.mapasMentales)) problemas.push('mapas mentales')
   if (d.repasoApuntes !== undefined && !(esObjeto(d.repasoApuntes) && Object.values(d.repasoApuntes).every((e) => esObjeto(e) && typeof e.caja === 'number' && typeof e.proximo === 'number')))
     problemas.push('repaso de tarjetas')
   if (d.tareasPlan !== undefined && !listaValida(d.tareasPlan, (t) => conId(t) && esTexto((t as TareaPlan).titulo))) problemas.push('tareas')
@@ -231,9 +299,9 @@ export function validarRespaldo(texto: string): ResultadoValidacion {
     academicoModulos: academicos,
     progresoModulos: (d.progresoModulos as Record<string, ProgresoModulo>) ?? {},
     diasActividadEstudio: (d.diasActividadEstudio as string[]) ?? [],
-    colecciones: (d.colecciones as Coleccion[]) ?? [],
+    colecciones: sanearLista(d.colecciones, (c) => sanearColeccionPropia(c)),
     subrayados: (d.subrayados as Record<string, string[]>) ?? {},
-    mapasMentales: (d.mapasMentales as MapaMental[]) ?? [],
+    mapasMentales: sanearLista(d.mapasMentales, (m) => sanearMapa(m)),
     repasoApuntes: (d.repasoApuntes as Record<string, EstadoTarjetaRepaso>) ?? {},
     posicionLectura: esObjeto(d.posicionLectura) ? (d.posicionLectura as Record<string, { ratio: number; fecha: number }>) : {},
     notasArticulo: notasArticuloValidas(d.notasArticulo),

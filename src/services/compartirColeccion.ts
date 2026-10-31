@@ -110,26 +110,32 @@ function refValida(v: unknown): RefArticuloColeccion | null {
   return { codigo: codigo as CodigoTipo, articulo }
 }
 
-/** Reconstruye la colección recibida con solo lo válido; null si no es una colección o si ninguno de sus artículos sirve. */
-export function sanearCompartida(valor: unknown): ColeccionCompartida | null {
-  if (!esObjeto(valor) || !Array.isArray(valor.articulos)) return null
-  const titulo = textoHasta(valor.titulo, 120)?.trim()
-  if (!titulo) return null
+const numero = (v: unknown): number | undefined => (typeof v === 'number' && Number.isFinite(v) ? v : undefined)
 
+/** Artículos, conexiones y grupos con solo lo válido. `propia`: es una colección de la propia persona (respaldo o
+ *  nube), así que además conserva lo que la app maneja sola (repaso y posición en la pizarra) y admite más. */
+function sanearPartes(valor: Record<string, unknown> & { articulos: unknown[] }, propia: boolean) {
   const vistos = new Set<string>()
   const articulos: ArticuloColeccion[] = []
-  for (const crudo of valor.articulos.slice(0, MAX_ARTICULOS)) {
+  for (const crudo of valor.articulos.slice(0, propia ? MAX_ARTICULOS * 4 : MAX_ARTICULOS)) {
     const ref = refValida(crudo)
     if (!ref || vistos.has(claveRef(ref))) continue
     vistos.add(claveRef(ref))
     const a = crudo as Record<string, unknown>
     const estado = unoDe(a.estado, ESTADOS)
-    const nota = textoHasta(a.nota, 5000)
+    const nota = textoHasta(a.nota, propia ? 20000 : 5000)
     const funcion = unoDe(a.funcion, FUNCIONES)
-    articulos.push({ ...ref, ...(estado ? { estado } : {}), ...(nota ? { nota } : {}), ...(funcion ? { funcion } : {}) })
+    const art: ArticuloColeccion = { ...ref, ...(estado ? { estado } : {}), ...(nota ? { nota } : {}), ...(funcion ? { funcion } : {}) }
+    if (propia) {
+      const caja = numero(a.caja)
+      const proximoRepaso = numero(a.proximoRepaso)
+      const pos = esObjeto(a.posicion) ? { x: numero(a.posicion.x), y: numero(a.posicion.y) } : null
+      if (caja !== undefined && Number.isInteger(caja) && caja >= 1 && caja <= 5) art.caja = caja
+      if (proximoRepaso !== undefined) art.proximoRepaso = proximoRepaso
+      if (pos && pos.x !== undefined && pos.y !== undefined) art.posicion = { x: pos.x, y: pos.y }
+    }
+    articulos.push(art)
   }
-  // una colección vacía se puede compartir; una que traía artículos y no quedó ninguno válido, no
-  if (articulos.length === 0 && valor.articulos.length > 0) return null
 
   // conexiones y grupos solo pueden apuntar a artículos que sí vienen en la colección
   const refEnColeccion = (v: unknown) => {
@@ -153,13 +159,46 @@ export function sanearCompartida(valor: unknown): ColeccionCompartida | null {
     const miembros = g.articulos.slice(0, MAX_ARTICULOS).map(refEnColeccion).filter((r): r is RefArticuloColeccion => r !== null)
     if (id && tituloGrupo && miembros.length > 0) grupos.push({ id, titulo: tituloGrupo, articulos: miembros })
   }
+  return { articulos, conexiones, grupos }
+}
 
+/** Reconstruye la colección recibida con solo lo válido; null si no es una colección o si ninguno de sus artículos sirve. */
+export function sanearCompartida(valor: unknown): ColeccionCompartida | null {
+  if (!esObjeto(valor) || !Array.isArray(valor.articulos)) return null
+  const titulo = textoHasta(valor.titulo, 120)?.trim()
+  if (!titulo) return null
+  const { articulos, conexiones, grupos } = sanearPartes(valor as Record<string, unknown> & { articulos: unknown[] }, false)
+  // una colección vacía se puede compartir; una que traía artículos y no quedó ninguno válido, no
+  if (articulos.length === 0 && valor.articulos.length > 0) return null
   const oficial = publicacionValida(valor.oficial)
   return {
     titulo,
     articulos,
     ...(conexiones.length > 0 ? { conexiones } : {}),
     ...(grupos.length > 0 ? { grupos } : {}),
+    ...(oficial ? { oficial } : {}),
+  }
+}
+
+/** Una colección propia que llega en un respaldo o desde la nube: misma revisión que un link, pero conserva su id,
+ *  sus fechas, el repaso, las posiciones y el vínculo con un mapa. null solo si ni siquiera es una colección. */
+export function sanearColeccionPropia(valor: unknown, ahora = Date.now()): Coleccion | null {
+  if (!esObjeto(valor) || !Array.isArray(valor.articulos)) return null
+  const id = textoHasta(valor.id, 64)
+  const titulo = typeof valor.titulo === 'string' ? valor.titulo.slice(0, 200) : undefined
+  if (!id || titulo === undefined) return null
+  const { articulos, conexiones, grupos } = sanearPartes(valor as Record<string, unknown> & { articulos: unknown[] }, true)
+  const oficial = publicacionValida(valor.oficial)
+  const mapa = textoHasta(valor.mapaMentalVinculado, 64)
+  return {
+    id,
+    titulo,
+    articulos,
+    fechaCreacion: numero(valor.fechaCreacion) ?? ahora,
+    fechaModificacion: numero(valor.fechaModificacion) ?? ahora,
+    ...(conexiones.length > 0 ? { conexiones } : {}),
+    ...(grupos.length > 0 ? { grupos } : {}),
+    ...(mapa ? { mapaMentalVinculado: mapa } : {}),
     ...(oficial ? { oficial } : {}),
   }
 }
