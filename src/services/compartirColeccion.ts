@@ -6,7 +6,20 @@
 // anotaciones propias del que compartió (nota, estado, función, conexiones,
 // grupos). Esto mantiene el link corto incluso para una colección grande.
 
-import type { ArticuloColeccion, ColeccionCompartida, Coleccion, PublicacionColeccion } from '../types'
+import type {
+  ArticuloColeccion,
+  CodigoTipo,
+  ColeccionCompartida,
+  Coleccion,
+  ConexionColeccion,
+  EstadoRepaso,
+  FuncionJuridica,
+  GrupoColeccion,
+  PublicacionColeccion,
+  RefArticuloColeccion,
+  TipoRelacion,
+} from '../types'
+import { CODIGOS_METADATA } from '../data/codigosMetadata'
 
 /** Nombre del parámetro de URL que dispara la importación al abrir un link
  * compartido — ver el efecto que lo lee en ColeccionesView.tsx. */
@@ -69,19 +82,86 @@ export function generarArchivoColeccion(coleccion: Coleccion): { nombre: string;
   }
 }
 
-/** Valida la forma mínima esperada antes de dársela por buena — un link o
- * archivo tocado a mano (o corrupto) no debería poder crashear la app ni
- * crear una "colección" con basura adentro. */
-function esColeccionCompartidaValida(valor: unknown): valor is ColeccionCompartida {
-  if (!valor || typeof valor !== 'object') return false
-  const v = valor as Record<string, unknown>
-  if (typeof v.titulo !== 'string' || !v.titulo.trim()) return false
-  if (!Array.isArray(v.articulos)) return false
-  return v.articulos.every((a) => {
-    if (!a || typeof a !== 'object') return false
-    const art = a as Record<string, unknown>
-    return typeof art.codigo === 'string' && typeof art.articulo === 'string'
-  })
+// Lo que llega en un link o archivo lo escribió otra persona (o alguien con
+// malas intenciones): se revisa campo por campo y se reconstruye con SOLO lo
+// válido. Antes bastaba con que `codigo` y `articulo` fueran texto, y un
+// `estado` o un código inexistente, o `conexiones` que no fueran una lista,
+// rompían la sección Colecciones al importarse; como la colección queda
+// guardada y se sincroniza, la sección no volvía a abrir en ningún dispositivo.
+const ESTADOS: readonly EstadoRepaso[] = ['pendiente', 'repasando', 'dominado']
+const FUNCIONES: readonly FuncionJuridica[] = ['regla_general', 'excepcion', 'concepto', 'procedimiento', 'sancion', 'complementaria']
+const RELACIONES: readonly TipoRelacion[] = [
+  'desarrolla', 'complementa', 'limita', 'excepcion', 'consecuencia', 'remite_a', 'relacionado_con', 'contradice', 'mismo_concepto',
+]
+const MAX_ARTICULOS = 500
+const MAX_CONEXIONES = 1000
+const MAX_GRUPOS = 100
+
+const esObjeto = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v)
+const textoHasta = (v: unknown, max: number): string | undefined => (typeof v === 'string' && v.trim() ? v.slice(0, max) : undefined)
+const unoDe = <T extends string>(v: unknown, validos: readonly T[]): T | undefined => (validos.includes(v as T) ? (v as T) : undefined)
+const claveRef = (r: RefArticuloColeccion) => `${r.codigo}|${r.articulo}`
+
+function refValida(v: unknown): RefArticuloColeccion | null {
+  if (!esObjeto(v)) return null
+  const codigo = v.codigo
+  const articulo = textoHasta(v.articulo, 40)
+  if (typeof codigo !== 'string' || !Object.hasOwn(CODIGOS_METADATA, codigo) || !articulo) return null
+  return { codigo: codigo as CodigoTipo, articulo }
+}
+
+/** Reconstruye la colección recibida con solo lo válido; null si no es una colección o si ninguno de sus artículos sirve. */
+export function sanearCompartida(valor: unknown): ColeccionCompartida | null {
+  if (!esObjeto(valor) || !Array.isArray(valor.articulos)) return null
+  const titulo = textoHasta(valor.titulo, 120)?.trim()
+  if (!titulo) return null
+
+  const vistos = new Set<string>()
+  const articulos: ArticuloColeccion[] = []
+  for (const crudo of valor.articulos.slice(0, MAX_ARTICULOS)) {
+    const ref = refValida(crudo)
+    if (!ref || vistos.has(claveRef(ref))) continue
+    vistos.add(claveRef(ref))
+    const a = crudo as Record<string, unknown>
+    const estado = unoDe(a.estado, ESTADOS)
+    const nota = textoHasta(a.nota, 5000)
+    const funcion = unoDe(a.funcion, FUNCIONES)
+    articulos.push({ ...ref, ...(estado ? { estado } : {}), ...(nota ? { nota } : {}), ...(funcion ? { funcion } : {}) })
+  }
+  // una colección vacía se puede compartir; una que traía artículos y no quedó ninguno válido, no
+  if (articulos.length === 0 && valor.articulos.length > 0) return null
+
+  // conexiones y grupos solo pueden apuntar a artículos que sí vienen en la colección
+  const refEnColeccion = (v: unknown) => {
+    const r = refValida(v)
+    return r && vistos.has(claveRef(r)) ? r : null
+  }
+  const conexiones: ConexionColeccion[] = []
+  for (const c of Array.isArray(valor.conexiones) ? valor.conexiones.slice(0, MAX_CONEXIONES) : []) {
+    if (!esObjeto(c)) continue
+    const id = textoHasta(c.id, 64)
+    const desde = refEnColeccion(c.desde)
+    const hasta = refEnColeccion(c.hasta)
+    const tipo = unoDe(c.tipo, RELACIONES)
+    if (id && desde && hasta && tipo) conexiones.push({ id, desde, hasta, tipo })
+  }
+  const grupos: GrupoColeccion[] = []
+  for (const g of Array.isArray(valor.grupos) ? valor.grupos.slice(0, MAX_GRUPOS) : []) {
+    if (!esObjeto(g) || !Array.isArray(g.articulos)) continue
+    const id = textoHasta(g.id, 64)
+    const tituloGrupo = textoHasta(g.titulo, 80)
+    const miembros = g.articulos.slice(0, MAX_ARTICULOS).map(refEnColeccion).filter((r): r is RefArticuloColeccion => r !== null)
+    if (id && tituloGrupo && miembros.length > 0) grupos.push({ id, titulo: tituloGrupo, articulos: miembros })
+  }
+
+  const oficial = publicacionValida(valor.oficial)
+  return {
+    titulo,
+    articulos,
+    ...(conexiones.length > 0 ? { conexiones } : {}),
+    ...(grupos.length > 0 ? { grupos } : {}),
+    ...(oficial ? { oficial } : {}),
+  }
 }
 
 /** Decodifica JSON ya en texto plano — el valor de un parámetro de URL leído
@@ -91,12 +171,7 @@ function esColeccionCompartidaValida(valor: unknown): valor is ColeccionComparti
  * solo tenga que chequear "¿se pudo?" antes de ofrecer importar. */
 export function decodificarColeccion(json: string): ColeccionCompartida | null {
   try {
-    const valor = JSON.parse(json)
-    if (!esColeccionCompartidaValida(valor)) return null
-    const oficial = publicacionValida((valor as { oficial?: unknown }).oficial)
-    const { oficial: _descartado, ...resto } = valor as ColeccionCompartida
-    void _descartado
-    return oficial ? { ...resto, oficial } : resto
+    return sanearCompartida(JSON.parse(json))
   } catch {
     return null
   }

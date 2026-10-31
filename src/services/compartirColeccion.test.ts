@@ -111,3 +111,49 @@ describe('fusionarOficial', () => {
     expect(mia.articulos).toHaveLength(2)
   })
 })
+
+describe('links armados a mano o maliciosos', () => {
+  const dec = (v: unknown) => decodificarColeccion(JSON.stringify(v))
+
+  it('descarta artículos de códigos que no existen; sin artículos válidos no hay nada que importar', () => {
+    expect(dec({ titulo: 'X', articulos: [{ codigo: 'cpr', articulo: 'Art. 19' }] })).toBeNull()
+    const d = dec({ titulo: 'X', articulos: [{ codigo: 'cpr', articulo: 'Art. 1' }, { codigo: 'con', articulo: 'Art. 19' }] })!
+    expect(d.articulos).toEqual([{ codigo: 'con', articulo: 'Art. 19' }])
+  })
+
+  it('un estado, una función o una nota con forma rara se descartan sin perder el artículo', () => {
+    const d = dec({ titulo: 'X', articulos: [{ codigo: 'con', articulo: 'Art. 19', estado: 'zzz', funcion: 7, nota: { a: 1 } }] })!
+    expect(d.articulos).toEqual([{ codigo: 'con', articulo: 'Art. 19' }])
+  })
+
+  it('conexiones y grupos que no son listas, o que apuntan fuera de la colección, se descartan', () => {
+    const base = { codigo: 'con', articulo: 'Art. 19' }
+    expect(dec({ titulo: 'X', articulos: [base], conexiones: 'x', grupos: 5 })).toEqual({ titulo: 'X', articulos: [base] })
+    const d = dec({
+      titulo: 'X',
+      articulos: [base, { codigo: 'con', articulo: 'Art. 20' }],
+      conexiones: [
+        { id: 'k1', desde: base, hasta: { codigo: 'con', articulo: 'Art. 20' }, tipo: 'limita' },
+        { id: 'k2', desde: base, hasta: { codigo: 'con', articulo: 'Art. 99' }, tipo: 'limita' },
+        { id: 'k3', desde: base, hasta: { codigo: 'con', articulo: 'Art. 20' }, tipo: 'inventado' },
+      ],
+      grupos: [{ id: 'g1', titulo: 'G', articulos: [base, { codigo: 'con', articulo: 'Art. 99' }] }, { id: 'g2', titulo: 'Vacío', articulos: [] }],
+    })!
+    expect(d.conexiones?.map((c) => c.id)).toEqual(['k1'])
+    expect(d.grupos).toEqual([{ id: 'g1', titulo: 'G', articulos: [base] }])
+  })
+
+  it('acota tamaños: título, nota, artículos repetidos y la cantidad de artículos', () => {
+    const muchos = Array.from({ length: 800 }, (_, i) => ({ codigo: 'civ', articulo: `Art. ${i + 1}` }))
+    const d = dec({ titulo: 'T'.repeat(500), articulos: [...muchos, { codigo: 'civ', articulo: 'Art. 1' }] })!
+    expect(d.titulo.length).toBe(120)
+    expect(d.articulos.length).toBe(500)
+    const n = dec({ titulo: 'X', articulos: [{ codigo: 'civ', articulo: 'Art. 1', nota: 'n'.repeat(9000) }] })!
+    expect(n.articulos[0].nota?.length).toBe(5000)
+  })
+
+  it('no deja pasar campos que la app maneja sola (repaso, posición)', () => {
+    const d = dec({ titulo: 'X', articulos: [{ codigo: 'civ', articulo: 'Art. 1', caja: 'x', proximoRepaso: NaN, posicion: 3 }] })!
+    expect(d.articulos[0]).toEqual({ codigo: 'civ', articulo: 'Art. 1' })
+  })
+})
