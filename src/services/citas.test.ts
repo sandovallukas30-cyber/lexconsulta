@@ -43,3 +43,17 @@ describe('citaDeVarios', () => {
     expect(citaDeVarios('civ', 'Art. 1445', [inc(2), inc(2)])).toBe('art. 1445 inc. 2° CC')
   })
 })
+
+import { citaArticulo, desdeCita } from './citas'
+
+describe('desdeCita', () => {
+  it('recupera código y artículo de una cita armada con citaArticulo', () => {
+    for (const [tipo, art] of [['con', 'Art. 19'], ['civ', 'Art. 1545'], ['pen', 'Art. 391'], ['ppe', 'Art. 7'], ['civ', 'Art. 2 bis']] as const) {
+      expect(desdeCita(citaArticulo(tipo, art))).toEqual({ tipo, articulo: art })
+    }
+  })
+  it('sin un código conocido al final, no inventa nada', () => {
+    expect(desdeCita('Art. 5 XYZ')).toBeNull()
+    expect(desdeCita('CPR')).toBeNull()
+  })
+})

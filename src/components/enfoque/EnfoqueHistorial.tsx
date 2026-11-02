@@ -181,6 +181,12 @@ export function EnfoqueHistorial() {
                       {s.distracciones ? <span>{s.distracciones} {s.distracciones === 1 ? 'distracción' : 'distracciones'}</span> : null}
                       {s.nota && <span className="italic">“{s.nota}”</span>}
                     </span>
+                    {s.recuerdo && (
+                      <span className="block mt-1 text-xs whitespace-pre-line line-clamp-3" style={{ color: 'var(--neu-ink2)' }}>
+                        <i className="ti ti-bulb text-sm mr-1" aria-hidden="true" />
+                        {s.recuerdo}
+                      </span>
+                    )}
                   </span>
                   {s.calidad !== undefined && <Estrellas valor={s.calidad} tamano={14} />}
                   <span className="neu-chip px-3 py-1 text-xs font-bold tabular-nums min-w-[76px] text-center" style={{ color: 'var(--accent-texto)' }}>{horasMin(s.minutos)}</span>

@@ -46,10 +46,12 @@ export function CalificarSesion() {
   const omitir = useEnfoque((s) => s.omitirCalificacion)
   const [valor, setValor] = useState(0)
   const [nota, setNota] = useState('')
+  const [recuerdo, setRecuerdo] = useState('')
   if (!calificar) return null
   const reiniciar = () => {
     setValor(0)
     setNota('')
+    setRecuerdo('')
   }
   return (
     <div className="neu-flat p-4 space-y-2.5" role="group" aria-label="Calificar la sesión">
@@ -58,6 +60,18 @@ export function CalificarSesion() {
       </p>
       <Estrellas valor={valor} onChange={setValor} />
       <p className="text-xs min-h-[18px]" style={{ color: 'var(--neu-ink2)' }}>{TEXTO[valor] ?? ''}</p>
+      {/* recuerdo activo: escribir lo aprendido sin mirar fija más que releer (opcional, queda en el Historial) */}
+      <label className="block">
+        <span className="block text-xs font-semibold mb-1" style={{ color: 'var(--neu-ink2)' }}>Sin mirar tus apuntes: ¿qué te llevas de esta sesión?</span>
+        <textarea
+          value={recuerdo}
+          maxLength={600}
+          rows={3}
+          onChange={(e) => setRecuerdo(e.target.value)}
+          placeholder="Dos o tres ideas, con tus palabras"
+          className="w-full px-3 py-2 text-sm outline-none resize-y rounded-control"
+        />
+      </label>
       <input
         value={nota}
         maxLength={200}
@@ -68,7 +82,7 @@ export function CalificarSesion() {
       />
       <div className="flex gap-2 justify-end">
         <button className="boton boton-fantasma boton-chico" onClick={() => { omitir(); reiniciar() }}>Omitir</button>
-        <button className="boton boton-primario boton-chico" disabled={valor === 0} onClick={() => { calificarSesion(valor, nota); reiniciar() }}>Guardar</button>
+        <button className="boton boton-primario boton-chico" disabled={valor === 0 && !recuerdo.trim()} onClick={() => { calificarSesion(valor, nota, recuerdo); reiniciar() }}>Guardar</button>
       </div>
     </div>
   )

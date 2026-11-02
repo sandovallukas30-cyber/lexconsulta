@@ -25,6 +25,8 @@ export interface SesionFoco {
   /** Cómo te concentraste, de 1 a 5 (se pide al terminar la sesión). */
   calidad?: number
   nota?: string
+  /** Lo que la persona recordó al terminar, escrito sin mirar los apuntes (recuerdo activo). */
+  recuerdo?: string
   /** Veces que apretaste «Me distraje». */
   distracciones?: number
   /** Fondo y sonido con que trabajaste (para saber qué ambiente te funciona). */

@@ -26,6 +26,7 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useStore } from '../../store/useStore'
+import { desdeCita } from '../../services/citas'
 import { eliminarMapaMentalConDeshacer } from '../../services/deshacer'
 import type { MapaMental, NodoMapaMental, ConexionMapaMental, FormaNodoMental, TamanoTextoMental } from '../../types'
 import { MAPAS_MENTALES_PLANTILLA } from '../../data/mapasMentalesPlantilla'
@@ -1753,6 +1754,8 @@ function NodoMental(props: NodeProps<NodoFlow>) {
   const [notaTmp, setNotaTmp] = useState(data.nota ?? '')
   const ref = useRef<HTMLTextAreaElement>(null)
   const medicionRef = useRef<HTMLDivElement>(null)
+  const abrirArticuloEnExplorador = useStore((st) => st.abrirArticuloEnExplorador)
+  const fuenteFicha = data.articulo ? desdeCita(data.articulo) : null
 
   const color = data.color ?? VERDE
 
@@ -2012,6 +2015,14 @@ function NodoMental(props: NodeProps<NodoFlow>) {
             modoOscuro={modoOscuro}
           />
 
+          {fuenteFicha && (
+            <ToolbarBtn
+              icono="ti-book-2"
+              label={`Abrir el ${fuenteFicha.articulo} en el Explorador (texto vigente, subrayados y notas)`}
+              onClick={() => abrirArticuloEnExplorador(fuenteFicha.tipo, fuenteFicha.articulo)}
+              modoOscuro={modoOscuro}
+            />
+          )}
           <div className={`w-px h-5 mx-0.5 ${modoOscuro ? 'bg-zinc-700' : 'bg-zinc-200'}`} />
           <ToolbarBtn icono="ti-copy" label="Duplicar" onClick={() => callbacks.duplicar(id)} modoOscuro={modoOscuro} />
           <ToolbarBtn

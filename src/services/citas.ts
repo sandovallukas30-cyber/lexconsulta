@@ -1,4 +1,4 @@
-import { abreviaturaCita, obtenerMetadata } from '../data/codigosMetadata'
+import { abreviaturaCita, CODIGOS_METADATA, obtenerMetadata } from '../data/codigosMetadata'
 import type { Articulo, CodigoTipo } from '../types'
 import type { UbicacionCita } from './incisos'
 
@@ -8,6 +8,18 @@ export function citaArticulo(tipo: CodigoTipo, idArticulo: string): string {
   return `${idArticulo.trim()} ${abreviaturaCita(tipo)}`
 }
 
+/** Lo contrario de citaArticulo: de «Art. 1545 CC» saca el código y el artículo (la ficha de un mapa mental
+ *  guarda solo la cita). Gana la abreviatura más larga, para no confundir «CP» con «CPR» o «CPP». */
+export function desdeCita(cita: string): { tipo: CodigoTipo; articulo: string } | null {
+  let mejor: { tipo: CodigoTipo; articulo: string; largo: number } | null = null
+  for (const tipo of Object.keys(CODIGOS_METADATA) as CodigoTipo[]) {
+    const abrev = abreviaturaCita(tipo)
+    if (!cita.endsWith(` ${abrev}`) || (mejor && abrev.length <= mejor.largo)) continue
+    const articulo = cita.slice(0, -abrev.length - 1).trim()
+    if (articulo) mejor = { tipo, articulo, largo: abrev.length }
+  }
+  return mejor && { tipo: mejor.tipo, articulo: mejor.articulo }
+}
 /** Cita corta como se escribe en un trabajo chileno: «art. 1445 inc. 2° CC», «art. 19 N° 3 inc. 6° CPR»,
  *  «art. 65 inc. 4° N° 6 CPR», «art. 23 Ley 19.620». Minúscula (va entre paréntesis en el texto corrido), con las
  *  abreviaturas de códigos de uso frecuente (CC, CCom, CPR…). Orden: artículo → inciso → número → letra; cuando el número

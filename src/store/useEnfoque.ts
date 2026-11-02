@@ -60,7 +60,8 @@ interface EstadoEnfoque extends Reloj {
   /** Sesión recién guardada que espera que le pongas una calificación. */
   calificar: { id: string; minutos: number } | null
   distraje: () => void
-  calificarSesion: (valor: number, nota: string) => void
+  /** `valor` 0 = sin estrellas (se guardó solo lo que recordaste). */
+  calificarSesion: (valor: number, nota: string, recuerdo?: string) => void
   omitirCalificacion: () => void
   iniciar: () => void
   pausar: () => void
@@ -236,14 +237,15 @@ export const useEnfoque = create<EstadoEnfoque>()(
           set({ distracciones: s.distracciones + 1 })
         },
 
-        calificarSesion: (valor, nota) => {
+        calificarSesion: (valor, nota, recuerdo = '') => {
           const s = get()
           if (!s.calificar) return
           const id = s.calificar.id
           const n = nota.trim().slice(0, 200)
+          const r = recuerdo.trim().slice(0, 600)
           set({
             calificar: null,
-            sesiones: s.sesiones.map((x) => (x.id === id ? { ...x, calidad: valor, ...(n ? { nota: n } : {}) } : x)),
+            sesiones: s.sesiones.map((x) => (x.id === id ? { ...x, ...(valor > 0 ? { calidad: valor } : {}), ...(n ? { nota: n } : {}), ...(r ? { recuerdo: r } : {}) } : x)),
           })
         },
 
