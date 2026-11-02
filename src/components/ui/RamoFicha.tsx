@@ -21,7 +21,7 @@ function Chip({ icono, texto, tono }: { icono: string; texto: string; tono?: 'ur
   const fondo = tono === 'urgente' ? 'var(--neu-danger)' : tono === 'proximo' ? 'var(--neu-warn)' : tono === 'bien' ? 'var(--neu-ok)' : null
   return (
     <span
-      className="inline-flex items-center gap-1 text-[11.5px] font-semibold px-2 py-1 rounded-full max-w-full"
+      className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-full max-w-full"
       style={
         fondo
           ? { background: `color-mix(in srgb, ${fondo} 16%, transparent)`, color: `color-mix(in srgb, ${fondo} 38%, var(--neu-ink))` }
@@ -85,7 +85,7 @@ export function RamoFicha({ ramo, modulos, onClick, onEditar }: Props) {
         </BandaRamo>
 
         <div className="p-3.5 space-y-2.5 flex-1 flex flex-col">
-          <div className="space-y-1 text-[12.5px]" style={{ color: 'var(--neu-ink2)' }}>
+          <div className="space-y-1 text-[13px]" style={{ color: 'var(--neu-ink2)' }}>
             {profesores.length > 0 && (
               <div className="flex items-start gap-1.5" title={profesores.join(', ')}>
                 <i className="ti ti-user text-[14px] mt-px flex-shrink-0" aria-hidden="true" />
@@ -122,7 +122,7 @@ export function RamoFicha({ ramo, modulos, onClick, onEditar }: Props) {
           )}
 
           {proxClase && (
-            <div className="flex items-center gap-1.5 text-[12.5px]" style={{ color: 'var(--neu-ink2)' }}>
+            <div className="flex items-center gap-1.5 text-[13px]" style={{ color: 'var(--neu-ink2)' }}>
               <i className="ti ti-calendar-event text-[14px] flex-shrink-0" aria-hidden="true" />
               <span className="truncate">
                 Próxima clase: <strong style={{ color: 'var(--neu-ink)' }}>{cuando(proxClase.fecha, proxClase.hora)}</strong>

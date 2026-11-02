@@ -221,7 +221,7 @@ export function ModalMoverApunte({
         className={`max-w-md w-full rounded-2xl shadow-2xl p-5 space-y-4 ${modoOscuro ? 'bg-zinc-900' : 'bg-white'}`}
       >
         <div>
-          <h2 className={`text-lg font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>Mover apunte</h2>
+          <h2 className={`text-lg font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>Mover apunte</h2>
           <p className={`text-xs mt-0.5 truncate ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>{apunte.titulo}</p>
         </div>
         <label className="block">

@@ -207,7 +207,7 @@ export function RepasoApunte({ apunte, mazo, onCerrar }: Props) {
         ) : terminado ? (
           <div className="max-w-md w-full text-center">
             <i className="ti ti-circle-check text-5xl mb-3 inline-block" style={{ color: VERDE }} />
-            <p className={`text-xl font-serif font-bold mb-1 ${texto}`}>¡Repaso terminado!</p>
+            <p className={`text-xl font-bold mb-1 ${texto}`}>¡Repaso terminado!</p>
             <p className={`text-sm mb-6 ${suave}`}>
               Recordaste {sabidas.size} de {unicas} a la primera
               {falladas.size > 0 ? ` · ${falladas.size} para reforzar (vuelve${falladas.size === 1 ? '' : 'n'} pronto)` : ''}

@@ -112,7 +112,7 @@ export function RepasoColecciones({ onVolver }: { onVolver: () => void }) {
         ) : terminado ? (
           <div className="max-w-md w-full text-center">
             <i className="ti ti-circle-check text-5xl mb-3 inline-block" style={{ color: VERDE }} />
-            <p className={`text-xl font-serif font-bold mb-1 ${tx}`}>¡Repaso terminado!</p>
+            <p className={`text-xl font-bold mb-1 ${tx}`}>¡Repaso terminado!</p>
             <p className={`text-sm mb-6 ${suave}`}>
               Recordaste {sabidas} de {cola.length}
               {sabidas < cola.length ? ` · ${cola.length - sabidas} vuelve${cola.length - sabidas === 1 ? '' : 'n'} mañana` : ''}

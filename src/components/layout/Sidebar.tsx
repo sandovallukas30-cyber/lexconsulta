@@ -365,7 +365,7 @@ function BotonNav({
       onPointerEnter={() => precargarVista(item.id)}
       onFocus={() => precargarVista(item.id)}
       aria-label={colapsado ? item.label : undefined}
-      className={`w-full min-h-[46px] rounded-[14px] text-[14.5px] text-left relative flex items-center transition-[padding,background-color,color] ${
+      className={`w-full min-h-[46px] rounded-[14px] text-[14px] text-left relative flex items-center transition-[padding,background-color,color] ${
         colapsado ? 'justify-center px-0' : 'px-3.5'
       } ${
         activo

@@ -122,7 +122,7 @@ export function TabResumen({
               <span className="text-xs" style={suave}>{pendientes.length === 1 ? 'tarea pendiente' : 'tareas pendientes'}</span>
             </button>
             {nuevaTarea === null ? (
-              <button onClick={() => setNuevaTarea('')} className="boton boton-suave boton-chico">
+              <button onClick={() => setNuevaTarea('')} className="boton boton-suave boton-chico self-start">
                 <i className="ti ti-plus" aria-hidden="true" /> Agregar tarea
               </button>
             ) : (
@@ -160,11 +160,11 @@ export function TabResumen({
             <p className="text-xs" style={suave}>Todavía no tienes apuntes en esta asignatura.</p>
           )}
           <div className="flex flex-wrap items-center gap-2 mt-auto">
-            <button onClick={onNuevoApunte} className="boton boton-primario boton-chico">
+            <button onClick={onNuevoApunte} className="boton boton-suave boton-chico">
               <i className="ti ti-plus" aria-hidden="true" /> Nuevo apunte
             </button>
             {datos.apuntes.length > 0 && (
-              <button onClick={() => onIrA('apuntes')} className="boton boton-fantasma boton-chico">Ver todos ({datos.apuntes.length})</button>
+              <button onClick={() => onIrA('apuntes')} className="boton boton-fantasma boton-chico">Ver todos ({datos.apuntes.length}) <i className="ti ti-chevron-right text-sm" aria-hidden="true" /></button>
             )}
           </div>
         </Panel>
@@ -193,7 +193,7 @@ export function TabResumen({
                 {notas.estado === 'imposible' && <>Ya no alcanza el 4,0</>}
                 {notas.estado === 'completo' && notas.promedio !== null && <>{notas.promedio >= 4 ? 'Asignatura aprobada' : 'Asignatura reprobada'}</>}
               </div>
-              <button onClick={() => onIrA('examenes')} className="boton boton-fantasma boton-chico self-start mt-auto">Ver evaluaciones</button>
+              <button onClick={() => onIrA('examenes')} className="boton boton-fantasma boton-chico self-start mt-auto -ml-2.5">Ver evaluaciones <i className="ti ti-chevron-right text-sm" aria-hidden="true" /></button>
             </>
           )}
         </Panel>

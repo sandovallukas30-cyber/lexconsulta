@@ -191,7 +191,7 @@ input[type='checkbox']:focus-visible, input[type='radio']:focus-visible, input[t
 }
 
 /* Texto de apoyo: piso de 13 px también para los tamaños escritos a mano (10, 11, 12 px) */
-[class*="text-[10px]"], [class*="text-[11px]"], [class*="text-[11.5px]"], [class*="text-[12px]"], [class*="text-[12.5px]"] { font-size: 0.8125rem; }
+[class*="text-[10px]"], [class*="text-[11px]"], [class*="text-[12px]"] { font-size: 0.8125rem; }
 
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; width: 100%; overflow: hidden; }

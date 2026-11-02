@@ -93,7 +93,7 @@ export function EsquemaCodigo({ abierto, onCerrar, codigo, modoOscuro, onSelecci
               <i className="ti ti-sitemap text-lg" style={{ color: 'var(--accent-texto)' }} />
             </div>
             <div className="flex-1 min-w-0">
-              <h1 className={`text-lg md:text-xl font-serif font-semibold leading-tight truncate ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+              <h1 className={`text-lg md:text-xl font-semibold leading-tight truncate ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
                 Esquema de estudio
               </h1>
               <p className={`text-xs truncate ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
@@ -254,8 +254,8 @@ function ListaEsquema({
 
 const ESTILOS_POR_CAMPO: Record<string, { tam: string; peso: string }> = {
   libro: { tam: 'text-[16px] md:text-[17px]', peso: 'font-semibold' },
-  titulo: { tam: 'text-[14.5px] md:text-[15px]', peso: 'font-medium' },
-  capitulo: { tam: 'text-[13.5px]', peso: 'font-normal' },
+  titulo: { tam: 'text-[15px]', peso: 'font-medium' },
+  capitulo: { tam: 'text-[13px]', peso: 'font-normal' },
   parrafo: { tam: 'text-[13px]', peso: 'font-normal italic' },
 }
 
@@ -613,8 +613,8 @@ function NodoDiagrama({
             style={{ color: modoOscuro ? '#71717a' : '#a1a1aa', transform: abierto ? 'rotate(90deg)' : undefined }}
           />
         </div>
-        <p className={`font-serif text-[14.5px] md:text-[15px] font-semibold leading-snug ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{nombre}</p>
-        <p className={`text-[11.5px] mt-1.5 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
+        <p className={`font-serif text-[15px] font-semibold leading-snug ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{nombre}</p>
+        <p className={`text-[11px] mt-1.5 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
           {rangoArticulos(nodo)}
           {subtitulo && ` · ${subtitulo}`}
         </p>

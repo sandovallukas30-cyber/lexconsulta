@@ -102,7 +102,7 @@ export function ModalCodigos({ abierto, onCerrar }: Props) {
             >
               <div>
                 <h2
-                  className={`text-xl font-serif font-semibold ${
+                  className={`text-xl font-semibold ${
                     modoOscuro ? 'text-white' : 'text-zinc-900'
                   }`}
                 >

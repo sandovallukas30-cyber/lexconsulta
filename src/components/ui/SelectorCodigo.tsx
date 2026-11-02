@@ -135,7 +135,7 @@ export function SelectorCodigo({ titulo, descripcion, onElegir }: Props) {
           >
             <div className="min-w-0 flex-1">
               <p className="text-[11px] font-bold uppercase tracking-[0.08em]" style={{ color: 'var(--accent-texto)' }}>Seguir leyendo</p>
-              <p className="text-[20px] font-bold truncate" style={{ color: 'var(--neu-ink)', fontFamily: 'var(--font-serif)' }}>
+              <p className="text-[20px] font-bold truncate" style={{ color: 'var(--neu-ink)' }}>
                 {nombreSeguir} · {seguir.art}
               </p>
             </div>
@@ -243,7 +243,7 @@ export function SelectorCodigo({ titulo, descripcion, onElegir }: Props) {
                   <i className="ti ti-world text-xl" style={{ color: 'var(--accent-base)' }} />
                 </span>
                 <div className="flex-1 min-w-0">
-                  <h3 className={`text-[19px] font-serif font-semibold leading-tight ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+                  <h3 className={`text-[17px] font-bold leading-tight ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
                     Tratados internacionales
                   </h3>
                   <p className={`text-[11px] mt-0.5 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
@@ -359,7 +359,7 @@ function CodigoCard({ codigo, onClick, modoOscuro, delay }: CodigoCardProps) {
           <i className="ti ti-book-2 text-xl" style={{ color: 'var(--accent-texto)' }} />
         </span>
         <div className="flex-1 min-w-0">
-          <h3 title={codigo.nombre} className={`text-[19px] font-serif font-semibold leading-tight line-clamp-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+          <h3 title={codigo.nombre} className={`text-[17px] font-bold leading-tight line-clamp-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
             {codigo.nombre}
           </h3>
           <p className={`text-[12px] mt-0.5 capitalize ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>

@@ -151,7 +151,7 @@ function PantallaJuego({
             {pregunta.articulo}
           </p>
         </div>
-        <h2 className={`text-2xl font-serif font-semibold mb-1 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+        <h2 className={`text-2xl font-semibold mb-1 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
           {pregunta.pregunta}
         </h2>
         {pregunta.descripcionBreve && (
@@ -350,7 +350,7 @@ function PantallaResultado({
         >
           <i className="ti ti-trophy text-4xl" style={{ color: 'var(--accent-texto)' }} />
         </div>
-        <h1 className={`text-3xl font-serif font-bold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+        <h1 className={`text-3xl font-bold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
           ¡Fin de la ronda!
         </h1>
         <p className={`text-sm ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
@@ -398,7 +398,7 @@ function PantallaResultado({
         <p className={`text-sm font-semibold mb-2 ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>
           Rendimiento
         </p>
-        <p className="text-xl font-serif font-bold mb-4" style={{ color: colorRendimiento }}>
+        <p className="text-xl font-bold mb-4" style={{ color: colorRendimiento }}>
           {rendimiento}
         </p>
 

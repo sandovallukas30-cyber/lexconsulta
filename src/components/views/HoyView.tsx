@@ -230,7 +230,7 @@ export function HoyView() {
           </ul>
         </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] gap-4 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] lg:grid-rows-[auto_1fr] gap-4 items-start">
           <Tarjeta
             titulo={esHoy ? 'Tu día' : fechaLargaISO(diaSel)}
             derecha={
@@ -354,7 +354,7 @@ export function HoyView() {
             </form>
           </Tarjeta>
 
-          <div className="space-y-4 min-w-0">
+          <div className="space-y-4 min-w-0 lg:row-span-2">
             {!sinNada && (
               <Tarjeta
                 titulo="Evaluaciones"
@@ -408,34 +408,34 @@ export function HoyView() {
               </button>
             </section>
           </div>
-        </div>
-
-        {!sinNada && (
-          <Tarjeta titulo="Repaso y constancia">
-            <div className="grid grid-cols-2 gap-3 max-w-md">
-              <button onClick={() => setVistaActiva('colecciones')} className="p-3 rounded-control text-left" style={{ background: 'var(--neu-bg)' }}>
-                <div className="text-2xl font-serif font-bold" style={{ color: 'var(--neu-ink)' }}>{tarjetas}</div>
-                <div className="text-xs" style={{ color: suave }}>{tarjetas === 1 ? 'tarjeta por repasar' : 'tarjetas por repasar'}</div>
-              </button>
-              <div className="p-3 rounded-control" style={{ background: 'var(--neu-bg)' }}>
-                {/* Sin racha no se muestra un «0» que se lea como fracaso: se invita a empezar, sin culpa */}
-                {racha > 0 ? (
-                  <>
-                    <div className="text-2xl font-serif font-bold" style={{ color: 'var(--neu-ink)' }}>{racha}</div>
-                    <div className="text-xs" style={{ color: suave }}>{racha === 1 ? 'día seguido' : 'días seguidos'}</div>
-                  </>
-                ) : (
-                  <>
-                    <div className="text-base font-serif font-bold" style={{ color: 'var(--neu-ink)' }}>Tu racha empieza hoy</div>
-                    <div className="text-xs" style={{ color: suave }}>Cualquier estudio cuenta</div>
-                  </>
-                )}
+          {/* en pantallas grandes va bajo «Tu día» (la columna derecha ocupa las dos filas): antes quedaba un hueco ahí */}
+          {!sinNada && (
+            <Tarjeta titulo="Repaso y constancia" className="lg:col-start-1">
+              <div className="grid grid-cols-2 gap-3 max-w-md">
+                <button onClick={() => setVistaActiva('colecciones')} className="p-3 rounded-control text-left" style={{ background: 'var(--neu-bg)' }}>
+                  <div className="text-2xl font-bold" style={{ color: 'var(--neu-ink)' }}>{tarjetas}</div>
+                  <div className="text-xs" style={{ color: suave }}>{tarjetas === 1 ? 'tarjeta por repasar' : 'tarjetas por repasar'}</div>
+                </button>
+                <div className="p-3 rounded-control" style={{ background: 'var(--neu-bg)' }}>
+                  {/* Sin racha no se muestra un «0» que se lea como fracaso: se invita a empezar, sin culpa */}
+                  {racha > 0 ? (
+                    <>
+                      <div className="text-2xl font-bold" style={{ color: 'var(--neu-ink)' }}>{racha}</div>
+                      <div className="text-xs" style={{ color: suave }}>{racha === 1 ? 'día seguido' : 'días seguidos'}</div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-base font-bold" style={{ color: 'var(--neu-ink)' }}>Tu racha empieza hoy</div>
+                      <div className="text-xs" style={{ color: suave }}>Cualquier estudio cuenta</div>
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
-            <p className="text-xs mt-3" style={{ color: suave }}>Cuenta estudiar con apuntes, tarjetas o Práctica, o terminar una tarea.</p>
-            <CompartirSemana />
-          </Tarjeta>
-        )}
+              <p className="text-xs mt-3" style={{ color: suave }}>Cuenta estudiar con apuntes, tarjetas o Práctica, o terminar una tarea.</p>
+              <CompartirSemana />
+            </Tarjeta>
+          )}
+        </div>
       </div>
     </div>
   )

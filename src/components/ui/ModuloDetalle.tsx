@@ -106,7 +106,7 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEdit
   const tinta = tintaPastel(modulo.color) // la franja es pastel: el texto va en un tono oscuro del mismo color
   const profesores = ramo ? profesoresDe(ramo) : []
   const lugar = ramo ? [ramo.horario, ramo.sala].filter(Boolean).join(' · ') : ''
-  const botonBanda = 'sin-neu inline-flex items-center gap-1.5 px-3 min-h-[40px] rounded-full text-xs font-bold transition-colors'
+  const botonBanda = 'sin-neu inline-flex items-center justify-center gap-1.5 px-3 min-h-[40px] min-w-[40px] rounded-full text-xs font-bold transition-colors'
   const estiloBotonBanda = { background: 'rgba(255,255,255,.6)', color: tinta }
 
   // contadores en el selector corto de las secciones de dos pantallas
@@ -130,8 +130,9 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEdit
 
         <BandaRamo color={modulo.color} diseno={disenoDe(ramo ?? { id: modulo.id })} className="rounded-tarjeta mb-6 shadow-tarjeta">
           <div className="p-4 sm:p-6 flex flex-col gap-3" style={{ color: tinta }}>
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="flex items-center gap-3.5 min-w-0">
+            {/* en celular los botones quedan como íconos en la esquina, para no robarle espacio al nombre del ramo */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3.5 min-w-0 flex-1">
                 <span
                   className="w-12 h-12 sm:w-14 sm:h-14 rounded-[18px] flex items-center justify-center flex-shrink-0"
                   style={{ background: 'rgba(255,255,255,.6)' }}
@@ -148,15 +149,15 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEdit
               </div>
               <div className="flex-shrink-0 flex items-center gap-2">
                 {onEditar && (
-                  <button onClick={onEditar} className={botonBanda} style={estiloBotonBanda}>
+                  <button onClick={onEditar} aria-label="Editar asignatura" title="Editar asignatura" className={botonBanda} style={estiloBotonBanda}>
                     <i className="ti ti-pencil text-sm" aria-hidden="true" />
-                    Editar asignatura
+                    <span className="hidden sm:inline">Editar asignatura</span>
                   </button>
                 )}
                 {modulo.codigoRelacionado && (
-                  <button onClick={abrirCodigo} className={botonBanda} style={estiloBotonBanda}>
+                  <button onClick={abrirCodigo} aria-label="Ver código" title="Ver código" className={botonBanda} style={estiloBotonBanda}>
                     <i className="ti ti-book-2 text-sm" aria-hidden="true" />
-                    Ver código
+                    <span className="hidden sm:inline">Ver código</span>
                   </button>
                 )}
               </div>

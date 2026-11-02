@@ -1173,7 +1173,7 @@ function ModalIndice({
           >
             <div className={`px-5 py-4 border-b flex items-center justify-between ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
               <div>
-                <h2 className={`text-base font-serif font-semibold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+                <h2 className={`text-base font-semibold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
                   Índice del código
                 </h2>
                 <p className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>

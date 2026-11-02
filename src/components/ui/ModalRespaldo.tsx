@@ -150,7 +150,7 @@ export function ModalRespaldo({ onCerrar }: Props) {
         }`}
       >
         <div className={`px-5 sm:px-6 py-4 border-b flex items-center justify-between ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
-          <h2 id="titulo-respaldo" className={`text-lg font-serif font-bold ${texto}`}>
+          <h2 id="titulo-respaldo" className={`text-lg font-bold ${texto}`}>
             Respaldo de tus datos
           </h2>
           <button

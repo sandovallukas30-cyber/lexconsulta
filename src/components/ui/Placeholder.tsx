@@ -19,7 +19,7 @@ export function Placeholder({ icono, titulo, descripcion, badge = 'En construcci
         >
           <i className={`ti ${icono} text-4xl`} style={{ color: 'var(--accent-base)' }} />
         </div>
-        <h3 className={`text-2xl font-serif font-semibold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+        <h3 className={`text-2xl font-semibold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
           {titulo}
         </h3>
         <p className={`text-sm leading-relaxed mb-4 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>

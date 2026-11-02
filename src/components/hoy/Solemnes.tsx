@@ -86,10 +86,10 @@ export function Solemnes() {
             <li key={`${x.moduloId}-${x.evaluacion.id}`} className="flex items-center gap-3 px-1 py-1.5">
               <div className="min-w-0 flex-1">
                 <p className="text-[15px] font-bold truncate" style={{ color: 'var(--neu-ink)' }}>{x.evaluacion.nombre}</p>
-                <p className="text-[12.5px] truncate" style={{ color: 'var(--neu-ink2)' }}>{detalle}</p>
+                <p className="text-[13px] truncate" style={{ color: 'var(--neu-ink2)' }}>{detalle}</p>
               </div>
               <span
-                className="text-[12.5px] font-bold px-2.5 py-1 rounded-full flex-shrink-0 tabular-nums"
+                className="text-[13px] font-bold px-2.5 py-1 rounded-full flex-shrink-0 tabular-nums"
                 style={{ background: 'var(--neu-bg3)', color: 'var(--neu-ink2)' }}
                 aria-label={etiquetaDias}
               >
@@ -103,7 +103,7 @@ export function Solemnes() {
             <div className="flex items-start gap-3">
               <div className="min-w-0 flex-1">
                 <p className="text-[16px] font-bold truncate" style={{ color: 'var(--neu-ink)' }}>{x.evaluacion.nombre}</p>
-                <p className="text-[12.5px] truncate" style={{ color: 'var(--neu-ink2)' }}>{detalle}</p>
+                <p className="text-[13px] truncate" style={{ color: 'var(--neu-ink2)' }}>{detalle}</p>
               </div>
               <span className="flex items-baseline gap-1 flex-shrink-0" style={{ color: tinta }} aria-label={etiquetaDias}>
                 {x.dias <= 1 ? (
@@ -116,7 +116,7 @@ export function Solemnes() {
                 )}
               </span>
             </div>
-            <p className="text-[12.5px] mt-1" style={{ color: 'var(--neu-ink2)' }}>
+            <p className="text-[13px] mt-1" style={{ color: 'var(--neu-ink2)' }}>
               {fraseCuentaRegresiva(x.dias, plan.length > 0 ? { hechas, total: plan.length } : undefined)}
               {minutos > 0 ? ` En los últimos 7 días llevas ${horasMin(minutos)} de enfoque en esta asignatura.` : ''}
             </p>

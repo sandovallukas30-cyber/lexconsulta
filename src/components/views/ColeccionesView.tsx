@@ -91,7 +91,7 @@ export function ModalConfirmarImportacion({
         className={`w-full max-w-md rounded-2xl shadow-2xl overflow-hidden ${modoOscuro ? 'bg-zinc-900' : 'bg-white'}`}
       >
         <div className={`px-5 py-4 border-b ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
-          <h2 className={`text-base font-serif font-semibold flex items-center gap-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+          <h2 className={`text-base font-semibold flex items-center gap-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
             <i className="ti ti-download text-lg" style={{ color: 'var(--accent-texto)' }} />
             {oficial ? 'Colección del curso' : 'Importar colección compartida'}
           </h2>
@@ -341,7 +341,7 @@ function SeccionPlantillas({
                       : 'bg-white border-zinc-200 hover:border-zinc-300'
                   }`}
                 >
-                  <h3 className={`text-sm font-serif font-semibold mb-1 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+                  <h3 className={`text-sm font-semibold mb-1 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
                     {p.titulo}
                   </h3>
                   <p className={`text-xs mb-2 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>{p.descripcion}</p>
@@ -372,7 +372,7 @@ function EmptyState({ onCrear, modoOscuro }: { onCrear: () => void; modoOscuro: 
       >
         <i className="ti ti-stack-2 text-3xl" style={{ color: 'var(--accent-texto)' }} />
       </div>
-      <h2 className={`text-lg font-serif font-semibold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+      <h2 className={`text-lg font-semibold mb-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
         Aún no tienes colecciones
       </h2>
       <p className={`text-sm max-w-sm mx-auto mb-6 leading-relaxed ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
@@ -446,7 +446,7 @@ function TarjetaColeccion({
         <i className="ti ti-trash text-sm" />
       </button>
 
-      <h3 className="text-[19px] font-serif font-semibold leading-snug mb-1 pr-8 line-clamp-2" title={coleccion.titulo} style={{ color: 'var(--neu-ink)' }}>
+      <h3 className="text-[17px] font-bold leading-snug mb-1 pr-8 line-clamp-2" title={coleccion.titulo} style={{ color: 'var(--neu-ink)' }}>
         {coleccion.titulo}
       </h3>
       <p className="text-[13px] mb-3" style={{ color: 'var(--neu-ink2)' }}>
@@ -558,7 +558,7 @@ function ModalNuevaColeccion({
             className={`w-full max-w-md rounded-2xl shadow-2xl overflow-hidden ${modoOscuro ? 'bg-zinc-900' : 'bg-white'}`}
           >
             <div className={`px-5 py-4 border-b ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
-              <h2 className={`text-base font-serif font-semibold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+              <h2 className={`text-base font-semibold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
                 Nueva colección
               </h2>
               <p className={`text-xs mt-0.5 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
@@ -916,7 +916,7 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
                 setEditandoTitulo(false)
               }
             }}
-            className={`flex-1 min-w-0 bg-transparent outline-none border campo-foco-b-2 text-lg font-serif font-semibold px-0.5 ${
+            className={`flex-1 min-w-0 bg-transparent outline-none border campo-foco-b-2 text-lg font-semibold px-0.5 ${
               modoOscuro ? 'text-white' : 'text-zinc-900'
             }`}
             style={{ borderColor: VERDE }}
@@ -927,7 +927,7 @@ function ColeccionDetalle({ coleccion }: { coleccion: Coleccion }) {
             title="Renombrar"
             className="group/title flex-1 min-w-[7rem] sm:min-w-0 text-left flex items-center gap-2"
           >
-            <h1 className={`text-lg font-serif font-semibold truncate ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+            <h1 className={`text-lg font-semibold truncate ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
               {coleccion.titulo}
             </h1>
             <i
@@ -1350,7 +1350,7 @@ function ModalCompartirColeccion({ coleccion, onCerrar }: { coleccion: Coleccion
         className={`w-full max-w-md rounded-2xl shadow-2xl overflow-hidden ${modoOscuro ? 'bg-zinc-900' : 'bg-white'}`}
       >
         <div className={`px-5 py-4 border-b ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
-          <h2 className={`text-base font-serif font-semibold flex items-center gap-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+          <h2 className={`text-base font-semibold flex items-center gap-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
             <i className="ti ti-share-2 text-lg" style={{ color: 'var(--accent-texto)' }} />
             Compartir "{coleccion.titulo}"
           </h2>
@@ -1421,7 +1421,7 @@ function ModalVincularMapaMental({
         className={`w-full max-w-md rounded-2xl shadow-2xl overflow-hidden ${modoOscuro ? 'bg-zinc-900' : 'bg-white'}`}
       >
         <div className={`px-5 py-4 border-b ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
-          <h2 className={`text-base font-serif font-semibold flex items-center gap-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+          <h2 className={`text-base font-semibold flex items-center gap-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
             <i className="ti ti-hierarchy-2 text-lg" style={{ color: 'var(--accent-texto)' }} />
             Vincular con un mapa mental
           </h2>
@@ -2789,7 +2789,7 @@ function ModalNombreGrupo({
           className={`w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden ${modoOscuro ? 'bg-zinc-900' : 'bg-white'}`}
         >
           <div className={`px-5 py-4 border-b ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
-            <h2 className={`text-base font-serif font-semibold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>Nombrar grupo</h2>
+            <h2 className={`text-base font-semibold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>Nombrar grupo</h2>
             <p className={`text-xs mt-0.5 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>Ej. "Modos de extinción"</p>
           </div>
           <div className="px-5 py-4">
@@ -3388,7 +3388,7 @@ function ModalAgregarArticulo({
           >
             <div className={`flex items-center justify-between px-5 py-4 border-b ${modoOscuro ? 'border-zinc-800' : 'border-zinc-200'}`}>
               <div>
-                <h2 className={`text-base font-serif font-semibold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+                <h2 className={`text-base font-semibold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
                   Agregar artículos
                 </h2>
                 <p className={`text-xs mt-0.5 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>

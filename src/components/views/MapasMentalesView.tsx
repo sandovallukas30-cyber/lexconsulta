@@ -1362,14 +1362,14 @@ function MapaMentalDetalle({
                   setEditandoTitulo(false)
                 }
               }}
-              className={`flex-1 min-w-0 bg-transparent outline-none border campo-foco-b-2 text-lg font-serif font-semibold px-0.5 ${
+              className={`flex-1 min-w-0 bg-transparent outline-none border campo-foco-b-2 text-lg font-semibold px-0.5 ${
                 modoOscuro ? 'text-white' : 'text-zinc-900'
               }`}
               style={{ borderColor: VERDE }}
             />
           ) : (
             <button onClick={() => setEditandoTitulo(true)} className="group/title flex-1 min-w-0 text-left flex items-center gap-2">
-              <h1 className={`text-lg font-serif font-semibold truncate ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{mapa.titulo}</h1>
+              <h1 className={`text-lg font-semibold truncate ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>{mapa.titulo}</h1>
               <i
                 className={`ti ti-pencil text-xs opacity-60 sm:opacity-0 group-hover/title:opacity-60 transition-opacity flex-shrink-0 ${
                   modoOscuro ? 'text-zinc-400' : 'text-zinc-500'
