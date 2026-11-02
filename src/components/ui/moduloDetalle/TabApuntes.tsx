@@ -115,7 +115,7 @@ export function TabApuntes({
 
   useEffect(() => {
     if (!sucio) return
-    return registrarGuardia(() => 'Tienes cambios sin guardar en el apunte. ¿Salir y descartarlos?')
+    return registrarGuardia(() => 'Tienes cambios sin guardar en el apunte. Si sales ahora, se pierden.')
   }, [sucio])
 
   // Borrador de respaldo del formulario: si la pestaña se cierra o el
@@ -179,7 +179,7 @@ export function TabApuntes({
   // apunte y lo abre directo en el editor visual (negrita, listas, «/» para
   // insertar bloques…). Si se cierra sin escribir nada, se descarta solo.
   const iniciarNuevo = () => {
-    if (sucio && !confirmarSalida()) return
+    if (sucio && !confirmarSalida(iniciarNuevo)) return
     const ahora = Date.now()
     const nuevo: ApunteModulo = {
       id: crypto.randomUUID(),
@@ -223,14 +223,14 @@ export function TabApuntes({
   }
 
   const cancelarFormulario = () => {
-    if (sucio && !confirmarSalida()) return
+    if (sucio && !confirmarSalida(cancelarFormulario)) return
     descartarBorrador()
     setMostrarForm(false)
     setEditandoId(null)
   }
 
   const iniciarEdicion = (a: ApunteModulo) => {
-    if (sucio && !confirmarSalida()) return
+    if (sucio && !confirmarSalida(() => iniciarEdicion(a))) return
     setEditarAlAbrir(false)
     setApunteLeyendo(null)
     setEditandoId(a.id)

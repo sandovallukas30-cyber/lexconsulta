@@ -459,7 +459,7 @@ export const useStore = create<AppState>()(
       setPerfil: (perfil) => set({ perfil, modalPerfilAbierto: false }),
       setVistaActiva: (vistaActiva) => {
         // formulario con cambios sin guardar: preguntar antes de salir
-        if (get().vistaActiva !== vistaActiva && !confirmarSalida()) return
+        if (get().vistaActiva !== vistaActiva && !confirmarSalida(() => get().setVistaActiva(vistaActiva))) return
         set((s) => {
           // Si hay una partida de Pasapalabra en curso y el usuario sale de
           // Práctica, pausarla automáticamente para preservar el tiempo restante.
@@ -1058,7 +1058,7 @@ export const useStore = create<AppState>()(
           }
         }),
       setModuloActivo: (id) => {
-        if (get().moduloActivoId !== id && !confirmarSalida()) return
+        if (get().moduloActivoId !== id && !confirmarSalida(() => get().setModuloActivo(id))) return
         set({ moduloActivoId: id })
       },
       abrirApunte: (moduloId, apunteId, resaltar, editar) =>

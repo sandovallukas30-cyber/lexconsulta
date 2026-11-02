@@ -152,7 +152,7 @@ useStore.subscribe((s, prev) => {
 export function volverAtras() {
   const { pila } = useNavegacion.getState()
   const destino = pila[pila.length - 1]
-  if (!destino || !confirmarSalida()) return
+  if (!destino || !confirmarSalida(volverAtras)) return
   useNavegacion.setState({ pila: pila.slice(0, -1) })
   volviendo = true
   try {

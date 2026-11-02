@@ -81,7 +81,7 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEdit
 
   const irA = (destino: Tab) => {
     if (destino === tab) return
-    if (!confirmarSalida()) return
+    if (!confirmarSalida(() => irA(destino))) return
     setTab(destino)
     const g = grupoDe(destino)
     if (GRUPOS.find((x) => x.id === g)!.tabs.length > 1) setUltimaDe((u) => ({ ...u, [g]: destino }))
@@ -212,11 +212,14 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEdit
                   : -1
                 if (destino < 0) return
                 e.preventDefault()
-                if (!confirmarSalida()) return
-                const d = GRUPOS[destino]
-                setTab(ultimaDe[d.id] ?? d.tabs[0])
                 const fila = e.currentTarget.parentElement
-                ;(fila?.children[destino] as HTMLElement | undefined)?.focus()
+                const cambiar = () => {
+                  const d = GRUPOS[destino]
+                  setTab(ultimaDe[d.id] ?? d.tabs[0])
+                  ;(fila?.children[destino] as HTMLElement | undefined)?.focus()
+                }
+                if (!confirmarSalida(cambiar)) return
+                cambiar()
               }}
               tabIndex={grupo === g.id ? 0 : -1}
               role="tab"
@@ -258,8 +261,8 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEdit
             datos={datos}
             modoOscuro={modoOscuro}
             onIrA={irA}
-            onNuevoApunte={() => {
-              if (!confirmarSalida()) return
+            onNuevoApunte={function nuevoApunte() {
+              if (!confirmarSalida(nuevoApunte)) return
               setNuevoApunteAlEntrar(true)
               setTab('apuntes')
               setUltimaDe((u) => ({ ...u, clases: 'apuntes' }))

@@ -362,6 +362,8 @@ const MIN_TAMANO: Record<FormaNodoMental, { w: number; h: number }> = {
   ovalo: { w: 90, h: 44 },
   ninguna: { w: 50, h: 24 },
 }
+/** La ficha de artículo necesita espacio para su encabezado y al menos un par de líneas: más chica, el texto se salía de la caja. */
+const MIN_FICHA = { w: 150, h: 84 }
 
 /** 'nube' y 'rombo' ya no son valores válidos del tipo (se sacaron, no
  * convencían), pero un mapa guardado ANTES de este cambio puede tener
@@ -1667,7 +1669,7 @@ function CuerpoNodo({
     // Ficha de artículo: fondo neutro y una barra de color al costado (como la ficha del panel de consulta)
     return (
       <div
-        className="w-full h-full flex items-stretch px-3 py-2"
+        className="w-full h-full flex items-stretch px-3 py-2 overflow-hidden"
         style={{
           background: modoOscuro ? '#18181b' : '#ffffff',
           border: `1px solid ${modoOscuro ? '#3f3f46' : '#e4e4e7'}`,
@@ -1829,10 +1831,14 @@ function NodoMental(props: NodeProps<NodoFlow>) {
     const natural = data.articulo
       ? Math.min(320, ((el.firstElementChild as HTMLElement | null)?.offsetHeight ?? 0) + ((el.lastElementChild as HTMLElement | null)?.scrollHeight ?? 0) + 6)
       : el.scrollHeight
-    const deseada = Math.max(MIN_TAMANO[data.forma].h, Math.ceil(natural + PADDING_VERTICAL))
+    const deseada = Math.max(data.articulo ? MIN_FICHA.h : MIN_TAMANO[data.forma].h, Math.ceil(natural + PADDING_VERTICAL))
     updateNode(id, (n) => {
       const actual = typeof n.style?.height === 'number' ? n.style.height : 0
-      return deseada > actual ? { style: { ...n.style, height: deseada } } : {}
+      // una ficha guardada más angosta que el mínimo (de antes de MIN_FICHA) se ensancha: si no, corta las palabras por la mitad
+      const ancho = typeof n.width === 'number' ? n.width : typeof n.style?.width === 'number' ? n.style.width : null
+      const ensanchar = data.articulo && ancho !== null && ancho < MIN_FICHA.w
+      if (deseada <= actual && !ensanchar) return {}
+      return { style: { ...n.style, height: Math.max(deseada, actual), ...(ensanchar ? { width: MIN_FICHA.w } : {}) }, ...(ensanchar ? { width: MIN_FICHA.w } : {}) }
     })
   }, [data.texto, data.forma, data.tamanoTexto, editando, id, updateNode])
 
@@ -1870,8 +1876,8 @@ function NodoMental(props: NodeProps<NodoFlow>) {
     <>
       <NodeResizer
         isVisible={selected}
-        minWidth={MIN_TAMANO[data.forma].w}
-        minHeight={MIN_TAMANO[data.forma].h}
+        minWidth={data.articulo ? MIN_FICHA.w : MIN_TAMANO[data.forma].w}
+        minHeight={data.articulo ? MIN_FICHA.h : MIN_TAMANO[data.forma].h}
         color={color}
         handleStyle={{ width: 10, height: 10, borderRadius: 3, border: '2px solid white', boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }}
         lineStyle={{ borderWidth: 2, borderStyle: 'dashed', opacity: 0.5 }}
@@ -2113,7 +2119,7 @@ function NodoMental(props: NodeProps<NodoFlow>) {
             />
           ) : (
             data.articulo ? (
-              <div ref={medicionRef} className="w-full h-full min-h-0 flex flex-col text-left">
+              <div ref={medicionRef} className="w-full min-w-0 h-full min-h-0 flex flex-col text-left">
                 <div className="flex-shrink-0 flex items-center gap-1.5 pb-1 mb-1 border-b" style={{ borderColor: modoOscuro ? '#3f3f46' : '#e4e4e7', color }}>
                   <i className="ti ti-book-2 text-sm flex-shrink-0" aria-hidden="true" />
                   <span className="text-[11px] font-bold uppercase tracking-wide truncate">{data.articulo}</span>
