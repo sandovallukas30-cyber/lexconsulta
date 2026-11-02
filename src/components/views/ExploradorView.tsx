@@ -2,6 +2,8 @@ import { useAjustes, sumarTamanoCodigo, TAMANO_CODIGO_MIN, TAMANO_CODIGO_MAX } f
 import { registrarUso } from '../../services/uso'
 import { NotaArticulo } from '../ui/NotaArticulo'
 import { useState, useMemo, useEffect, useRef, useCallback, type ReactNode, type TouchEvent } from 'react'
+import { obtenerCodigo } from '../../services/codigos'
+import { citadoPor } from '../../services/citadoPor'
 import { createPortal, flushSync } from 'react-dom'
 import { motion, AnimatePresence, animate, useMotionValue } from 'framer-motion'
 import { useStore } from '../../store/useStore'
@@ -453,6 +455,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
             codigo={tipoActivo}
             articulo={seleccionado.a}
           />
+          <CitadoPor codigo={tipoActivo} articulo={seleccionado.a} modoOscuro={modoOscuro} />
           <VinculosArticulo codigo={tipoActivo} articulo={seleccionado.a} modoOscuro={modoOscuro} />
           <NotaArticulo key={`${tipoActivo}:${seleccionado.a}`} codigo={tipoActivo} articulo={seleccionado.a} modoOscuro={modoOscuro} />
         </motion.article>
@@ -1023,6 +1026,7 @@ function MenuMas({
       document.removeEventListener('keydown', tecla)
     }
   }, [abierto])
+  const destacarPlazos = useAjustes((s) => s.destacarPlazos)
   const item = `sin-neu w-full flex items-center gap-3 px-3 min-h-[48px] text-left text-sm font-semibold rounded-xl ${modoOscuro ? 'hover:bg-zinc-800 text-zinc-100' : 'hover:bg-zinc-100 text-zinc-800'}`
   return (
     <div className="relative" ref={ref}>
@@ -1045,6 +1049,11 @@ function MenuMas({
             </button>
           </div>
           <div className="h-px mx-2 my-1" style={{ background: 'var(--neu-line)' }} aria-hidden="true" />
+          <button role="menuitemcheckbox" aria-checked={destacarPlazos} className={item} onClick={() => { useAjustes.getState().set({ destacarPlazos: !destacarPlazos }); setAbierto(false) }}>
+            <i className="ti ti-hourglass-high text-lg" aria-hidden="true" />
+            <span className="flex-1">Destacar plazos y penas</span>
+            {destacarPlazos && <i className="ti ti-check text-base" style={{ color: 'var(--accent-texto)' }} aria-hidden="true" />}
+          </button>
           {modernizable && (
             <button role="menuitemcheckbox" aria-checked={modernizado} className={item} onClick={() => { onModernizar(); setAbierto(false) }}>
               <i className={`ti ${modernizado ? 'ti-language' : 'ti-language-off'} text-lg`} aria-hidden="true" />
@@ -2030,6 +2039,7 @@ function ModoLecturaOverlay({
                 articulo={seleccionado.a}
                 tamanoFuente={TAMANOS_FUENTE[indiceTamano]}
               />
+              <CitadoPor codigo={tipoActivo} articulo={seleccionado.a} modoOscuro={temaLectura === 'oscuro'} />
               <VinculosArticulo codigo={tipoActivo} articulo={seleccionado.a} modoOscuro={temaLectura === 'oscuro'} />
             </div>
           </div>
@@ -2102,6 +2112,7 @@ function ArticuloTexto({
   const tamanoPropio = useAjustes((s) => s.tamanoCodigo)
   const tamano = tamanoFuente ?? tamanoPropio
   const numerarIncisos = useAjustes((s) => s.numerarIncisos)
+  const destacarPlazos = useAjustes((s) => s.destacarPlazos)
   const { principal, notas } = useMemo(() => separarNotas(texto), [texto])
   const parrafos = useMemo(
     () => principal.split(/\n{2,}/).map((p) => p.trim()).filter((p) => p.length > 0),
@@ -2139,6 +2150,7 @@ function ArticuloTexto({
               referencias={referenciasPorParrafo[i]}
               onIrAReferencia={(ref) => abrirArticuloEnExplorador(ref.codigo, ref.articulo)}
               texto={p}
+              plazos={destacarPlazos}
               subrayados={frasesResaltadas}
               onQuitar={(frase) => quitarSubrayado(codigo, articulo, frase)}
               className={`leading-[1.8] mb-4 last:mb-0 ${claseInciso(parrafos, i, incisosPropios)}`}
@@ -2176,6 +2188,44 @@ function ArticuloTexto({
         </div>
       )}
     </>
+  )
+}
+
+/** Artículos de este mismo código que citan al que se está leyendo (ver services/citadoPor.ts). */
+function CitadoPor({ codigo, articulo, modoOscuro }: { codigo: CodigoTipo; articulo: string; modoOscuro: boolean }) {
+  const abrirArticuloEnExplorador = useStore((s) => s.abrirArticuloEnExplorador)
+  const datos = obtenerCodigo(codigo)
+  const citas = useMemo(() => (datos ? citadoPor(datos, codigo, articulo) : []), [datos, codigo, articulo])
+  const [todas, setTodas] = useState(false)
+  if (citas.length === 0) return null
+  const MAX = 12
+  const visibles = todas ? citas : citas.slice(0, MAX)
+  return (
+    <div className={`mt-6 pt-4 border-t ${modoOscuro ? 'border-zinc-700' : 'border-zinc-100'}`}>
+      <span className={`block text-xs font-semibold mb-2 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
+        Citado por {citas.length === 1 ? 'un artículo' : `${citas.length} artículos`} de este código
+      </span>
+      <div className="flex flex-wrap gap-2">
+        {visibles.map((a) => (
+          <button
+            key={a}
+            onClick={() => abrirArticuloEnExplorador(codigo, a)}
+            title={`Ir al ${a}`}
+            className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border transition-colors ${
+              modoOscuro ? 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700' : 'bg-zinc-50 border-zinc-200 text-zinc-700 hover:bg-zinc-100'
+            }`}
+          >
+            <i className="ti ti-arrow-back-up text-sm" aria-hidden="true" />
+            {a}
+          </button>
+        ))}
+        {citas.length > MAX && !todas && (
+          <button onClick={() => setTodas(true)} className="boton boton-fantasma boton-chico">
+            Ver {citas.length - MAX} más
+          </button>
+        )}
+      </div>
+    </div>
   )
 }
 

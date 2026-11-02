@@ -45,6 +45,8 @@ export interface AjustesUI {
   avatarAnimal: string | null
   /** Número pequeño y tenue al margen de cada inciso de los artículos. */
   numerarIncisos: boolean
+  /** Marca en el texto de los artículos los plazos, cuantías y penas (services/plazos.ts). */
+  destacarPlazos: boolean
   /** Destinos de la barra inferior del celular (hasta 4; «Más» siempre va al final). */
   barraInferior: VistaId[]
   /** Letra de los artículos y los apuntes. */
@@ -71,6 +73,7 @@ export const useAjustes = create<AjustesUI>()(
       catalogoAbierto: null,
       avatarAnimal: null,
       numerarIncisos: false,
+      destacarPlazos: true,
       barraInferior: BARRA_INFERIOR_DEFECTO,
       fuenteLectura: FUENTE_LECTURA_DEFECTO,
       pistasVistas: [],
@@ -80,7 +83,7 @@ export const useAjustes = create<AjustesUI>()(
     }),
     {
       name: 'prima-lex-ajustes-v1',
-      partialize: (s) => ({ zoom: s.zoom, contraste: s.contraste, animaciones: s.animaciones, celebraciones: s.celebraciones, recordatorios: s.recordatorios, horaResumen: s.horaResumen, tamanoCodigo: s.tamanoCodigo, catalogoAbierto: s.catalogoAbierto, avatarAnimal: s.avatarAnimal, numerarIncisos: s.numerarIncisos, barraInferior: s.barraInferior, fuenteLectura: s.fuenteLectura, pistasVistas: s.pistasVistas, compartirUso: s.compartirUso, confirmacionesOmitidas: s.confirmacionesOmitidas }),
+      partialize: (s) => ({ zoom: s.zoom, contraste: s.contraste, animaciones: s.animaciones, celebraciones: s.celebraciones, recordatorios: s.recordatorios, horaResumen: s.horaResumen, tamanoCodigo: s.tamanoCodigo, catalogoAbierto: s.catalogoAbierto, avatarAnimal: s.avatarAnimal, numerarIncisos: s.numerarIncisos, destacarPlazos: s.destacarPlazos, barraInferior: s.barraInferior, fuenteLectura: s.fuenteLectura, pistasVistas: s.pistasVistas, compartirUso: s.compartirUso, confirmacionesOmitidas: s.confirmacionesOmitidas }),
     }
   )
 )

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, Fragment, type ReactNode, type CSSProperties } from 'react'
 import type { CoincidenciaReferencia, ReferenciaArticulo } from '../../services/referencias'
+import { detectarPlazos } from '../../services/plazos'
 
 /** Color fijo tipo resaltador de verdad — no depende de modoOscuro (un
  * marcador se ve igual sobre cualquier fondo, es justamente la idea de un
@@ -214,16 +215,38 @@ function calcularRangos(texto: string, subrayados: string[], referencias: Coinci
   return elegidos
 }
 
+/** Envuelve los plazos, cuantías y penas de un tramo de texto plano (sin subrayados ni enlaces adentro). */
+function conPlazos(texto: string): ReactNode {
+  const rangos = detectarPlazos(texto)
+  if (rangos.length === 0) return texto
+  const partes: ReactNode[] = []
+  let cursor = 0
+  rangos.forEach((r, i) => {
+    if (r.inicio > cursor) partes.push(texto.slice(cursor, r.inicio))
+    partes.push(
+      <span key={i} className="plazo-destacado">
+        {texto.slice(r.inicio, r.fin)}
+      </span>
+    )
+    cursor = r.fin
+  })
+  if (cursor < texto.length) partes.push(texto.slice(cursor))
+  return partes
+}
+
 export function ParrafoResaltado({
   texto,
   subrayados,
   onQuitar,
   referencias,
   onIrAReferencia,
+  plazos = false,
   className,
   style,
 }: {
   texto: string
+  /** Marcar plazos, cuantías y penas dentro del texto corrido (ver services/plazos.ts). */
+  plazos?: boolean
   subrayados: string[]
   onQuitar: (frase: string) => void
   /** Referencias a otros artículos YA FILTRADAS a las que de verdad existen
@@ -239,7 +262,7 @@ export function ParrafoResaltado({
   if (subrayados.length === 0 && (!referencias || referencias.length === 0)) {
     return (
       <p className={className} style={style}>
-        {texto}
+        {plazos ? conPlazos(texto) : texto}
       </p>
     )
   }
@@ -288,7 +311,7 @@ export function ParrafoResaltado({
             </button>
           )
         }
-        return <Fragment key={i}>{seg.texto}</Fragment>
+        return <Fragment key={i}>{plazos ? conPlazos(seg.texto) : seg.texto}</Fragment>
       })}
     </p>
   )

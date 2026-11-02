@@ -437,3 +437,10 @@ main[data-vista] > *:not(.esqueleto-contenedor) { animation: aparece var(--dur-l
 
 /* Mapas mentales: sobre el lienzo vacío el cursor es la flecha de siempre (la manito de «agarrar» no se veía en algunos equipos); sigue arrastrándose igual. */
 .react-flow .react-flow__pane.draggable, .react-flow .react-flow__pane.dragging { cursor: default; }
+
+/* Plazos, cuantías y penas dentro de un artículo (services/plazos.ts): un subrayado ancho y suave, legible en los tres temas de lectura */
+.plazo-destacado {
+  font-weight: 600;
+  background: linear-gradient(transparent 62%, color-mix(in srgb, var(--neu-warn, #d97706) 30%, transparent) 62%);
+  border-radius: 2px;
+}

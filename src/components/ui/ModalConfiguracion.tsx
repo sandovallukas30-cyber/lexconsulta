@@ -530,6 +530,7 @@ function SeccionLectura() {
   const modernizar = useStore((s) => s.modernizarLenguaje)
   const toggleModernizar = useStore((s) => s.toggleModernizar)
   const numerarIncisos = useAjustes((s) => s.numerarIncisos)
+  const destacarPlazos = useAjustes((s) => s.destacarPlazos)
   const poner = useAjustes((s) => s.set)
   return (
     <>
@@ -547,6 +548,12 @@ function SeccionLectura() {
           onChange={(v) => poner({ numerarIncisos: v })}
           etiqueta="Mostrar el número de cada inciso"
           descripcion="Un número pequeño y tenue al margen de cada inciso (1, 2, 3…) para ubicarte en los artículos largos. Cuenta los párrafos del texto: los ítems de una lista (1º., a)) no cuentan, y en los artículos con numerales que traen incisos propios (como el 19 de la Constitución) la cuenta se reinicia en cada número. Es una ayuda para ubicarte: para citar, contrasta con el texto vigente en leychile.cl."
+        />
+        <Interruptor
+          activo={destacarPlazos}
+          onChange={(v) => poner({ destacarPlazos: v })}
+          etiqueta="Destacar plazos, multas y penas"
+          descripcion="Marca en el texto de los artículos lo que más se pregunta: «dentro de tercero día», «treinta días hábiles», «10 unidades tributarias mensuales», «presidio menor en su grado medio». Se detecta con reglas sobre el texto, así que puede escaparse alguno."
         />
         <Interruptor
           activo={modernizar}
