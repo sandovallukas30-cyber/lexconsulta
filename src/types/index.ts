@@ -596,6 +596,8 @@ export interface SesionClase {
   actualizada?: number
 }
 
+export type TipoEvaluacion = 'escrita' | 'oral' | 'control' | 'trabajo'
+
 export interface EvaluacionModulo {
   id: string
   nombre: string
@@ -603,6 +605,10 @@ export interface EvaluacionModulo {
   ponderacion: number // 0-100, % que vale sobre la nota final del ramo
   notaMaxima: number // ej. 7 (escala chilena) o 100
   nota: number | null // null = aún no rendida o sin calificar
+  /** Cómo se rinde: con el tiempo se ve el patrón («en las orales me va peor»). */
+  tipo?: TipoEvaluacion
+  /** Qué falló o qué funcionó, en una línea, anotado al ver la nota. */
+  revision?: string
   /** Cuándo se tocó por última vez (la pone el store): al sincronizar entre dispositivos gana la copia más reciente. */
   actualizada?: number
 }

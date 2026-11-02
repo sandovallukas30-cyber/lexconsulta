@@ -2,12 +2,22 @@ import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../../../store/useStore'
 import { registrarUso } from '../../../services/uso'
 import { eliminarDeListaConDeshacer } from '../../../services/deshacer'
-import type { EvaluacionModulo } from '../../../types'
+import type { EvaluacionModulo, TipoEvaluacion } from '../../../types'
+import { SelectPrima } from '../SelectPrima'
 import { calcularPonderacionTotal } from '../../../services/modulosAcademico'
 import { formatoNota, NOTA_APROBAR, simular } from '../../../services/notas'
 import { formatearFechaCorta } from './utilidades'
 import { ConversorPuntaje } from './ConversorPuntaje'
 import { BotonAgregar, BotonEliminar, BotonesFormulario, CampoTexto, EstadoVacio, FechaConCountdown, FormularioRapido } from './comunes'
+
+const TIPOS: { valor: TipoEvaluacion | ''; texto: string }[] = [
+  { valor: '', texto: 'Sin especificar' },
+  { valor: 'escrita', texto: 'Escrita' },
+  { valor: 'oral', texto: 'Oral' },
+  { valor: 'control', texto: 'Control de lectura' },
+  { valor: 'trabajo', texto: 'Trabajo o informe' },
+]
+const NOMBRE_TIPO: Record<TipoEvaluacion, string> = { escrita: 'Escrita', oral: 'Oral', control: 'Control de lectura', trabajo: 'Trabajo' }
 
 function calcularNotaNecesaria(evaluaciones: EvaluacionModulo[], objetivo: number) {
   let sumaPonderada = 0
@@ -44,6 +54,8 @@ export function TabExamenes({
   const [fecha, setFecha] = useState(inicial?.fecha ?? '')
   const [ponderacion, setPonderacion] = useState(inicial ? String(inicial.ponderacion) : '')
   const [nota, setNota] = useState(inicial?.nota != null ? String(inicial.nota) : '')
+  const [tipo, setTipo] = useState<TipoEvaluacion | ''>(inicial?.tipo ?? '')
+  const [revision, setRevision] = useState(inicial?.revision ?? '')
   const refForm = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (inicial) refForm.current?.scrollIntoView({ block: 'center' })
@@ -61,6 +73,8 @@ export function TabExamenes({
     setFecha('')
     setPonderacion('')
     setNota('')
+    setTipo('')
+    setRevision('')
     setError(null)
     setMostrarForm(true)
   }
@@ -71,6 +85,8 @@ export function TabExamenes({
     setFecha(e.fecha)
     setPonderacion(String(e.ponderacion))
     setNota(e.nota === null ? '' : String(e.nota))
+    setTipo(e.tipo ?? '')
+    setRevision(e.revision ?? '')
     setError(null)
     setMostrarForm(true)
   }
@@ -91,19 +107,27 @@ export function TabExamenes({
       setError('La nota debe estar entre 1,0 y 7,0 (o déjala vacía si aún no la tienes).')
       return
     }
+    // tipo y revisión son opcionales: si quedan vacíos no se guardan (y se borran al editar)
+    const extra = (e: EvaluacionModulo): EvaluacionModulo => {
+      const resto = { ...e }
+      delete resto.tipo
+      delete resto.revision
+      const rev = revision.trim().slice(0, 300)
+      return { ...resto, ...(tipo ? { tipo } : {}), ...(rev ? { revision: rev } : {}) }
+    }
     if (editandoId) {
       setEvaluacionesModulo(moduloId, evaluaciones.map((e) => (e.id === editandoId
-        ? { ...e, nombre: nombre.trim(), fecha, ponderacion: pond, nota: notaNum !== null && Number.isFinite(notaNum) ? notaNum : null }
+        ? extra({ ...e, nombre: nombre.trim(), fecha, ponderacion: pond, nota: notaNum !== null && Number.isFinite(notaNum) ? notaNum : null })
         : e)))
     } else {
-      const nueva: EvaluacionModulo = {
+      const nueva: EvaluacionModulo = extra({
         id: crypto.randomUUID(),
         nombre: nombre.trim(),
         fecha,
         ponderacion: pond,
         notaMaxima: 7,
         nota: notaNum !== null && Number.isFinite(notaNum) ? notaNum : null,
-      }
+      })
       setEvaluacionesModulo(moduloId, [...evaluaciones, nueva])
       registrarUso('evaluacion.crear')
     }
@@ -123,6 +147,10 @@ export function TabExamenes({
 
   const { promedioActual, ponderacionEvaluada, ponderacionPendiente, notaNecesaria } = calcularNotaNecesaria(evaluaciones, objetivoNum)
   const ponderacionTotalActual = calcularPonderacionTotal(evaluaciones)
+  // con notas de dos tipos o más se ve el patrón (las orales contra las escritas, por ejemplo)
+  const porTipo = (Object.keys(NOMBRE_TIPO) as TipoEvaluacion[])
+    .map((t) => { const notas = evaluaciones.filter((e) => e.tipo === t && e.nota !== null).map((e) => (e.nota! / e.notaMaxima) * 7); return { tipo: t, cantidad: notas.length, promedio: notas.reduce((x, y) => x + y, 0) / Math.max(1, notas.length) } })
+    .filter((t) => t.cantidad > 0)
 
   return (
     <div>
@@ -150,6 +178,15 @@ export function TabExamenes({
             <CampoTexto label="Fecha" tipo="date" valor={fecha} onChange={setFecha} modoOscuro={modoOscuro} />
             <CampoTexto label="Ponderación (%)" tipo="number" valor={ponderacion} onChange={setPonderacion} modoOscuro={modoOscuro} placeholder={`Queda ${Math.max(0, 100 - ponderacionCargada)}% por repartir`} />
             <CampoTexto label="Nota (opcional, escala 1-7)" tipo="number" valor={nota} onChange={setNota} modoOscuro={modoOscuro} placeholder="Déjalo vacío si aún no la rindes" />
+            <label className="block">
+              <span className={`block text-xs font-medium mb-1 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>Tipo (opcional)</span>
+              <SelectPrima value={tipo} onChange={(ev) => setTipo(ev.target.value as TipoEvaluacion | '')} className="w-full h-control px-3 rounded-control border text-sm">
+                {TIPOS.map((t) => <option key={t.valor} value={t.valor}>{t.texto}</option>)}
+              </SelectPrima>
+            </label>
+            {nota.trim() !== '' && (
+              <CampoTexto label="¿Qué falló o qué funcionó? (opcional)" valor={revision} onChange={setRevision} modoOscuro={modoOscuro} placeholder="Ej: me faltó tiempo en el caso práctico" />
+            )}
           </div>
           <BotonesFormulario onCancelar={() => { setMostrarForm(false); setEditandoId(null); setError(null) }} onGuardar={guardar} modoOscuro={modoOscuro} error={error} />
         </FormularioRapido>
@@ -180,7 +217,8 @@ export function TabExamenes({
                       {e.nombre}
                     </button>
                   </div>
-                  <span className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>{e.ponderacion}% de la nota final</span>
+                  <span className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>{e.ponderacion}% de la nota final{e.tipo ? ` · ${NOMBRE_TIPO[e.tipo]}` : ''}</span>
+                  {e.revision && <span className={`block text-xs italic mt-0.5 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>“{e.revision}”</span>}
                 </div>
                 <div
                   className={`px-2.5 py-1 rounded-lg text-sm font-semibold ${
@@ -197,6 +235,12 @@ export function TabExamenes({
               </div>
             ))}
           </div>
+
+          {porTipo.length >= 2 && (
+            <p className={`text-xs mb-4 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
+              Promedio por tipo: {porTipo.map((t) => `${NOMBRE_TIPO[t.tipo]} ${formatoNota(t.promedio)} (${t.cantidad})`).join(' · ')}
+            </p>
+          )}
 
           <div className={`p-4 rounded-tarjeta border ${modoOscuro ? 'bg-zinc-800/40 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
             <div className="flex items-center justify-between gap-3 mb-3">
