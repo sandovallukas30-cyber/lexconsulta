@@ -222,16 +222,18 @@ function Etiqueta({ it }: { it: ItemCalendario }) {
   if (it.tipo === 'evaluacion' && !it.hecha) {
     return (
       <span
-        className="flex items-center gap-1 truncate text-[11px] leading-tight px-1.5 py-0.5 rounded-md font-bold"
+        title={it.titulo}
+        className="block line-clamp-2 break-words text-[11px] leading-tight px-1.5 py-0.5 rounded-md font-bold"
         style={{ background: 'color-mix(in srgb, var(--neu-danger) 14%, transparent)', color: 'var(--neu-danger)' }}
       >
-        <span className="truncate">{it.titulo}</span>
+        {it.titulo}
       </span>
     )
   }
   return (
     <span
-      className={`block truncate text-[11px] leading-tight px-1.5 py-0.5 rounded-md font-medium ${it.hecha ? 'opacity-50 line-through' : ''}`}
+      title={it.titulo}
+      className={`block line-clamp-2 break-words text-[11px] leading-tight px-1.5 py-0.5 rounded-md font-medium ${it.hecha ? 'opacity-50 line-through' : ''}`}
       style={{
         background: `color-mix(in srgb, ${color} ${it.tipo === 'evaluacion' ? 24 : 13}%, transparent)`,
         color: 'inherit',

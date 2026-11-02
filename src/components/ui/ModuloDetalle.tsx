@@ -220,7 +220,8 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEdit
               tabIndex={grupo === g.id ? 0 : -1}
               role="tab"
               aria-selected={grupo === g.id}
-              className={`flex items-center gap-1.5 px-3 py-2.5 min-h-[44px] text-sm font-semibold border-b-2 -mb-px transition-colors whitespace-nowrap flex-shrink-0 ${
+              // en celular las cuatro caben a lo ancho (ícono arriba, texto abajo) en vez de cortarse la última fuera de la pantalla
+              className={`flex flex-1 sm:flex-none flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 px-1 sm:px-3 py-2 sm:py-2.5 min-h-[44px] text-xs sm:text-sm leading-tight text-center font-semibold border-b-2 -mb-px transition-colors sm:whitespace-nowrap ${
                 grupo === g.id
                   ? 'border-current'
                   : 'border-transparent'

@@ -458,8 +458,9 @@ function SesionesDeHoy() {
           })}
         </ul>
       )}
+      <p className={`text-xs font-medium mt-3 mb-1 ${e.suave}`}>¿Estudiaste sin el reloj?</p>
       <form
-        className="flex gap-2 mt-3"
+        className="flex gap-2"
         onSubmit={(ev) => {
           ev.preventDefault()
           registrar(Number(manual))
@@ -474,11 +475,11 @@ function SesionesDeHoy() {
           value={manual}
           onChange={(ev) => setManual(ev.target.value)}
           aria-label="Minutos estudiados sin el temporizador"
-          placeholder="¿Estudiaste sin el reloj? Minutos…"
-          className={e.campo}
+          placeholder="Minutos"
+          className={`${e.campo} min-w-0`}
         />
         <button type="submit" disabled={!(Number(manual) >= 1)} className="boton boton-suave">
-          Registrar a mano
+          Registrar
         </button>
       </form>
     </section>

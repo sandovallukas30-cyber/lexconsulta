@@ -343,7 +343,9 @@ function CodigoCard({ codigo, onClick, modoOscuro, delay }: CodigoCardProps) {
       // tarjeta, así al hacer clic el código suele estar listo
       onMouseEnter={() => void cargarCodigo(codigo.tipo).catch(() => {})}
       onFocus={() => void cargarCodigo(codigo.tipo).catch(() => {})}
-      className={`group text-left rounded-2xl border p-5 transition-all hover:shadow-md hover:-translate-y-0.5 ${
+      // flex en columna: un <button> centra su contenido en vertical y las tarjetas de una misma fila quedaban
+      // desalineadas; así todo parte arriba y el pie ("Abrir") queda a la misma altura en toda la fila
+      className={`group text-left h-full flex flex-col rounded-2xl border p-5 transition-all hover:shadow-md hover:-translate-y-0.5 ${
         modoOscuro
           ? 'bg-[var(--neu-card)] border-[var(--neu-line)] hover:border-[var(--accent-700)]'
           : 'bg-white border-[var(--neu-line)] hover:border-[var(--accent-500)]'
@@ -357,7 +359,7 @@ function CodigoCard({ codigo, onClick, modoOscuro, delay }: CodigoCardProps) {
           <i className="ti ti-book-2 text-xl" style={{ color: 'var(--accent-texto)' }} />
         </span>
         <div className="flex-1 min-w-0">
-          <h3 className={`text-[19px] font-serif font-semibold leading-tight ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+          <h3 title={codigo.nombre} className={`text-[19px] font-serif font-semibold leading-tight line-clamp-2 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
             {codigo.nombre}
           </h3>
           <p className={`text-[12px] mt-0.5 capitalize ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
@@ -376,7 +378,7 @@ function CodigoCard({ codigo, onClick, modoOscuro, delay }: CodigoCardProps) {
       </p>
 
       <div
-        className={`flex items-center justify-between gap-3 text-[11px] pt-3 border-t ${
+        className={`mt-auto flex items-center justify-between gap-3 text-[11px] pt-3 border-t ${
           modoOscuro ? 'border-zinc-800' : 'border-zinc-100'
         }`}
       >
