@@ -15,6 +15,8 @@ import {
 } from '../../services/calendario'
 import { colorRamo, hoyISO, nombreRamo, sumarDiasISO } from '../../services/tareasPlan'
 import { crearICS, descargarICS } from '../../services/ics'
+import { leerICS, type EventoICS } from '../../services/icsImportar'
+import { ModalImportarICS } from '../ui/ModalImportarICS'
 
 const DIAS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 const ICONO: Record<TipoItem, string> = { clase: 'ti-school', evaluacion: 'ti-clipboard-check', tarea: 'ti-checkbox' }
@@ -463,6 +465,8 @@ export function CalendarioView() {
   const [ancla, setAncla] = useState(hoy)
   const [seleccion, setSeleccion] = useState(hoy)
   const [tipos, setTipos] = useState<Set<TipoItem>>(new Set(TODOS))
+  const [importando, setImportando] = useState<EventoICS[] | null>(null)
+  const archivoRef = useRef<HTMLInputElement>(null)
 
   const anio = Number(ancla.slice(0, 4))
   const mes = Number(ancla.slice(5, 7)) - 1
@@ -503,6 +507,19 @@ export function CalendarioView() {
     avisar.exito(`${cantidad} eventos exportados. Ábrelo para agregarlos a tu calendario.`)
   }
 
+  const alElegirArchivo = async (ev: { target: HTMLInputElement }) => {
+    const archivo = ev.target.files?.[0]
+    ev.target.value = ''
+    if (!archivo) return
+    try {
+      const eventos = leerICS(await archivo.text())
+      if (eventos.length === 0) avisar.info('El archivo no trae fechas que se puedan leer')
+      else setImportando(eventos)
+    } catch {
+      avisar.info('No se pudo leer el archivo')
+    }
+  }
+
   const etiquetaRango =
     modo === 'mes'
       ? nombreMes(anio, mes)
@@ -527,6 +544,11 @@ export function CalendarioView() {
                 { valor: 'semana', texto: 'Semana' },
               ]}
             />
+            <input ref={archivoRef} type="file" accept=".ics,text/calendar" className="hidden" onChange={alElegirArchivo} />
+            <button onClick={() => archivoRef.current?.click()} className="boton boton-borde" title="Traer las fechas de un archivo .ics como evaluaciones de tus asignaturas">
+              <i className="ti ti-file-import" aria-hidden="true" />
+              <span className="hidden sm:inline">Importar</span>
+            </button>
             <button onClick={exportar} className="boton boton-borde" title="Descargar un archivo .ics para tu calendario del celular">
               <i className="ti ti-calendar-down" aria-hidden="true" />
               <span className="hidden sm:inline">Exportar</span>
@@ -612,6 +634,7 @@ export function CalendarioView() {
           </div>
         )}
       </div>
+      {importando && <ModalImportarICS eventos={importando} onCerrar={() => setImportando(null)} />}
     </div>
   )
 }
