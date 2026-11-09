@@ -18,6 +18,7 @@ import { PanelConsultaArticulos } from './PanelConsultaArticulos'
 import { FilaMenuCabecera, MenuCabeceraApunte } from './MenuCabeceraApunte'
 import { BusquedaEnApunte } from './BusquedaEnApunte'
 import { registrarUso } from '../../services/uso'
+import { irAAncla, leerAncla, type AnclaScroll } from './anclaScroll'
 import type { ApunteModulo, SesionClase, CuadernoApuntes } from '../../types'
 
 const EditorApunte = lazy(() => import('./editorApunte/EditorApunte'))
@@ -121,6 +122,9 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
   const [buscando, setBuscando] = useState(false)
   const [seccionActual, setSeccionActual] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  // dónde iba al pasar entre leer y editar (para volver al mismo lugar en las dos direcciones)
+  const [anclaEdicion, setAnclaEdicion] = useState<AnclaScroll | null>(null)
+  const anclaPendiente = useRef<AnclaScroll | null>(null)
   const guardarPosicion = useStore((s) => s.guardarPosicionLectura)
   // posición guardada al abrir (se lee una vez: la que se va guardando al
   // leer no debe volver a ofrecer "retomar")
@@ -216,6 +220,21 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
     return () => window.clearTimeout(t)
   }, [ofrecerRetomar])
   if (ofrecerRetomar && scrollTop > 200) setOfrecerRetomar(false)
+
+  // Al volver del editor («Listo»), dejar la lectura donde iba y no al principio
+  useEffect(() => {
+    if (editando || !raiz || !anclaPendiente.current) return
+    const aplicar = () => irAAncla(scrollRef.current, raiz, anclaPendiente.current)
+    const raf = requestAnimationFrame(aplicar)
+    const t = window.setTimeout(() => {
+      aplicar()
+      anclaPendiente.current = null
+    }, 150)
+    return () => {
+      cancelAnimationFrame(raf)
+      window.clearTimeout(t)
+    }
+  }, [editando, raiz])
 
   const retomar = () => {
     const el = scrollRef.current
@@ -375,6 +394,7 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
               onClick={() => {
                 voz.detener()
                 setIndiceAbierto(false)
+                setAnclaEdicion(leerAncla(scrollRef.current, raiz))
                 setEditando(true)
               }}
               title="Editar aquí mismo: escribir, resaltar, agrandar, notas al margen…"
@@ -486,7 +506,12 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
             onTitulo={(t) => onCambiar({ titulo: t })}
             onContenido={(c) => onCambiar({ contenido: c })}
             // un apunte vacío no tiene nada que leer: se cierra de una vez (y se descarta si nunca se usó)
-            onTerminar={() => (apunte.contenido.trim() === '' ? onCerrar() : setEditando(false))}
+            anclaInicial={anclaEdicion}
+            onTerminar={(ancla) => {
+              if (apunte.contenido.trim() === '') return onCerrar()
+              anclaPendiente.current = ancla ?? null
+              setEditando(false)
+            }}
           />
         </Suspense>
       ) : (

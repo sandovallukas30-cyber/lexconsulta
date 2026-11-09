@@ -10,6 +10,7 @@ import { avisar } from '../../../store/useAvisos'
 import { crearExtensiones, ICONOS_RECUADRO } from './extensiones'
 import { MenuComandos } from './MenuComandos'
 import { cambiarAnchoColumna, PASO_ANCHO_COLUMNA } from './anchoColumna'
+import { irAAncla, leerAncla, type AnclaScroll } from '../anclaScroll'
 import './editorApunte.css'
 
 const VERDE = 'var(--accent-base)'
@@ -22,7 +23,10 @@ interface Props {
   tamanoPx: number
   onTitulo: (titulo: string) => void
   onContenido: (texto: string) => void
-  onTerminar: () => void
+  /** Recibe dónde iba el usuario, para que el lector vuelva al mismo lugar. */
+  onTerminar: (ancla?: AnclaScroll | null) => void
+  /** Dónde iba leyendo: el editor se abre ahí y no al principio. */
+  anclaInicial?: AnclaScroll | null
 }
 
 interface PanelNota {
@@ -98,7 +102,7 @@ function estadoDe(editor: Editor) {
   }
 }
 
-export default function EditorApunte({ titulo, contenido, tema: temaLectura, tamanoPx, onTitulo, onContenido, onTerminar }: Props) {
+export default function EditorApunte({ titulo, contenido, tema: temaLectura, tamanoPx, onTitulo, onContenido, onTerminar, anclaInicial }: Props) {
   const tema = TEMAS_LECTURA[temaLectura]
   const scrollRef = useRef<HTMLDivElement>(null)
   const refTitulo = useRef<HTMLTextAreaElement>(null)
@@ -193,8 +197,33 @@ export default function EditorApunte({ titulo, contenido, tema: temaLectura, tam
 
   const terminar = useCallback(() => {
     guardarAhora(editor)
-    onTerminar()
+    // dónde iba, antes de que el editor se cierre
+    const ancla = editor ? leerAncla(scrollRef.current, editor.view.dom as HTMLElement) : null
+    onTerminar(ancla)
   }, [editor, guardarAhora, onTerminar])
+
+  // Abrir el editor donde iba el lector (no al principio) y dejar el cursor ahí
+  useEffect(() => {
+    if (!editor || !anclaInicial) return
+    const colocar = () => {
+      const destino = irAAncla(scrollRef.current, editor.view.dom as HTMLElement, anclaInicial)
+      if (!destino) return
+      try {
+        editor.chain().focus(editor.view.posAtDOM(destino, 0), { scrollIntoView: false }).run()
+      } catch {
+        // sin cursor en ese bloque: queda al principio, pero la pantalla ya está donde iba
+      }
+      irAAncla(scrollRef.current, editor.view.dom as HTMLElement, anclaInicial)
+    }
+    const raf = requestAnimationFrame(colocar)
+    const t = window.setTimeout(colocar, 150)
+    return () => {
+      cancelAnimationFrame(raf)
+      window.clearTimeout(t)
+    }
+    // solo al abrir: después el usuario manda con su scroll
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editor])
 
   useEffect(() => {
     const alTeclear = (e: KeyboardEvent) => {
