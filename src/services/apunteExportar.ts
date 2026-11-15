@@ -277,6 +277,42 @@ export function descargarApunteWord(a: Datos) {
   descargarBlob(new Blob(['﻿', apunteAPaginaHtml(a, { word: true })], { type: 'application/msword' }), nombreArchivo(a.titulo, 'doc'))
 }
 
+/** «Descargar PDF»: abre el diálogo de impresión del navegador con el apunte ya formateado (colores, recuadros, tablas),
+ *  donde se elige «Guardar como PDF» (en el celular: «Compartir» → «Guardar PDF»). No agrega ninguna librería:
+ *  el navegador genera el PDF, con texto seleccionable y buena calidad. Funciona en cualquier pantalla, porque usa un
+ *  iframe oculto y no depende de la vista imprimible de la app. Devuelve false si no se pudo preparar. */
+export function guardarApunteComoPdf(a: Datos): Promise<boolean> {
+  return new Promise((resolver) => {
+    const marco = document.createElement('iframe')
+    marco.setAttribute('aria-hidden', 'true')
+    marco.tabIndex = -1
+    marco.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden'
+    marco.srcdoc = apunteAPaginaHtml(a)
+    let terminado = false
+    const limpiar = (ok: boolean) => {
+      if (terminado) return
+      terminado = true
+      window.setTimeout(() => marco.remove(), 1000)
+      resolver(ok)
+    }
+    marco.onload = () => {
+      const w = marco.contentWindow
+      if (!w) return limpiar(false)
+      try {
+        w.addEventListener('afterprint', () => limpiar(true))
+        w.focus()
+        w.print()
+      } catch {
+        limpiar(false)
+        return
+      }
+      // si el navegador no avisa que terminó de imprimir, se limpia igual
+      window.setTimeout(() => limpiar(true), 60_000)
+    }
+    document.body.appendChild(marco)
+  })
+}
+
 /** Copia el apunte con formato (HTML) y, para apps que solo aceptan texto (WhatsApp), la versión con *negrita*. */
 export async function copiarApunteConFormato(a: Datos): Promise<boolean> {
   const html = apunteAFragmentoHtml(a)

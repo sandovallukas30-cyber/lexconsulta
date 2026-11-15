@@ -5,7 +5,7 @@ import { useStore } from '../../../store/useStore'
 import { avisar } from '../../../store/useAvisos'
 import { MODULOS } from '../../../data/modulos'
 import { descargarApunteMd } from '../../../services/apunteArchivo'
-import { copiarApunteConFormato, descargarApunteHtml, descargarApunteWord } from '../../../services/apunteExportar'
+import { copiarApunteConFormato, descargarApunteHtml, descargarApunteWord, guardarApunteComoPdf } from '../../../services/apunteExportar'
 import { moverApunte } from '../../../services/accionesApunte'
 import type { ApunteModulo, CuadernoApuntes } from '../../../types'
 
@@ -109,6 +109,16 @@ export function MenuAccionesApunte({
             })}
           >
             <i className="ti ti-clipboard-text text-base" /> Copiar con formato
+          </button>
+          <button
+            role="menuitem"
+            className={item}
+            onClick={elegir(async () => {
+              const ok = await guardarApunteComoPdf(apunte)
+              if (!ok) avisar.error('No se pudo preparar el PDF')
+            })}
+          >
+            <i className="ti ti-file-type-pdf text-base" /> Descargar PDF
           </button>
           <button
             role="menuitem"

@@ -7,6 +7,7 @@ import {
   copiarApunteConFormato,
   descargarApunteHtml,
   descargarApunteWord,
+  guardarApunteComoPdf,
   puedeCompartirArchivos,
 } from '../../services/apunteExportar'
 import type { ApunteModulo } from '../../types'
@@ -98,6 +99,15 @@ export function MenuCompartirApunte({ apunte, onImprimir, claseBoton }: Props) {
           {onImprimir && (
             <Fila icono="ti-printer" titulo="Imprimir o guardar como PDF" detalle="Con colores, negritas y recuadros. En el celular: «Compartir» → «Guardar PDF»." onClick={elegir(onImprimir)} />
           )}
+          <Fila
+            icono="ti-file-type-pdf"
+            titulo="Descargar PDF"
+            detalle="Con colores, negritas, recuadros y tablas. Elige «Guardar como PDF» (en el celular: «Compartir» → «Guardar PDF»)."
+            onClick={elegir(async () => {
+              const ok = await guardarApunteComoPdf(apunte)
+              if (!ok) avisar.error('No se pudo preparar el PDF. Prueba con «Descargar página web».')
+            })}
+          />
           <Fila
             icono="ti-clipboard-text"
             titulo="Copiar con formato"
