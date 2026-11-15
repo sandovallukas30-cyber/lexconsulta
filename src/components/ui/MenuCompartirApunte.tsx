@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { avisar } from '../../store/useAvisos'
 import { descargarApunteMd } from '../../services/apunteArchivo'
+import { descargarApunteComoPdf } from '../../services/apunteDescargarPdf'
 import { registrarUso } from '../../services/uso'
 import {
   compartirApunte,
   copiarApunteConFormato,
   descargarApunteHtml,
   descargarApunteWord,
-  guardarApunteComoPdf,
   puedeCompartirArchivos,
 } from '../../services/apunteExportar'
 import type { ApunteModulo } from '../../types'
@@ -102,10 +102,11 @@ export function MenuCompartirApunte({ apunte, onImprimir, claseBoton }: Props) {
           <Fila
             icono="ti-file-type-pdf"
             titulo="Descargar PDF"
-            detalle="Con colores, negritas, recuadros y tablas. Elige «Guardar como PDF» (en el celular: «Compartir» → «Guardar PDF»)."
+            detalle="Se descarga directo, con colores, negritas, recuadros y tablas. Se puede seleccionar el texto."
             onClick={elegir(async () => {
-              const ok = await guardarApunteComoPdf(apunte)
-              if (!ok) avisar.error('No se pudo preparar el PDF. Prueba con «Descargar página web».')
+              const ok = await descargarApunteComoPdf(apunte)
+              if (ok) avisar.exito('Apunte descargado como PDF')
+              else avisar.error('No se pudo crear el PDF. Prueba con «Descargar página web».')
             })}
           />
           <Fila

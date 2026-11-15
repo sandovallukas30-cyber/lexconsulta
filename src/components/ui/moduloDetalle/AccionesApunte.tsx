@@ -5,7 +5,8 @@ import { useStore } from '../../../store/useStore'
 import { avisar } from '../../../store/useAvisos'
 import { MODULOS } from '../../../data/modulos'
 import { descargarApunteMd } from '../../../services/apunteArchivo'
-import { copiarApunteConFormato, descargarApunteHtml, descargarApunteWord, guardarApunteComoPdf } from '../../../services/apunteExportar'
+import { descargarApunteComoPdf } from '../../../services/apunteDescargarPdf'
+import { copiarApunteConFormato, descargarApunteHtml, descargarApunteWord } from '../../../services/apunteExportar'
 import { moverApunte } from '../../../services/accionesApunte'
 import type { ApunteModulo, CuadernoApuntes } from '../../../types'
 
@@ -114,8 +115,9 @@ export function MenuAccionesApunte({
             role="menuitem"
             className={item}
             onClick={elegir(async () => {
-              const ok = await guardarApunteComoPdf(apunte)
-              if (!ok) avisar.error('No se pudo preparar el PDF')
+              const ok = await descargarApunteComoPdf(apunte)
+              if (ok) avisar.exito('Apunte descargado como PDF')
+              else avisar.error('No se pudo crear el PDF. Prueba con «Descargar página web».')
             })}
           >
             <i className="ti ti-file-type-pdf text-base" /> Descargar PDF
