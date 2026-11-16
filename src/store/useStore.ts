@@ -57,6 +57,7 @@ import type {
 } from '../types'
 import { siguienteEstado } from '../services/tarjetasApunte'
 import { aplicarNota, notaDe } from '../services/repasoColeccion'
+import type { AccionHoy } from '../services/hoyTeToca'
 import { aplicarResultados, type ResultadoPrueba } from '../services/registroPrueba'
 import type { NotaRepaso } from '../services/fsrs'
 import { confirmarSalida } from '../services/guardiaCambios'
@@ -242,6 +243,10 @@ interface AppState {
    * se muestra el grid de tarjetas). Vive acá, no como estado local del
    * componente, por el mismo motivo que coleccionActivaId/canvasActivoId. */
   moduloActivoId: string | null
+  /** Práctica que se pidió abrir desde otra pantalla (no se guarda): la consume PracticaView al montarse. */
+  practicaPendiente: AccionHoy | null
+  irAPractica: (accion: AccionHoy) => void
+  consumirPracticaPendiente: () => AccionHoy | null
   setModuloActivo: (id: string | null) => void
 
   /** Apunte a abrir en Modo Lectura la próxima vez que se monte su pestaña
@@ -418,6 +423,13 @@ export const useStore = create<AppState>()(
       fechaConsultas: null,
       progresoModulos: {},
       moduloActivoId: null,
+      practicaPendiente: null,
+      irAPractica: (accion) => set({ practicaPendiente: accion, vistaActiva: 'practica' }),
+      consumirPracticaPendiente: () => {
+        const p = get().practicaPendiente
+        if (p) set({ practicaPendiente: null })
+        return p
+      },
       apuntePendiente: null,
       academicoModulos: {},
       ramos: [],

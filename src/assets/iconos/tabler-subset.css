@@ -182,6 +182,7 @@
 .ti-table-off:before{content:"\eefa"}
 .ti-tag:before{content:"\10096"}
 .ti-target:before{content:"\eb35"}
+.ti-target-arrow:before{content:"\f51a"}
 .ti-template:before{content:"\eb39"}
 .ti-text-size:before{content:"\f2b1"}
 .ti-trash:before{content:"\eb41"}

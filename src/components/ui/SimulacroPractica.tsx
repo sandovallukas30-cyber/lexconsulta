@@ -28,7 +28,7 @@ const minutosYSegundos = (ms: number) => {
 }
 
 /** Simulacro: preguntas de opción múltiple armadas con los «término: definición» de tus apuntes. */
-export function SimulacroPractica({ onVolver }: { onVolver: () => void }) {
+export function SimulacroPractica({ onVolver, inicial }: { onVolver: () => void; inicial?: { ramoId?: string; unidadIds?: string[]; soloErrores?: boolean } }) {
   const academico = useStore((s) => s.academicoModulos)
   const ramos = useStore((s) => s.ramos)
   const registrarRepaso = useStore((s) => s.registrarRepasoTarjeta)
@@ -37,7 +37,7 @@ export function SimulacroPractica({ onVolver }: { onVolver: () => void }) {
   const erroresPrueba = useStore((s) => s.erroresPrueba)
 
   const [fase, setFase] = useState<Fase>('config')
-  const [seleccion, setSeleccion] = useState('todas')
+  const [seleccion, setSeleccion] = useState(inicial?.ramoId ?? 'todas')
   const [cantidad, setCantidad] = useState(10)
   const [preguntas, setPreguntas] = useState<PreguntaSimulacro[]>([])
   const [indice, setIndice] = useState(0)
@@ -46,7 +46,7 @@ export function SimulacroPractica({ onVolver }: { onVolver: () => void }) {
   const [fin, setFin] = useState(0)
   const [programado, setProgramado] = useState(false)
   // unidades del temario elegidas (vacío = todo el ramo)
-  const [unidadesSel, setUnidadesSel] = useState<string[]>([])
+  const [unidadesSel, setUnidadesSel] = useState<string[]>(inicial?.unidadIds ?? [])
   const [modo, setModo] = useState<Modo>('alternativas')
   const [temas, setTemas] = useState<PreguntaDesarrollo[]>([])
   const [temaI, setTemaI] = useState(0)
@@ -126,6 +126,12 @@ export function SimulacroPractica({ onVolver }: { onVolver: () => void }) {
     setInicio(Date.now())
     setFase('preguntando')
   }
+
+  // desde «Hoy te toca → Corregir errores»: arranca directo con lo que sigues fallando
+  useEffect(() => {
+    if (inicial?.soloErrores) empezar(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const actual = preguntas[indice]
   const elegida = respuestas[indice] ?? null

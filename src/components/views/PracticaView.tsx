@@ -52,7 +52,10 @@ export function PracticaView() {
   const flujoQuiz = useDestello()
 
   const [mostrarContinuar, setMostrarContinuar] = useState(false)
-  const [juegoSeleccionado, setJuegoSeleccionado] = useState<JuegoSeleccionado>('none')
+  // si se llegó desde «Hoy te toca», se abre directo lo pedido (se lee una sola vez al montar)
+  const [pedida] = useState(() => useStore.getState().consumirPracticaPendiente())
+  const [juegoSeleccionado, setJuegoSeleccionado] = useState<JuegoSeleccionado>(pedida?.juego ?? 'none')
+  const inicialSimulacro = pedida?.juego === 'simulacro' ? pedida : undefined
 
   // Si entramos a la vista y hay una partida pausada sin terminar, mostrar el modal
   useEffect(() => {
@@ -131,7 +134,7 @@ export function PracticaView() {
   }
 
   if (juegoSeleccionado === 'simulacro') {
-    return <SimulacroPractica onVolver={() => setJuegoSeleccionado('none')} />
+    return <SimulacroPractica inicial={inicialSimulacro} onVolver={() => setJuegoSeleccionado('none')} />
   }
 
   // Menú de selección inicial
