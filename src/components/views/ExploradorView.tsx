@@ -1,6 +1,7 @@
 import { useAjustes, sumarTamanoCodigo, TAMANO_CODIGO_MIN, TAMANO_CODIGO_MAX } from '../../store/useAjustes'
 import { registrarUso } from '../../services/uso'
 import { NotaArticulo } from '../ui/NotaArticulo'
+import { RecitarMemoria } from '../ui/RecitarMemoria'
 import { useState, useMemo, useEffect, useRef, useCallback, type ReactNode, type TouchEvent } from 'react'
 import { obtenerCodigo } from '../../services/codigos'
 import { citadoPor } from '../../services/citadoPor'
@@ -75,6 +76,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
   const [indiceAbierto, setIndiceAbierto] = useState(false)
   const [esquemaAbierto, setEsquemaAbierto] = useState(false)
   const [modoLecturaAbierto, setModoLecturaAbierto] = useState(false)
+  const [recitando, setRecitando] = useState(false)
   const [busquedaAbierta, setBusquedaAbierta] = useState(false)
   const [busqueda, setBusqueda] = useState('')
   // coincidencia a marcar en el artículo al abrirlo desde una búsqueda de texto
@@ -438,6 +440,15 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
                 <i className="ti ti-printer text-sm" aria-hidden />
               </button>
               <button
+                onClick={() => setRecitando(true)}
+                title="Recitar este artículo de memoria: escribes lo que recuerdas y la app marca lo que faltó"
+                aria-label={`Recitar ${seleccionado.a} de memoria`}
+                className="boton boton-fantasma boton-chico max-sm:boton-icono"
+              >
+                <i className="ti ti-brain text-sm" aria-hidden />
+                <span className="hidden sm:inline">Recitar</span>
+              </button>
+              <button
                 onClick={copiarConCita}
                 title={`Copiar el texto con la cita "${citaArticulo(tipoActivo, seleccionado.a)}" y la fuente`}
                 aria-label={`Copiar ${seleccionado.a} con cita`}
@@ -458,6 +469,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
           <CitadoPor codigo={tipoActivo} articulo={seleccionado.a} modoOscuro={modoOscuro} />
           <VinculosArticulo codigo={tipoActivo} articulo={seleccionado.a} modoOscuro={modoOscuro} />
           <NotaArticulo key={`${tipoActivo}:${seleccionado.a}`} codigo={tipoActivo} articulo={seleccionado.a} modoOscuro={modoOscuro} />
+          {recitando && <RecitarMemoria titulo={`${seleccionado.a}`} texto={seleccionado.t} onCerrar={() => setRecitando(false)} />}
         </motion.article>
   ) : null
 

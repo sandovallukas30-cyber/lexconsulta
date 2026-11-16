@@ -8,6 +8,8 @@ import { descargarApunteMd } from '../../../services/apunteArchivo'
 import { descargarApunteComoPdf } from '../../../services/apunteDescargarPdf'
 import { copiarApunteConFormato, descargarApunteHtml, descargarApunteWord } from '../../../services/apunteExportar'
 import { moverApunte } from '../../../services/accionesApunte'
+import { quitarMarcas } from '../../../services/apunteFormato'
+import { RecitarMemoria } from '../RecitarMemoria'
 import type { ApunteModulo, CuadernoApuntes } from '../../../types'
 
 /** Menú "⋯" de cada apunte de la lista. */
@@ -21,6 +23,7 @@ export function MenuAccionesApunte({
   modoOscuro: boolean
 }) {
   const [abierto, setAbierto] = useState(false)
+  const [recitando, setRecitando] = useState(false)
   // Abrir hacia arriba si el menú no cabe bajo el botón (último apunte de la
   // lista en un celular).
   const [haciaArriba, setHaciaArriba] = useState(false)
@@ -100,6 +103,9 @@ export function MenuAccionesApunte({
           <button role="menuitem" className={item} onClick={elegir(onCrearMapa)}>
             <i className="ti ti-sitemap text-base" /> Crear mapa mental
           </button>
+          <button role="menuitem" className={item} onClick={elegir(() => setRecitando(true))}>
+            <i className="ti ti-brain text-base" /> Recitar de memoria
+          </button>
           <button
             role="menuitem"
             className={item}
@@ -154,6 +160,7 @@ export function MenuAccionesApunte({
           </button>
         </div>
       )}
+      {recitando && <RecitarMemoria titulo={apunte.titulo} texto={quitarMarcas(apunte.contenido)} onCerrar={() => setRecitando(false)} />}
     </div>
   )
 }
