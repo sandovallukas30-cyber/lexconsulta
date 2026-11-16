@@ -3,16 +3,19 @@ import { useStore } from '../../store/useStore'
 import { avisar } from '../../store/useAvisos'
 import { useDialogo } from '../../hooks/useDialogo'
 import { mapaAApunte } from '../../services/mapaApunte'
+import { mapaATarjetas } from '../../services/mapaTarjetas'
 import { registrarUso } from '../../services/uso'
 import { SelectorRamo } from './SelectorRamo'
 import type { ApunteModulo, MapaMental } from '../../types'
 
-/** «Crear apunte desde el mapa»: elige la asignatura y el mapa se vuelve un apunte (ramas = secciones). */
-export function ModalApunteDesdeMapa({ mapa, onCerrar }: { mapa: MapaMental; onCerrar: () => void }) {
+/** «Crear apunte desde el mapa»: elige la asignatura y el mapa se vuelve un apunte (ramas = secciones).
+ *  Con `modo="tarjetas"`, el apunte es una lista de tarjetas de repaso (cada idea al frente, sus ramas atrás). */
+export function ModalApunteDesdeMapa({ mapa, onCerrar, modo = 'apunte' }: { mapa: MapaMental; onCerrar: () => void; modo?: 'apunte' | 'tarjetas' }) {
+  const esTarjetas = modo === 'tarjetas'
   const ramos = useStore((s) => s.ramos)
   const ref = useDialogo<HTMLDivElement>(true, onCerrar)
   const [moduloId, setModuloId] = useState<string | null>(mapa.moduloId ?? ramos[0]?.id ?? null)
-  const resultado = useMemo(() => mapaAApunte(mapa), [mapa])
+  const resultado = useMemo(() => (esTarjetas ? mapaATarjetas(mapa) : mapaAApunte(mapa)), [mapa, esTarjetas])
   const secciones = resultado.contenido.split('\n').filter((l) => l.startsWith('#')).length
   const tarjetas = resultado.contenido.split('\n').filter((l) => /^\t*- \*\*[^*]+:\*\*/.test(l)).length
   const vacio = resultado.contenido.trim() === ''
@@ -23,8 +26,8 @@ export function ModalApunteDesdeMapa({ mapa, onCerrar }: { mapa: MapaMental; onC
     const apunte: ApunteModulo = { id: crypto.randomUUID(), titulo: resultado.titulo, contenido: resultado.contenido, fechaCreacion: ahora, fechaModificacion: ahora }
     const s = useStore.getState()
     s.setApuntesModulo(moduloId, [...(s.academicoModulos[moduloId]?.apuntes ?? []), apunte])
-    registrarUso('mapa.apunte')
-    avisar.exito(`Apunte "${apunte.titulo}" creado`)
+    registrarUso(esTarjetas ? 'mapa.tarjetas' : 'mapa.apunte')
+    avisar.exito(esTarjetas ? `${tarjetas} ${tarjetas === 1 ? 'tarjeta creada' : 'tarjetas creadas'}: ya están en tu repaso` : `Apunte "${apunte.titulo}" creado`)
     onCerrar()
     useStore.getState().abrirApunte(moduloId, apunte.id)
   }
@@ -42,18 +45,20 @@ export function ModalApunteDesdeMapa({ mapa, onCerrar }: { mapa: MapaMental; onC
       >
         <div className="px-5 py-4">
           <h2 id="titulo-apunte-desde-mapa" className="text-base font-bold" style={{ color: 'var(--neu-ink)' }}>
-            Crear apunte desde el mapa
+            {esTarjetas ? 'Crear tarjetas de repaso' : 'Crear apunte desde el mapa'}
           </h2>
           <p className="text-sm mt-1" style={{ color: 'var(--neu-ink2)' }}>
-            Cada rama del mapa pasa a ser una sección y lo de más adentro, viñetas. El mapa no cambia.
+            {esTarjetas
+              ? 'Cada idea con ramas pasa a ser una tarjeta: al frente la idea, atrás sus ramas. Se guardan como un apunte de la asignatura y entran al repaso espaciado y al simulacro. El mapa no cambia.'
+              : 'Cada rama del mapa pasa a ser una sección y lo de más adentro, viñetas. El mapa no cambia.'}
           </p>
           {vacio ? (
             <p className="text-sm mt-3" style={{ color: 'var(--neu-danger)' }}>
-              Este mapa no tiene nodos todavía.
+              {esTarjetas ? 'Para crear tarjetas, el mapa necesita ideas con ramas (nodos conectados).' : 'Este mapa no tiene nodos todavía.'}
             </p>
           ) : (
             <p className="text-xs mt-3" style={{ color: 'var(--neu-ink3)' }}>
-              «{resultado.titulo}» · {secciones} {secciones === 1 ? 'sección' : 'secciones'}
+              «{resultado.titulo}»{esTarjetas ? '' : ` · ${secciones} ${secciones === 1 ? 'sección' : 'secciones'}`}
               {tarjetas > 0 ? ` · ${tarjetas} ${tarjetas === 1 ? 'tarjeta de repaso' : 'tarjetas de repaso'}` : ''}
             </p>
           )}
@@ -69,7 +74,7 @@ export function ModalApunteDesdeMapa({ mapa, onCerrar }: { mapa: MapaMental; onC
             Cancelar
           </button>
           <button onClick={crear} disabled={!moduloId || vacio} className="boton boton-primario">
-            Crear apunte
+            {esTarjetas ? 'Crear tarjetas' : 'Crear apunte'}
           </button>
         </div>
       </div>

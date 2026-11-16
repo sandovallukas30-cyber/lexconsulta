@@ -751,6 +751,7 @@ function MapaMentalDetalle({
   const renombrarMapaMental = useStore((s) => s.renombrarMapaMental)
   const actualizarMapaMental = useStore((s) => s.actualizarMapaMental)
   const [crearApunte, setCrearApunte] = useState(false)
+  const [crearTarjetas, setCrearTarjetas] = useState(false)
   // Colección vinculada (si alguna) — ver Coleccion.mapaMentalVinculado en
   // types/index.ts: un solo lado guarda el vínculo, acá solo se consulta.
   const coleccionVinculada = useStore((s) => s.colecciones.find((c) => c.mapaMentalVinculado === mapa.id))
@@ -1574,6 +1575,15 @@ function MapaMentalDetalle({
                     setCrearApunte(true)
                   }}
                 />
+                <FilaMenuCabecera
+                  icono="ti-cards"
+                  titulo="Crear tarjetas de repaso"
+                  detalle="Cada idea al frente y sus ramas atrás, con repaso espaciado."
+                  onClick={() => {
+                    cerrar()
+                    setCrearTarjetas(true)
+                  }}
+                />
                 <div className="my-1 mx-3 border-t" style={{ borderColor: 'var(--neu-line)' }} />
                 <FilaMenuCabecera
                   icono="ti-trash"
@@ -1592,6 +1602,7 @@ function MapaMentalDetalle({
 
       <VistaImprimibleMapaMental mapa={mapa} />
       {crearApunte && <ModalApunteDesdeMapa mapa={mapa} onCerrar={() => setCrearApunte(false)} />}
+      {crearTarjetas && <ModalApunteDesdeMapa mapa={mapa} modo="tarjetas" onCerrar={() => setCrearTarjetas(false)} />}
 
       {repaso && avance && (
         <div
