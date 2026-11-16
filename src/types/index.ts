@@ -323,6 +323,8 @@ export interface ArticuloColeccion {
   /** Fecha (epoch ms) desde la que este artículo vuelve a estar "para hoy"
    * en el repaso. Sin valor = para hoy (nunca se calendarizó). */
   proximoRepaso?: number
+  /** Repaso FSRS (services/repasoColeccion.ts). Sin valor = se parte de `caja`. */
+  fsrs?: { fase: 'nueva' | 'aprendiendo' | 'repaso'; estabilidad: number; dificultad: number; ultima: number | null; olvidos: number }
 }
 
 /** EXPERIMENTAL: modo de visualización de las fichas dentro de una colección. */

@@ -6,6 +6,7 @@
 // anotaciones propias del que compartió (nota, estado, función, conexiones,
 // grupos). Esto mantiene el link corto incluso para una colección grande.
 
+import { esEstadoFSRS } from './repasoColeccion'
 import type {
   ArticuloColeccion,
   CodigoTipo,
@@ -132,6 +133,7 @@ function sanearPartes(valor: Record<string, unknown> & { articulos: unknown[] },
       const pos = esObjeto(a.posicion) ? { x: numero(a.posicion.x), y: numero(a.posicion.y) } : null
       if (caja !== undefined && Number.isInteger(caja) && caja >= 1 && caja <= 5) art.caja = caja
       if (proximoRepaso !== undefined) art.proximoRepaso = proximoRepaso
+      if (esEstadoFSRS(a.fsrs)) art.fsrs = a.fsrs
       if (pos && pos.x !== undefined && pos.y !== undefined) art.posicion = { x: pos.x, y: pos.y }
     }
     articulos.push(art)
@@ -250,6 +252,7 @@ export function fusionarOficial(local: Coleccion, nueva: ColeccionCompartida, ah
       ...(mio?.estado ? { estado: mio.estado } : {}),
       ...(mio?.caja !== undefined ? { caja: mio.caja } : {}),
       ...(mio?.proximoRepaso !== undefined ? { proximoRepaso: mio.proximoRepaso } : {}),
+      ...(mio?.fsrs ? { fsrs: mio.fsrs } : {}),
     }
   })
   return {

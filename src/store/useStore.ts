@@ -56,6 +56,7 @@ import type {
   PestanaConfig,
 } from '../types'
 import { siguienteEstado } from '../services/tarjetasApunte'
+import { aplicarNota, notaDe } from '../services/repasoColeccion'
 import { aplicarResultados, type ResultadoPrueba } from '../services/registroPrueba'
 import type { NotaRepaso } from '../services/fsrs'
 import { confirmarSalida } from '../services/guardiaCambios'
@@ -154,7 +155,7 @@ interface AppState {
   registrarRepaso: (
     id: string,
     ref: { codigo: CodigoActivo['tipo']; articulo: string },
-    resultado: 'sabia' | 'no_sabia'
+    resultado: 'sabia' | 'no_sabia' | NotaRepaso
   ) => void
   /** Crea una Colección nueva a partir de un link/archivo compartido (ver
    * services/compartirColeccion.ts) — id y fechas propias, para que nunca
@@ -705,15 +706,8 @@ export const useStore = create<AppState>()(
                   ...c,
                   articulos: c.articulos.map((a) => {
                     if (a.codigo !== ref.codigo || a.articulo !== ref.articulo) return a
-                    // Leitner de 5 cajas: "me la sabía" sube una caja (y el
-                    // próximo repaso se aleja más); "no me la sabía" vuelve
-                    // siempre a la caja 1 — no hay "castigo" mayor a eso,
-                    // volver a ver el artículo pronto ya es la corrección.
-                    const cajaActual = a.caja ?? 1
-                    const cajaNueva = resultado === 'sabia' ? Math.min(5, cajaActual + 1) : 1
-                    const DIAS_POR_CAJA: Record<number, number> = { 1: 1, 2: 3, 3: 7, 4: 14, 5: 30 }
-                    const dias = DIAS_POR_CAJA[cajaNueva] ?? 1
-                    return { ...a, caja: cajaNueva, proximoRepaso: Date.now() + dias * 24 * 60 * 60 * 1000 }
+                    // FSRS (como las tarjetas de los apuntes); los que tenían caja siguen desde su intervalo
+                    return aplicarNota(a, notaDe(resultado))
                   }),
                 }
               : c

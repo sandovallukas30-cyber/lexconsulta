@@ -187,7 +187,7 @@ function MenuSeleccionJuegos({
                 <div className="flex-1 min-w-0">
                   <h2 className={`text-xl font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>Repaso de colecciones</h2>
                   <p className={`text-sm leading-relaxed ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                    {paraRepasar} artículo{paraRepasar === 1 ? '' : 's'} te toca{paraRepasar === 1 ? '' : 'n'} hoy. Desliza la tarjeta: a la derecha si lo sabías, a la izquierda si no.
+                    {paraRepasar} artículo{paraRepasar === 1 ? '' : 's'} te toca{paraRepasar === 1 ? '' : 'n'} hoy. Recuerda qué dice cada uno y califícate: Otra vez, Difícil, Bien o Fácil.
                   </p>
                 </div>
                 <i className="ti ti-arrow-right text-lg transition-transform group-hover:translate-x-1" style={{ color: 'var(--accent-texto)' }} />

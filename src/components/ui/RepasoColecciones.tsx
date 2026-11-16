@@ -4,7 +4,9 @@ import { useStore } from '../../store/useStore'
 import { obtenerCodigo, precargar } from '../../services/codigos'
 import { nombreCortoMetadata } from '../../data/codigosMetadata'
 import { TarjetaDeslizable } from './TarjetaDeslizable'
-import type { CodigoTipo } from '../../types'
+import type { ArticuloColeccion, CodigoTipo } from '../../types'
+import type { NotaRepaso } from '../../services/fsrs'
+import { intervalosArticulo } from '../../services/repasoColeccion'
 
 const VERDE = 'var(--accent-base)'
 /** Sesiones cortas: más de 20 seguidas cansan y se abandona a la mitad. */
@@ -15,11 +17,20 @@ interface Pendiente {
   coleccion: string
   codigo: CodigoTipo
   articulo: string
+  /** Cómo estaba al empezar (para mostrar los tiempos de cada botón). */
+  previo: Pick<ArticuloColeccion, 'fsrs' | 'caja' | 'proximoRepaso'>
 }
 
-/** Repaso de los artículos de tus Colecciones que hoy te tocan (repetición espaciada de 5 cajas).
+const BOTONES: [NotaRepaso, string, string, string][] = [
+  [1, 'Otra vez', 'border-red-900 text-red-300 hover:bg-red-950/40', 'border-red-200 text-red-700 hover:bg-red-50'],
+  [2, 'Difícil', 'border-amber-900 text-amber-300 hover:bg-amber-950/40', 'border-amber-200 text-amber-700 hover:bg-amber-50'],
+  [3, 'Bien', 'border-emerald-900 text-emerald-300 hover:bg-emerald-950/40', 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'],
+  [4, 'Fácil', 'border-sky-900 text-sky-300 hover:bg-sky-950/40', 'border-sky-200 text-sky-700 hover:bg-sky-50'],
+]
+
+/** Repaso de los artículos de tus Colecciones que hoy te tocan (repetición espaciada FSRS, como las tarjetas de los apuntes).
  *  La tarjeta muestra el número del artículo: intenta recordar qué dice, tócala para verlo y deslízala
- *  a la derecha si lo sabías o a la izquierda si no. */
+ *  a la derecha («Bien») o a la izquierda («Otra vez»), o usa los 4 botones con sus tiempos. */
 export function RepasoColecciones({ onVolver }: { onVolver: () => void }) {
   const modoOscuro = useStore((s) => s.modoOscuro)
   const registrar = useStore((s) => s.registrarRepaso)
@@ -31,7 +42,7 @@ export function RepasoColecciones({ onVolver }: { onVolver: () => void }) {
     for (const c of useStore.getState().colecciones) {
       for (const a of c.articulos) {
         if (a.proximoRepaso && a.proximoRepaso > ahora) continue
-        todos.push({ coleccionId: c.id, coleccion: c.titulo, codigo: a.codigo, articulo: a.articulo, caja: a.caja ?? 1, vence: a.proximoRepaso ?? 0 })
+        todos.push({ coleccionId: c.id, coleccion: c.titulo, codigo: a.codigo, articulo: a.articulo, previo: { fsrs: a.fsrs, caja: a.caja, proximoRepaso: a.proximoRepaso }, caja: a.caja ?? 1, vence: a.proximoRepaso ?? 0 })
       }
     }
     // primero las cajas bajas (lo que peor sabes) y las más atrasadas
@@ -51,10 +62,11 @@ export function RepasoColecciones({ onVolver }: { onVolver: () => void }) {
   const terminado = indice >= cola.length
   const texto = actual ? (obtenerCodigo(actual.codigo)?.articulos.find((a) => a.a === actual.articulo)?.t ?? '') : ''
 
-  const responder = (sabia: boolean) => {
+  const intervalos = actual ? intervalosArticulo(actual.previo) : null
+  const responder = (nota: NotaRepaso) => {
     if (!actual || !volteada) return
-    registrar(actual.coleccionId, { codigo: actual.codigo, articulo: actual.articulo }, sabia ? 'sabia' : 'no_sabia')
-    if (sabia) setSabidas((n) => n + 1)
+    registrar(actual.coleccionId, { codigo: actual.codigo, articulo: actual.articulo }, nota)
+    if (nota > 1) setSabidas((n) => n + 1)
     setVolteada(false)
     setIndice((i) => i + 1)
   }
@@ -66,8 +78,9 @@ export function RepasoColecciones({ onVolver }: { onVolver: () => void }) {
       if (e.key === ' ' || e.key === 'Enter') {
         e.preventDefault()
         setVolteada((v) => !v)
-      } else if (e.key === 'ArrowLeft') responder(false)
-      else if (e.key === 'ArrowRight') responder(true)
+      } else if (e.key === 'ArrowLeft') responder(1)
+      else if (e.key === 'ArrowRight') responder(3)
+      else if (e.key >= '1' && e.key <= '4') responder(Number(e.key) as NotaRepaso)
     }
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
@@ -115,7 +128,7 @@ export function RepasoColecciones({ onVolver }: { onVolver: () => void }) {
             <p className={`text-xl font-bold mb-1 ${tx}`}>¡Repaso terminado!</p>
             <p className={`text-sm mb-6 ${suave}`}>
               Recordaste {sabidas} de {cola.length}
-              {sabidas < cola.length ? ` · ${cola.length - sabidas} vuelve${cola.length - sabidas === 1 ? '' : 'n'} mañana` : ''}
+              {sabidas < cola.length ? ` · ${cola.length - sabidas} vuelve${cola.length - sabidas === 1 ? '' : 'n'} en unos minutos` : ''}
             </p>
             <button onClick={onVolver} className="px-5 min-h-[44px] rounded-lg text-sm font-medium text-white" style={{ background: VERDE }}>
               Listo
@@ -127,8 +140,8 @@ export function RepasoColecciones({ onVolver }: { onVolver: () => void }) {
               key={`${actual.coleccionId}-${actual.codigo}-${actual.articulo}`}
               habilitada={volteada}
               ejes="x"
-              etiquetas={{ izquierda: { texto: 'Otra vez', color: '#dc2626' }, derecha: { texto: 'La sabía', color: '#16a34a' } }}
-              onResponder={(dir) => responder(dir === 'derecha')}
+              etiquetas={{ izquierda: { texto: 'Otra vez', color: '#dc2626' }, derecha: { texto: 'Bien', color: '#16a34a' } }}
+              onResponder={(dir) => responder(dir === 'derecha' ? 3 : 1)}
             >
               <AnimatePresence mode="wait">
                 <motion.button
@@ -162,31 +175,22 @@ export function RepasoColecciones({ onVolver }: { onVolver: () => void }) {
               </AnimatePresence>
             </TarjetaDeslizable>
 
-            <div className="grid grid-cols-2 gap-2 sm:gap-3 mt-4">
-              <button
-                onClick={() => responder(false)}
-                disabled={!volteada}
-                className={`min-h-[52px] rounded-xl text-sm font-semibold border transition-opacity disabled:opacity-40 ${
-                  modoOscuro ? 'border-red-900 text-red-300 hover:bg-red-950/40' : 'border-red-200 text-red-700 hover:bg-red-50'
-                }`}
-              >
-                Otra vez
-                <span className="block text-[11px] font-normal opacity-80">mañana</span>
-              </button>
-              <button
-                onClick={() => responder(true)}
-                disabled={!volteada}
-                className={`min-h-[52px] rounded-xl text-sm font-semibold border transition-opacity disabled:opacity-40 ${
-                  modoOscuro ? 'border-emerald-900 text-emerald-300 hover:bg-emerald-950/40' : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'
-                }`}
-              >
-                La sabía
-                <span className="block text-[11px] font-normal opacity-80">sube de caja</span>
-              </button>
+            <div className="grid grid-cols-4 gap-2 sm:gap-3 mt-4">
+              {BOTONES.map(([nota, nombre, oscuro, claro]) => (
+                <button
+                  key={nota}
+                  onClick={() => responder(nota)}
+                  disabled={!volteada}
+                  className={`min-h-[56px] rounded-xl text-sm font-semibold border transition-opacity disabled:opacity-40 flex flex-col items-center justify-center ${modoOscuro ? oscuro : claro}`}
+                >
+                  {nombre}
+                  <span className="text-[11px] font-normal opacity-80 tabular-nums">{intervalos?.[nota]}</span>
+                </button>
+              ))}
             </div>
             <p className={`text-center text-[11px] mt-3 ${suave}`}>
-              {volteada ? 'Desliza la tarjeta: ← otra vez · → la sabía' : 'Toca la tarjeta para ver el artículo'}
-              <span className="hidden sm:inline"> · Espacio: voltear · ← → responder · Esc: salir</span>
+              {volteada ? 'Desliza la tarjeta: ← otra vez · → bien' : 'Toca la tarjeta para ver el artículo'}
+              <span className="hidden sm:inline"> · Espacio: voltear · 1 a 4 o ← → responder · Esc: salir</span>
             </p>
           </div>
         )}
