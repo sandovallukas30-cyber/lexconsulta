@@ -1,5 +1,5 @@
 import { SelectPrima } from '../ui/SelectPrima'
-import { lazy, Suspense, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { registrarUso } from '../../services/uso'
@@ -110,10 +110,18 @@ function BotonPanel({ icono, titulo, resumen, abierto, onClick }: { icono: strin
   )
 }
 
+/** Duraciones típicas para cambiar con un toque (enfoque · descanso corto; el largo va aparte). */
+const DURACIONES = [
+  { foco: 25, corto: 5, largo: 15 },
+  { foco: 50, corto: 10, largo: 20 },
+  { foco: 90, corto: 20, largo: 30 },
+]
+
 function Temporizador({ concentracion }: { concentracion: boolean }) {
   const e = useEstilos()
   const s = useEnfoque()
   const tareas = useStore((st) => st.tareasPlan)
+  const unidadesRamo = useStore((st) => (s.ramoId ? st.academicoModulos[s.ramoId]?.unidades : undefined)) ?? []
   const [panel, setPanel] = useState<'ajustes' | 'ambiente' | null>(null)
   const alternar = (p: 'ajustes' | 'ambiente') => setPanel((a) => (a === p ? null : p))
   const conFondo = useConFondo()
@@ -137,6 +145,21 @@ function Temporizador({ concentracion }: { concentracion: boolean }) {
     () => tareas.filter((t) => !t.hecha && (!s.ramoId || !t.ramoId || t.ramoId === s.ramoId)),
     [tareas, s.ramoId]
   )
+
+  // barra espaciadora: iniciar o pausar (si no estás escribiendo ni sobre un botón)
+  useEffect(() => {
+    const alTeclear = (ev: KeyboardEvent) => {
+      if (ev.code !== 'Space' || ev.ctrlKey || ev.metaKey || ev.altKey || ev.repeat) return
+      const el = ev.target instanceof HTMLElement ? ev.target : null
+      if (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT|BUTTON|A)$/.test(el.tagName) || el.closest('[role=dialog],[role=menu],[role=listbox]'))) return
+      ev.preventDefault()
+      const st = useEnfoque.getState()
+      if (st.estado === 'corriendo') st.pausar()
+      else st.iniciar()
+    }
+    window.addEventListener('keydown', alTeclear)
+    return () => window.removeEventListener('keydown', alTeclear)
+  }, [])
 
   const alIniciar = () => {
     // pedir permiso de avisos con un gesto del usuario, solo la primera vez
@@ -218,7 +241,31 @@ function Temporizador({ concentracion }: { concentracion: boolean }) {
         </p>
       )}
 
+      {detenido && !flow && s.modo === 'foco' && (
+        <div className="flex items-center justify-center gap-1.5 mt-4 flex-wrap" role="group" aria-label="Duraciones rápidas">
+          {DURACIONES.map((d) => {
+            const activa = s.ajustes.foco === d.foco && s.ajustes.corto === d.corto
+            return (
+              <button
+                key={d.foco}
+                onClick={() => s.ajustar({ foco: d.foco, corto: d.corto, largo: d.largo })}
+                aria-pressed={activa}
+                title={`${d.foco} min de enfoque, ${d.corto} de descanso`}
+                className={`boton boton-chico ${activa ? 'boton-primario' : 'boton-fantasma'}`}
+              >
+                {d.foco} · {d.corto}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
       <div className="flex items-center justify-center gap-2 mt-4 flex-wrap">
+        {!flow && s.estado !== 'detenido' && (
+          <button onClick={() => s.extender(5)} className="boton boton-fantasma boton-chico" title="Sumar 5 minutos a este tramo">
+            <i className="ti ti-plus" aria-hidden="true" /> 5 min
+          </button>
+        )}
         {s.modo === 'foco' && s.inicioSesion !== null && (
           <button onClick={s.distraje} className="boton boton-fantasma boton-chico" title="Anota cuando te distraes: alimenta tus patrones">
             <i className="ti ti-bolt" aria-hidden="true" /> Me distraje{s.distracciones > 0 ? ` · ${s.distracciones}` : ''}
@@ -249,6 +296,19 @@ function Temporizador({ concentracion }: { concentracion: boolean }) {
             textoVacio="Sin asignatura"
           />
         </label>
+        {unidadesRamo.length > 0 && (
+          <label className="block sm:col-span-2 sm:order-last">
+            <span className={`block text-xs font-medium mb-1 ${e.suave}`}>¿Qué unidad?</span>
+            <SelectPrima aria-label="Unidad de la sesión" value={s.unidadId ?? ''} onChange={(ev) => s.setUnidad(ev.target.value || null)} className={e.campo}>
+              <option value="">Todo el ramo</option>
+              {unidadesRamo.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.nombre}
+                </option>
+              ))}
+            </SelectPrima>
+          </label>
+        )}
         <label className="block">
           <span className={`block text-xs font-medium mb-1 ${e.suave}`}>¿Con qué tarea?</span>
           <SelectPrima

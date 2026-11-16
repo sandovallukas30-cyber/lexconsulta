@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import { useAjustes, prefiereMenosMovimiento } from '../../store/useAjustes'
 import { useEnfoque, esFlow, msEnfocados } from '../../store/useEnfoque'
 import { useEnfoqueLocal } from '../../store/useEnfoqueLocal'
@@ -8,9 +8,14 @@ import { FONDOS, esFondo, infoFondo, type FondoId } from '../../services/fondos'
 import { guardarFoto, leerFoto, quitarFoto } from '../../services/fotoFondo'
 import { Aurora, Bosque, Cafeteria, Cielo, Ciudad, Espacio, Lluvia, Noche, Otono, Playa, type PropsEscena } from './Escenas'
 
-const ESCENAS: Partial<Record<FondoId, (props: PropsEscena) => React.JSX.Element>> = {
-  noche: Noche, bosque: Bosque, playa: Playa, aurora: Aurora, lluvia: Lluvia, ciudad: Ciudad, cafeteria: Cafeteria, espacio: Espacio, otono: Otono,
+// memo: el temporizador avisa cada segundo, pero la escena solo se vuelve a dibujar cuando su avance cambia de verdad
+const ESCENAS: Partial<Record<FondoId, React.ComponentType<PropsEscena>>> = {
+  noche: memo(Noche), bosque: memo(Bosque), playa: memo(Playa), aurora: memo(Aurora), lluvia: memo(Lluvia), ciudad: memo(Ciudad),
+  cafeteria: memo(Cafeteria), espacio: memo(Espacio), otono: memo(Otono),
 }
+const CieloMemo = memo(Cielo)
+/** Pasos del avance que ve la escena: 300 en toda la sesión (en 25 min, uno cada 5 s; los movimientos se suavizan con transiciones). */
+const PASOS = 300
 
 /** Hora del día en decimales (14,5 = 14:30), puesta al día cada minuto. */
 function useHora(): number {
@@ -120,12 +125,12 @@ export function FondoEnfoque({ vivo = true }: { vivo?: boolean }) {
   }, [activo, sonidoDeFondo, vivo])
 
   if (activo === 'ninguno') return null
-  const p = vivo ? progreso : 0.35
+  const p = vivo ? Math.round(progreso * PASOS) / PASOS : 0.35
   const Escena = ESCENAS[activo]
   const quieto = !animaciones || prefiereMenosMovimiento()
   return (
     <div className={`enf-fondo${oculto ? ' enf-pausado' : ''}${cierre ? ' enf-cierre' : ''}${quieto ? ' enf-quieto' : ''}`} aria-hidden="true">
-      {activo === 'auto' && <Cielo hora={hora} />}
+      {activo === 'auto' && <CieloMemo hora={hora} />}
       {Escena && <Escena p={p} />}
       {activo === 'foto' && <div className="enf-fondo-foto" style={foto ? { backgroundImage: `url(${foto})` } : undefined} />}
     </div>

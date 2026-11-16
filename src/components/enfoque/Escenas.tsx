@@ -14,8 +14,8 @@ function azar(semilla: number) {
 const ANCHO = 800, ALTO = 600;
 const VB = `0 0 ${ANCHO} ${ALTO}`;
 const ref = { className: "enf-fondo-svg", viewBox: VB, preserveAspectRatio: "xMidYMid slice", "aria-hidden": true } as const;
-const e = (x: number, y: number): CSSProperties => ({ transform: `translate(${x}px, ${y}px)`, transition: "transform 1.2s linear" });
-const op = (v: number): CSSProperties => ({ opacity: v, transition: "opacity 1.2s linear" });
+const e = (x: number, y: number): CSSProperties => ({ transform: `translate(${x}px, ${y}px)`, transition: "transform 5s linear" });
+const op = (v: number): CSSProperties => ({ opacity: v, transition: "opacity 5s linear" });
 
 /** Cuánto avanzó la sesión (0 a 1): las escenas lo usan para que el cielo cambie mientras trabajas. */
 export interface PropsEscena { p: number }
@@ -46,26 +46,84 @@ const Estrellas = ({ lista, opacidad = 1 }: { lista: ReturnType<typeof estrellas
   <g opacity={opacidad}>{lista.map((s, i) => <circle key={i} className="enf-fx-estrella" cx={s.x} cy={s.y} r={s.r} fill="#fff" style={{ animationDelay: `${s.d}s`, animationDuration: `${s.t}s` } as CSSProperties} />)}</g>
 );
 
+/** Mezcla dos colores #rrggbb (t = 0 → a, t = 1 → b). */
+function mezclaHex(a: string, b: string, t: number): string {
+  const x = [1, 3, 5].map((i) => parseInt(a.slice(i, i + 2), 16));
+  const y = [1, 3, 5].map((i) => parseInt(b.slice(i, i + 2), 16));
+  return "#" + x.map((v, k) => Math.round(v + (y[k] - v) * Math.max(0, Math.min(1, t))).toString(16).padStart(2, "0")).join("");
+}
+
+/** Una cordillera: picos al azar (siempre los mismos) unidos con curvas suaves. */
+function sierra(semilla: number, base: number, alto: number, picos: number): string {
+  const r = azar(semilla);
+  const paso = (ANCHO + 80) / picos;
+  let d = `M-40,${base}`;
+  let x = -40;
+  for (let k = 0; k < picos; k++) {
+    const cima = base - alto * (0.45 + r() * 0.55);
+    const cx = x + paso * (0.35 + r() * 0.3);
+    d += ` Q${cx.toFixed(0)},${cima.toFixed(0)} ${(x + paso).toFixed(0)},${(base - alto * r() * 0.25).toFixed(0)}`;
+    x += paso;
+  }
+  return `${d} V${ALTO} H-40 Z`;
+}
+
+/** Pinos en hilera sobre una base, para siluetas del primer plano. */
+function hileraPinos(semilla: number, base: number, n: number, h: number, w: number, desde = 0, hasta = ANCHO): string {
+  const r = azar(semilla);
+  return Array.from({ length: n }, (_, i) => pino(desde + (i + 0.5) * ((hasta - desde) / n) + (r() - 0.5) * 30, base + r() * 10, h * (0.7 + r() * 0.6), w * (0.8 + r() * 0.4))).join(" ");
+}
+
+/** Reflejo en el agua de un astro: franjas que titilan bajo él. */
+const Reflejo = ({ x, y0, color, ancho }: { x: number; y0: number; color: string; ancho: number }) => (
+  <g fill={color}>
+    {Array.from({ length: 7 }, (_, i) => (
+      <rect key={i} className="enf-fx-reflejo" x={x - ancho * (1 - i * 0.1) / 2} y={y0 + 6 + i * 12} width={ancho * (1 - i * 0.1)} height="2.4" rx="1.2" opacity={0.7 - i * 0.08} style={{ animationDelay: `${i * 0.35}s` } as CSSProperties} />
+    ))}
+  </g>
+);
+
 /* ───────────────────────── Noche ───────────────────────── */
 export function Noche({ p }: PropsEscena) {
-  const estrellas = useMemo(() => estrellasDe(7, 70, 400), []);
+  const estrellas = useMemo(() => estrellasDe(7, 90, 330), []);
+  const luciernagas = useMemo(() => {
+    const r = azar(13);
+    return Array.from({ length: 9 }, () => ({ x: 60 + r() * 680, y: 470 + r() * 60, dx: (r() - 0.5) * 60, dy: -20 - r() * 30, d: -r() * 9 }));
+  }, []);
+  const lejos = useMemo(() => sierra(31, 420, 150, 5), []);
+  const medio = useMemo(() => sierra(37, 455, 90, 7), []);
+  const pinos = useMemo(() => hileraPinos(41, 508, 9, 130, 62, 0, 300) + " " + hileraPinos(43, 510, 8, 110, 56, 540, ANCHO), []);
+  const luna = { x: 570 - p * 360, y: 150 + Math.sin(p * Math.PI) * -30 + p * 50 };
   return (
     <svg {...ref}>
       <defs>
-        <linearGradient id="fn-cielo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#060a1d" /><stop offset=".6" stopColor="#13214d" /><stop offset="1" stopColor="#34408a" /></linearGradient>
-        <radialGradient id="fn-halo"><stop offset="0" stopColor="#dfe6ff" stopOpacity=".2" /><stop offset="1" stopColor="#dfe6ff" stopOpacity="0" /></radialGradient>
-        <mask id="fn-media"><rect width={ANCHO} height={ALTO} fill="#fff" /><circle cx="598" cy="150" r="40" fill="#000" /></mask>
+        <linearGradient id="fn-cielo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#050918" /><stop offset=".55" stopColor="#12214d" /><stop offset="1" stopColor="#3a4790" /></linearGradient>
+        <linearGradient id="fn-lago" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#1d2a66" /><stop offset="1" stopColor="#060a1c" /></linearGradient>
+        <radialGradient id="fn-halo"><stop offset="0" stopColor="#dfe6ff" stopOpacity=".22" /><stop offset="1" stopColor="#dfe6ff" stopOpacity="0" /></radialGradient>
+        <radialGradient id="fn-ventana"><stop offset="0" stopColor="#ffcf7a" stopOpacity=".55" /><stop offset="1" stopColor="#ffcf7a" stopOpacity="0" /></radialGradient>
+        <mask id="fn-media"><rect x="-80" y="-80" width="160" height="160" fill="#fff" /><circle cx="24" cy="-16" r="40" fill="#000" /></mask>
       </defs>
       <rect width={ANCHO} height={ALTO} fill="url(#fn-cielo)" />
       <Estrellas lista={estrellas} />
-      <g style={e(-p * 360, Math.sin(p * Math.PI) * -30 + p * 50)}>
-        <circle cx="570" cy="150" r="150" fill="url(#fn-halo)" />
-        <circle cx="570" cy="150" r="46" fill="#f6f2dd" mask="url(#fn-media)" />
+      <g style={e(luna.x - 570, luna.y - 150)}>
+        <circle cx="570" cy="150" r="160" fill="url(#fn-halo)" />
+        <g transform="translate(570 150)"><circle r="46" fill="#f6f2dd" mask="url(#fn-media)" /></g>
       </g>
       <line className="enf-fx-fugaz" x1="140" y1="70" x2="90" y2="100" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
       <line className="enf-fx-fugaz enf-fx-fugaz-2" x1="470" y1="40" x2="425" y2="68" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M0,470 C120,420 220,450 330,430 C450,408 560,450 800,420 V600 H0 Z" fill="#0b1230" />
-      <path d="M0,520 C150,490 280,520 420,500 C560,482 680,520 800,500 V600 H0 Z" fill="#070b1d" />
+      <path d={lejos} fill="#1b2658" />
+      <path d={medio} fill="#111a42" />
+      <rect y="470" width={ANCHO} height="130" fill="url(#fn-lago)" />
+      {luna.y < 460 && <Reflejo x={luna.x} y0={470} color="#f6f2dd" ancho={70} />}
+      <path d={pinos} fill="#050916" />
+      <path d="M0,520 C140,505 260,515 400,508 C560,500 680,516 800,506 V600 H0 Z" fill="#04070f" />
+      <g transform="translate(205 462)">
+        <circle cx="22" cy="22" r="46" fill="url(#fn-ventana)" />
+        <path d="M0,36 L22,14 L44,36 V58 H0 Z" fill="#070b18" />
+        <rect x="15" y="34" width="14" height="12" rx="1.5" fill="#ffcf7a" className="enf-fx-estrella" style={{ animationDuration: "7s" } as CSSProperties} />
+        <rect x="31" y="14" width="6" height="14" fill="#070b18" />
+      </g>
+      {luciernagas.map((f, i) => <circle key={i} className="enf-fx-luciernaga" cx={f.x} cy={f.y} r="1.8" fill="#f6ff9a" style={{ "--dx": `${f.dx}px`, "--dy": `${f.dy}px`, animationDelay: `${f.d}s` } as CSSProperties} />)}
     </svg>
   );
 }
@@ -149,6 +207,7 @@ export function Playa({ p }: PropsEscena) {
 /* ───────────────────────── Aurora ───────────────────────── */
 export function Aurora({ p }: PropsEscena) {
   const estrellas = useMemo(() => estrellasDe(33, 55, 360), []);
+  const pinos = useMemo(() => hileraPinos(71, 535, 10, 120, 58, 0, 330) + " " + hileraPinos(73, 538, 9, 100, 52, 500, ANCHO), []);
   return (
     <svg {...ref}>
       <defs>
@@ -163,8 +222,15 @@ export function Aurora({ p }: PropsEscena) {
         <path className="enf-fx-vela fx-vela-2" d="M-40,210 C140,120 300,330 460,220 C600,130 700,300 860,190 V470 C700,560 560,400 420,480 C260,570 120,400 -40,480 Z" fill="url(#fa-m)" />
         <path className="enf-fx-vela fx-vela-3" d="M-40,60 C100,10 220,150 380,80 C540,10 660,140 860,60 V300 C700,380 540,220 380,300 C220,380 100,230 -40,300 Z" fill="url(#fa-v)" />
       </g></g>
-      <path d="M0,500 L90,440 L150,470 L250,400 L330,455 L420,420 L520,470 L620,410 L720,460 L800,430 V600 H0 Z" fill="#070d1a" />
-      <path d="M0,545 L120,505 L230,530 L360,495 L480,535 L600,500 L720,535 L800,515 V600 H0 Z" fill="#04080f" />
+      <path d="M0,480 L90,420 L150,450 L250,380 L330,435 L420,400 L520,450 L620,390 L720,440 L800,410 V600 H0 Z" fill="#070d1a" />
+      <rect y="478" width={ANCHO} height="122" fill="#050b18" />
+      {/* el lago refleja la aurora */}
+      <g opacity={0.25 + p * 0.35} transform="translate(0 956) scale(1 -1)" style={{ filter: "blur(3px)" }}>
+        <path className="enf-fx-vela fx-vela-1" d="M-40,380 C120,330 260,450 420,400 C560,350 680,440 860,380 V478 H-40 Z" fill="url(#fa-v)" />
+      </g>
+      <g fill="#9fffd6" opacity=".25">{[0, 1, 2, 3].map((i) => <rect key={i} className="enf-fx-reflejo" x={200 + i * 90} y={500 + i * 14} width={120 - i * 18} height="2" rx="1" style={{ animationDelay: `${i * 0.5}s` } as CSSProperties} />)}</g>
+      <path d={pinos} fill="#02050c" />
+      <path d="M0,548 C150,535 300,545 420,540 C560,534 690,546 800,538 V600 H0 Z" fill="#02050c" />
     </svg>
   );
 }
@@ -195,7 +261,24 @@ export function Lluvia({ p }: PropsEscena) {
       <rect className="enf-fx-relampago" width={ANCHO} height={ALTO} fill="#d6e4ff" opacity="0" />
       {gotas.map((g, i) => <line key={i} className="enf-fx-gota" x1={g.x} y1={-80} x2={g.x - 6} y2={-80 + g.l} stroke="#cfe0ff" strokeWidth="1.3" opacity={g.o} style={{ animationDuration: `${g.t}s`, animationDelay: `${g.d}s` } as CSSProperties} />)}
       {cristal.map((g, i) => <g key={i} transform={`translate(${g.x} ${g.y})`}><g className="enf-fx-resbala" style={{ animationDuration: `${g.t}s`, animationDelay: `${g.d}s` } as CSSProperties}><ellipse rx={g.r} ry={g.r * 1.5} fill="#e6f0ff" opacity=".4" /><ellipse cx={-g.r * 0.3} cy={-g.r * 0.4} rx={g.r * 0.3} ry={g.r * 0.4} fill="#fff" opacity=".7" /></g></g>)}
-      <g fill="#05080f" opacity=".5"><rect x="392" y="0" width="16" height="600" /><rect x="0" y="262" width="800" height="14" /><rect x="0" y="560" width="800" height="40" /></g>
+      <g fill="#1a120d">
+        <rect x="0" y="0" width="34" height="600" /><rect x="766" y="0" width="34" height="600" /><rect x="0" y="0" width="800" height="26" />
+        <rect x="390" y="0" width="20" height="540" /><rect x="0" y="262" width="800" height="16" />
+      </g>
+      <g fill="#ffb86b" opacity=".18"><rect x="34" y="26" width="3" height="514" /><rect x="410" y="26" width="3" height="514" /><rect x="37" y="278" width="730" height="2" /></g>
+      <rect x="-10" y="530" width="820" height="24" rx="4" fill="#2a1b12" />
+      <rect x="-10" y="530" width="820" height="4" fill="#5a3a24" />
+      <rect x="0" y="554" width="800" height="46" fill="#150d08" />
+      <g transform="translate(110 462)">
+        <path d="M-12,24 C-30,-6 -18,-40 -4,-52 C-6,-30 0,-14 0,24 Z" fill="#2f5a3c" /><path d="M10,24 C30,-4 26,-34 14,-46 C14,-24 8,-10 2,24 Z" fill="#3b6e48" />
+        <path d="M0,24 C-4,-10 2,-44 8,-62 C12,-36 8,-6 4,24 Z" fill="#285034" />
+        <path d="M-22,24 H26 L20,68 H-16 Z" fill="#b8643a" /><rect x="-25" y="20" width="54" height="9" rx="2" fill="#c97546" />
+      </g>
+      <g transform="translate(640 500)">
+        <path d="M0,0 H36 V24 C36,32 30,34 18,34 C6,34 0,32 0,24 Z" fill="#e9e1d4" />
+        <path d="M36,6 C48,6 48,22 36,22" fill="none" stroke="#e9e1d4" strokeWidth="5" />
+        <path className="enf-fx-vela" d="M10,-6 C4,-18 16,-24 10,-36 M22,-6 C16,-18 28,-24 22,-38" fill="none" stroke="#ffffff" strokeOpacity=".35" strokeWidth="3" strokeLinecap="round" />
+      </g>
     </svg>
   );
 }
@@ -395,33 +478,52 @@ function mezclar(h: number, k: 1 | 2): string {
   return `rgb(${a.map((v, j) => Math.round(v + (b[j] - v) * t)).join(",")})`;
 }
 
+const rgbAHex = (c: string) => "#" + (c.match(/\d+/g) ?? ["0", "0", "0"]).slice(0, 3).map((v) => Number(v).toString(16).padStart(2, "0")).join("");
+
 export function Cielo({ hora }: { hora: number }) {
-  const estrellas = useMemo(() => estrellasDe(91, 70, 380), []);
+  const estrellas = useMemo(() => estrellasDe(91, 80, 360), []);
+  const lejos = useMemo(() => sierra(53, 430, 170, 4), []);
+  const medio = useMemo(() => sierra(59, 465, 100, 6), []);
+  const pinos = useMemo(() => hileraPinos(61, 512, 14, 110, 56, 0, 300) + " " + hileraPinos(67, 515, 10, 90, 50, 560, ANCHO), []);
   const noche = hora < 5.5 || hora > 20.5 ? 1 : hora < 7 ? 1 - (hora - 5.5) / 1.5 : hora > 19 ? (hora - 19) / 1.5 : 0;
-  const diaT = (hora - 6) / 13; // 0 al amanecer, 1 al atardecer
-  const sol = diaT >= 0 && diaT <= 1;
-  const lunaT = hora >= 19 ? (hora - 19) / 11 : hora < 6 ? (hora + 5) / 11 : -1;
-  const pos = (t: number) => ({ x: 110 + t * 580, y: 400 - Math.sin(t * Math.PI) * 290 });
-  const s = sol ? pos(diaT) : null;
-  const l = lunaT >= 0 && lunaT <= 1 ? pos(lunaT) : null;
+  const diaT = (hora - 6) / 13.2; // 0 al amanecer, 1 al ponerse el sol
+  const sol = diaT >= -0.02 && diaT <= 1.02 ? pos(diaT) : null;
+  // la luna sale cuando el sol ya se puso, y se va antes de que amanezca
+  const lunaT = hora >= 19.6 ? (hora - 19.6) / 10.2 : hora < 5.8 ? (hora + 4.4) / 10.2 : -1;
+  const luna = lunaT >= 0 && lunaT <= 1 ? pos(lunaT) : null;
+  function pos(k: number) { return { x: 110 + k * 580, y: 430 - Math.sin(k * Math.PI) * 320 }; }
+  // el sol se pone anaranjado cerca del horizonte
+  const bajo = sol ? Math.max(0, Math.min(1, (sol.y - 200) / 220)) : 0;
+  const colorSol = mezclaHex("#fff3c4", "#ff9a4d", bajo);
+  const horizonte = mezclar(hora, 2);
+  const capa = (dia: string, nocheC: string, tinte: number) => mezclaHex(mezclaHex(dia, horizonte.startsWith("rgb") ? rgbAHex(horizonte) : horizonte, tinte), nocheC, noche);
   return (
     <svg {...ref}>
       <defs>
-        <linearGradient id="fc2-cielo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={mezclar(hora, 1)} /><stop offset="1" stopColor={mezclar(hora, 2)} /></linearGradient>
-        <radialGradient id="fc2-sol"><stop offset="0" stopColor="#fff6cf" stopOpacity=".95" /><stop offset=".3" stopColor="#ffe08a" stopOpacity=".6" /><stop offset="1" stopColor="#ffb26b" stopOpacity="0" /></radialGradient>
-        <radialGradient id="fc2-luna"><stop offset="0" stopColor="#dfe6ff" stopOpacity=".3" /><stop offset="1" stopColor="#dfe6ff" stopOpacity="0" /></radialGradient>
+        <linearGradient id="fc2-cielo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={mezclar(hora, 1)} /><stop offset="1" stopColor={horizonte} /></linearGradient>
+        <linearGradient id="fc2-lago" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={horizonte} stopOpacity=".95" /><stop offset="1" stopColor={mezclar(hora, 1)} /></linearGradient>
+        <radialGradient id="fc2-sol"><stop offset="0" stopColor={colorSol} stopOpacity=".9" /><stop offset=".35" stopColor={colorSol} stopOpacity=".35" /><stop offset="1" stopColor={colorSol} stopOpacity="0" /></radialGradient>
+        <radialGradient id="fc2-luna"><stop offset="0" stopColor="#dfe6ff" stopOpacity=".28" /><stop offset="1" stopColor="#dfe6ff" stopOpacity="0" /></radialGradient>
+        <linearGradient id="fc2-velo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#000" stopOpacity=".18" /><stop offset=".45" stopColor="#000" stopOpacity="0" /><stop offset="1" stopColor="#000" stopOpacity=".3" /></linearGradient>
       </defs>
       <rect width={ANCHO} height={ALTO} fill="url(#fc2-cielo)" />
       <Estrellas lista={estrellas} opacidad={noche} />
-      {s && <g><circle cx={s.x} cy={s.y} r="170" fill="url(#fc2-sol)" /><circle cx={s.x} cy={s.y} r="34" fill="#fff4c8" /></g>}
-      {l && <g><circle cx={l.x} cy={l.y} r="120" fill="url(#fc2-luna)" /><circle cx={l.x} cy={l.y} r="30" fill="#f6f2dd" /></g>}
-      <g className="enf-fx-nubes" opacity={0.25 + (1 - noche) * 0.35}>
-        <ellipse cx="170" cy="170" rx="130" ry="16" fill="#fff" /><ellipse cx="240" cy="194" rx="90" ry="11" fill="#fff" />
-        <ellipse cx="610" cy="120" rx="150" ry="17" fill="#fff" /><ellipse cx="540" cy="146" rx="80" ry="10" fill="#fff" />
+      {sol && <g><circle cx={sol.x} cy={sol.y} r="190" fill="url(#fc2-sol)" /><circle cx={sol.x} cy={sol.y} r="34" fill={colorSol} /></g>}
+      {luna && <g opacity={noche}><circle cx={luna.x} cy={luna.y} r="130" fill="url(#fc2-luna)" /><circle cx={luna.x} cy={luna.y} r="28" fill="#f6f2dd" /><circle cx={luna.x - 8} cy={luna.y - 6} r="5" fill="#e4dfc6" /><circle cx={luna.x + 9} cy={luna.y + 8} r="3.5" fill="#e4dfc6" /></g>}
+      <g className="enf-fx-nubes" opacity={0.3 + (1 - noche) * 0.45}>
+        <g fill={mezclaHex("#ffffff", "#9aa6d6", noche)}>
+          <ellipse cx="170" cy="170" rx="120" ry="18" /><ellipse cx="215" cy="156" rx="60" ry="20" /><ellipse cx="250" cy="190" rx="80" ry="11" />
+          <ellipse cx="610" cy="118" rx="140" ry="18" /><ellipse cx="575" cy="102" rx="66" ry="22" /><ellipse cx="540" cy="140" rx="70" ry="10" />
+        </g>
       </g>
-      <path d="M0,470 C120,430 240,455 360,440 C500,422 620,455 800,430 V600 H0 Z" fill={noche > 0.5 ? "#0b1230" : "#2c5a46"} opacity=".92" />
-      <path d="M0,520 C160,495 300,522 440,505 C580,490 700,520 800,505 V600 H0 Z" fill={noche > 0.5 ? "#070b1d" : "#1f4535"} />
-      <rect width={ANCHO} height={ALTO} fill="#0b1226" opacity={0.18 + (1 - noche) * 0.18} />
+      <path d={lejos} fill={capa("#7f9cc6", "#18224f", 0.35)} />
+      <path d={medio} fill={capa("#4a7393", "#10183f", 0.2)} />
+      <rect y="480" width={ANCHO} height="120" fill="url(#fc2-lago)" />
+      {sol && sol.y < 470 && <Reflejo x={sol.x} y0={480} color={colorSol} ancho={90} />}
+      {luna && luna.y < 470 && <g opacity={noche}><Reflejo x={luna.x} y0={480} color="#f6f2dd" ancho={60} /></g>}
+      <path d={pinos} fill={capa("#1f4536", "#050916", 0)} />
+      <path d="M0,525 C150,510 280,522 420,514 C560,506 690,522 800,512 V600 H0 Z" fill={capa("#173528", "#04070f", 0)} />
+      <rect width={ANCHO} height={ALTO} fill="url(#fc2-velo)" />
     </svg>
   );
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useEnfoque } from '../../store/useEnfoque'
+import { PruebaCierre } from '../enfoque/PruebaCierre'
 
 const TEXTO = ['', 'Costó mucho', 'Algo disperso', 'Normal', 'Buen enfoque', 'Concentración total']
 
@@ -44,6 +45,7 @@ export function CalificarSesion() {
   const calificar = useEnfoque((s) => s.calificar)
   const calificarSesion = useEnfoque((s) => s.calificarSesion)
   const omitir = useEnfoque((s) => s.omitirCalificacion)
+  const sesion = useEnfoque((s) => (s.calificar ? s.sesiones.find((x) => x.id === s.calificar!.id) : undefined))
   const [valor, setValor] = useState(0)
   const [nota, setNota] = useState('')
   const [recuerdo, setRecuerdo] = useState('')
@@ -72,6 +74,7 @@ export function CalificarSesion() {
           className="w-full px-3 py-2 text-sm outline-none resize-y rounded-control"
         />
       </label>
+      {sesion?.ramoId && <PruebaCierre key={sesion.id} ramoId={sesion.ramoId} unidadId={sesion.unidadId} />}
       <input
         value={nota}
         maxLength={200}

@@ -48,6 +48,8 @@ interface Reloj {
   tareaId: string | null
   /** Apunte con el que se estudia (se guarda en cada sesión). */
   apunteId: string | null
+  /** Unidad del temario que se estudia (del ramo elegido). */
+  unidadId: string | null
   /** Enfoques completados en el ciclo actual. */
   ciclo: number
   /** Veces que apretaste «Me distraje» en la sesión en curso. */
@@ -73,6 +75,9 @@ interface EstadoEnfoque extends Reloj {
   setModo: (m: Modo) => void
   setTecnica: (t: Tecnica) => void
   setObjetivo: (ramoId: string | null, tareaId: string | null, apunteId?: string | null) => void
+  setUnidad: (unidadId: string | null) => void
+  /** Suma minutos al tramo en curso (Pomodoro y descansos). */
+  extender: (minutos: number) => void
   ajustar: (cambios: Partial<AjustesEnfoque>) => void
   tick: () => void
   eliminarSesion: (id: string) => void
@@ -101,7 +106,7 @@ const durMs = (a: AjustesEnfoque, m: Modo) => (m === 'foco' ? a.foco : m === 'co
 function relojInicial(a: AjustesEnfoque): Reloj {
   return {
     modo: 'foco', tecnica: 'pomodoro', estado: 'detenido', finAt: null, restanteMs: durMs(a, 'foco'), totalMs: durMs(a, 'foco'),
-    inicioRun: null, acumuladoMs: 0, inicioSesion: null, ramoId: null, tareaId: null, apunteId: null, ciclo: 0, distracciones: 0,
+    inicioRun: null, acumuladoMs: 0, inicioSesion: null, ramoId: null, tareaId: null, apunteId: null, unidadId: null, ciclo: 0, distracciones: 0,
   }
 }
 
@@ -169,6 +174,7 @@ export const useEnfoque = create<EstadoEnfoque>()(
         const sesion: SesionFoco = {
           id: `ses-${inicio}`, inicio, minutos: m, ramoId: s.ramoId, tareaId: s.tareaId, tipo: s.tecnica, fecha: fechaDeMs(inicio),
           ...(s.apunteId ? { apunteId: s.apunteId } : {}),
+          ...(s.unidadId ? { unidadId: s.unidadId } : {}),
           ...(s.distracciones ? { distracciones: s.distracciones } : {}),
           ...(ambiente.fondo !== 'ninguno' ? { fondo: ambiente.fondo } : {}),
           ...(ambiente.sonido !== 'apagado' ? { sonido: ambiente.sonido } : {}),
@@ -308,7 +314,23 @@ export const useEnfoque = create<EstadoEnfoque>()(
         },
 
         setObjetivo: (ramoId, tareaId, apunteId) =>
-          set((g) => ({ ramoId, tareaId, apunteId: apunteId !== undefined ? apunteId : ramoId === g.ramoId ? g.apunteId : null })),
+          set((g) => ({
+            ramoId,
+            tareaId,
+            apunteId: apunteId !== undefined ? apunteId : ramoId === g.ramoId ? g.apunteId : null,
+            // la unidad es del ramo: si cambia el ramo, se suelta
+            unidadId: ramoId === g.ramoId ? g.unidadId : null,
+          })),
+
+        setUnidad: (unidadId) => set({ unidadId }),
+
+        extender: (minutos) => {
+          const s = get()
+          if (esFlow(s) || s.estado === 'detenido' || !(minutos > 0)) return
+          const extra = minutos * MIN
+          if (s.estado === 'corriendo' && s.finAt !== null) set({ finAt: s.finAt + extra, totalMs: s.totalMs + extra })
+          else set({ restanteMs: s.restanteMs + extra, totalMs: s.totalMs + extra })
+        },
 
         ajustar: (cambios) => {
           const s = get()
@@ -404,7 +426,7 @@ export const useEnfoque = create<EstadoEnfoque>()(
       version: 1,
       partialize: (s) => ({
         modo: s.modo, tecnica: s.tecnica, estado: s.estado, finAt: s.finAt, restanteMs: s.restanteMs, totalMs: s.totalMs,
-        inicioRun: s.inicioRun, acumuladoMs: s.acumuladoMs, inicioSesion: s.inicioSesion, ramoId: s.ramoId, tareaId: s.tareaId, apunteId: s.apunteId,
+        inicioRun: s.inicioRun, acumuladoMs: s.acumuladoMs, inicioSesion: s.inicioSesion, ramoId: s.ramoId, tareaId: s.tareaId, apunteId: s.apunteId, unidadId: s.unidadId,
         ciclo: s.ciclo, distracciones: s.distracciones, ajustes: s.ajustes, sesiones: s.sesiones, calificar: s.calificar,
       }),
       // un reloj que quedó corriendo hace mucho (cerraron el navegador) se
@@ -415,7 +437,7 @@ export const useEnfoque = create<EstadoEnfoque>()(
         const abandonado =
           (g.estado === 'corriendo' && g.finAt !== null && g.finAt < ahora - 5 * MIN) ||
           (g.estado === 'corriendo' && g.inicioRun !== null && g.inicioRun < ahora - 8 * 3_600_000)
-        if (abandonado) return { ...g, ...relojInicial(g.ajustes), tecnica: g.tecnica, ramoId: g.ramoId, tareaId: g.tareaId, apunteId: g.apunteId ?? null }
+        if (abandonado) return { ...g, ...relojInicial(g.ajustes), tecnica: g.tecnica, ramoId: g.ramoId, tareaId: g.tareaId, apunteId: g.apunteId ?? null, unidadId: g.unidadId ?? null }
         return g
       },
     }
