@@ -48,8 +48,8 @@ export function HoyTeToca() {
                 <i className={`ti ${it.icono} text-lg`} aria-hidden="true" />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-sm font-bold truncate" style={{ color: 'var(--neu-ink)' }}>{it.titulo}</span>
-                <span className="block text-xs truncate" style={{ color: 'var(--neu-ink2)' }}>{it.detalle}</span>
+                <span className="block text-sm font-bold" style={{ color: 'var(--neu-ink)' }}>{it.titulo}</span>
+                <span className="block text-xs line-clamp-2" style={{ color: 'var(--neu-ink2)' }}>{it.detalle}</span>
               </span>
               <span className="text-xs font-semibold flex-shrink-0 tabular-nums" style={{ color: 'var(--neu-ink2)' }}>{it.minutos} min</span>
               <i className="ti ti-chevron-right flex-shrink-0" style={{ color: 'var(--neu-ink3)' }} aria-hidden="true" />

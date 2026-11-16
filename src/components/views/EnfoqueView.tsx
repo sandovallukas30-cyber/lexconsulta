@@ -3,6 +3,7 @@ import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { registrarUso } from '../../services/uso'
+import { avisar } from '../../store/useAvisos'
 import { useEnfoque, esFlow, msEnfocados, msMostrados } from '../../store/useEnfoque'
 import { useAhora } from '../../hooks/useMotorEnfoque'
 import { AnilloProgreso } from '../ui/AnilloProgreso'
@@ -251,6 +252,7 @@ function Temporizador({ concentracion }: { concentracion: boolean }) {
                 onClick={() => s.ajustar({ foco: d.foco, corto: d.corto, largo: d.largo })}
                 aria-pressed={activa}
                 title={`${d.foco} min de enfoque, ${d.corto} de descanso`}
+                aria-label={`${d.foco} · ${d.corto}: ${d.foco} minutos de enfoque y ${d.corto} de descanso`}
                 className={`boton boton-chico ${activa ? 'boton-primario' : 'boton-fantasma'}`}
               >
                 {d.foco} · {d.corto}
@@ -262,7 +264,7 @@ function Temporizador({ concentracion }: { concentracion: boolean }) {
 
       <div className="flex items-center justify-center gap-2 mt-4 flex-wrap">
         {!flow && s.estado !== 'detenido' && (
-          <button onClick={() => s.extender(5)} className="boton boton-fantasma boton-chico" title="Sumar 5 minutos a este tramo">
+          <button onClick={() => { s.extender(5); avisar.info('Se sumaron 5 minutos a este tramo') }} className="boton boton-fantasma boton-chico" title="Sumar 5 minutos a este tramo" aria-label="Sumar 5 minutos a este tramo">
             <i className="ti ti-plus" aria-hidden="true" /> 5 min
           </button>
         )}

@@ -30,7 +30,7 @@ export function Estrellas({ valor, onChange, tamano = 22 }: { valor: number; onC
           aria-checked={valor === n}
           aria-label={`${n} de 5`}
           onClick={() => onChange(n)}
-          className="sin-neu sin-tactil p-0.5 transition-transform hover:scale-110"
+          className="sin-neu sin-tactil p-0.5 pointer-coarse:p-2 pointer-coarse:min-w-[44px] pointer-coarse:min-h-[44px] transition-transform hover:scale-110"
           style={{ color: n <= valor ? '#f2b53c' : 'var(--neu-ink3)' }}
         >
           {icono()}

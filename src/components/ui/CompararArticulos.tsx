@@ -54,7 +54,7 @@ export function CompararArticulos({ codigo, articulo, onCerrar }: { codigo: Codi
         {lista && marcar
           ? lista.map((t, i) =>
               t.propio ? (
-                <mark key={i} className="rounded px-0.5" style={{ background: 'rgba(245,158,11,0.3)', color: 'inherit' }}>
+                <mark key={i} className="rounded px-0.5 underline decoration-2 decoration-amber-600 underline-offset-2" style={{ background: 'rgba(245,158,11,0.3)', color: 'inherit' }}>
                   {t.texto}
                 </mark>
               ) : (
@@ -109,7 +109,7 @@ export function CompararArticulos({ codigo, articulo, onCerrar }: { codigo: Codi
             <i className="ti ti-x" aria-hidden="true" />
           </button>
         </header>
-        <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 grid gap-3 md:grid-cols-2">
+        <div tabIndex={0} role="region" aria-label="Texto de los artículos" className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 grid gap-3 md:grid-cols-2 outline-none focus-visible:ring-2">
           {izq ? columna({ cod: codigo, art: izq.a, texto: izq.t, lista: trozos?.izq ?? null }) : <p style={suave}>No encontré {articulo}.</p>}
           {der ? (
             columna({ cod: codigoDer, art: der.a, texto: der.t, lista: trozos?.der ?? null })

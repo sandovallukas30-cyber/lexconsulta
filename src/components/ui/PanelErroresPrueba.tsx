@@ -28,7 +28,7 @@ export function PanelErroresPrueba({
           return (
             <li key={r.tipo} className="flex items-center gap-3 text-sm">
               <span className="flex-1 min-w-0 truncate" style={{ color: 'var(--neu-ink)' }}>{NOMBRE_TIPO_PRUEBA[r.tipo]}</span>
-              <span className="flex-shrink-0 font-semibold" style={{ color: pct >= 50 ? '#dc2626' : 'var(--neu-ink2)' }}>
+              <span className="flex-shrink-0 font-semibold" style={{ color: pct >= 50 ? 'var(--texto-mal)' : 'var(--neu-ink2)' }}>
                 {r.fallos} de {total} mal
               </span>
               {r.pendientes > 0 && <span className="flex-shrink-0 text-xs" style={suave}>{r.pendientes} {r.pendientes === 1 ? 'pendiente' : 'pendientes'}</span>}

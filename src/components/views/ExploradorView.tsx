@@ -422,14 +422,14 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
             modoOscuro ? 'bg-zinc-800/40 border border-zinc-800' : 'bg-white shadow-tarjeta border border-zinc-200/60'
           }`}
         >
-          <div className="flex items-baseline justify-between gap-3 mb-6">
+          <div className="flex flex-wrap items-baseline justify-between gap-3 mb-6">
             <h1
-              className={`font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}
+              className={`font-serif font-bold whitespace-nowrap ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}
               style={{ fontSize: Math.round(tamanoCodigo * 1.75) }}
             >
               <span style={{ color: 'var(--accent-texto)' }}>{seleccionado.a}</span>
             </h1>
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex flex-wrap items-center justify-end gap-2 min-w-0">
               <span className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
                 {indiceActual + 1} de {arts.length}
               </span>
@@ -457,7 +457,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
                 className="boton boton-fantasma boton-chico max-sm:boton-icono"
               >
                 <i className="ti ti-brain text-sm" aria-hidden />
-                <span className="hidden sm:inline">Recitar</span>
+                <span className="hidden lg:inline">Recitar</span>
               </button>
               <button
                 onClick={copiarConCita}
@@ -466,7 +466,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
                 className="boton boton-fantasma boton-chico max-sm:boton-icono"
               >
                 <i className="ti ti-copy text-sm" aria-hidden />
-                <span className="hidden sm:inline">Copiar con cita</span>
+                <span className="hidden lg:inline">Copiar con cita</span>
               </button>
               <GuardarEnColeccion codigo={tipoActivo} articulo={seleccionado.a} modoOscuro={modoOscuro} />
             </div>

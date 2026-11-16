@@ -29,6 +29,9 @@
   --neu-warn-soft: #faeace;
   --neu-danger: #e4504f;
   --neu-danger-soft: #fbdede;
+  /* texto de acierto/error con contraste AA (4,5:1) sobre tarjetas y fondos */
+  --texto-ok: #047857;
+  --texto-mal: #b91c1c;
   --font-head: var(--font-sans);
 }
 :root[data-tema='oscuro'] {
@@ -47,6 +50,8 @@
   --neu-warn: #f2bd5c;
   --neu-warn-soft: #3f3015;
   --neu-danger: #f3807f;
+  --texto-ok: #34d399;
+  --texto-mal: #f87171;
   --neu-danger-soft: #44201f;
 }
 
@@ -283,6 +288,8 @@ input[type='checkbox']:not(.sin-neu):checked::after { content: ''; width: 10px; 
 .max-h-\[85vh\] { max-height: calc(85vh / var(--zoom-vu, var(--zoom, 1))); }
 .max-h-\[88vh\] { max-height: calc(88vh / var(--zoom-vu, var(--zoom, 1))); }
 .max-h-\[85dvh\] { max-height: calc(85dvh / var(--zoom-vu, var(--zoom, 1))); }
+.max-h-\[92dvh\] { max-height: calc(92dvh / var(--zoom-vu, var(--zoom, 1))); }
+.max-h-\[94dvh\] { max-height: calc(94dvh / var(--zoom-vu, var(--zoom, 1))); }
 .max-h-\[75vh\] { max-height: calc(75vh / var(--zoom-vu, var(--zoom, 1))); }
 .max-h-\[70vh\] { max-height: calc(70vh / var(--zoom-vu, var(--zoom, 1))); }
 .max-h-\[60vh\] { max-height: calc(60vh / var(--zoom-vu, var(--zoom, 1))); }

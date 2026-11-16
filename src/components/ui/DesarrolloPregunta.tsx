@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { evaluarRespuesta, UMBRAL_LOGRADO, type PreguntaDesarrollo } from '../../services/desarrollo'
 
 /** Una pregunta de desarrollo: escribes la respuesta, la app marca qué puntos clave de tu apunte aparecieron y tú
@@ -14,7 +14,11 @@ export function DesarrolloPregunta({
   const [cubiertos, setCubiertos] = useState<boolean[] | null>(null)
   const suave = { color: 'var(--neu-ink2)' }
 
-  const revisar = () => setCubiertos(evaluarRespuesta(texto, pregunta.puntos).cubiertos)
+  const refResultado = useRef<HTMLDivElement>(null)
+  const revisar = () => {
+    setCubiertos(evaluarRespuesta(texto, pregunta.puntos).cubiertos)
+    window.setTimeout(() => refResultado.current?.focus(), 30)
+  }
   const alternar = (i: number) => setCubiertos((c) => c && c.map((x, k) => (k === i ? !x : x)))
   const hechos = cubiertos?.filter(Boolean).length ?? 0
   const porcentaje = cubiertos ? hechos / pregunta.puntos.length : 0
@@ -46,12 +50,12 @@ export function DesarrolloPregunta({
         </>
       ) : (
         <>
-          <div aria-live="polite">
-            <p className="text-sm font-bold" style={{ color: porcentaje >= UMBRAL_LOGRADO ? '#059669' : '#dc2626' }}>
+          <div aria-live="polite" ref={refResultado} tabIndex={-1} className="outline-none">
+            <p className="text-sm font-bold" style={{ color: porcentaje >= UMBRAL_LOGRADO ? 'var(--texto-ok)' : 'var(--texto-mal)' }}>
               {hechos} de {pregunta.puntos.length} puntos clave · {porcentaje >= UMBRAL_LOGRADO ? 'Logrado' : 'Por reforzar'}
             </p>
             <p className="text-xs mt-0.5" style={suave}>
-              La app los busca en tu texto; si se equivocó, toca el punto para corregirlo.
+              La app los busca en tu texto. Cada punto es un botón: presionado = lo dijiste; si se equivocó, tócalo para corregirlo.
             </p>
           </div>
           <ul className="space-y-1.5" aria-label="Puntos clave">
@@ -61,13 +65,12 @@ export function DesarrolloPregunta({
                   onClick={() => alternar(i)}
                   aria-pressed={cubiertos[i]}
                   className="w-full text-left flex gap-3 items-start p-2.5 rounded-control border-2 border-transparent min-h-[44px]"
-                  style={cubiertos[i] ? { borderColor: '#059669', background: 'rgba(5,150,105,0.1)' } : { borderColor: '#dc2626', background: 'rgba(220,38,38,0.08)' }}
+                  style={cubiertos[i] ? { borderColor: 'var(--texto-ok)', background: 'rgba(5,150,105,0.1)' } : { borderColor: 'var(--texto-mal)', background: 'rgba(220,38,38,0.08)' }}
                 >
-                  <i className={`ti ${cubiertos[i] ? 'ti-check' : 'ti-x'} text-base mt-0.5 flex-shrink-0`} style={{ color: cubiertos[i] ? '#059669' : '#dc2626' }} aria-hidden="true" />
+                  <i className={`ti ${cubiertos[i] ? 'ti-check' : 'ti-x'} text-base mt-0.5 flex-shrink-0`} style={{ color: cubiertos[i] ? 'var(--texto-ok)' : 'var(--texto-mal)' }} aria-hidden="true" />
                   <span className="text-[15px] leading-snug" style={{ color: 'var(--neu-ink)' }}>
                     {p.texto}
-                    {p.tipo === 'cantidad' && <span className="text-xs ml-2" style={suave}>plazo o quórum</span>}
-                    <span className="sr-only">{cubiertos[i] ? ' (cubierto)' : ' (falta)'}</span>
+                    {p.tipo === 'cantidad' && <span className="text-xs ml-2" style={suave}><span className="sr-only">, </span>plazo o quórum</span>}
                   </span>
                 </button>
               </li>

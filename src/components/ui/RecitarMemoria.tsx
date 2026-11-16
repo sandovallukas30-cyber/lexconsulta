@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useDialogo } from '../../hooks/useDialogo'
 import { compararRecitado } from '../../services/recitar'
@@ -13,6 +13,10 @@ export function RecitarMemoria({ titulo, texto, onCerrar }: { titulo: string; te
   const r = useMemo(() => (comparar ? compararRecitado(texto, recitado) : null), [comparar, texto, recitado])
   const suave = { color: 'var(--neu-ink2)' }
   const pct = r ? Math.round(r.porcentaje * 100) : 0
+  const refResultado = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (comparar) refResultado.current?.focus()
+  }, [comparar])
 
   const empezarDeNuevo = () => {
     setRecitado('')
@@ -72,8 +76,8 @@ export function RecitarMemoria({ titulo, texto, onCerrar }: { titulo: string; te
           </>
         ) : (
           <>
-            <div aria-live="polite">
-              <p className="text-3xl font-extrabold leading-none" style={{ color: pct >= 70 ? '#059669' : '#dc2626' }}>
+            <div ref={refResultado} tabIndex={-1} className="outline-none">
+              <p className="text-3xl font-extrabold leading-none" style={{ color: pct >= 70 ? 'var(--texto-ok)' : 'var(--texto-mal)' }}>
                 {pct} %
                 <span className="text-base font-semibold ml-2" style={suave}>
                   {r.recordadas} de {r.total} ideas clave
@@ -84,7 +88,7 @@ export function RecitarMemoria({ titulo, texto, onCerrar }: { titulo: string; te
               <span className="px-1 rounded" style={{ background: 'rgba(5,150,105,0.18)' }}>Verde</span> lo que dijiste ·{' '}
               <span className="px-1 rounded" style={{ background: 'rgba(220,38,38,0.18)' }}>Rojo</span> lo que faltó.
             </p>
-            <p className="text-[15px] leading-relaxed whitespace-pre-wrap rounded-control p-3" style={{ background: 'var(--neu-bg)' }}>
+            <p className="text-[15px] leading-relaxed whitespace-pre-wrap rounded-control p-3" style={{ background: 'var(--neu-bg)' }} aria-label="El original, con lo que dijiste en verde y lo que faltó en rojo y subrayado">
               {r.trozos.map((t, i) =>
                 t.estado === 'neutro' ? (
                   <span key={i}>{t.texto}</span>
@@ -95,7 +99,6 @@ export function RecitarMemoria({ titulo, texto, onCerrar }: { titulo: string; te
                     style={{ background: t.estado === 'ok' ? 'rgba(5,150,105,0.18)' : 'rgba(220,38,38,0.2)', textDecoration: t.estado === 'falta' ? 'underline' : undefined }}
                   >
                     {t.texto}
-                    <span className="sr-only">{t.estado === 'ok' ? ' (lo recordaste)' : ' (te faltó)'}</span>
                   </span>
                 ),
               )}

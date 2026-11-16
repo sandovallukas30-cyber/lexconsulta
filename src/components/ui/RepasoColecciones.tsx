@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { obtenerCodigo, precargar } from '../../services/codigos'
@@ -63,6 +63,17 @@ export function RepasoColecciones({ onVolver }: { onVolver: () => void }) {
   const texto = actual ? (obtenerCodigo(actual.codigo)?.articulos.find((a) => a.a === actual.articulo)?.t ?? '') : ''
 
   const intervalos = actual ? intervalosArticulo(actual.previo) : null
+  // la tarjeta se vuelve a montar al voltearla o al pasar a la siguiente: el foco vuelve a ella (no al <body>)
+  const refTarjeta = useRef<HTMLButtonElement>(null)
+  const montado = useRef(false)
+  useEffect(() => {
+    if (!montado.current) {
+      montado.current = true
+      return
+    }
+    const id = window.setTimeout(() => refTarjeta.current?.focus(), 200)
+    return () => window.clearTimeout(id)
+  }, [volteada, indice])
   const responder = (nota: NotaRepaso) => {
     if (!actual || !volteada) return
     registrar(actual.coleccionId, { codigo: actual.codigo, articulo: actual.articulo }, nota)
@@ -75,6 +86,10 @@ export function RepasoColecciones({ onVolver }: { onVolver: () => void }) {
     const h = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onVolver()
       if (terminado) return
+      // Enter y Espacio sobre otro botón (Volver, los 4 de nota) hacen lo de ese botón
+      const el = e.target instanceof HTMLElement ? e.target : null
+      const enControl = !!el && (/^(A|INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || (el.tagName === 'BUTTON' && !el.dataset.tarjeta))
+      if ((e.key === ' ' || e.key === 'Enter') && enControl) return
       if (e.key === ' ' || e.key === 'Enter') {
         e.preventDefault()
         setVolteada((v) => !v)
@@ -100,7 +115,7 @@ export function RepasoColecciones({ onVolver }: { onVolver: () => void }) {
           <i className="ti ti-arrow-left text-lg" />
         </button>
         <div className="flex-1 min-w-0">
-          <p className={`text-sm font-semibold truncate ${tx}`}>Repaso de colecciones</p>
+          <h1 className={`text-sm font-semibold truncate ${tx}`}>Repaso de colecciones</h1>
           <p className={`text-[11px] ${suave}`}>
             {cola.length} artículo{cola.length === 1 ? '' : 's'} para hoy
           </p>
@@ -151,7 +166,10 @@ export function RepasoColecciones({ onVolver }: { onVolver: () => void }) {
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.18 }}
                   onClick={() => setVolteada((v) => !v)}
-                  aria-label={volteada ? 'Ver el frente de la tarjeta' : 'Ver el artículo'}
+                  data-tarjeta="1"
+                  ref={refTarjeta}
+                  aria-expanded={volteada}
+                  aria-label={`${actual.articulo}, ${nombreCortoMetadata(actual.codigo)}. ${volteada ? 'Mostrando el texto: toca para ocultarlo' : 'Toca para ver el texto'}`}
                   className={`w-full min-h-[260px] rounded-2xl border shadow-sm p-6 sm:p-8 flex flex-col items-center justify-center text-center ${
                     modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
                   }`}
@@ -184,13 +202,13 @@ export function RepasoColecciones({ onVolver }: { onVolver: () => void }) {
                   className={`min-h-[56px] rounded-xl text-sm font-semibold border transition-opacity disabled:opacity-40 flex flex-col items-center justify-center ${modoOscuro ? oscuro : claro}`}
                 >
                   {nombre}
-                  <span className="text-[11px] font-normal opacity-80 tabular-nums">{intervalos?.[nota]}</span>
+                  <span className="text-[11px] font-normal tabular-nums">{intervalos?.[nota]}</span>
                 </button>
               ))}
             </div>
             <p className={`text-center text-[11px] mt-3 ${suave}`}>
               {volteada ? 'Desliza la tarjeta: ← otra vez · → bien' : 'Toca la tarjeta para ver el artículo'}
-              <span className="hidden sm:inline"> · Espacio: voltear · 1 a 4 o ← → responder · Esc: salir</span>
+              <span className="hidden sm:inline solo-teclado"> · Espacio: voltear · 1 a 4 o ← → responder · Esc: salir</span>
             </p>
           </div>
         )}

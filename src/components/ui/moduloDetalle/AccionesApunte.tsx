@@ -8,6 +8,7 @@ import { descargarApunteMd } from '../../../services/apunteArchivo'
 import { descargarApunteComoPdf } from '../../../services/apunteDescargarPdf'
 import { copiarApunteConFormato, descargarApunteHtml, descargarApunteWord } from '../../../services/apunteExportar'
 import { moverApunte } from '../../../services/accionesApunte'
+import { useDialogo } from '../../../hooks/useDialogo'
 import { quitarMarcas } from '../../../services/apunteFormato'
 import { RecitarMemoria } from '../RecitarMemoria'
 import type { ApunteModulo, CuadernoApuntes } from '../../../types'
@@ -181,6 +182,7 @@ export function ModalMoverApunte({
   const [cuaderno, setCuaderno] = useState(apunte.cuadernoId ?? '')
   const [nuevoCuaderno, setNuevoCuaderno] = useState('')
   const [unidad, setUnidad] = useState(apunte.unidadId ?? '')
+  const refDialogo = useDialogo<HTMLDivElement>(true, onCerrar)
 
   const opciones = useMemo(
     () => [
@@ -233,6 +235,7 @@ export function ModalMoverApunte({
       onClick={onCerrar}
     >
       <motion.div
+        ref={refDialogo}
         role="dialog"
         aria-modal="true"
         aria-label="Mover apunte o asignar unidad"

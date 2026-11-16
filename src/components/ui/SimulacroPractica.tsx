@@ -1,5 +1,5 @@
 import { SelectPrima } from './SelectPrima'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from '../../store/useStore'
 import { nombreRamo } from '../../services/tareasPlan'
 import { tarjetasDe, type TarjetaRepaso } from '../../services/tarjetasApunte'
@@ -11,6 +11,7 @@ import { apuntesDeUnidades, apuntesPorUnidad, evaluacionesConTemario, SIN_UNIDAD
 import { generarDesarrollo, preguntasDeApunte, UMBRAL_LOGRADO, type PreguntaDesarrollo } from '../../services/desarrollo'
 import { pendientes, type ResultadoPrueba } from '../../services/registroPrueba'
 import { Segmentado } from './Segmentado'
+import { confirmar } from '../../services/confirmar'
 import { DesarrolloPregunta } from './DesarrolloPregunta'
 import { PanelErroresPrueba } from './PanelErroresPrueba'
 import type { TipoPregunta } from '../../services/simulacro'
@@ -133,6 +134,17 @@ export function SimulacroPractica({ onVolver, inicial }: { onVolver: () => void;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // al cambiar de pregunta, tema o pantalla, el foco va al título (si no, cae al <body> cuando el botón pulsado desaparece)
+  const refTitulo = useRef<HTMLHeadingElement>(null)
+  const primerRender = useRef(true)
+  useEffect(() => {
+    if (primerRender.current) {
+      primerRender.current = false
+      return
+    }
+    refTitulo.current?.focus()
+  }, [fase, indice, temaI])
+
   const actual = preguntas[indice]
   const elegida = respuestas[indice] ?? null
 
@@ -185,6 +197,9 @@ export function SimulacroPractica({ onVolver, inicial }: { onVolver: () => void;
   useEffect(() => {
     const alTeclear = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return
+      // Enter y flechas sobre un botón, campo o diálogo hacen lo de ese control, no el atajo
+      const el = e.target instanceof HTMLElement ? e.target : null
+      if (el && (/^(BUTTON|A|INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.closest('[role=dialog]')) && !(e.key >= '1' && e.key <= '4')) return
       if (fase === 'preguntando') {
         if (e.key >= '1' && e.key <= '4') elegir(Number(e.key) - 1)
         else if ((e.key === 'Enter' || e.key === 'ArrowRight') && elegida !== null) siguiente()
@@ -235,12 +250,18 @@ export function SimulacroPractica({ onVolver, inicial }: { onVolver: () => void;
   }
 
   const suave = { color: 'var(--neu-ink2)' }
+  const salir = () => {
+    if (fase !== 'desarrollando') return onVolver()
+    void confirmar({ titulo: '¿Salir del desarrollo?', mensaje: 'Se pierde lo que escribiste en este tema y lo que falta del intento.', etiquetaConfirmar: 'Salir', peligro: true }).then((ok) => {
+      if (ok) onVolver()
+    })
+  }
   const cabecera = (titulo: string) => (
     <header className="flex items-center gap-3">
-      <button onClick={onVolver} className="boton boton-chico boton-suave" aria-label="Volver a Práctica">
+      <button onClick={salir} className="boton boton-chico boton-suave" aria-label="Volver a Práctica">
         <i className="ti ti-arrow-left" aria-hidden="true" />
       </button>
-      <h1 className="titulo-pagina titulo-visible flex-1 min-w-0 truncate">{titulo}</h1>
+      <h1 ref={refTitulo} tabIndex={-1} className="titulo-pagina titulo-visible flex-1 min-w-0 truncate outline-none">{titulo}</h1>
     </header>
   )
 
@@ -358,16 +379,16 @@ export function SimulacroPractica({ onVolver, inicial }: { onVolver: () => void;
           </div>
           <section className="neu-raised p-5 sm:p-6" aria-label="Pregunta">
             <p className="text-[17px] font-semibold leading-snug" style={{ color: 'var(--neu-ink)' }}>{actual.enunciado}</p>
-            <ul className="mt-4 space-y-2" role="group" aria-label="Opciones">
+            <ul className="mt-4 space-y-2" aria-label="Opciones">
               {actual.opciones.map((o, i) => {
                 const esCorrecta = i === actual.correcta
                 const esElegida = i === elegida
                 const mostrar = elegida !== null
                 const estilo =
                   mostrar && esCorrecta
-                    ? { borderColor: '#059669', background: 'rgba(5,150,105,0.12)' }
+                    ? { borderColor: 'var(--texto-ok)', background: 'rgba(5,150,105,0.12)' }
                     : mostrar && esElegida
-                      ? { borderColor: '#dc2626', background: 'rgba(220,38,38,0.1)' }
+                      ? { borderColor: 'var(--texto-mal)', background: 'rgba(220,38,38,0.1)' }
                       : undefined
                 return (
                   <li key={o}>
@@ -390,7 +411,7 @@ export function SimulacroPractica({ onVolver, inicial }: { onVolver: () => void;
             <div aria-live="polite">
               {elegida !== null && (
                 <div className="mt-4">
-                  <p className="text-sm font-bold" style={{ color: acerto ? '#059669' : '#dc2626' }}>{acerto ? 'Correcto' : 'Incorrecto'}</p>
+                  <p className="text-sm font-bold" style={{ color: acerto ? 'var(--texto-ok)' : 'var(--texto-mal)' }}>{acerto ? 'Correcto' : 'Incorrecto'}</p>
                   {!acerto && (
                     <p className="text-sm mt-1" style={suave}>
                       <strong style={{ color: 'var(--neu-ink)' }}>{actual.frente}:</strong> {actual.reverso}
@@ -403,7 +424,7 @@ export function SimulacroPractica({ onVolver, inicial }: { onVolver: () => void;
           <button onClick={siguiente} disabled={elegida === null} className="boton boton-primario w-full">
             {indice + 1 < preguntas.length ? 'Siguiente' : 'Ver resultado'}
           </button>
-          <p className="text-xs text-center" style={suave}>Teclas 1 a 4 para elegir · Enter para seguir</p>
+          <p className="text-xs text-center solo-teclado" style={suave}>Teclas 1 a 4 para elegir · Enter para seguir</p>
         </div>
       </div>
     )
@@ -451,7 +472,7 @@ export function SimulacroPractica({ onVolver, inicial }: { onVolver: () => void;
                   <li key={pregunta.id} className="text-sm">
                     <p className="flex gap-2 items-baseline">
                       <span className="flex-1 min-w-0 font-semibold" style={{ color: 'var(--neu-ink)' }}>{pregunta.titulo}</span>
-                      <span className="flex-shrink-0 font-semibold" style={{ color: hechos / pregunta.puntos.length >= UMBRAL_LOGRADO ? '#059669' : '#dc2626' }}>
+                      <span className="flex-shrink-0 font-semibold" style={{ color: hechos / pregunta.puntos.length >= UMBRAL_LOGRADO ? 'var(--texto-ok)' : 'var(--texto-mal)' }}>
                         {hechos} de {pregunta.puntos.length}
                       </span>
                     </p>
@@ -485,7 +506,7 @@ export function SimulacroPractica({ onVolver, inicial }: { onVolver: () => void;
             {aciertos}<span className="text-[22px] font-semibold" style={suave}> de {preguntas.length}</span>
           </p>
           {nota !== null && (
-            <p className="mt-2 text-base font-bold" style={{ color: nota >= NOTA_APROBAR ? '#059669' : '#dc2626' }}>
+            <p className="mt-2 text-base font-bold" style={{ color: nota >= NOTA_APROBAR ? 'var(--texto-ok)' : 'var(--texto-mal)' }}>
               Nota estimada {formatoNota(nota)} <span className="font-normal text-sm" style={suave}>con {EXIGENCIA_COMUN} % de exigencia</span>
             </p>
           )}
@@ -499,7 +520,7 @@ export function SimulacroPractica({ onVolver, inicial }: { onVolver: () => void;
               {porUnidad.map((u) => (
                 <li key={u.id} className="flex items-center gap-3 text-sm">
                   <span className="flex-1 min-w-0 truncate" style={{ color: 'var(--neu-ink)' }}>{u.nombre}</span>
-                  <span className="font-semibold flex-shrink-0" style={{ color: u.fallos === 0 ? '#059669' : u.fallos / u.total >= 0.5 ? '#dc2626' : 'var(--neu-ink2)' }}>
+                  <span className="font-semibold flex-shrink-0" style={{ color: u.fallos === 0 ? 'var(--texto-ok)' : u.fallos / u.total >= 0.5 ? 'var(--texto-mal)' : 'var(--neu-ink2)' }}>
                     {u.total - u.fallos} de {u.total}
                   </span>
                 </li>
@@ -525,7 +546,7 @@ export function SimulacroPractica({ onVolver, inicial }: { onVolver: () => void;
             </button>
           </section>
         ) : (
-          <p className="text-sm text-center font-semibold" style={{ color: '#059669' }}>Sin errores. ¡Buen simulacro!</p>
+          <p className="text-sm text-center font-semibold" style={{ color: 'var(--texto-ok)' }}>Sin errores. ¡Buen simulacro!</p>
         )}
 
         {falladas.length > 0 && (

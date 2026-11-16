@@ -285,6 +285,7 @@ export function TabExamenes({
                 <span className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>Objetivo:</span>
                 <input
                   type="number"
+                  aria-label="Nota objetivo"
                   value={objetivo}
                   onChange={(e) => setObjetivo(e.target.value)}
                   step="0.1"

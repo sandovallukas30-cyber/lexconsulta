@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useStore } from '../../../store/useStore'
+import { confirmar } from '../../../services/confirmar'
 import { agregarUnidades, apuntesPorUnidad, limpiarUnidadesBorradas, MAX_NOMBRE_UNIDAD, MAX_UNIDADES, parsearTemario, SIN_UNIDAD } from '../../../services/temario'
 import type { ApunteModulo, EvaluacionModulo, UnidadRamo } from '../../../types'
 
@@ -52,7 +53,16 @@ export function TemarioRamo({
     ;[copia[i], copia[j]] = [copia[j], copia[i]]
     guardarLista(copia)
   }
-  const borrar = (id: string) => {
+  const borrar = async (id: string) => {
+    const u = unidades.find((x) => x.id === id)
+    const n = conteo.get(id) ?? 0
+    const ok = await confirmar({
+      titulo: `¿Quitar «${u?.nombre ?? 'la unidad'}» del temario?`,
+      mensaje: n > 0 ? `${n} ${n === 1 ? 'apunte queda' : 'apuntes quedan'} sin unidad y se quita de las evaluaciones donde estaba marcada. Los apuntes no se borran.` : 'Se quita también de las evaluaciones donde estaba marcada.',
+      etiquetaConfirmar: 'Quitar',
+      peligro: true,
+    })
+    if (!ok) return
     const resto = unidades.filter((u) => u.id !== id)
     const limpio = limpiarUnidadesBorradas(resto, evaluaciones, apuntes)
     guardarLista(resto)
@@ -98,7 +108,7 @@ export function TemarioRamo({
                   <button onClick={() => mover(i, 1)} disabled={i === unidades.length - 1} aria-label={`Bajar ${u.nombre}`} className="boton boton-fantasma boton-chico boton-icono">
                     <i className="ti ti-arrow-down" aria-hidden="true" />
                   </button>
-                  <button onClick={() => borrar(u.id)} aria-label={`Quitar la unidad ${u.nombre}`} className="boton boton-fantasma boton-chico boton-icono">
+                  <button onClick={() => void borrar(u.id)} aria-label={`Quitar la unidad ${u.nombre}`} className="boton boton-fantasma boton-chico boton-icono">
                     <i className="ti ti-x" aria-hidden="true" />
                   </button>
                 </li>
