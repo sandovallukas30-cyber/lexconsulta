@@ -33,15 +33,18 @@ export function duplicarApunte(moduloId: string, apunte: ApunteModulo): ApunteMo
 /** Mueve el apunte a otro módulo/ramo y/o cuaderno. La clase vinculada solo
  *  se conserva si el destino es el mismo módulo (las clases son de cada
  *  módulo). Se puede deshacer. */
-export function moverApunte(origenId: string, apunte: ApunteModulo, destinoId: string, cuadernoId: string | undefined) {
+export function moverApunte(origenId: string, apunte: ApunteModulo, destinoId: string, cuadernoId: string | undefined, unidadId?: string) {
   const s = useStore.getState()
   const mismoModulo = origenId === destinoId
   const movido: ApunteModulo = {
     ...apunte,
     cuadernoId,
+    // las unidades son de cada ramo: al cambiar de ramo se usa la elegida para el destino (o ninguna)
+    unidadId,
     claseId: mismoModulo ? apunte.claseId : undefined,
     fechaModificacion: Date.now(),
   }
+  if (!unidadId) delete movido.unidadId
   if (mismoModulo) {
     s.setApuntesModulo(origenId, datosDe(origenId).apuntes.map((a) => (a.id === apunte.id ? movido : a)))
   } else {

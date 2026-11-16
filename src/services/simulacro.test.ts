@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { TarjetaRepaso } from './tarjetasApunte'
-import { generarSimulacro, palabraParaHueco, recortar, tarjetasParaSimulacro } from './simulacro'
+import { cantidadParaHueco, generarSimulacro, palabraParaHueco, recortar, tarjetasParaSimulacro } from './simulacro'
 
 function azarFijo(semilla: number) {
   let s = semilla
@@ -87,5 +87,40 @@ describe('recortar', () => {
     expect(r.length).toBeLessThanOrEqual(50)
     expect(r.endsWith('…')).toBe(true)
     expect(r).not.toMatch(/palabr…/)
+  })
+})
+
+describe('preguntas de cantidad (plazos y quórums)', () => {
+  it('oculta un plazo en dígitos y deja falsas con el mismo formato', () => {
+    const c = cantidadParaHueco('El Presidente tiene 30 días para formular observaciones', () => 0.5)
+    expect(c?.texto).toBe('30 días')
+    expect(c?.falsas).toHaveLength(3)
+    expect(c?.falsas.every((f) => /^\d+ días$/.test(f))).toBe(true)
+    expect(c?.falsas).not.toContain('30 días')
+  })
+
+  it('oculta un plazo en palabras y mantiene el calificativo', () => {
+    const c = cantidadParaHueco('Dentro del plazo de quince días hábiles', () => 0.5)
+    expect(c?.texto).toBe('quince días hábiles')
+    expect(c?.falsas.every((f) => f.endsWith(' días hábiles') && !/^\d/.test(f))).toBe(true)
+  })
+
+  it('oculta una fracción numérica y una en palabras', () => {
+    expect(cantidadParaHueco('se requiere 2/5 de los diputados', () => 0.5)?.texto).toBe('2/5')
+    const p = cantidadParaHueco('a petición de un tercio de los diputados en ejercicio', () => 0.5)
+    expect(p?.texto).toBe('un tercio')
+    expect(p?.falsas).not.toContain('un tercio')
+    expect(p?.falsas).toHaveLength(3)
+  })
+
+  it('sin cantidad en la definición devuelve null', () => {
+    expect(cantidadParaHueco('Intención positiva de inferir injuria')).toBeNull()
+  })
+
+  it('el simulacro incluye preguntas de cantidad cuando las definiciones traen plazos', () => {
+    const tarjetas = Array.from({ length: 6 }, (_, i) => ({ id: `t${i}`, tipo: 'termino' as const, frente: `Plazo ${i}`, reverso: `Se cuenta dentro de ${10 + i} días desde la notificación del acto` }))
+    const { preguntas } = generarSimulacro(tarjetas, 6, () => 0.1)
+    expect(preguntas.some((p) => p.tipo === 'numero')).toBe(true)
+    for (const p of preguntas.filter((q) => q.tipo === 'numero')) expect(p.opciones[p.correcta]).toMatch(/días/)
   })
 })

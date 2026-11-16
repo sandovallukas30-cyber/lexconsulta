@@ -95,7 +95,7 @@ export function MenuAccionesApunte({
             <i className="ti ti-copy text-base" /> Duplicar
           </button>
           <button role="menuitem" className={item} onClick={elegir(onMover)}>
-            <i className="ti ti-folder-symlink text-base" /> Mover a…
+            <i className="ti ti-folder-symlink text-base" /> Mover o asignar unidad…
           </button>
           <button role="menuitem" className={item} onClick={elegir(onCrearMapa)}>
             <i className="ti ti-sitemap text-base" /> Crear mapa mental
@@ -173,6 +173,7 @@ export function ModalMoverApunte({
   const [destino, setDestino] = useState(moduloId)
   const [cuaderno, setCuaderno] = useState(apunte.cuadernoId ?? '')
   const [nuevoCuaderno, setNuevoCuaderno] = useState('')
+  const [unidad, setUnidad] = useState(apunte.unidadId ?? '')
 
   const opciones = useMemo(
     () => [
@@ -182,6 +183,7 @@ export function ModalMoverApunte({
     [ramos]
   )
   const cuadernos: CuadernoApuntes[] = academicoModulos[destino]?.cuadernos ?? []
+  const unidadesDestino = academicoModulos[destino]?.unidades ?? []
 
   useEffect(() => {
     const esc = (e: KeyboardEvent) => {
@@ -200,11 +202,12 @@ export function ModalMoverApunte({
       setCuadernosModulo(destino, [...cuadernos, nuevo])
       cuadernoFinal = nuevo.id
     }
-    if (destino === moduloId && cuadernoFinal === apunte.cuadernoId) {
+    const unidadFinal = unidadesDestino.some((u) => u.id === unidad) ? unidad : undefined
+    if (destino === moduloId && cuadernoFinal === apunte.cuadernoId && unidadFinal === apunte.unidadId) {
       onCerrar()
       return
     }
-    moverApunte(moduloId, apunte, destino, cuadernoFinal)
+    moverApunte(moduloId, apunte, destino, cuadernoFinal, unidadFinal)
     onCerrar()
   }
 
@@ -225,7 +228,7 @@ export function ModalMoverApunte({
       <motion.div
         role="dialog"
         aria-modal="true"
-        aria-label="Mover apunte"
+        aria-label="Mover apunte o asignar unidad"
         initial={{ scale: 0.96, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.18 }}
@@ -244,6 +247,7 @@ export function ModalMoverApunte({
             onChange={(e) => {
               setDestino(e.target.value)
               setCuaderno('')
+              setUnidad('')
             }}
           >
             {['Mis asignaturas', 'Áreas del derecho'].map((g) => {
@@ -274,6 +278,19 @@ export function ModalMoverApunte({
             <option value="__nuevo__">+ Cuaderno nuevo…</option>
           </SelectPrima>
         </label>
+        {unidadesDestino.length > 0 && (
+          <label className="block">
+            <span className={etiqueta}>Unidad del temario</span>
+            <SelectPrima className={campo} value={unidad} onChange={(e) => setUnidad(e.target.value)}>
+              <option value="">Sin unidad</option>
+              {unidadesDestino.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.nombre}
+                </option>
+              ))}
+            </SelectPrima>
+          </label>
+        )}
         {cuaderno === '__nuevo__' && (
           <input
             autoFocus

@@ -242,6 +242,7 @@ function datosAcademicosValidos(d: unknown): boolean {
   // cuadernos/briefs llegaron después (v25/v26 del store): pueden faltar
   if (d.cuadernos !== undefined && !listaValida(d.cuadernos, conId)) return false
   if (d.briefs !== undefined && !listaValida(d.briefs, conId)) return false
+  if (d.unidades !== undefined && !listaValida(d.unidades, conId)) return false
   return true
 }
 
@@ -292,6 +293,7 @@ export function validarRespaldo(texto: string): ResultadoValidacion {
       apuntes: datos.apuntes ?? [],
       cuadernos: datos.cuadernos ?? [],
       briefs: datos.briefs ?? [],
+      ...(datos.unidades ? { unidades: datos.unidades } : {}),
     }
   }
   const datos: DatosRespaldo = {
@@ -396,6 +398,7 @@ export function combinarAcademicos(
           apuntes: unirNotas(l.apuntes, e.apuntes),
           cuadernos: unirPorId(l.cuadernos ?? [], e.cuadernos),
           briefs: unirPorId(l.briefs ?? [], e.briefs),
+          unidades: unirPorId(l.unidades ?? [], e.unidades ?? []),
         }
       : e
   }

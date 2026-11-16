@@ -7,6 +7,7 @@ import { generarSimulacro, MIN_TARJETAS_SIMULACRO, tarjetasParaSimulacro, type P
 import { EXIGENCIA_COMUN, puntajeANota } from '../../services/puntaje'
 import { formatoNota, NOTA_APROBAR } from '../../services/notas'
 import { registrarUso } from '../../services/uso'
+import { apuntesDeUnidades, apuntesPorUnidad, evaluacionesConTemario, SIN_UNIDAD } from '../../services/temario'
 
 const CANTIDADES = [5, 10, 20, 30]
 const LETRAS = ['A', 'B', 'C', 'D']
@@ -33,24 +34,35 @@ export function SimulacroPractica({ onVolver }: { onVolver: () => void }) {
   const [inicio, setInicio] = useState(0)
   const [fin, setFin] = useState(0)
   const [programado, setProgramado] = useState(false)
+  // unidades del temario elegidas (vacío = todo el ramo)
+  const [unidadesSel, setUnidadesSel] = useState<string[]>([])
 
   // material de cada asignatura: cuántas tarjetas de término y definición hay en sus apuntes
   const opcionesRamo = useMemo(() => {
     const porRamo = Object.entries(academico).map(([id, d]) => {
-      const tarjetas = (d.apuntes ?? []).flatMap((a) => tarjetasDe(a))
-      return { id, nombre: nombreRamo(id, ramos) ?? id, tarjetas, n: tarjetasParaSimulacro(tarjetas).length }
+      const apuntes = d.apuntes ?? []
+      const tarjetas = apuntes.flatMap((a) => tarjetasDe(a))
+      return { id, nombre: nombreRamo(id, ramos) ?? id, apuntes, unidades: d.unidades ?? [], evaluaciones: d.evaluaciones ?? [], tarjetas, n: tarjetasParaSimulacro(tarjetas).length }
     })
     return porRamo.filter((r) => r.n > 0).sort((a, b) => b.n - a.n)
   }, [academico, ramos])
 
   const todas = useMemo(() => opcionesRamo.flatMap((r) => r.tarjetas), [opcionesRamo])
-  const material = seleccion === 'todas' ? tarjetasParaSimulacro(todas).length : (opcionesRamo.find((r) => r.id === seleccion)?.n ?? 0)
+  const ramoActual = seleccion === 'todas' ? undefined : opcionesRamo.find((r) => r.id === seleccion)
+  const tarjetasFuente = useMemo<TarjetaRepaso[]>(() => {
+    if (!ramoActual) return todas
+    if (unidadesSel.length === 0) return ramoActual.tarjetas
+    return apuntesDeUnidades(ramoActual.apuntes, unidadesSel).flatMap((a) => tarjetasDe(a))
+  }, [ramoActual, todas, unidadesSel])
+  const material = tarjetasParaSimulacro(tarjetasFuente).length
+  const conteoUnidades = ramoActual ? apuntesPorUnidad(ramoActual.apuntes, ramoActual.unidades) : new Map<string, number>()
+  const evaluacionesTemario = ramoActual ? evaluacionesConTemario(ramoActual.evaluaciones) : []
+  const alternarUnidad = (id: string) => setUnidadesSel((u) => (u.includes(id) ? u.filter((x) => x !== id) : [...u, id]))
   const alcanza = material >= MIN_TARJETAS_SIMULACRO
   const cantidadReal = Math.min(cantidad, material)
 
   const empezar = () => {
-    const fuente: TarjetaRepaso[] = seleccion === 'todas' ? todas : (opcionesRamo.find((r) => r.id === seleccion)?.tarjetas ?? [])
-    const { preguntas: generadas } = generarSimulacro(fuente, cantidad)
+    const { preguntas: generadas } = generarSimulacro(tarjetasFuente, cantidad)
     if (generadas.length === 0) return
     registrarUso('practica.simulacro')
     setPreguntas(generadas)
@@ -96,6 +108,35 @@ export function SimulacroPractica({ onVolver }: { onVolver: () => void }) {
   const falladas = preguntas.filter((p, i) => respuestas[i] !== p.correcta)
   const nota = puntajeANota(aciertos, preguntas.length, EXIGENCIA_COMUN)
 
+  // dónde fallaste, por unidad del temario (solo si el ramo tiene unidades)
+  const porUnidad = useMemo(() => {
+    const ramo = opcionesRamo.find((r) => r.apuntes.some((a) => preguntas.some((p) => p.tarjetaId.startsWith(`${a.id}:`))))
+    if (!ramo || ramo.unidades.length === 0) return []
+    const unidadDeApunte = new Map(ramo.apuntes.map((a) => [a.id, ramo.unidades.some((u) => u.id === a.unidadId) ? a.unidadId! : SIN_UNIDAD]))
+    const cuenta = new Map<string, { total: number; fallos: number }>()
+    preguntas.forEach((p, i) => {
+      const u = unidadDeApunte.get(p.tarjetaId.split(':')[0])
+      if (!u) return
+      const c = cuenta.get(u) ?? { total: 0, fallos: 0 }
+      c.total++
+      if (respuestas[i] !== p.correcta) c.fallos++
+      cuenta.set(u, c)
+    })
+    return [...cuenta.entries()]
+      .map(([id, c]) => ({ id, nombre: id === SIN_UNIDAD ? 'Sin unidad' : (ramo.unidades.find((u) => u.id === id)?.nombre ?? ''), ...c }))
+      .sort((a, b) => b.fallos / b.total - a.fallos / a.total || b.fallos - a.fallos)
+  }, [opcionesRamo, preguntas, respuestas])
+
+  const repetirFalladas = () => {
+    if (falladas.length === 0) return
+    setPreguntas(falladas)
+    setRespuestas(falladas.map(() => null))
+    setIndice(0)
+    setProgramado(false)
+    setInicio(Date.now())
+    setFase('preguntando')
+  }
+
   const programarRepaso = () => {
     for (const id of new Set(falladas.map((p) => p.tarjetaId))) registrarRepaso(id, 1)
     setProgramado(true)
@@ -130,7 +171,7 @@ export function SimulacroPractica({ onVolver }: { onVolver: () => void }) {
             <section className="neu-raised p-5 space-y-4" aria-label="Armar simulacro">
               <label className="block">
                 <span className="block text-[11px] font-bold uppercase tracking-[0.08em] mb-1" style={{ color: 'var(--neu-ink3)' }}>Material</span>
-                <SelectPrima value={seleccion} onChange={(e) => setSeleccion(e.target.value)} className="w-full h-control px-3 rounded-control border text-sm bg-[var(--neu-bg)] border-zinc-200 text-[var(--neu-ink)]">
+                <SelectPrima value={seleccion} onChange={(e) => { setSeleccion(e.target.value); setUnidadesSel([]) }} className="w-full h-control px-3 rounded-control border text-sm bg-[var(--neu-bg)] border-zinc-200 text-[var(--neu-ink)]">
                   <option value="todas">Todas mis asignaturas ({tarjetasParaSimulacro(todas).length} tarjetas)</option>
                   {opcionesRamo.map((r) => (
                     <option key={r.id} value={r.id}>
@@ -139,6 +180,37 @@ export function SimulacroPractica({ onVolver }: { onVolver: () => void }) {
                   ))}
                 </SelectPrima>
               </label>
+              {ramoActual && ramoActual.unidades.length > 0 && (
+                <fieldset>
+                  <legend className="block text-[11px] font-bold uppercase tracking-[0.08em] mb-1" style={{ color: 'var(--neu-ink3)' }}>Qué entra</legend>
+                  {evaluacionesTemario.length > 0 && (
+                    <div className="flex gap-2 flex-wrap mb-2">
+                      {evaluacionesTemario.slice(0, 3).map((e) => (
+                        <button key={e.id} onClick={() => setUnidadesSel(e.unidadIds ?? [])} className="boton boton-chico boton-suave">
+                          Lo que entra en «{e.nombre}»
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex gap-1.5 flex-wrap" role="group" aria-label="Unidades del temario">
+                    <button onClick={() => setUnidadesSel([])} aria-pressed={unidadesSel.length === 0} className={`boton boton-chico ${unidadesSel.length === 0 ? 'boton-primario' : 'boton-suave'}`}>
+                      Todo el ramo
+                    </button>
+                    {ramoActual.unidades.map((u) => (
+                      <button key={u.id} onClick={() => alternarUnidad(u.id)} aria-pressed={unidadesSel.includes(u.id)} className={`boton boton-chico ${unidadesSel.includes(u.id) ? 'boton-primario' : 'boton-suave'}`}>
+                        {u.nombre}
+                        <span className="opacity-70"> · {conteoUnidades.get(u.id) ?? 0}</span>
+                      </button>
+                    ))}
+                    {(conteoUnidades.get(SIN_UNIDAD) ?? 0) > 0 && (
+                      <button onClick={() => alternarUnidad(SIN_UNIDAD)} aria-pressed={unidadesSel.includes(SIN_UNIDAD)} className={`boton boton-chico ${unidadesSel.includes(SIN_UNIDAD) ? 'boton-primario' : 'boton-suave'}`}>
+                        Sin unidad
+                        <span className="opacity-70"> · {conteoUnidades.get(SIN_UNIDAD)}</span>
+                      </button>
+                    )}
+                  </div>
+                </fieldset>
+              )}
               <div>
                 <span className="block text-[11px] font-bold uppercase tracking-[0.08em] mb-1" style={{ color: 'var(--neu-ink3)' }}>Preguntas</span>
                 <div className="flex gap-2 flex-wrap" role="group" aria-label="Cantidad de preguntas">
@@ -240,6 +312,23 @@ export function SimulacroPractica({ onVolver }: { onVolver: () => void }) {
           <p className="text-sm mt-1" style={suave}>Tiempo: {minutosYSegundos(fin - inicio)}</p>
         </section>
 
+        {porUnidad.length > 1 && falladas.length > 0 && (
+          <section className="neu-raised p-5 space-y-2" aria-label="Dónde fallaste, por unidad">
+            <h2 className="text-[17px] font-bold" style={{ color: 'var(--neu-ink)', fontFamily: 'var(--font-head)' }}>Por unidad</h2>
+            <ul className="space-y-1.5">
+              {porUnidad.map((u) => (
+                <li key={u.id} className="flex items-center gap-3 text-sm">
+                  <span className="flex-1 min-w-0 truncate" style={{ color: 'var(--neu-ink)' }}>{u.nombre}</span>
+                  <span className="font-semibold flex-shrink-0" style={{ color: u.fallos === 0 ? '#059669' : u.fallos / u.total >= 0.5 ? '#dc2626' : 'var(--neu-ink2)' }}>
+                    {u.total - u.fallos} de {u.total}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs" style={suave}>Empieza a repasar por la que tiene menos aciertos.</p>
+          </section>
+        )}
+
         {falladas.length > 0 ? (
           <section className="neu-raised p-5 space-y-3" aria-label="Lo que fallaste">
             <h2 className="text-[17px] font-bold" style={{ color: 'var(--neu-ink)', fontFamily: 'var(--font-head)' }}>Lo que fallaste ({falladas.length})</h2>
@@ -259,8 +348,13 @@ export function SimulacroPractica({ onVolver }: { onVolver: () => void }) {
           <p className="text-sm text-center font-semibold" style={{ color: '#059669' }}>Sin errores. ¡Buen simulacro!</p>
         )}
 
+        {falladas.length > 0 && (
+          <button onClick={repetirFalladas} className="boton boton-primario w-full">
+            Repetir solo lo que fallé ({falladas.length})
+          </button>
+        )}
         <div className="flex gap-2">
-          <button onClick={() => setFase('config')} className="boton boton-primario flex-1">Otro simulacro</button>
+          <button onClick={() => setFase('config')} className={`boton ${falladas.length > 0 ? 'boton-suave' : 'boton-primario'} flex-1`}>Otro simulacro</button>
           <button onClick={onVolver} className="boton boton-suave flex-1">Volver a Práctica</button>
         </div>
       </div>

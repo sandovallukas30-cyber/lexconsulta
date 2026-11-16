@@ -4,10 +4,12 @@ import type { TarjetaRepaso } from './tarjetasApunte'
  *  «término: definición» de los apuntes (los mismos que el repaso usa como
  *  tarjetas). Sin IA: los distractores salen de otras tarjetas del material.
  *
- *  Tres tipos: elegir la definición de un término, elegir el término de una
- *  definición y completar una palabra que falta en la definición. */
+ *  Cuatro tipos: elegir la definición de un término, elegir el término de una
+ *  definición, completar una palabra que falta en la definición y completar la
+ *  CANTIDAD (plazo, fracción de quórum) que falta: la trampa clásica de las
+ *  pruebas de Derecho (1/3 vs 2/5, 30 vs 15 días). */
 
-export type TipoPregunta = 'definicion' | 'termino' | 'hueco'
+export type TipoPregunta = 'definicion' | 'termino' | 'hueco' | 'numero'
 
 export interface PreguntaSimulacro {
   id: string
@@ -75,6 +77,55 @@ export function palabraParaHueco(reverso: string): string | null {
   return palabras.reduce((mejor, p) => (p.length > mejor.length ? p : mejor))
 }
 
+// ——— Cantidades (plazos y fracciones) ———
+const NUM_PAL: Record<number, string> = { 1: 'un', 2: 'dos', 3: 'tres', 4: 'cuatro', 5: 'cinco', 6: 'seis', 7: 'siete', 8: 'ocho', 9: 'nueve', 10: 'diez', 12: 'doce', 15: 'quince', 20: 'veinte', 30: 'treinta', 45: 'cuarenta y cinco', 60: 'sesenta', 90: 'noventa', 120: 'ciento veinte', 180: 'ciento ochenta' }
+const PAL_NUM = new Map(Object.entries(NUM_PAL).map(([n, p]) => [p, Number(n)]))
+const PLAZOS_USUALES = [1, 2, 3, 4, 5, 6, 7, 10, 15, 20, 30, 45, 60, 90, 120, 180]
+const FRACCIONES_NUM = ['1/3', '2/5', '1/2', '3/5', '2/3', '4/7', '3/4', '1/4', '3/7', '1/5']
+const FRACCIONES_PAL = ['un tercio', 'dos tercios', 'un cuarto', 'tres cuartos', 'dos quintos', 'tres quintos', 'cuatro quintos', 'cuatro séptimos', 'tres séptimos', 'un quinto']
+const PALABRA_NUMERO = Object.values(NUM_PAL).sort((a, b) => b.length - a.length).join('|')
+const RE_TIEMPO = new RegExp(String.raw`\b(\d{1,3}|${PALABRA_NUMERO})\s+(días|meses|años|horas|semanas)(\s+(?:hábiles|corridos))?`, 'iu')
+const RE_FRACCION_NUM = /\b\d{1,2}\/\d{1,2}\b/
+const RE_FRACCION_PAL = /\b(?:un|dos|tres|cuatro|cinco|seis|siete)\s+(?:tercios?|cuartos?|quintos?|sextos?|séptimos?)\b/iu
+
+export interface CantidadOculta {
+  /** El texto exacto que se oculta en la definición. */
+  texto: string
+  /** Respuestas falsas con el mismo formato. */
+  falsas: string[]
+}
+
+/** Primera cantidad (plazo o fracción) de la definición, con sus respuestas falsas del mismo estilo. */
+export function cantidadParaHueco(reverso: string, azar: () => number = Math.random): CantidadOculta | null {
+  const tiempo = RE_TIEMPO.exec(reverso)
+  if (tiempo) {
+    const [completo, cant, unidad, calif = ''] = tiempo
+    const esDigito = /^\d/.test(cant)
+    const valor = esDigito ? Number(cant) : PAL_NUM.get(cant.toLowerCase())
+    if (valor === undefined) return null
+    const lejos = PLAZOS_USUALES.filter((n) => n !== valor).sort((a, b) => Math.abs(Math.log(a / valor)) - Math.abs(Math.log(b / valor)))
+    const candidatos = mezclar(lejos.slice(0, 6), azar).slice(0, 3)
+    const poner = (n: number) => `${esDigito ? n : (NUM_PAL[n] ?? String(n))} ${unidad}${calif}`
+    return { texto: completo, falsas: candidatos.map(poner) }
+  }
+  const num = RE_FRACCION_NUM.exec(reverso)
+  if (num) return { texto: num[0], falsas: mezclar(FRACCIONES_NUM.filter((f) => f !== num[0]), azar).slice(0, 3) }
+  const pal = RE_FRACCION_PAL.exec(reverso)
+  if (pal) {
+    const base = pal[0].toLowerCase()
+    return { texto: pal[0], falsas: mezclar(FRACCIONES_PAL.filter((f) => f !== base), azar).slice(0, 3) }
+  }
+  return null
+}
+
+function preguntaNumero(t: TarjetaRepaso, azar: () => number): PreguntaSimulacro | null {
+  const c = cantidadParaHueco(t.reverso, azar)
+  if (!c || c.falsas.length < 3) return null
+  const opciones = mezclar([c.texto, ...c.falsas], azar)
+  const enunciado = `${t.frente}: ${t.reverso.replace(c.texto, HUECO)}`
+  return { id: `${t.id}:numero`, tarjetaId: t.id, tipo: 'numero', enunciado: recortar(enunciado, 260), opciones, correcta: opciones.indexOf(c.texto), frente: t.frente, reverso: t.reverso }
+}
+
 function preguntaHueco(t: TarjetaRepaso, otras: TarjetaRepaso[], azar: () => number): PreguntaSimulacro | null {
   const oculta = palabraParaHueco(t.reverso)
   if (!oculta) return null
@@ -87,6 +138,7 @@ function preguntaHueco(t: TarjetaRepaso, otras: TarjetaRepaso[], azar: () => num
 }
 
 function preguntaDe(t: TarjetaRepaso, tipo: TipoPregunta, otras: TarjetaRepaso[], azar: () => number): PreguntaSimulacro | null {
+  if (tipo === 'numero') return preguntaNumero(t, azar)
   if (tipo === 'hueco') return preguntaHueco(t, otras, azar)
   if (tipo === 'definicion') {
     const correcta = recortar(t.reverso)
@@ -111,8 +163,9 @@ export function generarSimulacro(tarjetas: TarjetaRepaso[], cantidad: number, az
   for (const t of mezclar(base, azar)) {
     if (preguntas.length >= cantidad) break
     const otras = base.filter((o) => o.id !== t.id)
-    const primero = TIPOS[Math.floor(azar() * TIPOS.length)]
-    const orden = [primero, ...TIPOS.filter((x) => x !== primero)]
+    // si la definición trae un plazo o un quórum, casi siempre se pregunta eso: es lo que más se confunde
+    const primero: TipoPregunta = cantidadParaHueco(t.reverso, azar) && azar() < 0.7 ? 'numero' : TIPOS[Math.floor(azar() * TIPOS.length)]
+    const orden = [primero, ...TIPOS.filter((x) => x !== primero), 'numero' as const].filter((x, i, a) => a.indexOf(x) === i)
     for (const tipo of orden) {
       const p = preguntaDe(t, tipo, otras, azar)
       if (p) {

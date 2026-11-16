@@ -2,12 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../../../store/useStore'
 import { registrarUso } from '../../../services/uso'
 import { eliminarDeListaConDeshacer } from '../../../services/deshacer'
-import type { EvaluacionModulo, TipoEvaluacion } from '../../../types'
+import type { ApunteModulo, EvaluacionModulo, TipoEvaluacion, UnidadRamo } from '../../../types'
 import { SelectPrima } from '../SelectPrima'
 import { calcularPonderacionTotal } from '../../../services/modulosAcademico'
 import { formatoNota, NOTA_APROBAR, simular } from '../../../services/notas'
 import { formatearFechaCorta } from './utilidades'
 import { ConversorPuntaje } from './ConversorPuntaje'
+import { TemarioRamo } from './TemarioRamo'
 import { BotonAgregar, BotonEliminar, BotonesFormulario, CampoTexto, EstadoVacio, FechaConCountdown, FormularioRapido } from './comunes'
 
 const TIPOS: { valor: TipoEvaluacion | ''; texto: string }[] = [
@@ -36,10 +37,12 @@ function calcularNotaNecesaria(evaluaciones: EvaluacionModulo[], objetivo: numbe
 }
 
 export function TabExamenes({
-  moduloId, evaluaciones, modoOscuro, enfocarId,
+  moduloId, evaluaciones, unidades, apuntes, modoOscuro, enfocarId,
 }: {
   moduloId: string
   evaluaciones: EvaluacionModulo[]
+  unidades: UnidadRamo[]
+  apuntes: ApunteModulo[]
   modoOscuro: boolean
   /** Abrir esta evaluación en edición al montar (una sola vez). */
   enfocarId?: string
@@ -56,6 +59,7 @@ export function TabExamenes({
   const [nota, setNota] = useState(inicial?.nota != null ? String(inicial.nota) : '')
   const [tipo, setTipo] = useState<TipoEvaluacion | ''>(inicial?.tipo ?? '')
   const [revision, setRevision] = useState(inicial?.revision ?? '')
+  const [unidadIds, setUnidadIds] = useState<string[]>(inicial?.unidadIds ?? [])
   const refForm = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (inicial) refForm.current?.scrollIntoView({ block: 'center' })
@@ -75,6 +79,7 @@ export function TabExamenes({
     setNota('')
     setTipo('')
     setRevision('')
+    setUnidadIds([])
     setError(null)
     setMostrarForm(true)
   }
@@ -87,6 +92,7 @@ export function TabExamenes({
     setNota(e.nota === null ? '' : String(e.nota))
     setTipo(e.tipo ?? '')
     setRevision(e.revision ?? '')
+    setUnidadIds(e.unidadIds ?? [])
     setError(null)
     setMostrarForm(true)
   }
@@ -112,8 +118,10 @@ export function TabExamenes({
       const resto = { ...e }
       delete resto.tipo
       delete resto.revision
+      delete resto.unidadIds
       const rev = revision.trim().slice(0, 300)
-      return { ...resto, ...(tipo ? { tipo } : {}), ...(rev ? { revision: rev } : {}) }
+      const entra = unidadIds.filter((id) => unidades.some((u) => u.id === id))
+      return { ...resto, ...(tipo ? { tipo } : {}), ...(rev ? { revision: rev } : {}), ...(entra.length > 0 ? { unidadIds: entra } : {}) }
     }
     if (editandoId) {
       setEvaluacionesModulo(moduloId, evaluaciones.map((e) => (e.id === editandoId
@@ -154,6 +162,7 @@ export function TabExamenes({
 
   return (
     <div>
+      <TemarioRamo moduloId={moduloId} unidades={unidades} apuntes={apuntes} evaluaciones={evaluaciones} modoOscuro={modoOscuro} />
       <div className="flex justify-between items-center mb-3">
         <div className="flex items-baseline gap-2">
           <h2 className={`text-sm font-semibold ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>Exámenes y evaluaciones</h2>
@@ -184,6 +193,28 @@ export function TabExamenes({
                 {TIPOS.map((t) => <option key={t.valor} value={t.valor}>{t.texto}</option>)}
               </SelectPrima>
             </label>
+            {unidades.length > 0 && (
+              <fieldset className="sm:col-span-2">
+                <legend className={`block text-xs font-medium mb-1 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>¿Qué unidades entran? (opcional)</legend>
+                <div className="flex flex-wrap gap-1.5">
+                  {unidades.map((u) => {
+                    const on = unidadIds.includes(u.id)
+                    return (
+                      <button
+                        key={u.id}
+                        type="button"
+                        aria-pressed={on}
+                        onClick={() => setUnidadIds((ids) => (on ? ids.filter((i) => i !== u.id) : [...ids, u.id]))}
+                        className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${on ? 'text-white border-transparent' : modoOscuro ? 'border-zinc-700 text-zinc-400 hover:bg-zinc-800' : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'}`}
+                        style={on ? { background: 'var(--accent-base)' } : undefined}
+                      >
+                        {u.nombre}
+                      </button>
+                    )
+                  })}
+                </div>
+              </fieldset>
+            )}
             {nota.trim() !== '' && (
               <CampoTexto label="¿Qué falló o qué funcionó? (opcional)" valor={revision} onChange={setRevision} modoOscuro={modoOscuro} placeholder="Ej: me faltó tiempo en el caso práctico" />
             )}
@@ -218,6 +249,11 @@ export function TabExamenes({
                     </button>
                   </div>
                   <span className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>{e.ponderacion}% de la nota final{e.tipo ? ` · ${NOMBRE_TIPO[e.tipo]}` : ''}</span>
+                  {(e.unidadIds?.length ?? 0) > 0 && (
+                    <span className={`block text-xs mt-0.5 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                      Entra: {e.unidadIds!.map((id) => unidades.find((u) => u.id === id)?.nombre).filter(Boolean).join(' · ')}
+                    </span>
+                  )}
                   {e.revision && <span className={`block text-xs italic mt-0.5 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>“{e.revision}”</span>}
                 </div>
                 <div

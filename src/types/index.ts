@@ -609,6 +609,8 @@ export interface EvaluacionModulo {
   tipo?: TipoEvaluacion
   /** Qué falló o qué funcionó, en una línea, anotado al ver la nota. */
   revision?: string
+  /** Unidades del temario que entran en esta evaluación (sin valor = no se marcó). */
+  unidadIds?: string[]
   /** Cuándo se tocó por última vez (la pone el store): al sincronizar entre dispositivos gana la copia más reciente. */
   actualizada?: number
 }
@@ -654,6 +656,15 @@ export interface ApunteModulo {
   /** Artículo del código del Módulo sobre el que es este apunte (ver la
    *  misma nota en TextoObligatorio.articuloRelacionado). */
   articuloRelacionado?: string
+  /** Unidad del temario del ramo (UnidadRamo['id']) a la que pertenece. */
+  unidadId?: string
+}
+
+/** Unidad del temario de un ramo (el programa del curso): agrupa apuntes y
+ *  permite marcar qué entra en cada evaluación. */
+export interface UnidadRamo {
+  id: string
+  nombre: string
 }
 
 /** Agrupador de Apuntes dentro de un Módulo (ej. "Cuaderno de audiencias"),
@@ -711,6 +722,8 @@ export interface DatosAcademicosModulo {
   apuntes: ApunteModulo[]
   cuadernos: CuadernoApuntes[]
   briefs: BriefCaso[]
+  /** Temario del ramo (llegó después: puede faltar). */
+  unidades?: UnidadRamo[]
 }
 
 /** Ramo concreto que el usuario cursa (con su propio profesor, horario,

@@ -277,7 +277,7 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEdit
           />
         )}
         {tab === 'clases' && <TabClases moduloId={modulo.id} clases={datos.clases} modoOscuro={modoOscuro} />}
-        {tab === 'examenes' && <TabExamenes moduloId={modulo.id} evaluaciones={datos.evaluaciones} modoOscuro={modoOscuro} enfocarId={evaluacionEnfocada} />}
+        {tab === 'examenes' && <TabExamenes moduloId={modulo.id} evaluaciones={datos.evaluaciones} unidades={datos.unidades ?? []} apuntes={datos.apuntes} modoOscuro={modoOscuro} enfocarId={evaluacionEnfocada} />}
         {tab === 'textos' && <TabTextos moduloId={modulo.id} textos={datos.textos} clases={datos.clases} modoOscuro={modoOscuro} />}
         {tab === 'apuntes' && (
           <TabApuntes

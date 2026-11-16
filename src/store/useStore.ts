@@ -49,6 +49,7 @@ import type {
   CuadernoApuntes,
   Ramo,
   BriefCaso,
+  UnidadRamo,
   CodigoTipo,
   EstadoTarjetaRepaso,
   PestanaConfig,
@@ -258,6 +259,7 @@ interface AppState {
   setApuntesModulo: (moduloId: string, apuntes: ApunteModulo[]) => void
   setCuadernosModulo: (moduloId: string, cuadernos: CuadernoApuntes[]) => void
   setBriefsModulo: (moduloId: string, briefs: BriefCaso[]) => void
+  setUnidadesModulo: (moduloId: string, unidades: UnidadRamo[]) => void
 
   /** Ramos que el usuario cursa (metadata real de curso -- profesor,
    *  horario, semestre), cada uno vinculado a uno o más Módulos. */
@@ -1101,6 +1103,13 @@ export const useStore = create<AppState>()(
           academicoModulos: {
             ...s.academicoModulos,
             [moduloId]: { ...(s.academicoModulos[moduloId] ?? datosAcademicosVacios), cuadernos },
+          },
+        })),
+      setUnidadesModulo: (moduloId, unidades) =>
+        set((s) => ({
+          academicoModulos: {
+            ...s.academicoModulos,
+            [moduloId]: { ...(s.academicoModulos[moduloId] ?? datosAcademicosVacios), unidades },
           },
         })),
       setBriefsModulo: (moduloId, briefs) =>
