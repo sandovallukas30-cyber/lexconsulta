@@ -9,6 +9,7 @@ import type {
   Coleccion,
   DatosAcademicosModulo,
   EstadoTarjetaRepaso,
+  RegistroPrueba,
   ConexionMapaMental,
   MapaMental,
   NodoMapaMental,
@@ -39,6 +40,8 @@ export interface DatosRespaldo {
   mapasMentales: MapaMental[]
   /** Progreso del repaso de tarjetas de apuntes (desde persist v30). */
   repasoApuntes: Record<string, EstadoTarjetaRepaso>
+  /** Errores del modo prueba (desde persist v39). Faltan en respaldos antiguos. */
+  erroresPrueba: Record<string, RegistroPrueba>
   /** Hasta dónde se leyó cada apunte (desde persist v31). */
   posicionLectura: Record<string, { ratio: number; fecha: number }>
   /** Notas propias sobre artículos de los códigos. Faltan en respaldos antiguos. */
@@ -95,6 +98,7 @@ export function crearRespaldo(): ArchivoRespaldo {
       subrayados: s.subrayados,
       mapasMentales: s.mapasMentales,
       repasoApuntes: s.repasoApuntes,
+      erroresPrueba: s.erroresPrueba,
       posicionLectura: s.posicionLectura,
       notasArticulo: s.notasArticulo,
       tareasPlan: s.tareasPlan,
@@ -119,6 +123,7 @@ export function vaciarDatosLocales() {
         subrayados: ini.subrayados,
         mapasMentales: ini.mapasMentales,
         repasoApuntes: ini.repasoApuntes,
+        erroresPrueba: ini.erroresPrueba,
         posicionLectura: ini.posicionLectura,
         notasArticulo: ini.notasArticulo,
         tareasPlan: ini.tareasPlan,
@@ -277,6 +282,8 @@ export function validarRespaldo(texto: string): ResultadoValidacion {
   if (d.mapasMentales !== undefined && !Array.isArray(d.mapasMentales)) problemas.push('mapas mentales')
   if (d.repasoApuntes !== undefined && !(esObjeto(d.repasoApuntes) && Object.values(d.repasoApuntes).every((e) => esObjeto(e) && typeof e.caja === 'number' && typeof e.proximo === 'number')))
     problemas.push('repaso de tarjetas')
+  if (d.erroresPrueba !== undefined && !(esObjeto(d.erroresPrueba) && Object.values(d.erroresPrueba).every((e) => esObjeto(e) && esTexto(e.tipo) && typeof e.aciertos === 'number' && typeof e.fallos === 'number' && typeof e.ultimo === 'number')))
+    problemas.push('registro de errores')
   if (d.tareasPlan !== undefined && !listaValida(d.tareasPlan, (t) => conId(t) && esTexto((t as TareaPlan).titulo))) problemas.push('tareas')
   if (d.sesionesFoco !== undefined && !listaValida(d.sesionesFoco, (x) => conId(x) && typeof (x as SesionFoco).minutos === 'number'))
     problemas.push('sesiones de enfoque')
@@ -305,6 +312,7 @@ export function validarRespaldo(texto: string): ResultadoValidacion {
     subrayados: (d.subrayados as Record<string, string[]>) ?? {},
     mapasMentales: sanearLista(d.mapasMentales, (m) => sanearMapa(m)),
     repasoApuntes: (d.repasoApuntes as Record<string, EstadoTarjetaRepaso>) ?? {},
+    erroresPrueba: esObjeto(d.erroresPrueba) ? (d.erroresPrueba as Record<string, RegistroPrueba>) : {},
     posicionLectura: esObjeto(d.posicionLectura) ? (d.posicionLectura as Record<string, { ratio: number; fecha: number }>) : {},
     notasArticulo: notasArticuloValidas(d.notasArticulo),
     tareasPlan: (d.tareasPlan as TareaPlan[]) ?? [],
@@ -439,6 +447,7 @@ export function aplicarRespaldo(respaldo: ArchivoRespaldo, modo: ModoImportacion
     subrayados: s.subrayados,
     mapasMentales: s.mapasMentales,
     repasoApuntes: s.repasoApuntes,
+    erroresPrueba: s.erroresPrueba,
     posicionLectura: s.posicionLectura,
     notasArticulo: s.notasArticulo,
     tareasPlan: s.tareasPlan,
@@ -468,6 +477,7 @@ function aplicarSinVerificar(respaldo: ArchivoRespaldo, modo: ModoImportacion) {
       subrayados: d.subrayados,
       mapasMentales: d.mapasMentales,
       repasoApuntes: d.repasoApuntes,
+      erroresPrueba: d.erroresPrueba,
       posicionLectura: d.posicionLectura,
       notasArticulo: d.notasArticulo,
       tareasPlan: d.tareasPlan,
@@ -489,12 +499,17 @@ function aplicarSinVerificar(respaldo: ArchivoRespaldo, modo: ModoImportacion) {
   // repaso y posición de lectura: en la nube gana lo más reciente de cada tarjeta/apunte
   const repasoApuntes = { ...d.repasoApuntes, ...s.repasoApuntes }
   const posicionLectura = { ...d.posicionLectura, ...s.posicionLectura }
+  const erroresPrueba = { ...d.erroresPrueba, ...s.erroresPrueba }
   // notas de artículos: en la nube gana la más reciente; al importar un archivo, lo que ya tienes aquí
   const notasArticulo = nube ? unirNotasArticulo(s.notasArticulo, d.notasArticulo) : { ...d.notasArticulo, ...s.notasArticulo }
   if (nube) {
     for (const [id, e] of Object.entries(d.repasoApuntes)) {
       const l = s.repasoApuntes[id]
       if (l && e.ultimo > l.ultimo) repasoApuntes[id] = e
+    }
+    for (const [id, e] of Object.entries(d.erroresPrueba)) {
+      const l = s.erroresPrueba[id]
+      if (l && e.ultimo > l.ultimo) erroresPrueba[id] = e
     }
     for (const [id, e] of Object.entries(d.posicionLectura)) {
       const l = s.posicionLectura[id]
@@ -510,6 +525,7 @@ function aplicarSinVerificar(respaldo: ArchivoRespaldo, modo: ModoImportacion) {
     subrayados,
     mapasMentales: unir(s.mapasMentales, d.mapasMentales),
     repasoApuntes,
+    erroresPrueba,
     posicionLectura,
     notasArticulo,
     tareasPlan: unir(s.tareasPlan, d.tareasPlan),

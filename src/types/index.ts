@@ -660,6 +660,28 @@ export interface ApunteModulo {
   unidadId?: string
 }
 
+/** Tipo de pregunta del modo prueba (alternativas por tipo, o desarrollo). */
+export type TipoPrueba = 'definicion' | 'termino' | 'hueco' | 'numero' | 'desarrollo'
+
+/** Registro de una pregunta del modo prueba: cuántas veces se acertó y se falló y cómo salió la última. Se guarda por id
+ *  de pregunta (ver services/registroPrueba.ts). */
+export interface RegistroPrueba {
+  tipo: TipoPrueba
+  etiqueta: string
+  /** Id de la tarjeta (alternativas) o del tema (desarrollo). */
+  origen: string
+  ramoId?: string
+  unidadId?: string
+  aciertos: number
+  fallos: number
+  /** epoch ms del último intento. */
+  ultimo: number
+  /** Resultado del último intento. */
+  ok: boolean
+  /** Desarrollo: puntos que faltaron en la última respuesta fallada. */
+  faltaron?: string[]
+}
+
 /** Unidad del temario de un ramo (el programa del curso): agrupa apuntes y
  *  permite marcar qué entra en cada evaluación. */
 export interface UnidadRamo {

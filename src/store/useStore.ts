@@ -50,11 +50,13 @@ import type {
   Ramo,
   BriefCaso,
   UnidadRamo,
+  RegistroPrueba,
   CodigoTipo,
   EstadoTarjetaRepaso,
   PestanaConfig,
 } from '../types'
 import { siguienteEstado } from '../services/tarjetasApunte'
+import { aplicarResultados, type ResultadoPrueba } from '../services/registroPrueba'
 import type { NotaRepaso } from '../services/fsrs'
 import { confirmarSalida } from '../services/guardiaCambios'
 import { agregarActividadHoy, fechaLocalISO } from '../services/actividadEstudio'
@@ -297,6 +299,10 @@ interface AppState {
   /** Progreso del repaso de tarjetas de apuntes (B5), por id de tarjeta. */
   repasoApuntes: Record<string, EstadoTarjetaRepaso>
   registrarRepasoTarjeta: (id: string, nota: NotaRepaso) => void
+  /** Errores y aciertos del modo prueba, por id de pregunta. */
+  erroresPrueba: Record<string, RegistroPrueba>
+  registrarPrueba: (items: ResultadoPrueba[]) => void
+  borrarRegistroPrueba: (ids?: string[]) => void
 
   /** Hasta dónde se leyó cada apunte (0-1 del alto total), para ofrecer
    *  "Retomar donde quedaste" (C1). Antes vivía suelto en localStorage con
@@ -453,6 +459,7 @@ export const useStore = create<AppState>()(
         set((s) => ({ tareasPlan: s.tareasPlan.some((x) => x.id === t.id) ? s.tareasPlan : [t, ...s.tareasPlan] })),
       diasActividadEstudio: [],
       repasoApuntes: {},
+      erroresPrueba: {},
       posicionLectura: {},
       notasArticulo: {},
       coleccionPorImportar: null,
@@ -1152,6 +1159,18 @@ export const useStore = create<AppState>()(
           repasoApuntes: { ...s.repasoApuntes, [id]: siguienteEstado(s.repasoApuntes[id], nota) },
           diasActividadEstudio: agregarActividadHoy(s.diasActividadEstudio),
         })),
+      registrarPrueba: (items) =>
+        set((s) => ({
+          erroresPrueba: aplicarResultados(s.erroresPrueba, items, Date.now()),
+          diasActividadEstudio: agregarActividadHoy(s.diasActividadEstudio),
+        })),
+      borrarRegistroPrueba: (ids) =>
+        set((s) => {
+          if (!ids) return { erroresPrueba: {} }
+          const resto = { ...s.erroresPrueba }
+          for (const id of ids) delete resto[id]
+          return { erroresPrueba: resto }
+        }),
       recordarArticuloExplorador: (tipo, articulo) =>
         set((s) =>
           s.ultimoArticuloExplorador[tipo] === articulo ? s : { ultimoArticuloExplorador: { ...s.ultimoArticuloExplorador, [tipo]: articulo } }
@@ -1183,7 +1202,7 @@ export const useStore = create<AppState>()(
     {
       name: 'prima-lex-storage-v3',
       storage: crearAlmacenamiento(),
-      version: 38,
+      version: 39,
       partialize: (s) => ({
         perfil: s.perfil,
         codigos: s.codigos,
@@ -1212,6 +1231,7 @@ export const useStore = create<AppState>()(
         tareasPlan: s.tareasPlan,
         diasActividadEstudio: s.diasActividadEstudio,
         repasoApuntes: s.repasoApuntes,
+        erroresPrueba: s.erroresPrueba,
         posicionLectura: s.posicionLectura,
         notasArticulo: s.notasArticulo,
         // C7: al recargar se vuelve a la última vista (y módulo/código)
@@ -1361,6 +1381,11 @@ export const useStore = create<AppState>()(
           void _descartada
           state = resto
           if (state.vistaActiva === 'admin') state = { ...state, vistaActiva: 'modulos' }
+        }
+        if (version < 39) {
+          // v39: registro de errores del modo prueba.
+          const previo = state.erroresPrueba
+          state = { ...state, erroresPrueba: previo && typeof previo === 'object' && !Array.isArray(previo) ? previo : {} }
         }
         return state as never
       },

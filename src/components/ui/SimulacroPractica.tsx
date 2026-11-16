@@ -8,11 +8,19 @@ import { EXIGENCIA_COMUN, puntajeANota } from '../../services/puntaje'
 import { formatoNota, NOTA_APROBAR } from '../../services/notas'
 import { registrarUso } from '../../services/uso'
 import { apuntesDeUnidades, apuntesPorUnidad, evaluacionesConTemario, SIN_UNIDAD } from '../../services/temario'
+import { generarDesarrollo, preguntasDeApunte, UMBRAL_LOGRADO, type PreguntaDesarrollo } from '../../services/desarrollo'
+import { pendientes, type ResultadoPrueba } from '../../services/registroPrueba'
+import { Segmentado } from './Segmentado'
+import { DesarrolloPregunta } from './DesarrolloPregunta'
+import { PanelErroresPrueba } from './PanelErroresPrueba'
+import type { TipoPregunta } from '../../services/simulacro'
 
 const CANTIDADES = [5, 10, 20, 30]
+const CANTIDADES_DESARROLLO = [3, 5, 8]
 const LETRAS = ['A', 'B', 'C', 'D']
 
-type Fase = 'config' | 'preguntando' | 'resultado'
+type Fase = 'config' | 'preguntando' | 'resultado' | 'desarrollando' | 'resultadoDes'
+type Modo = 'alternativas' | 'desarrollo'
 
 const minutosYSegundos = (ms: number) => {
   const s = Math.max(0, Math.round(ms / 1000))
@@ -24,6 +32,9 @@ export function SimulacroPractica({ onVolver }: { onVolver: () => void }) {
   const academico = useStore((s) => s.academicoModulos)
   const ramos = useStore((s) => s.ramos)
   const registrarRepaso = useStore((s) => s.registrarRepasoTarjeta)
+  const registrarPrueba = useStore((s) => s.registrarPrueba)
+  const borrarRegistroPrueba = useStore((s) => s.borrarRegistroPrueba)
+  const erroresPrueba = useStore((s) => s.erroresPrueba)
 
   const [fase, setFase] = useState<Fase>('config')
   const [seleccion, setSeleccion] = useState('todas')
@@ -36,15 +47,20 @@ export function SimulacroPractica({ onVolver }: { onVolver: () => void }) {
   const [programado, setProgramado] = useState(false)
   // unidades del temario elegidas (vacío = todo el ramo)
   const [unidadesSel, setUnidadesSel] = useState<string[]>([])
+  const [modo, setModo] = useState<Modo>('alternativas')
+  const [temas, setTemas] = useState<PreguntaDesarrollo[]>([])
+  const [temaI, setTemaI] = useState(0)
+  const [resDes, setResDes] = useState<{ pregunta: PreguntaDesarrollo; cubiertos: boolean[] }[]>([])
 
   // material de cada asignatura: cuántas tarjetas de término y definición hay en sus apuntes
   const opcionesRamo = useMemo(() => {
     const porRamo = Object.entries(academico).map(([id, d]) => {
       const apuntes = d.apuntes ?? []
       const tarjetas = apuntes.flatMap((a) => tarjetasDe(a))
-      return { id, nombre: nombreRamo(id, ramos) ?? id, apuntes, unidades: d.unidades ?? [], evaluaciones: d.evaluaciones ?? [], tarjetas, n: tarjetasParaSimulacro(tarjetas).length }
+      const temasRamo = apuntes.reduce((n, a) => n + preguntasDeApunte(a).length, 0)
+      return { id, nombre: nombreRamo(id, ramos) ?? id, apuntes, unidades: d.unidades ?? [], evaluaciones: d.evaluaciones ?? [], tarjetas, n: tarjetasParaSimulacro(tarjetas).length, temas: temasRamo }
     })
-    return porRamo.filter((r) => r.n > 0).sort((a, b) => b.n - a.n)
+    return porRamo.filter((r) => r.n > 0 || r.temas > 0).sort((a, b) => b.n + b.temas - (a.n + a.temas))
   }, [academico, ramos])
 
   const todas = useMemo(() => opcionesRamo.flatMap((r) => r.tarjetas), [opcionesRamo])
@@ -58,11 +74,49 @@ export function SimulacroPractica({ onVolver }: { onVolver: () => void }) {
   const conteoUnidades = ramoActual ? apuntesPorUnidad(ramoActual.apuntes, ramoActual.unidades) : new Map<string, number>()
   const evaluacionesTemario = ramoActual ? evaluacionesConTemario(ramoActual.evaluaciones) : []
   const alternarUnidad = (id: string) => setUnidadesSel((u) => (u.includes(id) ? u.filter((x) => x !== id) : [...u, id]))
-  const alcanza = material >= MIN_TARJETAS_SIMULACRO
-  const cantidadReal = Math.min(cantidad, material)
+  // apuntes que alimentan el desarrollo (mismo filtro de ramo y unidades)
+  const apuntesFuente = useMemo(() => {
+    if (!ramoActual) return opcionesRamo.flatMap((r) => r.apuntes)
+    return apuntesDeUnidades(ramoActual.apuntes, unidadesSel)
+  }, [ramoActual, opcionesRamo, unidadesSel])
+  const temasDisponibles = useMemo(() => apuntesFuente.reduce((n, a) => n + preguntasDeApunte(a).length, 0), [apuntesFuente])
+  const esDesarrollo = modo === 'desarrollo'
+  const disponible = esDesarrollo ? temasDisponibles : material
+  const alcanza = esDesarrollo ? temasDisponibles >= 1 : material >= MIN_TARJETAS_SIMULACRO
+  const cantidadReal = Math.min(cantidad, disponible)
+  const filtroRegistro = useMemo(() => ({ ...(ramoActual ? { ramoId: ramoActual.id } : {}), ...(unidadesSel.length > 0 ? { unidadIds: unidadesSel } : {}) }), [ramoActual, unidadesSel])
 
-  const empezar = () => {
-    const { preguntas: generadas } = generarSimulacro(tarjetasFuente, cantidad)
+  // a qué ramo y unidad pertenece un apunte (para anotarlo en el registro de errores)
+  const ubicar = (apunteId: string): { ramoId?: string; unidadId?: string } => {
+    const r = opcionesRamo.find((x) => x.apuntes.some((a) => a.id === apunteId))
+    if (!r) return {}
+    const a = r.apuntes.find((x) => x.id === apunteId)
+    return { ramoId: r.id, ...(a?.unidadId && r.unidades.some((u) => u.id === a.unidadId) ? { unidadId: a.unidadId } : {}) }
+  }
+
+  const empezar = (soloErrores = false) => {
+    if (esDesarrollo) {
+      const prioridad = new Set(pendientes(erroresPrueba, filtroRegistro).filter(([, r]) => r.tipo === 'desarrollo').map(([id]) => id))
+      const lista = generarDesarrollo(apuntesFuente, cantidad, Math.random, prioridad)
+      const elegidos = soloErrores ? lista.filter((t) => prioridad.has(t.id)) : lista
+      if (elegidos.length === 0) return
+      registrarUso('practica.simulacro')
+      setTemas(elegidos)
+      setTemaI(0)
+      setResDes([])
+      setInicio(Date.now())
+      setFase('desarrollando')
+      return
+    }
+    let prioridad: Map<string, TipoPregunta> | undefined
+    if (soloErrores) {
+      prioridad = new Map(
+        pendientes(erroresPrueba, filtroRegistro)
+          .filter(([, r]) => r.tipo !== 'desarrollo')
+          .map(([, r]) => [r.origen, r.tipo as TipoPregunta] as const)
+      )
+    }
+    const { preguntas: generadas } = generarSimulacro(tarjetasFuente, cantidad, Math.random, prioridad)
     if (generadas.length === 0) return
     registrarUso('practica.simulacro')
     setPreguntas(generadas)
@@ -86,7 +140,39 @@ export function SimulacroPractica({ onVolver }: { onVolver: () => void }) {
     else {
       setFin(Date.now())
       setFase('resultado')
+      registrarPrueba(
+        preguntas.map<ResultadoPrueba>((p, i) => ({
+          id: p.id,
+          tipo: p.tipo,
+          etiqueta: p.frente,
+          origen: p.tarjetaId,
+          ...ubicar(p.tarjetaId.split(':')[0]),
+          ok: respuestas[i] === p.correcta,
+        }))
+      )
     }
+  }
+
+  const terminarTema = (cubiertos: boolean[]) => {
+    const nuevo = [...resDes, { pregunta: temas[temaI], cubiertos }]
+    setResDes(nuevo)
+    if (temaI + 1 < temas.length) {
+      setTemaI(temaI + 1)
+      return
+    }
+    setFin(Date.now())
+    setFase('resultadoDes')
+    registrarPrueba(
+      nuevo.map<ResultadoPrueba>(({ pregunta, cubiertos: c }) => ({
+        id: pregunta.id,
+        tipo: 'desarrollo',
+        etiqueta: pregunta.titulo,
+        origen: pregunta.id,
+        ...ubicar(pregunta.apunteId),
+        ok: c.filter(Boolean).length / pregunta.puntos.length >= UMBRAL_LOGRADO,
+        faltaron: pregunta.puntos.filter((_, k) => !c[k]).map((p) => p.texto),
+      }))
+    )
   }
 
   // teclado: 1 a 4 eligen, Enter o flecha derecha avanzan, Escape sale
@@ -98,7 +184,7 @@ export function SimulacroPractica({ onVolver }: { onVolver: () => void }) {
         else if ((e.key === 'Enter' || e.key === 'ArrowRight') && elegida !== null) siguiente()
         else return
         e.preventDefault()
-      } else if (e.key === 'Escape') onVolver()
+      } else if (e.key === 'Escape' && fase !== 'desarrollando') onVolver()
     }
     window.addEventListener('keydown', alTeclear)
     return () => window.removeEventListener('keydown', alTeclear)
@@ -158,7 +244,9 @@ export function SimulacroPractica({ onVolver }: { onVolver: () => void }) {
         <div className="max-w-2xl mx-auto p-4 sm:p-6 space-y-4">
           {cabecera('Simulacro')}
           <p className="text-sm" style={suave}>
-            Preguntas de opción múltiple armadas con los «término: definición» de tus apuntes. Al terminar ves qué fallaste y puedes mandarlo al repaso.
+            {esDesarrollo
+              ? 'Preguntas de desarrollo armadas con las secciones de tus apuntes. Escribes la respuesta y la app marca qué puntos clave (plazos, quórums, conceptos) te faltaron.'
+              : 'Preguntas de opción múltiple armadas con los «término: definición» de tus apuntes, con plazos y quórums. Al terminar ves qué fallaste y puedes mandarlo al repaso.'}
           </p>
           {opcionesRamo.length === 0 ? (
             <section className="neu-raised p-5" aria-label="Sin material">
@@ -169,13 +257,25 @@ export function SimulacroPractica({ onVolver }: { onVolver: () => void }) {
             </section>
           ) : (
             <section className="neu-raised p-5 space-y-4" aria-label="Armar simulacro">
+              <Segmentado<Modo>
+                id="modo-prueba"
+                etiqueta="Tipo de pregunta"
+                valor={modo}
+                onChange={(v) => {
+                  setModo(v)
+                  setCantidad(v === 'desarrollo' ? 3 : 10)
+                }}
+                opciones={[{ valor: 'alternativas', texto: 'Alternativas' }, { valor: 'desarrollo', texto: 'Desarrollo' }]}
+              />
               <label className="block">
                 <span className="block text-[11px] font-bold uppercase tracking-[0.08em] mb-1" style={{ color: 'var(--neu-ink3)' }}>Material</span>
                 <SelectPrima value={seleccion} onChange={(e) => { setSeleccion(e.target.value); setUnidadesSel([]) }} className="w-full h-control px-3 rounded-control border text-sm bg-[var(--neu-bg)] border-zinc-200 text-[var(--neu-ink)]">
-                  <option value="todas">Todas mis asignaturas ({tarjetasParaSimulacro(todas).length} tarjetas)</option>
+                  <option value="todas">
+                    Todas mis asignaturas ({esDesarrollo ? `${opcionesRamo.reduce((n, r) => n + r.temas, 0)} temas` : `${tarjetasParaSimulacro(todas).length} tarjetas`})
+                  </option>
                   {opcionesRamo.map((r) => (
                     <option key={r.id} value={r.id}>
-                      {r.nombre} ({r.n} {r.n === 1 ? 'tarjeta' : 'tarjetas'})
+                      {r.nombre} ({esDesarrollo ? `${r.temas} ${r.temas === 1 ? 'tema' : 'temas'}` : `${r.n} ${r.n === 1 ? 'tarjeta' : 'tarjetas'}`})
                     </option>
                   ))}
                 </SelectPrima>
@@ -212,21 +312,29 @@ export function SimulacroPractica({ onVolver }: { onVolver: () => void }) {
                 </fieldset>
               )}
               <div>
-                <span className="block text-[11px] font-bold uppercase tracking-[0.08em] mb-1" style={{ color: 'var(--neu-ink3)' }}>Preguntas</span>
+                <span className="block text-[11px] font-bold uppercase tracking-[0.08em] mb-1" style={{ color: 'var(--neu-ink3)' }}>{esDesarrollo ? 'Temas' : 'Preguntas'}</span>
                 <div className="flex gap-2 flex-wrap" role="group" aria-label="Cantidad de preguntas">
-                  {CANTIDADES.map((n) => (
+                  {(esDesarrollo ? CANTIDADES_DESARROLLO : CANTIDADES).map((n) => (
                     <button key={n} onClick={() => setCantidad(n)} aria-pressed={cantidad === n} className={`boton ${cantidad === n ? 'boton-primario' : 'boton-suave'}`}>
                       {n}
                     </button>
                   ))}
                 </div>
-                {alcanza && cantidad > material && <p className="text-xs mt-2" style={suave}>Con este material salen {cantidadReal} preguntas.</p>}
+                {alcanza && cantidad > disponible && <p className="text-xs mt-2" style={suave}>Con este material salen {cantidadReal} {esDesarrollo ? (cantidadReal === 1 ? 'tema' : 'temas') : 'preguntas'}.</p>}
               </div>
-              {!alcanza && <p className="text-sm" style={{ color: 'var(--neu-danger)' }}>Este material tiene solo {material} {material === 1 ? 'tarjeta' : 'tarjetas'}; hacen falta al menos {MIN_TARJETAS_SIMULACRO}.</p>}
-              <button onClick={empezar} disabled={!alcanza} className="boton boton-primario w-full">
-                Empezar simulacro
+              {!alcanza && esDesarrollo && (
+                <p className="text-sm" style={{ color: 'var(--neu-danger)' }}>
+                  No hay temas para desarrollar aquí. Hacen falta secciones con título, algo de texto y al menos 3 puntos clave (en **negrita**, o con plazos y quórums).
+                </p>
+              )}
+              {!alcanza && !esDesarrollo && <p className="text-sm" style={{ color: 'var(--neu-danger)' }}>Este material tiene solo {material} {material === 1 ? 'tarjeta' : 'tarjetas'}; hacen falta al menos {MIN_TARJETAS_SIMULACRO}.</p>}
+              <button onClick={() => empezar()} disabled={!alcanza} className="boton boton-primario w-full">
+                {esDesarrollo ? 'Empezar desarrollo' : 'Empezar simulacro'}
               </button>
             </section>
+          )}
+          {opcionesRamo.length > 0 && (
+            <PanelErroresPrueba registro={erroresPrueba} filtro={filtroRegistro} modo={modo} onPracticar={() => empezar(true)} onBorrar={() => borrarRegistroPrueba()} />
           )}
         </div>
       </div>
@@ -290,6 +398,72 @@ export function SimulacroPractica({ onVolver }: { onVolver: () => void }) {
             {indice + 1 < preguntas.length ? 'Siguiente' : 'Ver resultado'}
           </button>
           <p className="text-xs text-center" style={suave}>Teclas 1 a 4 para elegir · Enter para seguir</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (fase === 'desarrollando' && temas[temaI]) {
+    return (
+      <div className="h-full overflow-y-auto">
+        <div className="max-w-2xl mx-auto p-4 sm:p-6 space-y-4">
+          {cabecera(`Tema ${temaI + 1} de ${temas.length}`)}
+          <DesarrolloPregunta key={temas[temaI].id} pregunta={temas[temaI]} esUltima={temaI + 1 === temas.length} onTerminar={terminarTema} />
+        </div>
+      </div>
+    )
+  }
+
+  if (fase === 'resultadoDes') {
+    const logrados = resDes.filter((r) => r.cubiertos.filter(Boolean).length / r.pregunta.puntos.length >= UMBRAL_LOGRADO)
+    const porReforzar = resDes.filter((r) => !logrados.includes(r))
+    const repetirDesarrollo = () => {
+      if (porReforzar.length === 0) return
+      setTemas(porReforzar.map((r) => r.pregunta))
+      setTemaI(0)
+      setResDes([])
+      setInicio(Date.now())
+      setFase('desarrollando')
+    }
+    return (
+      <div className="h-full overflow-y-auto">
+        <div className="max-w-2xl mx-auto p-4 sm:p-6 space-y-4">
+          {cabecera('Resultado')}
+          <section className="neu-raised p-5 sm:p-6 text-center" aria-label="Resultado del desarrollo">
+            <p className="text-[44px] font-extrabold leading-none" style={{ color: 'var(--neu-ink)' }}>
+              {logrados.length}<span className="text-[22px] font-semibold" style={suave}> de {resDes.length} logrados</span>
+            </p>
+            <p className="text-sm mt-1" style={suave}>Tiempo: {minutosYSegundos(fin - inicio)} · «Logrado» es cubrir al menos el {Math.round(UMBRAL_LOGRADO * 100)} % de los puntos clave.</p>
+          </section>
+          <section className="neu-raised p-5 space-y-3" aria-label="Detalle por tema">
+            <h2 className="text-[17px] font-bold" style={{ color: 'var(--neu-ink)', fontFamily: 'var(--font-head)' }}>Por tema</h2>
+            <ul className="space-y-3">
+              {resDes.map(({ pregunta, cubiertos }) => {
+                const hechos = cubiertos.filter(Boolean).length
+                const falto = pregunta.puntos.filter((_, k) => !cubiertos[k])
+                return (
+                  <li key={pregunta.id} className="text-sm">
+                    <p className="flex gap-2 items-baseline">
+                      <span className="flex-1 min-w-0 font-semibold" style={{ color: 'var(--neu-ink)' }}>{pregunta.titulo}</span>
+                      <span className="flex-shrink-0 font-semibold" style={{ color: hechos / pregunta.puntos.length >= UMBRAL_LOGRADO ? '#059669' : '#dc2626' }}>
+                        {hechos} de {pregunta.puntos.length}
+                      </span>
+                    </p>
+                    {falto.length > 0 && <p style={suave}>Te faltó: {falto.map((p) => p.texto).join(' · ')}</p>}
+                  </li>
+                )
+              })}
+            </ul>
+          </section>
+          {porReforzar.length > 0 && (
+            <button onClick={repetirDesarrollo} className="boton boton-primario w-full">
+              Repetir lo que no logré ({porReforzar.length})
+            </button>
+          )}
+          <div className="flex gap-2">
+            <button onClick={() => setFase('config')} className={`boton ${porReforzar.length > 0 ? 'boton-suave' : 'boton-primario'} flex-1`}>Otro simulacro</button>
+            <button onClick={onVolver} className="boton boton-suave flex-1">Volver a Práctica</button>
+          </div>
         </div>
       </div>
     )

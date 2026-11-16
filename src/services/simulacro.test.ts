@@ -124,3 +124,13 @@ describe('preguntas de cantidad (plazos y quórums)', () => {
     for (const p of preguntas.filter((q) => q.tipo === 'numero')) expect(p.opciones[p.correcta]).toMatch(/días/)
   })
 })
+
+describe('simulacro con prioridad (practicar errores)', () => {
+  const tarjetas = Array.from({ length: 6 }, (_, i) => ({ id: `t${i}`, tipo: 'termino' as const, frente: `Concepto ${i}`, reverso: `Descripción larga número ${i} del concepto con varias palabras distintas` }))
+  it('solo pregunta las tarjetas pedidas y del tipo pedido', () => {
+    const { preguntas } = generarSimulacro(tarjetas, 10, () => 0.3, new Map([['t2', 'termino' as const], ['t4', 'definicion' as const]]))
+    expect(preguntas.map((p) => p.tarjetaId).sort()).toEqual(['t2', 't4'])
+    expect(preguntas.find((p) => p.tarjetaId === 't2')?.tipo).toBe('termino')
+    expect(preguntas.find((p) => p.tarjetaId === 't4')?.tipo).toBe('definicion')
+  })
+})

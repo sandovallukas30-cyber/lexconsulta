@@ -155,16 +155,18 @@ function preguntaDe(t: TarjetaRepaso, tipo: TipoPregunta, otras: TarjetaRepaso[]
 }
 
 /** Hasta `cantidad` preguntas, una por tarjeta. Con menos de 4 tarjetas no se puede armar (faltan opciones falsas). */
-export function generarSimulacro(tarjetas: TarjetaRepaso[], cantidad: number, azar: () => number = Math.random): { preguntas: PreguntaSimulacro[]; material: number } {
+export function generarSimulacro(tarjetas: TarjetaRepaso[], cantidad: number, azar: () => number = Math.random, prioridad?: Map<string, TipoPregunta>): { preguntas: PreguntaSimulacro[]; material: number } {
   const base = tarjetasParaSimulacro(tarjetas)
   if (base.length < MIN_TARJETAS_SIMULACRO) return { preguntas: [], material: base.length }
   const TIPOS: TipoPregunta[] = ['definicion', 'termino', 'hueco']
   const preguntas: PreguntaSimulacro[] = []
-  for (const t of mezclar(base, azar)) {
+  // con `prioridad` (tarjeta → tipo que fallaste) solo se pregunta eso, y de ese tipo; el resto del material sirve de opciones falsas
+  const aPreguntar = prioridad ? base.filter((t) => prioridad.has(t.id)) : base
+  for (const t of mezclar(aPreguntar, azar)) {
     if (preguntas.length >= cantidad) break
     const otras = base.filter((o) => o.id !== t.id)
     // si la definición trae un plazo o un quórum, casi siempre se pregunta eso: es lo que más se confunde
-    const primero: TipoPregunta = cantidadParaHueco(t.reverso, azar) && azar() < 0.7 ? 'numero' : TIPOS[Math.floor(azar() * TIPOS.length)]
+    const primero: TipoPregunta = prioridad?.get(t.id) ?? (cantidadParaHueco(t.reverso, azar) && azar() < 0.7 ? 'numero' : TIPOS[Math.floor(azar() * TIPOS.length)])
     const orden = [primero, ...TIPOS.filter((x) => x !== primero), 'numero' as const].filter((x, i, a) => a.indexOf(x) === i)
     for (const tipo of orden) {
       const p = preguntaDe(t, tipo, otras, azar)
