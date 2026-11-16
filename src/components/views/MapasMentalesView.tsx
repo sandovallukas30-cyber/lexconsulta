@@ -34,6 +34,7 @@ import { MenuCabeceraApunte, FilaMenuCabecera } from '../ui/MenuCabeceraApunte'
 import { registrarUso } from '../../services/uso'
 import { calcularLayoutMapaMental, elegirLadosConexion } from '../../services/layoutMapaMental'
 import { crearMapaDesdeEsquema } from '../../services/mapaDesdeEsquema'
+import { avanceRepaso, iniciarRepaso, raicesDe, repetirFalladas, type EstadoRepasoMapa } from '../../services/repasoMapa'
 import { ModalApunteDesdeMapa } from '../ui/ModalApunteDesdeMapa'
 
 // Inter solo para Mapas mentales (.fuente-mapa-mental). Va con la propia app
@@ -117,6 +118,14 @@ interface MentalCtx {
   estaColapsado: (id: string) => boolean
   cantidadOcultosSi: (id: string) => number
   toggleColapsado: (id: string) => void
+  /** Modo «Repasar»: null si no se está repasando. */
+  repaso: {
+    tapado: (id: string) => boolean
+    esRaiz: (id: string) => boolean
+    marca: (id: string) => boolean | undefined
+    revelar: (id: string) => void
+    marcar: (id: string, sabia: boolean) => void
+  } | null
 }
 
 const MentalContext = createContext<MentalCtx | null>(null)
@@ -797,6 +806,9 @@ function MapaMentalDetalle({
   // en el momento solo hace falta mirar una rama, no un cambio de
   // estructura. Cada vez que se reabre el mapa, todo empieza expandido.
   const [colapsados, setColapsados] = useState<Set<string>>(new Set())
+  // modo «Repasar»: qué está destapado y qué marcaste (solo de pantalla, no se guarda)
+  const [repaso, setRepaso] = useState<EstadoRepasoMapa | null>(null)
+  const raicesRepaso = useMemo(() => raicesDe(nodes.map((n) => n.id), edges), [nodes, edges])
 
   const hijosDe = useMemo(() => {
     const m = new Map<string, string[]>()
@@ -1323,9 +1335,26 @@ function MapaMentalDetalle({
         return vistos.size
       },
       toggleColapsado,
+      repaso: repaso
+        ? {
+            tapado: (id) => !repaso.revelados.has(id),
+            esRaiz: (id) => raicesRepaso.has(id),
+            marca: (id) => repaso.marcas.get(id),
+            revelar: (id) => setRepaso((r) => (r ? { ...r, revelados: new Set(r.revelados).add(id) } : r)),
+            marcar: (id, sabia) => setRepaso((r) => (r ? { ...r, marcas: new Map(r.marcas).set(id, sabia) } : r)),
+          }
+        : null,
     }),
-    [modoOscuro, handleActualizar, handleEliminarNodo, handleDuplicar, handleDuplicarRama, handleActualizarEtiqueta, hijosDe, colapsados, toggleColapsado]
+    [modoOscuro, handleActualizar, handleEliminarNodo, handleDuplicar, handleDuplicarRama, handleActualizarEtiqueta, hijosDe, colapsados, toggleColapsado, repaso, raicesRepaso]
   )
+
+  const empezarRepaso = () => {
+    setColapsados(new Set())
+    setNodes((ns) => ns.map((n) => (n.selected ? { ...n, selected: false } : n)))
+    setRepaso(iniciarRepaso(nodes.map((n) => n.id), edges))
+    registrarUso('mapa.repasar')
+  }
+  const avance = repaso ? avanceRepaso(repaso, nodes.map((n) => n.id), raicesRepaso) : null
 
   const guardarTitulo = () => {
     const t = tituloTmp.trim()
@@ -1442,6 +1471,19 @@ function MapaMentalDetalle({
             </div>
           )}
           <button
+            onClick={() => (repaso ? setRepaso(null) : empezarRepaso())}
+            disabled={!repaso && nodes.length < 2}
+            title="Repasar de memoria: las ramas quedan tapadas y las destapas de a una"
+            aria-pressed={!!repaso}
+            className={`h-8 px-2.5 rounded-lg flex items-center gap-1.5 text-sm font-medium flex-shrink-0 transition-colors disabled:opacity-40 ${
+              repaso ? 'text-white' : modoOscuro ? 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+            }`}
+            style={repaso ? { background: 'var(--accent-base)' } : undefined}
+          >
+            <i className="ti ti-brain text-base" aria-hidden="true" />
+            Repasar
+          </button>
+          <button
             onClick={() => {
               setBusquedaAbierta((v) => !v)
               if (busquedaAbierta) setBusqueda('')
@@ -1551,8 +1593,34 @@ function MapaMentalDetalle({
       <VistaImprimibleMapaMental mapa={mapa} />
       {crearApunte && <ModalApunteDesdeMapa mapa={mapa} onCerrar={() => setCrearApunte(false)} />}
 
+      {repaso && avance && (
+        <div
+          role="region"
+          aria-label="Repaso del mapa"
+          className={`flex flex-wrap items-center gap-2 px-3 sm:px-6 py-2 border-b text-sm flex-shrink-0 ${modoOscuro ? 'bg-zinc-900 border-zinc-800 text-zinc-200' : 'bg-white border-zinc-200 text-zinc-800'}`}
+        >
+          <i className="ti ti-brain" style={{ color: 'var(--accent-texto)' }} aria-hidden="true" />
+          <span className="font-semibold">Repasando</span>
+          <span aria-live="polite" className={modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}>
+            {avance.revisados} de {avance.total} · <span className="text-emerald-600 font-semibold">{avance.sabidas} sabías</span>
+            {avance.noSabidas > 0 && <> · <span className="text-red-600 font-semibold">{avance.noSabidas} no</span></>}
+          </span>
+          <span className="flex-1" />
+          {avance.revisados < avance.total && (
+            <span className={`hidden sm:inline text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>Toca un recuadro tapado, recuerda qué dice y destápalo</span>
+          )}
+          {avance.noSabidas > 0 && (
+            <button onClick={() => setRepaso((r) => (r ? repetirFalladas(r) : r))} className="boton boton-chico boton-suave">
+              Repasar las que no sabía
+            </button>
+          )}
+          <button onClick={() => setRepaso(null)} className="boton boton-chico boton-primario">
+            Terminar
+          </button>
+        </div>
+      )}
       <div className="flex-1 min-h-0 flex flex-col md:flex-row">
-      <div ref={wrapperRef} className="flex-1 relative min-w-0 min-h-0" onDoubleClick={alDobleClicLienzo}>
+      <div ref={wrapperRef} className="flex-1 relative min-w-0 min-h-0" onDoubleClick={repaso ? undefined : alDobleClicLienzo}>
         <MentalContext.Provider value={ctxValue}>
           <ReactFlow
             onInit={(instance) => {
@@ -1744,7 +1812,10 @@ function renderTextoEnriquecido(texto: string): React.ReactNode[] {
 
 function NodoMental(props: NodeProps<NodoFlow>) {
   const { id, data, selected } = props
-  const { modoOscuro, callbacks, tieneHijos, estaColapsado, cantidadOcultosSi, toggleColapsado } = useMentalCtx()
+  const { modoOscuro, callbacks, tieneHijos, estaColapsado, cantidadOcultosSi, toggleColapsado, repaso } = useMentalCtx()
+  const tapado = !!repaso?.tapado(id)
+  const marcaRepaso = repaso?.marca(id)
+  const porMarcar = !!repaso && !tapado && !repaso.esRaiz(id) && marcaRepaso === undefined
   const { updateNode } = useReactFlow<NodoFlow, EdgeWithData>()
   const [editando, setEditando] = useState(false)
   const [mostrandoTamanos, setMostrandoTamanos] = useState(false)
@@ -1886,7 +1957,7 @@ function NodoMental(props: NodeProps<NodoFlow>) {
         lineStyle={{ borderWidth: 2, borderStyle: 'dashed', opacity: 0.5 }}
       />
 
-      <NodeToolbar isVisible={selected || editando} position={Position.Top} offset={10}>
+      <NodeToolbar isVisible={(selected || editando) && !repaso} position={Position.Top} offset={10}>
         <div
           className={`flex items-center gap-0.5 px-1 py-1 rounded-lg shadow-lg ${
             modoOscuro ? 'bg-zinc-800 border border-zinc-700' : 'bg-white border border-zinc-200'
@@ -2053,7 +2124,7 @@ function NodoMental(props: NodeProps<NodoFlow>) {
         </div>
       </NodeToolbar>
 
-      <div className="relative" style={{ width: '100%', height: '100%', minHeight: 60 }} onDoubleClick={() => setEditando(true)}>
+      <div className="relative" style={{ width: '100%', height: '100%', minHeight: 60 }} onDoubleClick={repaso ? undefined : () => setEditando(true)}>
         {HANDLES_POR_LADO.map((h) => (
           <Handle
             key={h.id}
@@ -2109,6 +2180,39 @@ function NodoMental(props: NodeProps<NodoFlow>) {
           </button>
         )}
 
+        {tapado && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              repaso?.revelar(id)
+            }}
+            aria-label="Destapar este recuadro"
+            className="nodrag nopan absolute inset-0 z-40 rounded-xl flex flex-col items-center justify-center gap-0.5 border-2 border-dashed"
+            style={{ background: modoOscuro ? '#27272a' : '#f4f4f5', borderColor: color, color }}
+          >
+            <i className="ti ti-help-circle text-xl" aria-hidden="true" />
+            <span className="text-[11px] font-semibold">¿Qué va aquí?</span>
+          </button>
+        )}
+        {porMarcar && (
+          <div className="nodrag nopan absolute z-40 left-1/2 -translate-x-1/2 flex gap-1" style={{ top: '100%', marginTop: 6 }}>
+            <button onClick={(e) => { e.stopPropagation(); repaso?.marcar(id, true) }} className="h-8 px-2.5 rounded-lg text-xs font-semibold text-white shadow" style={{ background: '#059669' }}>
+              <i className="ti ti-check" aria-hidden="true" /> Sabía
+            </button>
+            <button onClick={(e) => { e.stopPropagation(); repaso?.marcar(id, false) }} className="h-8 px-2.5 rounded-lg text-xs font-semibold text-white shadow" style={{ background: '#dc2626' }}>
+              <i className="ti ti-x" aria-hidden="true" /> No
+            </button>
+          </div>
+        )}
+        {repaso && marcaRepaso !== undefined && (
+          <span
+            className="absolute z-40 -left-2 -top-2 w-6 h-6 rounded-full flex items-center justify-center text-white text-xs shadow"
+            style={{ background: marcaRepaso ? '#059669' : '#dc2626' }}
+            aria-label={marcaRepaso ? 'La sabías' : 'No la sabías'}
+          >
+            <i className={`ti ${marcaRepaso ? 'ti-check' : 'ti-x'}`} aria-hidden="true" />
+          </span>
+        )}
         <CuerpoNodo ficha={!!data.articulo && !editando} forma={data.forma} color={color} modoOscuro={modoOscuro} seleccionado={!!selected}>
           {editando ? (
             <textarea
@@ -2176,7 +2280,7 @@ function NodoMental(props: NodeProps<NodoFlow>) {
             de CuerpoNodo a propósito: no es parte de la figura, es una
             anotación pegada afuera, que es justo el punto (no requiere otro
             nodo + conexión para algo tan chico). */}
-        {data.nota && !editandoNota && (
+        {data.nota && !editandoNota && !tapado && (
           <button
             onClick={(e) => {
               e.stopPropagation()
