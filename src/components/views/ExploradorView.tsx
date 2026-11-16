@@ -2,6 +2,7 @@ import { useAjustes, sumarTamanoCodigo, TAMANO_CODIGO_MIN, TAMANO_CODIGO_MAX } f
 import { registrarUso } from '../../services/uso'
 import { NotaArticulo } from '../ui/NotaArticulo'
 import { RecitarMemoria } from '../ui/RecitarMemoria'
+import { CompararArticulos } from '../ui/CompararArticulos'
 import { useState, useMemo, useEffect, useRef, useCallback, type ReactNode, type TouchEvent } from 'react'
 import { obtenerCodigo } from '../../services/codigos'
 import { citadoPor } from '../../services/citadoPor'
@@ -77,6 +78,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
   const [esquemaAbierto, setEsquemaAbierto] = useState(false)
   const [modoLecturaAbierto, setModoLecturaAbierto] = useState(false)
   const [recitando, setRecitando] = useState(false)
+  const [comparando, setComparando] = useState(false)
   const [busquedaAbierta, setBusquedaAbierta] = useState(false)
   const [busqueda, setBusqueda] = useState('')
   // coincidencia a marcar en el artículo al abrirlo desde una búsqueda de texto
@@ -440,6 +442,15 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
                 <i className="ti ti-printer text-sm" aria-hidden />
               </button>
               <button
+                onClick={() => setComparando(true)}
+                title="Comparar este artículo con otro, lado a lado y con las diferencias marcadas"
+                aria-label={`Comparar ${seleccionado.a} con otro artículo`}
+                className="boton boton-fantasma boton-chico max-sm:boton-icono"
+              >
+                <i className="ti ti-columns text-sm" aria-hidden />
+                <span className="hidden lg:inline">Comparar</span>
+              </button>
+              <button
                 onClick={() => setRecitando(true)}
                 title="Recitar este artículo de memoria: escribes lo que recuerdas y la app marca lo que faltó"
                 aria-label={`Recitar ${seleccionado.a} de memoria`}
@@ -469,6 +480,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
           <CitadoPor codigo={tipoActivo} articulo={seleccionado.a} modoOscuro={modoOscuro} />
           <VinculosArticulo codigo={tipoActivo} articulo={seleccionado.a} modoOscuro={modoOscuro} />
           <NotaArticulo key={`${tipoActivo}:${seleccionado.a}`} codigo={tipoActivo} articulo={seleccionado.a} modoOscuro={modoOscuro} />
+          {comparando && <CompararArticulos codigo={tipoActivo} articulo={seleccionado.a} onCerrar={() => setComparando(false)} />}
           {recitando && <RecitarMemoria titulo={`${seleccionado.a}`} texto={seleccionado.t} onCerrar={() => setRecitando(false)} />}
         </motion.article>
   ) : null

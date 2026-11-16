@@ -54,6 +54,7 @@ export const FUNCIONES_USO = {
   'practica.jugar': 'Empezar un juego de práctica',
   'practica.simulacro': 'Hacer un simulacro con tus apuntes',
   'practica.recitar': 'Recitar de memoria un artículo o un apunte',
+  'explorador.comparar': 'Comparar dos artículos lado a lado',
   'mapa.repasar': 'Repasar un mapa mental de memoria',
   'mapa.tarjetas': 'Crear tarjetas de repaso desde un mapa mental',
   'practica.mazo': 'Repasar un mazo con filtros',
