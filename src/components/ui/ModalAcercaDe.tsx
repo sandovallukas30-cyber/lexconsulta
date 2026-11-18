@@ -217,7 +217,7 @@ export function Privacidad({ modoOscuro }: { modoOscuro: boolean }) {
         intervienen si las usas, y que reciben tu dirección IP al hacerlo: YouTube y Vimeo (al pegar un video en la
         Sala de estudio) y jsDelivr y PyPI (al importar un PDF de Notion se descarga el programa que lo lee; el PDF no
         sale de tu dispositivo). Varios de estos proveedores están en otros países. Cada uno trata los datos según sus
-        propias políticas. No usamos cookies de seguimiento ni analítica de terceros, y no vendemos datos. Para detectar
+        propias políticas. No usamos cookies de seguimiento y no vendemos datos. Para contar visitas usamos Vercel Web Analytics, que mide páginas vistas, país, tipo de dispositivo y navegador de forma agregada, sin cookies ni identificarte; se puede apagar en Configuración (estadísticas de uso) o con la opción «No rastrear» del navegador. Para detectar
         fallos, la aplicación envía a nuestro propio servidor avisos técnicos <strong>anónimos</strong>: el tipo de
         error y un fragmento de su mensaje (sin correos ni enlaces), el archivo y la ruta donde ocurrió, la sección
         abierta, la versión de la aplicación, si está instalada, el tipo de pantalla y de conexión y la velocidad de

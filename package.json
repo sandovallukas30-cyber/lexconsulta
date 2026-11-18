@@ -26,6 +26,7 @@
     "@tiptap/pm": "^3.31.3",
     "@tiptap/react": "^3.31.3",
     "@tiptap/starter-kit": "^3.31.3",
+    "@vercel/analytics": "^2.0.1",
     "@xyflow/react": "^12.10.2",
     "framer-motion": "^12.39.0",
     "pdfmake": "^0.3.14",

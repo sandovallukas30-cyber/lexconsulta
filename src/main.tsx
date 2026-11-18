@@ -12,9 +12,11 @@ import { LimiteError } from './components/ui/LimiteError'
 import './services/navegacion'
 import { useStore } from './store/useStore'
 import { iniciarReporteTecnico } from './services/reporteTecnico'
+import { inject } from '@vercel/analytics'
 import { iniciarUso } from './services/uso'
 import { useEnfoque } from './store/useEnfoque'
 import { useCuenta } from './store/useCuenta'
+import { useAjustes } from './store/useAjustes'
 
 // Solo en desarrollo: acceso al store desde la consola / pruebas automatizadas.
 if (import.meta.env.DEV) {
@@ -58,6 +60,14 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
 iniciarReporteTecnico(() => useStore.getState().vistaActiva)
 // estadísticas de uso anónimas: apagadas salvo que el despliegue las habilite (VITE_USO_ACTIVO=1); ver docs/ANALITICA_USO.md
 iniciarUso(() => useStore.getState().vistaActiva)
+// Vercel Web Analytics (visitas, páginas, país y dispositivo; sin cookies ni identificador personal).
+// Solo en producción y se omite si el navegador pide no ser rastreado o la persona apagó las estadísticas.
+if (import.meta.env.PROD) {
+  inject({
+    beforeSend: (ev) =>
+      navigator.doNotTrack === '1' || !useAjustes.getState().compartirUso ? null : ev,
+  })
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
