@@ -1,3 +1,4 @@
+import { JUEGOS_IA_ACTIVOS } from '../../config'
 import { usoDisponible } from '../../services/uso'
 
 /** Contenido de «Acerca de» y de las páginas legales. El marco (ventana y menú de secciones) está en ModalConfiguracion. */
@@ -151,7 +152,8 @@ export function Privacidad({ modoOscuro }: { modoOscuro: boolean }) {
           <li>Sin cuenta, tus apuntes, tareas y ajustes se guardan solo en tu dispositivo.</li>
           <li>Con cuenta, se guarda una copia en Supabase para sincronizar tus dispositivos. No está cifrada de extremo a extremo.</li>
           <li>No hay publicidad ni cookies de seguimiento, y no vendemos datos.</li>
-          <li>Los juegos de práctica usan inteligencia artificial (Anthropic), sin enviar tus apuntes ni datos personales.</li>
+          {JUEGOS_IA_ACTIVOS && <li>Los juegos de práctica usan inteligencia artificial (Anthropic), sin enviar tus apuntes ni datos personales.</li>}
+          {!JUEGOS_IA_ACTIVOS && <li>Por ahora Prima Lex no usa inteligencia artificial: nada de lo que escribes se envía a un modelo de IA.</li>}
           <li>Puedes eliminar tu cuenta y tu copia en la nube desde tu perfil.</li>
         </ul>
         <p className="mt-2 text-xs">El detalle completo está más abajo.</p>
@@ -194,17 +196,16 @@ export function Privacidad({ modoOscuro }: { modoOscuro: boolean }) {
 
       <H modoOscuro={modoOscuro}>5. Límite diario de los juegos de práctica</H>
       <P modoOscuro={modoOscuro}>
-        Los juegos tienen un límite diario de partidas. Si tienes sesión iniciada, la app envía al servidor el
-        token de tu sesión para que Supabase confirme tu correo y se te dé un límite mayor; el servidor usa ese correo
-        solo para contar tus partidas del día, en su memoria temporal (hasta 24 horas), y no lo guarda en ninguna
-        base de datos. Sin sesión, el límite se cuenta por dirección IP.
+        {JUEGOS_IA_ACTIVOS
+          ? 'Los juegos tienen un límite diario de partidas. Si tienes sesión iniciada, la app envía al servidor el token de tu sesión para que Supabase confirme tu correo y se te dé un límite mayor; el servidor usa ese correo solo para contar tus partidas del día, en su memoria temporal (hasta 24 horas), y no lo guarda en ninguna base de datos. Sin sesión, el límite se cuenta por dirección IP.'
+          : 'Los juegos con límite diario (que usaban inteligencia artificial) están desactivados por ahora, así que no se cuenta ningún uso ni se envía tu sesión a ese servicio.'}
       </P>
 
       <H modoOscuro={modoOscuro}>6. Inteligencia artificial</H>
       <P modoOscuro={modoOscuro}>
-        Los juegos Pasapalabra y Ahorcado piden palabras y definiciones al modelo de Anthropic a través de un servidor
-        intermediario que protege la credencial. Esa solicitud indica el área del derecho y el formato del juego; no
-        incluye tus apuntes ni datos personales.
+        {JUEGOS_IA_ACTIVOS
+          ? 'Los juegos Pasapalabra y Ahorcado piden palabras y definiciones al modelo de Anthropic a través de un servidor intermediario que protege la credencial. Esa solicitud indica el área del derecho y el formato del juego; no incluye tus apuntes ni datos personales.'
+          : 'Por ahora Prima Lex no usa inteligencia artificial: los juegos que la usaban están desactivados y ninguna función envía tus apuntes ni datos personales a un modelo de IA. Si se vuelven a activar, esta sección se actualizará antes.'}
       </P>
 
       <H modoOscuro={modoOscuro}>7. Datos técnicos y terceros que intervienen</H>
@@ -212,7 +213,7 @@ export function Privacidad({ modoOscuro }: { modoOscuro: boolean }) {
         Para evitar abusos, el servidor mantiene en memoria un contador temporal de usos por dirección IP, que se
         descarta automáticamente. Intervienen como proveedores: Vercel (alojamiento; puede registrar datos técnicos de
         conexión como la IP), Supabase (cuentas, base de datos y envío del enlace de ingreso por correo), Google y Microsoft (solo si eliges
-        entrar con tu cuenta de alguno de ellos) y Anthropic (juegos). Algunas funciones usan además servicios que solo
+        entrar con tu cuenta de alguno de ellos){JUEGOS_IA_ACTIVOS ? ' y Anthropic (juegos)' : ''}. Algunas funciones usan además servicios que solo
         intervienen si las usas, y que reciben tu dirección IP al hacerlo: YouTube y Vimeo (al pegar un video en la
         Sala de estudio) y jsDelivr y PyPI (al importar un PDF de Notion se descarga el programa que lo lee; el PDF no
         sale de tu dispositivo). Varios de estos proveedores están en otros países. Cada uno trata los datos según sus
@@ -322,7 +323,7 @@ export function Terminos({ modoOscuro }: { modoOscuro: boolean }) {
       <H modoOscuro={modoOscuro}>9. Modificaciones</H>
       <P modoOscuro={modoOscuro}>
         Estos Términos pueden actualizarse. La versión vigente es siempre la publicada en esta sección, con su fecha.
-        Antes de ofrecer planes de pago se publicarán condiciones específicas.
+        Prima Lex es gratis y todas sus funciones están disponibles para todas las personas. Si existe un enlace para donar, la donación es voluntaria y no da ventajas ni cambia lo que puedes usar.
       </P>
 
       <H modoOscuro={modoOscuro}>10. Cuentas</H>

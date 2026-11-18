@@ -10,6 +10,7 @@ import { RepasoColecciones } from '../ui/RepasoColecciones'
 import { SimulacroPractica } from '../ui/SimulacroPractica'
 import { MazoRepaso } from '../ui/MazoRepaso'
 import { contarTarjetasVencidas } from '../../services/actividadEstudio'
+import { JUEGOS_IA_ACTIVOS } from '../../config'
 import { obtenerCodigosConPreguntas } from '../../data/destelloPreguntas'
 import type { AreaPractica, EntradaRosco, PartidaPasapalabra, PartidaAhorcado, CodigoActivo, CodigoTipo } from '../../types'
 
@@ -59,7 +60,7 @@ export function PracticaView() {
 
   // Si entramos a la vista y hay una partida pausada sin terminar, mostrar el modal
   useEffect(() => {
-    if (partida && partida.pausadaEn && !partida.finalizada) {
+    if (JUEGOS_IA_ACTIVOS && partida && partida.pausadaEn && !partida.finalizada) {
       setMostrarContinuar(true)
     }
   }, [partida])
@@ -246,7 +247,7 @@ function MenuSeleccionJuegos({
             </div>
           </motion.button>
 
-          {/* Pasapalabra */}
+          {JUEGOS_IA_ACTIVOS && (
           <motion.button
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -284,6 +285,7 @@ function MenuSeleccionJuegos({
               Desafío de velocidad
             </div>
           </motion.button>
+          )}
 
           {/* Quiz Jurídico */}
           <motion.button
@@ -324,7 +326,7 @@ function MenuSeleccionJuegos({
             </div>
           </motion.button>
 
-          {/* El Acusado (ahorcado) */}
+          {JUEGOS_IA_ACTIVOS && (
           <motion.button
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -362,6 +364,7 @@ function MenuSeleccionJuegos({
               Ahorcado jurídico
             </div>
           </motion.button>
+          )}
         </div>
       </div>
     </div>

@@ -20,6 +20,7 @@ describe('api/anthropic: identidad del usuario', () => {
   beforeEach(() => {
     vi.resetModules()
     process.env.ANTHROPIC_API_KEY = 'x'
+    process.env.JUEGOS_IA_ACTIVOS = '1'
     delete process.env.VITE_SUPABASE_URL
     vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ content: [] }) })))
   })
@@ -89,5 +90,14 @@ describe('api/anthropic: identidad del usuario', () => {
       estados.push(r.status)
     }
     expect(estados.includes(429)).toBe(false) // 12 > 10 de visitante, bajo los 30 de verificado
+  })
+
+  it('con los juegos con IA apagados no llama a Anthropic ni consume cupo', async () => {
+    delete process.env.JUEGOS_IA_ACTIVOS
+    const { default: handler } = await import('../../api/anthropic')
+    const { r, res } = respuesta()
+    await handler(pedido('9.9.9.9', cuerpoBase), res)
+    expect(r.status).toBe(503)
+    expect(fetch).not.toHaveBeenCalled()
   })
 })

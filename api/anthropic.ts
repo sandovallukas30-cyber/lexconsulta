@@ -145,6 +145,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
+  // Interruptor: sin JUEGOS_IA_ACTIVOS=1 en Vercel este servicio no gasta nada, aunque alguien lo llame directo
+  if (process.env.JUEGOS_IA_ACTIVOS !== '1') {
+    return res.status(503).json({ error: 'Los juegos con IA están desactivados por ahora' })
+  }
+
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
     console.error('[anthropic] falta ANTHROPIC_API_KEY en el servidor')

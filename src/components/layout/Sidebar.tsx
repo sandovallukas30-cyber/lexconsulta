@@ -1,3 +1,5 @@
+import { DONACION_URL } from '../../config'
+import { ApoyarPrimaLex } from '../ui/ApoyarPrimaLex'
 import { precargarVista } from '../../vistas'
 import { useEffect, useState } from 'react'
 import { useDialogo } from '../../hooks/useDialogo'
@@ -265,10 +267,15 @@ export function Sidebar() {
 
           {!colapsado && (
             <p className={`pie-legal mt-1 px-3 text-[13px] leading-snug ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
-              Gratis por ahora ·{' '}
               <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="underline">Privacidad</a>
               {' · '}
               <a href="/terminos" target="_blank" rel="noopener noreferrer" className="underline">Términos</a>
+              {DONACION_URL && (
+                <>
+                  {' · '}
+                  <ApoyarPrimaLex compacto />
+                </>
+              )}
             </p>
           )}
 

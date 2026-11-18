@@ -1,3 +1,5 @@
+import { DONACION_URL } from '../../config'
+import { ApoyarPrimaLex } from './ApoyarPrimaLex'
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useStore } from '../../store/useStore'
@@ -233,7 +235,6 @@ function Grupo({ titulo, descripcion, children, modoOscuro }: { titulo?: string;
 
 function SeccionPerfil({ modoOscuro }: { modoOscuro: boolean }) {
   const perfil = useCuenta((s) => s.perfil)
-  const plan = useCuenta((s) => s.plan)
   const abrirCuenta = useCuenta((s) => s.abrirModal)
   const animal = useAjustes((s) => s.avatarAnimal)
   const poner = useAjustes((s) => s.set)
@@ -249,11 +250,6 @@ function SeccionPerfil({ modoOscuro }: { modoOscuro: boolean }) {
               {perfil ? perfil.email : 'Tus datos se guardan solo en este dispositivo.'}
             </p>
           </div>
-          {perfil && (
-            <span className="neu-chip px-3 py-1 text-xs font-bold uppercase flex-shrink-0" style={{ color: plan === 'pro' ? 'var(--accent-texto)' : 'var(--neu-ink2)' }}>
-              {plan === 'pro' ? 'Pro' : 'Gratis'}
-            </span>
-          )}
         </div>
         {cuentasDisponibles && (
           <div className="flex flex-wrap items-center gap-3">
@@ -267,6 +263,12 @@ function SeccionPerfil({ modoOscuro }: { modoOscuro: boolean }) {
           </div>
         )}
       </Grupo>
+
+      {DONACION_URL && (
+        <Grupo titulo="Apoyar Prima Lex" modoOscuro={modoOscuro}>
+          <ApoyarPrimaLex />
+        </Grupo>
+      )}
 
       <Grupo titulo="Foto de perfil" descripcion="Elige un animal. Se guarda en este dispositivo." modoOscuro={modoOscuro}>
         <div role="radiogroup" aria-label="Foto de perfil" className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-7 gap-2">

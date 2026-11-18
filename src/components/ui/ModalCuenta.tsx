@@ -127,9 +127,6 @@ function ContenidoModalCuenta() {
                 <p className="text-sm truncate" style={{ color: 'var(--neu-ink2)' }}>{c.perfil.email}</p>
                 <p className="text-xs" style={{ color: 'var(--neu-ink3)' }}>Entraste con {NOMBRE_PROVEEDOR[c.perfil.proveedor] ?? c.perfil.proveedor}</p>
               </div>
-              <span className="ml-auto neu-chip px-3 py-1 text-xs font-bold uppercase" style={{ color: c.plan === 'pro' ? 'var(--accent-texto)' : 'var(--neu-ink2)' }}>
-                {c.plan === 'pro' ? 'Pro' : 'Gratis'}
-              </span>
             </div>
 
             {c.conflictoDispositivo && (
@@ -237,7 +234,7 @@ function ContenidoModalCuenta() {
               <a href="/terminos" target="_blank" rel="noopener noreferrer" className="underline">Términos</a>
               {' '}y la{' '}
               <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="underline">Política de privacidad</a>
-              . Prima Lex es gratis por ahora; si algún día cobra, lo avisaremos antes.
+              . Prima Lex es gratis.
             </p>
           </div>
         )}
