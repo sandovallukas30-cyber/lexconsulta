@@ -4,7 +4,7 @@ import { tituloSinFecha } from './mapaApunte'
 /** Mapa mental → tarjetas de repaso, sin IA. Cada nodo que tiene ramas se vuelve una tarjeta: al frente el nodo (con
  *  su nodo padre para dar contexto) y atrás sus ramas. Los nodos con nota al margen también: al frente el nodo y
  *  atrás la nota. Se escribe como un apunte con el formato «- **Frente:** reverso», el mismo que el repaso ya
- *  convierte en tarjetas: así entran al repaso espaciado, al simulacrosin nada aparte. */
+ *  convierte en tarjetas: así entran al repaso espaciado, al simulacro sin nada aparte. */
 
 type Nodo = MapaMental['nodos'][number]
 
