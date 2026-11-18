@@ -105,7 +105,9 @@ export function cantidadParaHueco(reverso: string, azar: () => number = Math.ran
     if (valor === undefined) return null
     const lejos = PLAZOS_USUALES.filter((n) => n !== valor).sort((a, b) => Math.abs(Math.log(a / valor)) - Math.abs(Math.log(b / valor)))
     const candidatos = mezclar(lejos.slice(0, 6), azar).slice(0, 3)
-    const poner = (n: number) => `${esDigito ? n : (NUM_PAL[n] ?? String(n))} ${unidad}${calif}`
+    // «1 mes», no «1 meses»
+    const SINGULAR: Record<string, string> = { días: 'día', meses: 'mes', años: 'año', horas: 'hora', semanas: 'semana' }
+    const poner = (n: number) => `${esDigito ? n : (NUM_PAL[n] ?? String(n))} ${n === 1 ? (SINGULAR[unidad.toLowerCase()] ?? unidad) : unidad}${calif}`
     return { texto: completo, falsas: candidatos.map(poner) }
   }
   const num = RE_FRACCION_NUM.exec(reverso)

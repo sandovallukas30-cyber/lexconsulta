@@ -134,3 +134,15 @@ describe('simulacro con prioridad (practicar errores)', () => {
     expect(preguntas.find((p) => p.tarjetaId === 't4')?.tipo).toBe('definicion')
   })
 })
+
+describe('plazos de una unidad', () => {
+  it('no escribe «1 meses» ni «1 días»', () => {
+    for (let s = 0; s < 60; s++) {
+      const azar = azarFijo(s)
+      const m = cantidadParaHueco('dentro de 3 meses desde el cese', azar)
+      expect(m?.falsas.some((f) => /^1 (meses|días|años)/.test(f))).toBe(false)
+      const d = cantidadParaHueco('tiene 30 días para responder', azar)
+      expect(d?.falsas.some((f) => /^1 (meses|días|años)/.test(f))).toBe(false)
+    }
+  })
+})
