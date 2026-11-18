@@ -345,6 +345,29 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
     return () => window.removeEventListener('keydown', handler, true)
   }, [])
 
+  // ← / → cambian de artículo (con teclado físico, también en iPad). No actúan escribiendo, con un menú/diálogo
+  // abierto, con texto seleccionado ni en el modo lectura (que tiene su propio atajo).
+  const bloqueaFlechas = modoLecturaAbierto || busquedaAbierta || indiceAbierto || comparando || recitando
+  useEffect(() => {
+    if (bloqueaFlechas) return
+    const alTeclear = (e: KeyboardEvent) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
+      if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || e.defaultPrevented) return
+      const el = e.target as HTMLElement | null
+      if (el?.closest?.('input, textarea, select, [contenteditable=""], [contenteditable="true"], [role="menu"], [role="dialog"], [role="tablist"], [role="slider"], [role="listbox"]')) return
+      if (document.querySelector('[role="dialog"][aria-modal="true"]')) return
+      if (!(window.getSelection()?.isCollapsed ?? true)) return
+      const dir: 1 | -1 = e.key === 'ArrowRight' ? 1 : -1
+      const destino = dir === 1 ? siguiente : anterior
+      if (!destino) return
+      e.preventDefault()
+      if (esTactil) deslizarA(dir)
+      else setSeleccionadoId(destino.a)
+    }
+    window.addEventListener('keydown', alTeclear)
+    return () => window.removeEventListener('keydown', alTeclear)
+  })
+
   if (cargandoCodigo) {
     return <PantallaCargandoCodigo modoOscuro={modoOscuro} />
   }
