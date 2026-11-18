@@ -2,7 +2,6 @@ import { SelectPrima } from '../ui/SelectPrima'
 import { useEffect, useMemo, useState } from 'react'
 import { useStore } from '../../store/useStore'
 import { LoQueSigue } from '../hoy/LoQueSigue'
-import { HoyTeToca } from '../hoy/HoyTeToca'
 import { Solemnes } from '../hoy/Solemnes'
 import { CompartirSemana } from '../hoy/CompartirSemana'
 import { AnilloProgreso } from '../ui/AnilloProgreso'
@@ -152,8 +151,6 @@ export function HoyView() {
         </header>
 
         <LoQueSigue />
-
-        <HoyTeToca />
 
         {sinNada && (
           <section className="neu-raised p-5" aria-label="Primeros pasos">
