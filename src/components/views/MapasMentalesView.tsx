@@ -865,7 +865,12 @@ function MapaMentalDetalle({
 
   // Guardar en el store cada vez que cambian nodos/conexiones — mismo patrón
   // que Canvas: estado "vivo" en React Flow, persistencia en un efecto aparte.
+  // Se guarda con una pausa de 350 ms: mientras arrastras un nodo la posición cambia en cada fotograma y reescribir
+  // el mapa entero (y el store) a esa velocidad dejaba el arrastre en ~30 fps en un equipo lento. Lo pendiente se
+  // guarda también al salir del mapa o al cerrar la pestaña.
+  const guardadoPendiente = useRef<(() => void) | null>(null)
   useEffect(() => {
+    const guardar = () => {
     const nodosPersist: NodoMapaMental[] = nodes.map((n) => ({
       id: n.id,
       posicion: n.position,
@@ -887,8 +892,26 @@ function MapaMentalDetalle({
       etiqueta: typeof e.label === 'string' ? e.label : undefined,
     }))
     actualizarMapaMental(mapa.id, { nodos: nodosPersist, conexiones: conexionesPersist })
+    }
+    guardadoPendiente.current = guardar
+    const t = window.setTimeout(() => {
+      guardar()
+      guardadoPendiente.current = null
+    }, 350)
+    return () => window.clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodes, edges])
+  useEffect(() => {
+    const volcar = () => {
+      guardadoPendiente.current?.()
+      guardadoPendiente.current = null
+    }
+    window.addEventListener('pagehide', volcar)
+    return () => {
+      window.removeEventListener('pagehide', volcar)
+      volcar()
+    }
+  }, [])
 
   // ============= HISTORIAL (deshacer/rehacer) =============
   // Mismo patrón que CanvasView.tsx: snapshots manuales en un ref (no el

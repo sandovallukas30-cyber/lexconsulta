@@ -155,7 +155,7 @@
 }
 .enf-con-fondo .enf-foco-centro .enf-reloj { text-shadow: 0 2px 12px rgba(0, 0, 0, .5); }
 .enf-con-fondo .boton-primario { background: #fff; color: #10162b; box-shadow: 0 4px 14px rgba(0, 0, 0, .35); }
-.enf-con-fondo .boton-suave, .enf-con-fondo .boton-fantasma, .enf-con-fondo .enf-pie, .enf-con-fondo .enf-panel { backdrop-filter: blur(6px); }
+/* (sin backdrop-filter sobre la escena: con decenas de animaciones debajo, Safari y los equipos lentos pierden fluidez) */
 .enf-con-fondo .boton-fantasma { color: #fff; text-shadow: 0 1px 5px rgba(0, 0, 0, .7); }
 .enf-con-fondo .enf-sobretitulo, .enf-con-fondo .enf-fondo-muestra, .enf-con-fondo .enf-fondo-opcion { text-shadow: 0 1px 5px rgba(0, 0, 0, .75); }
 .enf-con-fondo .enf-fondo-muestra { color: #fff; }
@@ -163,13 +163,13 @@
 .enf-con-fondo .enf-panel { background: rgba(8, 12, 28, .62); }
 .enf-con-fondo select option { color: #10162b; background: #fff; }
 /* el control segmentado y los textos sueltos sobre la escena: fondo oscuro translúcido y texto claro */
-.enf-tarjeta.enf-con-fondo .neu-pressed { background: rgba(8, 12, 28, .55); backdrop-filter: blur(6px); }
+.enf-tarjeta.enf-con-fondo .neu-pressed { background: rgba(8, 12, 28, .6); }
 .enf-tarjeta.enf-con-fondo .neu-pressed button[aria-pressed="false"] { color: rgba(255, 255, 255, .88); }
 .enf-tarjeta.enf-con-fondo p.text-xs { text-shadow: 0 1px 4px rgba(0, 0, 0, .8); }
 /* escenas claras (cielo de día, playa, otoño, cafetería): un velo oscuro bajo los controles de la tarjeta */
 .enf-tarjeta.enf-con-fondo .enf-fondo::after { content: ""; position: absolute; inset: 0; background: rgba(6, 10, 24, .38); pointer-events: none; }
 .enf-con-fondo input[type="checkbox"]:checked::after { border-color: #fff; }
-.enf-con-fondo .enf-foco-tarea { background: rgba(8, 12, 28, .42); backdrop-filter: blur(6px); }
+.enf-con-fondo .enf-foco-tarea { background: rgba(8, 12, 28, .5); }
 
 /* Con fondo en la tarjeta del temporizador (pantalla normal de Enfoque): los grises de
    Tailwind que usa la vista pasan a las tintas claras para leerse sobre la escena. */

@@ -3,7 +3,7 @@ import { registrarUso } from '../../services/uso'
 import { NotaArticulo } from '../ui/NotaArticulo'
 import { RecitarMemoria } from '../ui/RecitarMemoria'
 import { CompararArticulos } from '../ui/CompararArticulos'
-import { useState, useMemo, useEffect, useRef, useCallback, type ReactNode, type TouchEvent } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback, useDeferredValue, type ReactNode, type TouchEvent } from 'react'
 import { obtenerCodigo } from '../../services/codigos'
 import { citadoPor } from '../../services/citadoPor'
 import { createPortal, flushSync } from 'react-dom'
@@ -1484,7 +1484,9 @@ function ModalBusqueda({
   const [indiceActivo, setIndiceActivo] = useState(0)
 
   // C7: ids tolerantes ("183a", "183-A", "4 bis") y texto sin tildes
-  const resultados = useMemo(() => buscarEnCodigo(arts, busqueda), [arts, busqueda])
+  // el valor diferido deja escribir sin trabarse: la lista se actualiza cuando el teclado da un respiro
+  const busquedaDiferida = useDeferredValue(busqueda)
+  const resultados = useMemo(() => buscarEnCodigo(arts, busquedaDiferida), [arts, busquedaDiferida])
 
   useEffect(() => {
     setIndiceActivo(0)
