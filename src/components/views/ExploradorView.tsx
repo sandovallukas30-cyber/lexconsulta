@@ -10,6 +10,7 @@ import { createPortal, flushSync } from 'react-dom'
 import { motion, AnimatePresence, animate, useMotionValue } from 'framer-motion'
 import { useStore } from '../../store/useStore'
 import { useProgresoScroll } from '../../hooks/useProgresoScroll'
+import { useEsMovil } from '../../hooks/useEsMovil'
 import { useCodigo } from '../../hooks/useCodigo'
 import { useReferenciasFiltradas } from '../../hooks/useReferencias'
 import { SelectorCodigo } from '../ui/SelectorCodigo'
@@ -422,53 +423,26 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
             modoOscuro ? 'bg-zinc-800/40 border border-zinc-800' : 'bg-white shadow-tarjeta border border-zinc-200/60'
           }`}
         >
-          <div className="flex flex-wrap items-baseline justify-between gap-3 mb-6">
+          <div className="flex items-center justify-between gap-3 mb-6">
             <h1
               className={`font-serif font-bold whitespace-nowrap ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}
               style={{ fontSize: Math.round(tamanoCodigo * 1.75) }}
             >
               <span style={{ color: 'var(--accent-texto)' }}>{seleccionado.a}</span>
             </h1>
-            <div className="flex flex-wrap items-center justify-end gap-2 min-w-0">
+            <div className="flex items-center justify-end gap-2 min-w-0">
               <span className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
                 {indiceActual + 1} de {arts.length}
               </span>
-              <button
-                onClick={() => imprimir('articulo')}
-                title="Imprimir o guardar como PDF solo este artículo"
-                aria-label={`Imprimir ${seleccionado.a}`}
-                className="boton boton-fantasma boton-chico boton-icono max-sm:hidden"
-              >
-                <i className="ti ti-printer text-sm" aria-hidden />
-              </button>
-              <button
-                onClick={() => setComparando(true)}
-                title="Comparar este artículo con otro, lado a lado y con las diferencias marcadas"
-                aria-label={`Comparar ${seleccionado.a} con otro artículo`}
-                className="boton boton-fantasma boton-chico max-sm:boton-icono"
-              >
-                <i className="ti ti-columns text-sm" aria-hidden />
-                <span className="hidden lg:inline">Comparar</span>
-              </button>
-              <button
-                onClick={() => setRecitando(true)}
-                title="Recitar este artículo de memoria: escribes lo que recuerdas y la app marca lo que faltó"
-                aria-label={`Recitar ${seleccionado.a} de memoria`}
-                className="boton boton-fantasma boton-chico max-sm:boton-icono"
-              >
-                <i className="ti ti-brain text-sm" aria-hidden />
-                <span className="hidden lg:inline">Recitar</span>
-              </button>
-              <button
-                onClick={copiarConCita}
-                title={`Copiar el texto con la cita "${citaArticulo(tipoActivo, seleccionado.a)}" y la fuente`}
-                aria-label={`Copiar ${seleccionado.a} con cita`}
-                className="boton boton-fantasma boton-chico max-sm:boton-icono"
-              >
-                <i className="ti ti-copy text-sm" aria-hidden />
-                <span className="hidden lg:inline">Copiar con cita</span>
-              </button>
-              <GuardarEnColeccion codigo={tipoActivo} articulo={seleccionado.a} modoOscuro={modoOscuro} />
+              <AccionesArticulo
+                codigo={tipoActivo}
+                articulo={seleccionado.a}
+                modoOscuro={modoOscuro}
+                onImprimir={() => imprimir('articulo')}
+                onComparar={() => setComparando(true)}
+                onRecitar={() => setRecitando(true)}
+                onCopiar={copiarConCita}
+              />
             </div>
           </div>
           <ArticuloTexto
@@ -815,7 +789,90 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
 
 /** «Guardar» junto al artículo: lo agrega o lo quita de una colección, o crea una nueva.
  *  Antes el único camino era al revés (Colecciones → Agregar artículo) y no se descubría. */
-function GuardarEnColeccion({ codigo, articulo, modoOscuro }: { codigo: CodigoTipo; articulo: string; modoOscuro: boolean }) {
+/** Acciones de la ficha de un artículo. Un botón «⋯» abre un menú flotante (no empuja ni agranda la ficha).
+ *  En pantallas anchas «Guardar» queda a la vista; en móvil y iPad vertical todo va dentro del menú. */
+function AccionesArticulo({
+  codigo,
+  articulo,
+  modoOscuro,
+  onImprimir,
+  onComparar,
+  onRecitar,
+  onCopiar,
+}: {
+  codigo: CodigoTipo
+  articulo: string
+  modoOscuro: boolean
+  onImprimir: () => void
+  onComparar: () => void
+  onRecitar: () => void
+  onCopiar: () => void
+}) {
+  const estrecho = useEsMovil()
+  const [abierto, setAbierto] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!abierto) return
+    const fuera = (e: PointerEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setAbierto(false)
+    }
+    const tecla = (e: KeyboardEvent) => e.key === 'Escape' && setAbierto(false)
+    document.addEventListener('pointerdown', fuera)
+    document.addEventListener('keydown', tecla)
+    return () => {
+      document.removeEventListener('pointerdown', fuera)
+      document.removeEventListener('keydown', tecla)
+    }
+  }, [abierto])
+  const item = `sin-neu w-full flex items-center gap-3 px-3 min-h-[48px] text-left text-sm font-semibold rounded-xl ${modoOscuro ? 'hover:bg-zinc-800 text-zinc-100' : 'hover:bg-zinc-100 text-zinc-800'}`
+  const accion = (fn: () => void) => () => {
+    setAbierto(false)
+    fn()
+  }
+  return (
+    <div className="flex items-center gap-1">
+      {!estrecho && <GuardarEnColeccion codigo={codigo} articulo={articulo} modoOscuro={modoOscuro} />}
+      <div className="relative" ref={ref}>
+        <button
+          onClick={() => setAbierto((v) => !v)}
+          aria-label={`Acciones de ${articulo}`}
+          aria-expanded={abierto}
+          aria-haspopup="menu"
+          title="Más acciones: comparar, recitar, copiar, guardar…"
+          className="boton boton-fantasma boton-chico boton-icono"
+        >
+          <i className="ti ti-dots text-lg" aria-hidden />
+        </button>
+        {abierto && (
+          <div
+            role="menu"
+            className={`absolute right-0 top-full mt-2 w-64 p-1.5 rounded-2xl shadow-flotante border z-30 ${modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}
+          >
+            {estrecho && <GuardarEnColeccion codigo={codigo} articulo={articulo} modoOscuro={modoOscuro} enMenu />}
+            <button role="menuitem" className={item} onClick={accion(onComparar)} title="Comparar este artículo con otro, lado a lado y con las diferencias marcadas">
+              <i className="ti ti-columns text-lg" aria-hidden />
+              <span className="flex-1">Comparar con otro</span>
+            </button>
+            <button role="menuitem" className={item} onClick={accion(onRecitar)} title="Escribes lo que recuerdas y la app marca lo que faltó">
+              <i className="ti ti-brain text-lg" aria-hidden />
+              <span className="flex-1">Recitar de memoria</span>
+            </button>
+            <button role="menuitem" className={item} onClick={accion(onCopiar)} title="Copia el texto con la cita y la fuente">
+              <i className="ti ti-copy text-lg" aria-hidden />
+              <span className="flex-1">Copiar con cita</span>
+            </button>
+            <button role="menuitem" className={`${item} max-sm:hidden`} onClick={accion(onImprimir)} title="Imprimir o guardar como PDF solo este artículo">
+              <i className="ti ti-printer text-lg" aria-hidden />
+              <span className="flex-1">Imprimir / PDF</span>
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function GuardarEnColeccion({ codigo, articulo, modoOscuro, enMenu = false }: { codigo: CodigoTipo; articulo: string; modoOscuro: boolean; enMenu?: boolean }) {
   const colecciones = useStore((s) => s.colecciones)
   const agregar = useStore((s) => s.agregarArticuloAColeccion)
   const quitar = useStore((s) => s.quitarArticuloDeColeccion)
@@ -866,25 +923,31 @@ function GuardarEnColeccion({ codigo, articulo, modoOscuro }: { codigo: CodigoTi
   }
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className={enMenu ? '' : 'relative'}>
       <button
         onClick={() => setAbierto((v) => !v)}
         aria-expanded={abierto}
         aria-haspopup="true"
         title="Guardar este artículo en una colección"
         aria-label={`Guardar ${articulo} en una colección`}
-        className="boton boton-fantasma boton-chico max-sm:boton-icono"
+        className={
+          enMenu
+            ? `sin-neu w-full flex items-center gap-3 px-3 min-h-[48px] text-left text-sm font-semibold rounded-xl ${modoOscuro ? 'hover:bg-zinc-800 text-zinc-100' : 'hover:bg-zinc-100 text-zinc-800'}`
+            : 'boton boton-fantasma boton-chico max-sm:boton-icono'
+        }
       >
-        <i className="ti ti-bookmark text-sm" style={guardadoEn > 0 ? { color: 'var(--accent-texto)' } : undefined} aria-hidden />
-        <span className="hidden sm:inline">{guardadoEn > 0 ? 'Guardado' : 'Guardar'}</span>
+        <i className={`ti ti-bookmark ${enMenu ? 'text-lg' : 'text-sm'}`} style={guardadoEn > 0 ? { color: 'var(--accent-texto)' } : undefined} aria-hidden />
+        <span className={enMenu ? 'flex-1' : 'hidden sm:inline'}>{enMenu ? (guardadoEn > 0 ? 'Guardado en colección' : 'Guardar en colección') : guardadoEn > 0 ? 'Guardado' : 'Guardar'}</span>
       </button>
       {abierto && (
         <div
           role="group"
           aria-label="Colecciones"
-          className={`absolute right-0 top-full mt-1 z-30 w-64 rounded-xl border p-2 shadow-xl ${
-            modoOscuro ? 'bg-zinc-900 border-zinc-700' : 'bg-white border-zinc-200'
-          }`}
+          className={
+            enMenu
+              ? 'mt-1 mb-1 p-2'
+              : `absolute right-0 top-full mt-1 z-30 w-64 rounded-xl border p-2 shadow-xl ${modoOscuro ? 'bg-zinc-900 border-zinc-700' : 'bg-white border-zinc-200'}`
+          }
         >
           {colecciones.length > 0 && (
             <ul className="max-h-48 overflow-y-auto mb-2">
@@ -2217,21 +2280,39 @@ function ArticuloTexto({
   )
 }
 
+/** Título de una sección de la ficha: en móvil y iPad vertical se pliega para no alargar el artículo. */
+function CabeceraPlegable({ movil, plegado, onAlternar, modoOscuro, texto }: { movil: boolean; plegado: boolean; onAlternar: () => void; modoOscuro: boolean; texto: string }) {
+  const clase = `text-xs font-semibold ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`
+  if (!movil) return <span className={`block mb-2 ${clase}`}>{texto}</span>
+  return (
+    <button type="button" onClick={onAlternar} aria-expanded={!plegado} className={`w-full flex items-center justify-between gap-2 min-h-[44px] text-left ${clase}`}>
+      <span>{texto}</span>
+      <i className={`ti ${plegado ? 'ti-chevron-down' : 'ti-chevron-up'} text-base`} aria-hidden />
+    </button>
+  )
+}
+
 /** Artículos de este mismo código que citan al que se está leyendo (ver services/citadoPor.ts). */
 function CitadoPor({ codigo, articulo, modoOscuro }: { codigo: CodigoTipo; articulo: string; modoOscuro: boolean }) {
   const abrirArticuloEnExplorador = useStore((s) => s.abrirArticuloEnExplorador)
   const datos = obtenerCodigo(codigo)
   const citas = useMemo(() => (datos ? citadoPor(datos, codigo, articulo) : []), [datos, codigo, articulo])
   const [todas, setTodas] = useState(false)
+  const movil = useEsMovil()
+  const [plegado, setPlegado] = useState(true)
   if (citas.length === 0) return null
   const MAX = 12
   const visibles = todas ? citas : citas.slice(0, MAX)
   return (
     <div className={`mt-6 pt-4 border-t ${modoOscuro ? 'border-zinc-700' : 'border-zinc-100'}`}>
-      <span className={`block text-xs font-semibold mb-2 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
-        Citado por {citas.length === 1 ? 'un artículo' : `${citas.length} artículos`} de este código
-      </span>
-      <div className="flex flex-wrap gap-2">
+      <CabeceraPlegable
+        movil={movil}
+        plegado={plegado}
+        onAlternar={() => setPlegado((v) => !v)}
+        modoOscuro={modoOscuro}
+        texto={`Citado por ${citas.length === 1 ? 'un artículo' : `${citas.length} artículos`} de este código`}
+      />
+      <div className={`flex flex-wrap gap-2 ${movil && plegado ? 'hidden' : ''}`}>
         {visibles.map((a) => (
           <button
             key={a}
@@ -2266,6 +2347,8 @@ function VinculosArticulo({ codigo, articulo, modoOscuro }: { codigo: CodigoTipo
   const setModuloActivo = useStore((s) => s.setModuloActivo)
   const setVistaActiva = useStore((s) => s.setVistaActiva)
   const vinculos = buscarVinculosArticulo(academicoModulos, codigo, articulo)
+  const movil = useEsMovil()
+  const [plegado, setPlegado] = useState(true)
 
   if (vinculos.length === 0) return null
 
@@ -2276,10 +2359,14 @@ function VinculosArticulo({ codigo, articulo, modoOscuro }: { codigo: CodigoTipo
 
   return (
     <div className={`mt-6 pt-4 border-t ${modoOscuro ? 'border-zinc-700' : 'border-zinc-100'}`}>
-      <span className={`block text-xs font-semibold mb-2 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`}>
-        Tienes contenido propio sobre este artículo
-      </span>
-      <div className="flex flex-wrap gap-2">
+      <CabeceraPlegable
+        movil={movil}
+        plegado={plegado}
+        onAlternar={() => setPlegado((v) => !v)}
+        modoOscuro={modoOscuro}
+        texto={`Tienes contenido propio sobre este artículo (${vinculos.length})`}
+      />
+      <div className={`flex flex-wrap gap-2 ${movil && plegado ? 'hidden' : ''}`}>
         {vinculos.map((v, i) => (
           <button
             key={i}
