@@ -504,7 +504,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
           >
             <i className="ti ti-book-2 text-base" style={{ color: 'var(--accent-texto)' }} />
           </span>
-          <span className={`md:hidden text-sm font-semibold truncate min-w-0 ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
+          <span className={`md:hidden text-sm font-semibold truncate min-w-[9ch] max-w-[11rem] ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}>
             {nombreCortoMetadata(tipoActivo)}
           </span>
           <div className="hidden md:block text-left">
@@ -612,7 +612,7 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
               .filter((x): x is string => !!x)
               .map((parte) => (
                 <span key={parte} className="inline-flex items-center gap-1.5 min-w-0">
-                  <span className="truncate max-w-[16rem]" title={parte}>{parte}</span>
+                  <span className="truncate max-w-[16rem] max-sm:max-w-[10rem]" title={parte}>{parte}</span>
                   <Sep />
                 </span>
               ))}

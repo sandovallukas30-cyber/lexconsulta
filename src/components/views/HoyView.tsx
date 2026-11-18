@@ -175,7 +175,7 @@ export function HoyView() {
 
         <section className="neu-raised p-3 sm:p-4" aria-label="Mi semana">
           <div className="flex items-center gap-2 px-1 mb-2">
-            <h2 className="text-[15px] font-bold flex-1 min-w-0 truncate" style={{ color: 'var(--neu-ink)', fontFamily: 'var(--font-head)' }}>
+            <h2 className="text-[15px] font-bold flex-1 min-w-0" style={{ color: 'var(--neu-ink)', fontFamily: 'var(--font-head)' }}>
               Mi semana <span className="font-medium text-[13px]" style={{ color: suave }}>· {etiquetaSemana(diaSel, hoy)}</span>
             </h2>
             {!esHoy && (

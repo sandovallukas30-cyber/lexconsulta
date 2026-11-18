@@ -25,9 +25,9 @@
   --neu-ink3: #565e7e; /* AA: 4,6:1 incluso sobre el fondo hundido */
   --neu-ok: #1f9d61;
   --neu-ok-soft: #d9f2e4;
-  --neu-warn: #d98a1a;
+  --neu-warn: #9a5700; /* texto de aviso: 5,6:1 sobre blanco */
   --neu-warn-soft: #faeace;
-  --neu-danger: #e4504f;
+  --neu-danger: #c62828; /* texto de error: 5,6:1 sobre blanco */
   --neu-danger-soft: #fbdede;
   /* texto de acierto/error con contraste AA (4,5:1) sobre tarjetas y fondos */
   --texto-ok: #047857;
@@ -44,7 +44,7 @@
   --neu-line: #2d3356;
   --neu-ink: #eef0fb;
   --neu-ink2: #a7afcc;
-  --neu-ink3: #8a93b6;
+  --neu-ink3: #a3abc9;
   --neu-ok: #4bcf92;
   --neu-ok-soft: #1c3c2c;
   --neu-warn: #f2bd5c;

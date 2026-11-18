@@ -163,12 +163,12 @@ export function TabExamenes({
   return (
     <div>
       <TemarioRamo moduloId={moduloId} unidades={unidades} apuntes={apuntes} evaluaciones={evaluaciones} modoOscuro={modoOscuro} />
-      <div className="flex justify-between items-center mb-3">
-        <div className="flex items-baseline gap-2">
+      <div className="flex flex-wrap justify-between items-center gap-x-3 gap-y-2 mb-3">
+        <div className="flex flex-wrap items-baseline gap-x-2">
           <h2 className={`text-sm font-semibold ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>Exámenes y evaluaciones</h2>
           {evaluaciones.length > 0 && (
             <span className={`text-xs ${ponderacionTotalActual === 100 ? 'text-emerald-600' : modoOscuro ? 'text-zinc-500' : 'text-zinc-500'}`}>
-              {ponderacionTotalActual}% de 100% cargado
+              <span className="whitespace-nowrap">{ponderacionTotalActual}% de 100% cargado</span>
             </span>
           )}
         </div>

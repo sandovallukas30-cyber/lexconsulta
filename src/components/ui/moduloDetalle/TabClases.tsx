@@ -80,9 +80,9 @@ export function TabClases({ moduloId, clases, modoOscuro }: { moduloId: string; 
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-3">
+      <div className="flex flex-wrap justify-between items-center gap-x-3 gap-y-2 mb-3">
         <h2 className={`text-sm font-semibold ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>Cronograma de clases</h2>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {hayHorario && (
             <button onClick={() => { setGenerando(true); setMostrarForm(false) }} className="boton boton-borde boton-chico">
               <i className="ti ti-wand text-sm" aria-hidden="true" />

@@ -399,7 +399,7 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
               }}
               title="Editar aquí mismo: escribir, resaltar, agrandar, notas al margen…"
               aria-label="Editar el apunte"
-              className={`flex items-center gap-1.5 px-3 h-9 rounded-lg text-xs font-semibold transition-colors flex-shrink-0 ${tema.chipBg} ${tema.text} ${tema.chipHover}`}
+              className={`sin-neu flex items-center gap-1.5 px-3 h-9 rounded-lg text-xs font-semibold transition-colors flex-shrink-0 ${tema.chipBg} ${tema.text} ${tema.chipHover}`}
             >
               <i className="ti ti-pencil text-sm" />
               <span className="hidden sm:inline">Editar</span>

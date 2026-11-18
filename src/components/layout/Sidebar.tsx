@@ -231,7 +231,7 @@ export function Sidebar() {
               <i className="ti ti-books text-base" style={{ color: 'var(--accent-texto)' }} />
               {colapsado && (
                 <span
-                  className={`absolute -top-1 -right-1 min-w-[16px] h-4 rounded-full text-[9px] font-bold flex items-center justify-center px-1 text-white`}
+                  className={`absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full text-[11px] font-bold flex items-center justify-center px-1 text-white`}
                   style={{ background: VERDE }}
                 >
                   {topeVisible(activos)}

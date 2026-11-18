@@ -22,9 +22,9 @@ export type { Tab }
  *  pestaña concreta (p. ej. «examenes» desde las próximas evaluaciones) no cambia. */
 type Grupo = 'resumen' | 'clases' | 'examenes' | 'biblioteca'
 
-const GRUPOS: { id: Grupo; label: string; icono: string; tabs: Tab[] }[] = [
+const GRUPOS: { id: Grupo; label: string; /** Versión corta para celulares angostos. */ etiquetaCorta?: string; icono: string; tabs: Tab[] }[] = [
   { id: 'resumen', label: 'Resumen', icono: 'ti-layout-dashboard', tabs: ['resumen'] },
-  { id: 'clases', label: 'Clases y apuntes', icono: 'ti-calendar-event', tabs: ['clases', 'apuntes'] },
+  { id: 'clases', label: 'Clases y apuntes', etiquetaCorta: 'Clases', icono: 'ti-calendar-event', tabs: ['clases', 'apuntes'] },
   { id: 'examenes', label: 'Evaluaciones', icono: 'ti-clipboard-check', tabs: ['examenes'] },
   { id: 'biblioteca', label: 'Biblioteca', icono: 'ti-books', tabs: ['textos', 'casos'] },
 ]
@@ -224,6 +224,7 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEdit
               tabIndex={grupo === g.id ? 0 : -1}
               role="tab"
               aria-selected={grupo === g.id}
+              aria-label={g.etiquetaCorta ? g.label : undefined}
               // en celular las cuatro caben a lo ancho (ícono arriba, texto abajo) en vez de cortarse la última fuera de la pantalla
               className={`flex flex-1 sm:flex-none flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 px-1 sm:px-3 py-2 sm:py-2.5 min-h-[44px] text-xs sm:text-sm leading-tight text-center font-semibold border-b-2 -mb-px transition-colors sm:whitespace-nowrap ${
                 grupo === g.id
@@ -237,7 +238,7 @@ export function ModuloDetalle({ modulo, modoOscuro, onVolver, tabInicial, onEdit
               style={grupo === g.id ? { color: 'var(--accent-texto)', borderColor: VERDE } : undefined}
             >
               <i className={`ti ${g.icono} text-base`} aria-hidden="true" />
-              {g.label}
+              <span className="max-sm:break-words">{g.etiquetaCorta ? <><span className="sm:hidden">{g.etiquetaCorta}</span><span className="max-sm:hidden">{g.label}</span></> : g.label}</span>
             </button>
           ))}
         </div>
