@@ -16,6 +16,7 @@ import { inject } from '@vercel/analytics'
 import { iniciarUso } from './services/uso'
 import { useEnfoque } from './store/useEnfoque'
 import { useCuenta } from './store/useCuenta'
+import { useAvisos } from './store/useAvisos'
 import { useAjustes } from './store/useAjustes'
 
 // Solo en desarrollo: acceso al store desde la consola / pruebas automatizadas.
@@ -30,20 +31,21 @@ if (import.meta.env.DEV) {
 // archivo que ya no existe: se limpia el caché de la app y se recarga una vez.
 window.addEventListener('vite:preloadError', (e) => {
   e.preventDefault()
-  try {
-    const marca = Number(sessionStorage.getItem('prima-lex-recarga') ?? 0)
-    if (Date.now() - marca < 30_000) return
-    sessionStorage.setItem('prima-lex-recarga', String(Date.now()))
-  } catch {
-    /* sin sessionStorage: se recarga igual una vez por evento */
+  // No se recarga solo (sacaba a la persona de lo que estaba haciendo): se avisa y recarga cuando ella quiera.
+  const recargar = () => {
+    if ('caches' in window) {
+      void caches
+        .keys()
+        .then((claves) => Promise.all(claves.filter((k) => k.startsWith('prima-lex-')).map((k) => caches.delete(k))))
+        .finally(() => window.location.reload())
+    } else globalThis.location.reload()
   }
-  const recargar = () => window.location.reload()
-  if ('caches' in window) {
-    void caches
-      .keys()
-      .then((claves) => Promise.all(claves.filter((k) => k.startsWith('prima-lex-')).map((k) => caches.delete(k))))
-      .finally(recargar)
-  } else recargar()
+  useAvisos.getState().mostrar({
+    tipo: 'info',
+    mensaje: 'Esta sección necesita la versión nueva. Termina lo que estás haciendo y actualiza.',
+    duracionMs: 600_000,
+    accion: { etiqueta: 'Actualizar', alPulsar: recargar },
+  })
 })
 
 // Service worker: la app abre sin conexión. Solo en producción (en desarrollo

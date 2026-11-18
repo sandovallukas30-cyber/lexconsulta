@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useAvisos } from '../store/useAvisos'
 
+const AUSENCIA_LARGA_MS = 30 * 60_000
 const PATRON_PRINCIPAL = /\/assets\/index-[\w-]+\.js/
 
 /** En un iPad o un celular la app puede quedar abierta días en segundo plano con el código viejo (volver a ella no
@@ -14,12 +15,14 @@ export function useActualizacion() {
     if (!archivoActual) return
 
     let avisado: string | null = null
-    const revisar = async () => {
+    const revisar = async (recargarSiNueva = false) => {
       try {
         const html = await (await fetch('/', { cache: 'no-store' })).text()
         const nuevo = PATRON_PRINCIPAL.exec(html)?.[0]
         if (!nuevo || nuevo === archivoActual || nuevo === avisado) return
         avisado = nuevo
+        // volvió tras un rato largo fuera: nada en pantalla se interrumpe, se actualiza solo
+        if (recargarSiNueva) { window.location.reload(); return }
         useAvisos.getState().mostrar({
           tipo: 'info',
           mensaje: 'Hay una versión nueva de Prima Lex.',
@@ -31,12 +34,16 @@ export function useActualizacion() {
       }
     }
 
+    let oculta = 0
     const alVolver = () => {
-      if (document.visibilityState === 'visible') void revisar()
+      if (document.visibilityState === 'hidden') { oculta = Date.now(); return }
+      const larga = oculta > 0 && Date.now() - oculta > AUSENCIA_LARGA_MS
+      oculta = 0
+      void revisar(larga)
     }
     document.addEventListener('visibilitychange', alVolver)
-    const id = window.setInterval(revisar, 15 * 60_000)
-    const inicio = window.setTimeout(revisar, 60_000)
+    const id = window.setInterval(() => void revisar(), 15 * 60_000)
+    const inicio = window.setTimeout(() => void revisar(), 60_000)
     return () => {
       document.removeEventListener('visibilitychange', alVolver)
       window.clearInterval(id)
