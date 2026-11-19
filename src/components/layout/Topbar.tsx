@@ -12,7 +12,10 @@ export function Topbar() {
   if (estadoEnfoque === 'detenido' || vistaActiva === 'enfoque') return null
 
   return (
-    <header className="escritorio:hidden px-3 sm:px-8 pt-3 flex items-center justify-end gap-2 flex-shrink-0">
+    <header
+      className="escritorio:hidden px-3 sm:px-8 py-1 flex items-center justify-end gap-2 flex-shrink-0"
+      style={{ background: 'var(--neu-card)' }}
+    >
       <MiniEnfoque />
     </header>
   )

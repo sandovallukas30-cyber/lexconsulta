@@ -19,7 +19,7 @@ export function MiniEnfoque() {
       onClick={() => setVistaActiva('enfoque')}
       title="Ir a Enfoque"
       aria-label={`${esFlow(s) ? 'Flowtime' : NOMBRE_MODO[s.modo]} ${corriendo ? 'en marcha' : 'en pausa'}: ${mmss(msMostrados(s, ahora))}. Ir a Enfoque`}
-      className="boton boton-borde gap-2 font-semibold tabular-nums"
+      className="boton boton-borde boton-chico gap-2 font-semibold tabular-nums"
     >
       <i className={`ti ${s.modo === 'foco' ? 'ti-hourglass-high' : 'ti-coffee'} ${corriendo ? 'animate-pulse' : ''}`} style={{ color }} aria-hidden="true" />
       <span className="hidden sm:inline text-xs font-bold" style={{ color: 'var(--neu-ink2)' }}>
