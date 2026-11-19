@@ -1,5 +1,4 @@
 import { Sidebar } from './components/layout/Sidebar'
-import { Topbar } from './components/layout/Topbar'
 import { PARAM_IMPORTAR, coleccionDeOrigen, decodificarColeccion } from './services/compartirColeccion'
 import { useEffect, useRef, lazy, Suspense } from 'react'
 import { AnimatePresence } from 'framer-motion'
@@ -150,7 +149,6 @@ function App() {
       <a href="#contenido" className="saltar-contenido">Saltar al contenido</a>
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden relative">
-        <Topbar />
         <div className="flex-1 flex overflow-hidden">
           <main id="contenido" ref={refContenido} tabIndex={-1} data-vista={vistaActiva} className="flex-1 overflow-y-auto outline-none">
             <LimiteError key={vistaActiva} modoOscuro={modoOscuro}>

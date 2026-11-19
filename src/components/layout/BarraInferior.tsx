@@ -2,6 +2,9 @@ import { useStore } from '../../store/useStore'
 import { useEsMovil } from '../../hooks/useEsMovil'
 import { precargarVista } from '../../vistas'
 import { useAjustes } from '../../store/useAjustes'
+import { useEnfoque, msMostrados } from '../../store/useEnfoque'
+import { useAhora } from '../../hooks/useMotorEnfoque'
+import { mmss } from '../../services/enfoque'
 import { barraInferiorValida, DESTINOS_NAVEGACION } from '../../data/destinosNavegacion'
 
 /** Navegación inferior en teléfonos y tablets en vertical (donde el menú lateral no cabe): los destinos que
@@ -12,6 +15,8 @@ export function BarraInferior() {
   const setVistaActiva = useStore((s) => s.setVistaActiva)
   const setMenuMovilAbierto = useStore((s) => s.setMenuMovilAbierto)
   const elegidos = useAjustes((s) => s.barraInferior)
+  const enf = useEnfoque()
+  const ahora = useAhora(enf.estado === 'corriendo')
   if (!esMovil) return null
 
   const claseBase = 'flex-1 min-w-0 min-h-[56px] flex flex-col items-center justify-center gap-0.5 text-[13px] font-semibold transition-colors'
@@ -33,7 +38,9 @@ export function BarraInferior() {
             style={{ color: activo ? 'var(--accent-texto)' : 'var(--neu-ink2)' }}
           >
             <i className={`ti ${d.icono} text-[22px]`} aria-hidden="true" />
-            <span className="truncate max-w-full px-1">{d.corto}</span>
+            <span className="truncate max-w-full px-1 tabular-nums">
+              {d.id === 'enfoque' && enf.estado !== 'detenido' ? mmss(msMostrados(enf, ahora)) : d.corto}
+            </span>
           </button>
         )
       })}
