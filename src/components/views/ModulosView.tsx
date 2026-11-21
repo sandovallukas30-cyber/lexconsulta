@@ -181,7 +181,7 @@ function MisRamos({
       </div>
 
       {ramos.length === 0 ? (
-        <div className={`flex flex-col items-center justify-center text-center py-10 rounded-xl border border-dashed ${
+        <div className={`flex flex-col items-center justify-center text-center py-6 sm:py-10 rounded-xl border border-dashed ${
           modoOscuro ? 'border-zinc-800 text-zinc-500' : 'border-zinc-300 text-zinc-400'
         }`}>
           <i className="ti ti-school text-2xl mb-2 opacity-60" aria-hidden="true" />
@@ -276,7 +276,7 @@ export function ModulosView() {
     <div className={`h-full overflow-y-auto ${modoOscuro ? 'bg-zinc-900' : 'bg-zinc-50'}`}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
         <div className="flex flex-wrap items-start gap-3">
-          <div className="flex-1 min-w-0">
+          <div className="basis-full sm:basis-0 flex-1 min-w-0">
             <h1 className="titulo-pagina">Mis asignaturas</h1>
             <p className="text-sm mt-1" style={{ color: 'var(--neu-ink2)' }}>Tus asignaturas del semestre, lo que viene y las áreas del derecho para explorar</p>
           </div>
@@ -286,9 +286,9 @@ export function ModulosView() {
             className="boton boton-suave flex-shrink-0"
           >
             <i className="ti ti-database-export text-sm" aria-hidden="true" />
-            <span className="hidden sm:inline">Respaldo</span>
+            <span>Respaldo</span>
           </button>
-          <button onClick={abrirNuevoRamo} className="boton boton-primario flex-shrink-0">
+          <button onClick={abrirNuevoRamo} className="boton boton-primario flex-shrink-0 flex-1 sm:flex-none">
             <i className="ti ti-plus text-sm" aria-hidden="true" />
             Agregar asignatura
           </button>

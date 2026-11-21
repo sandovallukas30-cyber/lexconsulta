@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../../store/useStore'
 import { useEsMovil } from '../../hooks/useEsMovil'
 import { precargarVista } from '../../vistas'
@@ -16,6 +17,25 @@ export function BarraInferior() {
   const setMenuMovilAbierto = useStore((s) => s.setMenuMovilAbierto)
   const elegidos = useAjustes((s) => s.barraInferior)
   const enf = useEnfoque()
+  // Leyendo un código: al bajar el texto la barra se esconde (más espacio para leer) y vuelve al subir.
+  const [escondida, setEscondida] = useState(false)
+  const ultimo = useRef(new WeakMap<EventTarget, number>())
+  const leyendo = esMovil && vistaActiva === 'explorador'
+  useEffect(() => {
+    setEscondida(false)
+    if (!leyendo) return
+    const alScroll = (e: Event) => {
+      const el = e.target
+      if (!(el instanceof HTMLElement) || el.scrollHeight - el.clientHeight < 200) return
+      const antes = ultimo.current.get(el) ?? 0
+      const dy = el.scrollTop - antes
+      if (Math.abs(dy) < 12) return
+      ultimo.current.set(el, el.scrollTop)
+      setEscondida(dy > 0 && el.scrollTop > 80)
+    }
+    document.addEventListener('scroll', alScroll, { capture: true, passive: true })
+    return () => document.removeEventListener('scroll', alScroll, { capture: true })
+  }, [leyendo])
   const ahora = useAhora(enf.estado === 'corriendo')
   if (!esMovil) return null
 
@@ -23,8 +43,10 @@ export function BarraInferior() {
   return (
     <nav
       aria-label="Navegación principal"
-      className="flex-shrink-0 flex items-stretch border-t"
-      style={{ background: 'var(--neu-card)', borderColor: 'var(--neu-line)', paddingBottom: 'env(safe-area-inset-bottom)' }}
+      className="flex-shrink-0 flex items-stretch border-t overflow-hidden transition-[max-height] duration-200"
+      style={{ background: 'var(--neu-card)', borderColor: 'var(--neu-line)', paddingBottom: escondida ? 0 : 'env(safe-area-inset-bottom)', maxHeight: escondida ? 0 : 140, borderTopWidth: escondida ? 0 : undefined }}
+      aria-hidden={escondida || undefined}
+      inert={escondida || undefined}
     >
       {barraInferiorValida(elegidos).flatMap((id) => DESTINOS_NAVEGACION.filter((d) => d.id === id)).map((d) => {
         const activo = vistaActiva === d.id

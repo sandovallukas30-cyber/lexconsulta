@@ -145,6 +145,11 @@ function bloques(lista_: Bloque[], ctx: Ctx): Nodo[] {
 }
 
 /** Arma y descarga el PDF. Devuelve false si no se pudo (el llamador avisa o usa la impresión del navegador). */
+/** Baja de antemano el generador de PDF (1,5 MB) para que el primer clic en «Descargar PDF» no espere. */
+export function precargarGeneradorPdf() {
+  void Promise.all([import('pdfmake/build/pdfmake'), import('pdfmake/build/vfs_fonts')]).catch(() => {})
+}
+
 export async function descargarApunteComoPdf(a: Datos): Promise<boolean> {
   try {
     const ctx: Ctx = { notas: [] }

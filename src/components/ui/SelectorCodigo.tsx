@@ -345,13 +345,13 @@ function CodigoCard({ codigo, onClick, modoOscuro, delay }: CodigoCardProps) {
       onFocus={() => void cargarCodigo(codigo.tipo).catch(() => {})}
       // flex en columna: un <button> centra su contenido en vertical y las tarjetas de una misma fila quedaban
       // desalineadas; así todo parte arriba y el pie ("Abrir") queda a la misma altura en toda la fila
-      className={`group text-left h-full flex flex-col rounded-2xl border p-5 transition-all hover:shadow-md hover:-translate-y-0.5 ${
+      className={`group text-left h-full flex flex-col rounded-2xl border p-3.5 sm:p-5 transition-all hover:shadow-md hover:-translate-y-0.5 ${
         modoOscuro
           ? 'bg-[var(--neu-card)] border-[var(--neu-line)] hover:border-[var(--accent-700)]'
           : 'bg-white border-[var(--neu-line)] hover:border-[var(--accent-500)]'
       }`}
     >
-      <div className="flex items-start gap-3 mb-3">
+      <div className="flex items-start gap-3 mb-2 sm:mb-3">
         <span
           className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
           style={{ background: modoOscuro ? 'color-mix(in srgb, var(--accent-base) 19%, transparent)' : 'color-mix(in srgb, var(--accent-base) 8%, transparent)' }}
@@ -373,12 +373,12 @@ function CodigoCard({ codigo, onClick, modoOscuro, delay }: CodigoCardProps) {
         </div>
       </div>
 
-      <p className={`text-xs leading-relaxed mb-3 ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
+      <p className={`text-xs leading-relaxed mb-2 sm:mb-3 line-clamp-1 sm:line-clamp-none ${modoOscuro ? 'text-zinc-400' : 'text-zinc-600'}`}>
         {codigo.descripcion}
       </p>
 
       <div
-        className={`mt-auto flex items-center justify-between gap-3 text-[11px] pt-3 border-t ${
+        className={`mt-auto flex items-center justify-between gap-3 text-[11px] pt-2 sm:pt-3 border-t ${
           modoOscuro ? 'border-zinc-800' : 'border-zinc-100'
         }`}
       >

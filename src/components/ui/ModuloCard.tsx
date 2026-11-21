@@ -17,7 +17,7 @@ export function ModuloCard({ modulo, progreso, modoOscuro, onClick }: ModuloCard
       whileHover={{ translateY: -2 }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className={`group w-full rounded-lg p-6 text-left transition-all overflow-hidden relative ${
+      className={`group w-full rounded-lg p-4 sm:p-6 text-left transition-all overflow-hidden relative ${
         modoOscuro ? 'bg-zinc-800 hover:bg-zinc-700' : 'bg-white hover:bg-zinc-50'
       } border ${modoOscuro ? 'border-zinc-700' : 'border-zinc-200'} shadow-sm hover:shadow-md`}
     >

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { avisar } from '../../store/useAvisos'
 import { descargarApunteMd } from '../../services/apunteArchivo'
-import { descargarApunteComoPdf } from '../../services/apunteDescargarPdf'
+import { descargarApunteComoPdf, precargarGeneradorPdf } from '../../services/apunteDescargarPdf'
 import { registrarUso } from '../../services/uso'
 import {
   compartirApunte,
@@ -80,6 +80,8 @@ export function MenuCompartirApunte({ apunte, onImprimir, claseBoton }: Props) {
     <div ref={ref} className="relative flex-shrink-0">
       <button
         onClick={() => setAbierto((v) => !v)}
+        onPointerEnter={precargarGeneradorPdf}
+        onFocus={precargarGeneradorPdf}
         aria-haspopup="menu"
         aria-expanded={abierto}
         aria-label="Compartir o exportar el apunte"

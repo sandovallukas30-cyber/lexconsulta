@@ -190,7 +190,7 @@ export function HoyView() {
               <i className="ti ti-chevron-right" aria-hidden="true" />
             </button>
           </div>
-          <ul className="grid grid-cols-4 sm:grid-cols-7 gap-1">
+          <ul className="grid grid-cols-7 gap-0.5 sm:gap-1">
             {semana.map((d) => {
               const elegido = d.fecha === diaSel
               const esDiaHoy = d.fecha === hoy
@@ -202,7 +202,7 @@ export function HoyView() {
                 <li key={d.fecha}>
                   <button
                     onClick={() => setDiaSel(d.fecha)}
-                    className="w-full text-left rounded-xl px-2.5 py-2 transition-colors hover:bg-[var(--neu-bg3)]"
+                    className="w-full text-center sm:text-left rounded-xl px-0.5 sm:px-2.5 py-2 transition-colors hover:bg-[var(--neu-bg3)]"
                     style={{
                       background: elegido ? 'color-mix(in srgb, var(--accent-base) 14%, transparent)' : undefined,
                       boxShadow: elegido ? 'inset 0 0 0 2px var(--accent-base)' : undefined,
@@ -212,15 +212,20 @@ export function HoyView() {
                     aria-label={`${fechaLargaISO(d.fecha)}${resumen ? `: ${resumen}` : ''}`}
                   >
                     <span className="block text-[13px] font-bold tracking-wide" style={{ color: esDiaHoy || elegido ? 'var(--accent-texto)' : 'var(--neu-ink3)' }}>
-                      {nombreDia(d.fecha)} <span className="text-[17px]" style={{ color: esDiaHoy || elegido ? 'var(--accent-texto)' : 'var(--neu-ink)' }}>{Number(d.fecha.slice(8))}</span>
+                      <span className="block sm:inline text-[11px] sm:text-[13px]">{nombreDia(d.fecha)}</span> <span className="text-[17px]" style={{ color: esDiaHoy || elegido ? 'var(--accent-texto)' : 'var(--neu-ink)' }}>{Number(d.fecha.slice(8))}</span>
                       {esDiaHoy && <span className="inline-block w-1.5 h-1.5 rounded-full ml-1.5 align-middle" style={{ background: 'var(--accent-base)' }} aria-hidden="true" />}
                     </span>
+                    {/* celular: 7 días en una fila; en vez del texto, un punto (rojo = evaluación) */}
+                    <span className="sm:hidden flex justify-center gap-0.5 h-2 mt-0.5" aria-hidden="true">
+                      {evaluacion && <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--neu-danger)' }} />}
+                      {cuentas && <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--neu-ink3)' }} />}
+                    </span>
                     {evaluacion && (
-                      <span className="block text-[12px] leading-tight font-semibold line-clamp-2" style={{ color: 'var(--neu-danger)' }}>
+                      <span className="hidden sm:block text-[12px] leading-tight font-semibold line-clamp-2" style={{ color: 'var(--neu-danger)' }}>
                         {evaluacion}
                       </span>
                     )}
-                    <span className="block text-[12px] leading-tight min-h-[1.1rem]" style={{ color: 'var(--neu-ink3)' }}>
+                    <span className="hidden sm:block text-[12px] leading-tight min-h-[1.1rem]" style={{ color: 'var(--neu-ink3)' }}>
                       {cuentas}
                     </span>
                   </button>

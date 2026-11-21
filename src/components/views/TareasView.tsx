@@ -9,6 +9,7 @@ import { ItemLista } from '../ui/ItemLista'
 import { SelectorRamo } from '../ui/SelectorRamo'
 import { PistaGesto } from '../ui/PistaGesto'
 import { esPantallaTactil } from '../../services/pantallaTactil'
+import { useEsMovil } from '../../hooks/useEsMovil'
 import type { PrioridadTarea, TareaPlan } from '../../types'
 import {
   contarPorFiltro,
@@ -67,6 +68,9 @@ function NuevaTarea({ onCreada }: { onCreada: () => void }) {
   }
   const [fecha, setFecha] = useState<string | null>(null)
   const [prioridad, setPrioridad] = useState<PrioridadTarea>('media')
+  const movil = useEsMovil()
+  const [masAbierto, setMasAbierto] = useState(false)
+  const hayOpciones = fecha !== null || ramoId !== null || prioridad !== 'media'
 
   const enviar = (e: React.FormEvent) => {
     e.preventDefault()
@@ -94,7 +98,21 @@ function NuevaTarea({ onCreada }: { onCreada: () => void }) {
           <span className="hidden sm:inline">Agregar</span>
         </button>
       </div>
-      <div className="flex flex-wrap items-center gap-2 mt-2">
+      {movil && (
+        <button
+          type="button"
+          onClick={() => setMasAbierto((v) => !v)}
+          aria-expanded={masAbierto}
+          className={`mt-2 w-full min-h-[44px] flex items-center justify-between gap-2 text-sm font-semibold ${c.suave}`}
+        >
+          <span>
+            Fecha, asignatura y prioridad
+            {!masAbierto && hayOpciones && <span style={{ color: 'var(--accent-texto)' }}> · {[fecha ? etiquetaFecha(fecha).texto : null, ramoId ? 'con asignatura' : null, prioridad !== 'media' ? `prioridad ${prioridad}` : null].filter(Boolean).join(', ')}</span>}
+          </span>
+          <i className={`ti ${masAbierto ? 'ti-chevron-up' : 'ti-chevron-down'} text-base`} aria-hidden="true" />
+        </button>
+      )}
+      <div className={`flex flex-wrap items-center gap-2 mt-2 ${movil && !masAbierto ? 'hidden' : ''}`}>
         <SelectorRamo valor={ramoId} onChange={setRamoId} className={`${c.campo} max-w-[210px]`} />
         <input
           type="date"
