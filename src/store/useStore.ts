@@ -476,9 +476,12 @@ export const useStore = create<AppState>()(
           const p = s.partidaPasapalabra
           const debePausar =
             vistaActiva !== 'practica' && p && !p.pausadaEn && !p.finalizada
+          // Al salir del Explorador, la próxima vez que se entre se ve el catálogo de códigos y no el que quedó abierto
+          // (el último artículo de cada código se recuerda aparte: al abrir el código vuelve a donde iba).
+          const cierraCodigo = s.vistaActiva === 'explorador' && vistaActiva !== 'explorador' ? { codigoExploradorActivo: null } : {}
           return debePausar
-            ? { vistaActiva, partidaPasapalabra: { ...p!, pausadaEn: Date.now() } }
-            : { vistaActiva }
+            ? { vistaActiva, ...cierraCodigo, partidaPasapalabra: { ...p!, pausadaEn: Date.now() } }
+            : { vistaActiva, ...cierraCodigo }
         })
       },
       toggleCodigo: (tipo) =>
