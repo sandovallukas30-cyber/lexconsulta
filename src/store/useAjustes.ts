@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { VistaId } from '../types'
-import { BARRA_INFERIOR_DEFECTO } from '../data/destinosNavegacion'
+import { BARRA_INFERIOR_ANTERIOR, BARRA_INFERIOR_DEFECTO } from '../data/destinosNavegacion'
 import { FUENTE_LECTURA_DEFECTO, type FuenteLectura } from '../services/fuentesLectura'
 
 /** Preferencias de la interfaz. Propias de cada dispositivo (no van en el
@@ -83,6 +83,13 @@ export const useAjustes = create<AjustesUI>()(
     }),
     {
       name: 'prima-lex-ajustes-v1',
+      version: 2,
+      // v2: nueva barra inferior por defecto; si la persona no la había cambiado, se le pasa a la nueva
+      migrate: (guardado, version) => {
+        const g = guardado as Partial<AjustesUI>
+        if (version < 2 && JSON.stringify(g.barraInferior) === JSON.stringify(BARRA_INFERIOR_ANTERIOR)) g.barraInferior = BARRA_INFERIOR_DEFECTO
+        return g as AjustesUI
+      },
       partialize: (s) => ({ zoom: s.zoom, contraste: s.contraste, animaciones: s.animaciones, celebraciones: s.celebraciones, recordatorios: s.recordatorios, horaResumen: s.horaResumen, tamanoCodigo: s.tamanoCodigo, catalogoAbierto: s.catalogoAbierto, avatarAnimal: s.avatarAnimal, numerarIncisos: s.numerarIncisos, destacarPlazos: s.destacarPlazos, barraInferior: s.barraInferior, fuenteLectura: s.fuenteLectura, pistasVistas: s.pistasVistas, compartirUso: s.compartirUso, confirmacionesOmitidas: s.confirmacionesOmitidas }),
     }
   )
