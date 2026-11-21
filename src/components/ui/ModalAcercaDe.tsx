@@ -1,4 +1,4 @@
-import { JUEGOS_IA_ACTIVOS } from '../../config'
+import { CORREO_CONTACTO, JUEGOS_IA_ACTIVOS } from '../../config'
 import { usoDisponible } from '../../services/uso'
 
 /** Contenido de «Acerca de» y de las páginas legales. El marco (ventana y menú de secciones) está en ModalConfiguracion. */
@@ -14,6 +14,15 @@ export function H({ children, modoOscuro }: { children: React.ReactNode; modoOsc
 export function P({ children, modoOscuro }: { children: React.ReactNode; modoOscuro: boolean }) {
   return (
     <p className={`text-sm leading-relaxed mb-3 ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}>{children}</p>
+  )
+}
+
+/** Enlace de correo al contacto del proyecto. */
+function CorreoContacto() {
+  return (
+    <a href={`mailto:${CORREO_CONTACTO}`} className="underline underline-offset-2" style={{ color: 'var(--accent-texto)' }}>
+      {CORREO_CONTACTO}
+    </a>
   )
 }
 
@@ -139,7 +148,7 @@ export function Privacidad({ modoOscuro }: { modoOscuro: boolean }) {
   return (
     <div>
       <P modoOscuro={modoOscuro}>
-        <em>Última actualización: 19 de octubre de 2026.</em>
+        <em>Última actualización: 21 de noviembre de 2026.</em>
       </P>
 
       <div
@@ -163,7 +172,7 @@ export function Privacidad({ modoOscuro }: { modoOscuro: boolean }) {
       <P modoOscuro={modoOscuro}>
         Prima Lex es un proyecto independiente creado por un estudiante de Derecho. Esta política se rige por la Ley
         19.628 y por la Ley 21.719, que la reemplaza a partir del 1 de diciembre de 2026, y se actualizará cuando cambie
-        lo que recopilamos. Para ejercer tus derechos puedes hacerlo directamente desde la aplicación (ver sección 8).
+        lo que recopilamos. Para ejercer tus derechos puedes hacerlo directamente desde la aplicación (ver sección 8) o escribiendo a <CorreoContacto />.
       </P>
 
       <H modoOscuro={modoOscuro}>2. Sin cuenta: todo queda en tu dispositivo</H>
@@ -243,7 +252,8 @@ export function Privacidad({ modoOscuro }: { modoOscuro: boolean }) {
         En la práctica: lo que ves en la aplicación es lo que guardamos de ti; puedes descargarlo con la opción de
         respaldo; y puedes <strong>eliminar tu cuenta y la copia en la nube</strong> en cualquier momento desde tu
         perfil (botón «Eliminar mi cuenta»). La eliminación es inmediata e irreversible y no toca lo que tienes en tu
-        dispositivo. Cerrar sesión solo deja de sincronizar.
+        dispositivo. Cerrar sesión solo deja de sincronizar. Si prefieres pedirlo por correo, o tienes una duda sobre tus
+        datos, escribe a <CorreoContacto />.
       </P>
 
       <H modoOscuro={modoOscuro}>9. Menores de edad</H>
@@ -259,7 +269,7 @@ export function Terminos({ modoOscuro }: { modoOscuro: boolean }) {
   return (
     <div>
       <P modoOscuro={modoOscuro}>
-        <em>Última actualización: 16 de octubre de 2026.</em>
+        <em>Última actualización: 21 de noviembre de 2026.</em>
       </P>
 
       <H modoOscuro={modoOscuro}>1. Aceptación</H>
@@ -331,6 +341,11 @@ export function Terminos({ modoOscuro }: { modoOscuro: boolean }) {
         Crear una cuenta es opcional. Eres responsable de la seguridad de tu acceso (tu cuenta de Google o
         Microsoft, o tu correo). Podemos suspender cuentas que incumplan estos Términos. Puedes eliminar tu cuenta cuando
         quieras desde tu perfil; el tratamiento de tus datos se describe en la Política de privacidad.
+      </P>
+
+      <H modoOscuro={modoOscuro}>11. Contacto</H>
+      <P modoOscuro={modoOscuro}>
+        Para consultas, reportes de errores o reclamos sobre Prima Lex escribe a <CorreoContacto />.
       </P>
     </div>
   )

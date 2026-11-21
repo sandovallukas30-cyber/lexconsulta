@@ -9,3 +9,6 @@ export const JUEGOS_IA_ACTIVOS = false
  *  Sin valor, no se muestra ningún botón ni texto de donación. Solo se acepta https. */
 const crudo = (import.meta.env.VITE_DONACION_URL as string | undefined)?.trim() ?? ''
 export const DONACION_URL: string | null = /^https:\/\/[^\s]+$/i.test(crudo) ? crudo : null
+
+/** Correo público de contacto: aparece en la política de privacidad y en los términos. */
+export const CORREO_CONTACTO = 'primalex.contacto@gmail.com'
