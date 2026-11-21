@@ -55,7 +55,7 @@ export function BarraInferior() {
             style={{ color: activo ? 'var(--accent-texto)' : 'var(--neu-ink2)' }}
           >
             <i className={`ti ${d.icono} text-[22px]`} aria-hidden="true" />
-            <span className="truncate max-w-full px-1">{d.corto}</span>
+            <span className="truncate max-w-full px-0.5 tracking-tight" style={{ fontSize: 12.5 }}>{d.corto}</span>
           </button>
         )
       })}

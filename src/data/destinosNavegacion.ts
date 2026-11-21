@@ -22,9 +22,12 @@ export const DESTINOS_NAVEGACION: DestinoNavegacion[] = [
   { id: 'practica', icono: 'ti-puzzle', corto: 'Práctica', largo: 'Práctica' },
 ]
 
-export const BARRA_INFERIOR_DEFECTO: VistaId[] = ['hoy', 'colecciones', 'modulos', 'enfoque']
-/** La barra por defecto hasta noviembre de 2026: quien la dejó sin tocar pasa a la nueva. */
-export const BARRA_INFERIOR_ANTERIOR: VistaId[] = ['hoy', 'tareas', 'enfoque', 'explorador']
+export const BARRA_INFERIOR_DEFECTO: VistaId[] = ['hoy', 'explorador', 'modulos', 'enfoque']
+/** Barras por defecto anteriores: quien dejó una sin tocar pasa a la nueva. */
+export const BARRAS_INFERIORES_ANTERIORES: VistaId[][] = [
+  ['hoy', 'tareas', 'enfoque', 'explorador'],
+  ['hoy', 'colecciones', 'modulos', 'enfoque'],
+]
 export const BARRA_INFERIOR_MAX = 4
 
 /** Deja solo destinos válidos y sin repetir (un valor viejo o dañado en el almacenamiento no debe romper la barra). */

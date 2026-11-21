@@ -2304,11 +2304,18 @@ function ArticuloTexto({
 }
 
 /** Título de una sección de la ficha: en móvil y iPad vertical se pliega para no alargar el artículo. */
+/** Tamaño de «Citado por» y «Tienes contenido propio»: siempre menor que el texto del artículo, también cuando se achica en Configuración. */
+function useTamanoSecundario(): number {
+  const tamano = useAjustes((s) => s.tamanoCodigo)
+  return Math.max(11, Math.min(13, Math.round(tamano * 0.7)))
+}
+
 function CabeceraPlegable({ movil, plegado, onAlternar, modoOscuro, texto }: { movil: boolean; plegado: boolean; onAlternar: () => void; modoOscuro: boolean; texto: string }) {
-  const clase = `text-xs font-semibold ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`
-  if (!movil) return <span className={`block mb-2 ${clase}`}>{texto}</span>
+  const tam = useTamanoSecundario()
+  const clase = `font-medium ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`
+  if (!movil) return <span className={`block mb-2 ${clase}`} style={{ fontSize: tam }}>{texto}</span>
   return (
-    <button type="button" onClick={onAlternar} aria-expanded={!plegado} className={`w-full flex items-center justify-between gap-2 min-h-[44px] text-left ${clase}`}>
+    <button type="button" onClick={onAlternar} aria-expanded={!plegado} className={`w-full flex items-center justify-between gap-2 min-h-[44px] text-left ${clase}`} style={{ fontSize: tam }}>
       <span>{texto}</span>
       <i className={`ti ${plegado ? 'ti-chevron-down' : 'ti-chevron-up'} text-base`} aria-hidden />
     </button>
@@ -2323,6 +2330,7 @@ function CitadoPor({ codigo, articulo, modoOscuro }: { codigo: CodigoTipo; artic
   const [todas, setTodas] = useState(false)
   const movil = useEsMovil()
   const [plegado, setPlegado] = useState(true)
+  const tamChip = useTamanoSecundario()
   if (citas.length === 0) return null
   const MAX = 12
   const visibles = todas ? citas : citas.slice(0, MAX)
@@ -2341,7 +2349,8 @@ function CitadoPor({ codigo, articulo, modoOscuro }: { codigo: CodigoTipo; artic
             key={a}
             onClick={() => abrirArticuloEnExplorador(codigo, a)}
             title={`Ir al ${a}`}
-            className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border transition-colors ${
+            style={{ fontSize: tamChip }}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-colors ${
               modoOscuro ? 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700' : 'bg-zinc-50 border-zinc-200 text-zinc-700 hover:bg-zinc-100'
             }`}
           >
@@ -2372,6 +2381,7 @@ function VinculosArticulo({ codigo, articulo, modoOscuro }: { codigo: CodigoTipo
   const vinculos = buscarVinculosArticulo(academicoModulos, codigo, articulo)
   const movil = useEsMovil()
   const [plegado, setPlegado] = useState(true)
+  const tamChip = useTamanoSecundario()
 
   if (vinculos.length === 0) return null
 
@@ -2394,7 +2404,8 @@ function VinculosArticulo({ codigo, articulo, modoOscuro }: { codigo: CodigoTipo
           <button
             key={i}
             onClick={() => abrirModulo(v.moduloId)}
-            className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border transition-colors ${
+            style={{ fontSize: tamChip }}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-colors ${
               modoOscuro ? 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700' : 'bg-zinc-50 border-zinc-200 text-zinc-700 hover:bg-zinc-100'
             }`}
           >
