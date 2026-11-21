@@ -7,6 +7,9 @@ import { barraInferiorValida, DESTINOS_NAVEGACION } from '../../data/destinosNav
 
 /** Navegación inferior en teléfonos y tablets en vertical (donde el menú lateral no cabe): los destinos que
  *  elige cada persona en Configuración (por defecto, los cuatro más usados) y «Más», que abre el menú completo. Todos con área táctil de 44 px o más. */
+/** Solo en artículos largos (al menos este recorrido de scroll) se esconde la barra: en los cortos el contenido no se mueve y los botones del final (p. ej. «Agregar mi nota») no se corren al tocarlos. */
+const RECORRIDO_MINIMO = 700
+
 export function BarraInferior() {
   const esMovil = useEsMovil()
   const vistaActiva = useStore((s) => s.vistaActiva)
@@ -20,14 +23,35 @@ export function BarraInferior() {
   useEffect(() => {
     setEscondida(false)
     if (!leyendo) return
+    let oculta = false
+    let bloqueoHasta = 0
     const alScroll = (e: Event) => {
       const el = e.target
-      if (!(el instanceof HTMLElement) || el.scrollHeight - el.clientHeight < 200) return
+      if (!(el instanceof HTMLElement) || (el.scrollHeight - el.clientHeight < RECORRIDO_MINIMO && !oculta)) return
+      // arriba del todo la barra siempre vuelve (también en artículos cortos)
+      if (oculta && el.scrollTop < 40) {
+        oculta = false
+        bloqueoHasta = performance.now() + 450
+        setEscondida(false)
+        return
+      }
       const antes = ultimo.current.get(el) ?? 0
       const dy = el.scrollTop - antes
+      // Esconder/mostrar la barra cambia el alto del área de lectura y el navegador corrige el scroll solo:
+      // sin esto, eso se lee como «subir» y la barra parpadea. Tras cada cambio se ignora el scroll un momento,
+      // y cerca del final del artículo no se cambia nada.
+      const cercaDelFinal = el.scrollHeight - el.clientHeight - el.scrollTop < 160
+      if (performance.now() < bloqueoHasta || cercaDelFinal) {
+        ultimo.current.set(el, el.scrollTop)
+        return
+      }
       if (Math.abs(dy) < 12) return
       ultimo.current.set(el, el.scrollTop)
-      setEscondida(dy > 0 && el.scrollTop > 80)
+      const debeOcultar = dy > 0 && el.scrollTop > 80
+      if (debeOcultar === oculta) return
+      oculta = debeOcultar
+      bloqueoHasta = performance.now() + 450
+      setEscondida(debeOcultar)
     }
     document.addEventListener('scroll', alScroll, { capture: true, passive: true })
     return () => document.removeEventListener('scroll', alScroll, { capture: true })
