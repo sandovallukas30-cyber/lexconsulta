@@ -104,7 +104,7 @@ export function ContenedorResaltable({
       {boton && (
         <div
           className={tactil
-            ? 'fixed inset-x-0 bottom-0 z-[60] flex items-center justify-center gap-3 px-4 pt-3 border-t'
+            ? 'fixed inset-x-0 bottom-0 z-[60] flex items-center justify-center gap-3 px-4 pt-3 border-t rounded-t-[24px]'
             : 'absolute z-20 flex items-center gap-1.5'}
           style={tactil
             ? { paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.75rem)', background: 'var(--neu-card)', borderColor: 'var(--neu-line)' }

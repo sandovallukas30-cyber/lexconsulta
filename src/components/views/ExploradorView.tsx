@@ -54,6 +54,8 @@ export function ExploradorView() {
 }
 
 function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: CodigoTipo; onCambiarCodigo: () => void }) {
+  // (un hook va siempre arriba: más abajo hay salidas anticipadas mientras carga el código)
+  const vecinoEstrecho = useEsMovil()
   const tamanoCodigo = useAjustes((s) => s.tamanoCodigo)
   const ajustarTamano = useAjustes((s) => s.set)
 
@@ -435,7 +437,6 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
   const claseTarjeta = `max-w-3xl mx-3 sm:mx-auto my-4 sm:my-8 rounded-panel p-5 sm:p-10 ${
     modoOscuro ? 'bg-zinc-800/40 border border-zinc-800' : 'bg-white shadow-tarjeta border border-zinc-200/60'
   }`
-  const vecinoEstrecho = useEsMovil()
   const tarjetaVecina = (a: Articulo, posicion: number) => (
     <article className={claseTarjeta}>
       <div className="flex items-center justify-between gap-3 mb-6">
@@ -1328,7 +1329,7 @@ function ModalIndice({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'tween', duration: 0.25 }}
-            className={`fixed right-0 top-0 bottom-0 z-50 w-[360px] flex flex-col shadow-2xl ${
+            className={`fixed right-0 top-0 bottom-0 z-50 w-[360px] max-w-[92vw] flex flex-col shadow-2xl rounded-l-[28px] overflow-hidden ${
               modoOscuro ? 'bg-zinc-900' : 'bg-white'
             }`}
           >

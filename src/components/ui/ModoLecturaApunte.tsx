@@ -598,7 +598,7 @@ function LectorApunte({ apunte, clase, cuaderno, onCerrar, onEditar, onCambiar, 
                   animate={{ x: 0, opacity: 1 }}
                   exit={{ x: 40, opacity: 0 }}
                   transition={{ duration: 0.16 }}
-                  className={`absolute inset-y-0 right-0 w-72 max-w-[85%] overflow-y-auto border-l shadow-xl ${tema.bg} ${tema.border}`}
+                  className={`absolute inset-y-0 right-0 w-72 max-w-[85%] overflow-y-auto border-l shadow-xl rounded-l-[28px] ${tema.bg} ${tema.border}`}
                 >
                   <p className={`px-4 pt-4 pb-2 text-[11px] font-semibold uppercase tracking-wide ${tema.textSoft}`}>Índice</p>
                   <ul className="pb-4">

@@ -42,7 +42,7 @@ export function RightSidebar() {
       transition={{ duration: 0.22, ease: 'easeOut' }}
       // en móvil se superpone (no empuja) al contenido; cerrado = inerte
       inert={!rightSidebarAbierto ? true : undefined}
-      className={`flex flex-col border-l overflow-hidden ${esMovil ? 'fixed inset-y-0 right-0 z-[60] shadow-2xl' : ''} ${
+      className={`flex flex-col border-l overflow-hidden ${esMovil ? 'fixed inset-y-0 right-0 z-[60] shadow-2xl rounded-l-[28px]' : ''} ${
         modoOscuro ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'
       }`}
     >
