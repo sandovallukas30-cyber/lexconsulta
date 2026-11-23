@@ -1687,7 +1687,7 @@ function ModalBusqueda({
               </kbd>
             </div>
 
-            <div className="flex-1 overflow-y-auto py-2">
+            <div className="flex-1 overflow-y-auto p-2">
               {resultados.length === 0 ? (
                 <div className={`text-center py-10 ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
                   <i className="ti ti-search-off text-2xl mb-2 block" />
@@ -1701,7 +1701,7 @@ function ModalBusqueda({
                       key={`${a.a}::${i}`}
                       onClick={() => onSelect(a.a)}
                       onMouseEnter={() => setIndiceActivo(i)}
-                      className={`w-full text-left px-4 py-2.5 transition-colors ${
+                      className={`w-full text-left px-3 py-2.5 rounded-xl transition-colors ${
                         activo
                           ? modoOscuro
                             ? 'bg-zinc-800'
@@ -2358,7 +2358,7 @@ function CabeceraPlegable({ movil, plegado, onAlternar, modoOscuro, texto }: { m
   const clase = `font-medium ${modoOscuro ? 'text-zinc-400' : 'text-zinc-500'}`
   if (!movil) return <span className={`block mb-2 ${clase}`} style={{ fontSize: tam }}>{texto}</span>
   return (
-    <button type="button" onClick={onAlternar} aria-expanded={!plegado} className={`w-full flex items-center justify-between gap-2 min-h-[44px] text-left ${clase}`} style={{ fontSize: tam }}>
+    <button type="button" onClick={onAlternar} aria-expanded={!plegado} className={`w-full flex items-center justify-between gap-2 min-h-[44px] text-left rounded-lg ${clase}`} style={{ fontSize: tam }}>
       <span>{texto}</span>
       <i className={`ti ${plegado ? 'ti-chevron-down' : 'ti-chevron-up'} text-base`} aria-hidden />
     </button>

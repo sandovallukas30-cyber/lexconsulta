@@ -308,7 +308,7 @@ function SeccionPlantillas({
     <div className="mt-10">
       <button
         onClick={() => setAbierta(!abierta)}
-        className={`flex items-center gap-2 text-sm font-semibold mb-4 ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}
+        className={`flex items-center gap-2 text-sm font-semibold mb-4 rounded-lg ${modoOscuro ? 'text-zinc-300' : 'text-zinc-700'}`}
       >
         <i className={`ti ti-chevron-right text-sm transition-transform ${abierta ? 'rotate-90' : ''}`} />
         Plantillas para empezar
@@ -2874,7 +2874,7 @@ function MenuTipoRelacion({
                 <button
                   key={id}
                   onClick={() => onElegir(id)}
-                  className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 transition-colors ${
+                  className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 rounded-lg transition-colors ${
                     modoOscuro ? 'hover:bg-zinc-800 text-zinc-200' : 'hover:bg-zinc-50 text-zinc-700'
                   }`}
                 >

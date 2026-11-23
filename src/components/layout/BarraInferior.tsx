@@ -58,7 +58,7 @@ export function BarraInferior() {
   }, [leyendo])
   if (!esMovil) return null
 
-  const claseBase = 'flex-1 min-w-0 min-h-[56px] flex flex-col items-center justify-center gap-0.5 text-[13px] font-semibold transition-colors'
+  const claseBase = 'flex-1 min-w-0 min-h-[56px] flex flex-col items-center justify-center gap-0.5 text-[13px] font-semibold transition-colors rounded-2xl'
   return (
     <nav
       aria-label="Navegación principal"

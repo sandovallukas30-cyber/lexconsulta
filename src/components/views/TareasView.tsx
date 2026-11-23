@@ -103,7 +103,7 @@ function NuevaTarea({ onCreada }: { onCreada: () => void }) {
           type="button"
           onClick={() => setMasAbierto((v) => !v)}
           aria-expanded={masAbierto}
-          className={`mt-2 w-full min-h-[44px] flex items-center justify-between gap-2 text-sm font-semibold ${c.suave}`}
+          className={`mt-2 w-full min-h-[44px] flex items-center justify-between gap-2 text-sm font-semibold rounded-xl ${c.suave}`}
         >
           <span>
             Fecha, asignatura y prioridad

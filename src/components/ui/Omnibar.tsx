@@ -237,7 +237,7 @@ export function Omnibar({ onClose }: Props) {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className={`max-h-[60vh] sm:max-h-96 overflow-y-auto ${
+              className={`max-h-[60vh] sm:max-h-96 overflow-y-auto p-2 space-y-0.5 ${
                 modoOscuro ? 'bg-zinc-800/50' : 'bg-zinc-50'
               }`}
             >
@@ -245,7 +245,7 @@ export function Omnibar({ onClose }: Props) {
                 <button
                   key={resultado.id}
                   onClick={() => seleccionarResultado(resultado)}
-                  className={`w-full px-4 py-3 text-left flex items-center gap-3 transition-colors ${
+                  className={`w-full px-3 py-3 rounded-xl text-left flex items-center gap-3 transition-colors ${
                     idx === indiceSeleccionado
                       ? modoOscuro
                         ? 'bg-zinc-700'
@@ -253,7 +253,7 @@ export function Omnibar({ onClose }: Props) {
                       : modoOscuro
                       ? 'hover:bg-zinc-700/50'
                       : 'hover:bg-zinc-100/50'
-                  } ${idx < resultados.length - 1 ? (modoOscuro ? 'border-b border-zinc-700' : 'border-b border-zinc-200') : ''}`}
+                  }`}
                 >
                   {/* Icono por tipo */}
                   <div className="flex-shrink-0">

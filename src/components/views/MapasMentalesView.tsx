@@ -326,7 +326,7 @@ function ListaMapas({
           <button
             onClick={() => setPlantillasAbiertas((v) => !v)}
             aria-expanded={plantillasAbiertas}
-            className="min-h-11 flex items-center gap-2 text-[17px] font-bold"
+            className="min-h-11 flex items-center gap-2 text-[17px] font-bold rounded-lg"
             style={{ color: 'var(--neu-ink)' }}
           >
             Plantillas para empezar

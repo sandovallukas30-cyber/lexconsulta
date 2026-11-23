@@ -163,6 +163,11 @@ input::placeholder, textarea::placeholder { color: var(--neu-ink3); }
 input:not(.sin-neu):focus-visible, textarea:not(.sin-neu):focus-visible, select:not(.sin-neu):focus-visible, .select-prima:not(.sin-neu):focus-visible {
   box-shadow: var(--neu-presionada-chica);
 }
+/* Campos transparentes (buscadores dentro de un panel, p. ej. el del Explorador): la regla de arriba los excluye y sin radio
+   su anillo de foco salía con las puntas rectas. */
+input.bg-transparent:not([class*='rounded']):not([type='checkbox']):not([type='radio']):not([type='range']),
+textarea.bg-transparent:not([class*='rounded']),
+select.bg-transparent:not([class*='rounded']) { border-radius: 10px; }
 /* Foco de los campos: anillo sólido (antes un halo al 55 % que quedaba bajo 3:1 de contraste, WCAG 1.4.11).
    Va fuera de las capas de Tailwind, así que gana sobre `outline-none` de las clases de cada campo. */
 input:focus-visible, textarea:focus-visible, select:focus-visible, .select-prima:focus-visible {
