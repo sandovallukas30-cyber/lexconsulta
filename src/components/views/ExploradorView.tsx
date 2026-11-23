@@ -261,18 +261,38 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
   // los vecinos se alinean con lo que se ve (el artículo puede estar leído hasta la mitad)
   const [topVecinos, setTopVecinos] = useState(0)
   const cambiandoArticulo = useRef(false)
-  const deslizarA = (dir: 1 | -1) => {
+  // Los vecinos se preparan en un momento libre después de abrir un artículo (ocultos, sin alto): así el gesto no
+  // tiene que montarlos justo cuando el dedo ya se está moviendo, que era lo que lo hacía sentirse trabado.
+  const [vecinosListos, setVecinosListos] = useState(false)
+  const idArticuloActual = seleccionado?.a
+  useEffect(() => {
+    if (!esTactil) return
+    setVecinosListos(false)
+    const ric = (window as unknown as { requestIdleCallback?: (f: () => void, o?: { timeout: number }) => number }).requestIdleCallback
+    const cancelar = (window as unknown as { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback
+    if (ric && cancelar) {
+      const id = ric(() => setVecinosListos(true), { timeout: 600 })
+      return () => cancelar(id)
+    }
+    const id = window.setTimeout(() => setVecinosListos(true), 350)
+    return () => window.clearTimeout(id)
+  }, [esTactil, idArticuloActual])
+  // `desdeArrastre`: el dedo ya traía el artículo en movimiento; se sigue con un resorte que parte de su velocidad
+  // (sin pausa ni cambio de ritmo al soltar). Con botón o teclado se hace un deslizamiento suave de duración fija.
+  const deslizarA = (dir: 1 | -1, vx = 0, desdeArrastre = false) => {
     const destino = dir === 1 ? siguiente : anterior
     if (!destino || cambiandoArticulo.current) return
     cambiandoArticulo.current = true
-    setTopVecinos(refArticulo.current?.scrollTop ?? 0)
-    setArrastrando(true)
+    if (!desdeArrastre) {
+      setTopVecinos(refArticulo.current?.scrollTop ?? 0)
+      setArrastrando(true)
+    }
     const ancho = refPista.current?.offsetWidth ?? window.innerWidth
-    // un cuadro para que los vecinos ya estén montados cuando empieza el movimiento
-    requestAnimationFrame(() => {
+    const lanzar = () => {
       animate(desplazamientoX, -dir * ancho, {
-        duration: 0.22,
-        ease: [0.2, 0, 0, 1],
+        ...(desdeArrastre
+          ? { type: 'spring' as const, stiffness: 380, damping: 40, mass: 1, velocity: vx, restDelta: 1, restSpeed: 40 }
+          : { duration: 0.34, ease: [0.32, 0.72, 0, 1] as [number, number, number, number] }),
         onComplete: () => {
           // el vecino ya está justo en pantalla: se vuelve «actual» y la pista vuelve a 0 sin salto visible
           flushSync(() => setSeleccionadoId(destino.a))
@@ -281,7 +301,10 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
           cambiandoArticulo.current = false
         },
       })
-    })
+    }
+    // con botón o teclado, un cuadro para que los vecinos ya estén montados cuando empieza el movimiento
+    if (desdeArrastre) lanzar()
+    else requestAnimationFrame(lanzar)
   }
   const soltarArrastre = (dx: number, vx: number) => {
     const ancho = refPista.current?.offsetWidth ?? window.innerWidth
@@ -289,9 +312,9 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
     const dir: 1 | -1 = dx < 0 ? 1 : -1
     const destino = dir === 1 ? siguiente : anterior
     if (!hayTexto && destino && (Math.abs(dx) > ancho * 0.28 || Math.abs(vx) > 500)) {
-      deslizarA(dir)
+      deslizarA(dir, vx, true)
     } else {
-      animate(desplazamientoX, 0, { duration: 0.2, ease: [0.2, 0, 0, 1], onComplete: () => setArrastrando(false) })
+      animate(desplazamientoX, 0, { type: 'spring', stiffness: 380, damping: 40, mass: 1, velocity: vx, restDelta: 1, restSpeed: 40, onComplete: () => setArrastrando(false) })
     }
   }
 
@@ -412,18 +435,33 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
   const claseTarjeta = `max-w-3xl mx-3 sm:mx-auto my-4 sm:my-8 rounded-panel p-5 sm:p-10 ${
     modoOscuro ? 'bg-zinc-800/40 border border-zinc-800' : 'bg-white shadow-tarjeta border border-zinc-200/60'
   }`
+  const vecinoEstrecho = useEsMovil()
   const tarjetaVecina = (a: Articulo, posicion: number) => (
     <article className={claseTarjeta}>
-      <div className="flex items-baseline justify-between gap-3 mb-6">
+      <div className="flex items-center justify-between gap-3 mb-6">
         <h1
-          className={`font-serif font-bold ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}
+          className={`font-serif font-bold whitespace-nowrap ${modoOscuro ? 'text-white' : 'text-zinc-900'}`}
           style={{ fontSize: Math.round(tamanoCodigo * 1.75) }}
         >
           <span style={{ color: 'var(--accent-texto)' }}>{a.a}</span>
         </h1>
-        <span className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
-          {posicion} de {arts.length}
-        </span>
+        {/* mismas piezas que la cabecera real (solo de adorno): al llegar el artículo no «aparece» el botón ⋯ */}
+        <div className="flex items-center justify-end gap-2 min-w-0">
+          <span className={`text-xs ${modoOscuro ? 'text-zinc-500' : 'text-zinc-400'}`}>
+            {posicion} de {arts.length}
+          </span>
+          <div className="flex items-center gap-1" aria-hidden="true">
+            {!vecinoEstrecho && (
+              <span className="boton boton-fantasma boton-chico">
+                <i className="ti ti-bookmark text-sm" />
+                <span className="hidden sm:inline">Guardar</span>
+              </span>
+            )}
+            <span className="boton boton-fantasma boton-chico boton-icono">
+              <i className="ti ti-dots text-lg" />
+            </span>
+          </div>
+        </div>
       </div>
       <ArticuloTexto texto={transformarTexto(a.t)} modoOscuro={modoOscuro} codigo={tipoActivo} articulo={a.a} />
     </article>
@@ -646,14 +684,18 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
           <motion.div
             ref={refPista}
             className="relative flow-root min-h-full"
-            style={{ x: desplazamientoX }}
+            style={{ x: desplazamientoX, willChange: arrastrando ? 'transform' : undefined }}
             drag={haySeleccion || pulsacionLarga ? false : 'x'}
             dragDirectionLock
             dragMomentum={false}
             onPointerMove={moverPulsacion}
             onPointerDown={(e) => {
               iniciarPulsacion(e)
-              if (cambiandoArticulo.current || haySeleccion) return
+            }}
+            onDirectionLock={(eje) => {
+              // los vecinos ya están montados (en reposo, sin alto): se muestran solo cuando el gesto es de verdad horizontal,
+              // no al apoyar el dedo para hacer scroll vertical
+              if (eje !== 'x' || cambiandoArticulo.current || haySeleccionRef.current || pulsandoLargo.current) return
               setTopVecinos(refArticulo.current?.scrollTop ?? 0)
               setArrastrando(true)
             }}
@@ -681,14 +723,14 @@ function ExploradorInterno({ tipoActivo, onCambiarCodigo }: { tipoActivo: Codigo
               soltarArrastre(info.offset.x, info.velocity.x)
             }}
           >
-            {arrastrando && anterior && (
-              <div aria-hidden="true" inert className="absolute left-0 w-full" style={{ top: topVecinos, transform: 'translateX(-100%)' }}>
+            {(arrastrando || vecinosListos) && anterior && (
+              <div aria-hidden="true" inert className="absolute left-0 w-full" style={{ top: arrastrando ? topVecinos : 0, transform: 'translateX(-100%)', ...(arrastrando ? {} : { height: 0, overflow: 'hidden' }) }}>
                 {tarjetaVecina(anterior, indiceActual)}
               </div>
             )}
             {tarjetaActual}
-            {arrastrando && siguiente && (
-              <div aria-hidden="true" inert className="absolute left-0 w-full" style={{ top: topVecinos, transform: 'translateX(100%)' }}>
+            {(arrastrando || vecinosListos) && siguiente && (
+              <div aria-hidden="true" inert className="absolute left-0 w-full" style={{ top: arrastrando ? topVecinos : 0, transform: 'translateX(100%)', ...(arrastrando ? {} : { height: 0, overflow: 'hidden' }) }}>
                 {tarjetaVecina(siguiente, indiceActual + 2)}
               </div>
             )}
